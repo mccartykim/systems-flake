@@ -23,6 +23,7 @@
     nixpkgs,
     home-manager,
     nixos-hardware,
+    nixvim,
     ...
   } @ inputs: let
     inherit (self) outputs;
