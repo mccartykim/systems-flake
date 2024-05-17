@@ -55,8 +55,9 @@
         pkgs = nixpkgs.legacyPackages.x86_64-linux; # Home-manager requires 'pkgs' instance
         extraSpecialArgs = {inherit inputs outputs;};
         # > Our main home-manager configuration file <
-        modules = [./home/marshmallow.nix
-	nixvim/nixosModules.nixvim
+        modules = [
+	nixvim.homeManagerModules.nixvim
+        ./home/marshmallow.nix
 	];
       };
       "kimb@total-eclipse" = home-manager.lib.homeManagerConfiguration {
@@ -64,7 +65,7 @@
         extraSpecialArgs = {inherit inputs outputs;};
         # > Our main home-manager configuration file <
         modules = [
-	nixvim.nixosModules.nixvim
+	nixvim.homeManagerModules.nixvim
 	./home/total-eclipse.nix
 	];
       };
