@@ -24,16 +24,16 @@
     # NixOS configuration entrypoint
     # Available through 'nixos-rebuild --flake .#your-hostname'
     nixosConfigurations = {
-      marshmallow = nixpkgs.lib.nixossystem {
-        specialargs = {inherit inputs outputs;};
+      marshmallow = nixpkgs.lib.nixosSystem {
+        specialArgs = {inherit inputs outputs;};
         # > our main nixos configuration file <
         modules = [
 	  ./hosts/marshmallow.nix
-          nixos-hardware.nixosmodules.lenovo-thinkpad-t490
+          nixos-hardware.nixosModules.lenovo-thinkpad-t490
 	];
       };
-      total-eclipse = nixpkgs.lib.nixossystem {
-        specialargs = {inherit inputs outputs;};
+      total-eclipse = nixpkgs.lib.nixosSystem {
+        specialArgs = {inherit inputs outputs;};
         # > our main nixos configuration file <
         modules = [
 	  ./hosts/total-eclipse.nix
