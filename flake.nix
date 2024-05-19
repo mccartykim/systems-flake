@@ -28,6 +28,7 @@
   } @ inputs: let
     inherit (self) outputs;
   in {
+    formatter.x86_64-linux = nixpkgs.legacyPackages.x86_64-linux.alejandra;
     # NixOS configuration entrypoint
     # Available through 'nixos-rebuild --flake .#your-hostname'
     nixosConfigurations = {
@@ -35,16 +36,24 @@
         specialArgs = {inherit inputs outputs;};
         # > our main nixos configuration file <
         modules = [
-	  ./hosts/marshmallow/configuration.nix
+          ./hosts/marshmallow/configuration.nix
           nixos-hardware.nixosModules.lenovo-thinkpad-t490
-	];
+        ];
       };
       total-eclipse = nixpkgs.lib.nixosSystem {
         specialArgs = {inherit inputs outputs;};
         # > our main nixos configuration file <
         modules = [
-	  ./hosts/total-eclipse/configuration.nix
-	];
+          ./hosts/total-eclipse/configuration.nix
+        ];
+      };
+      rich-evans = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        specialArgs = {inherit inputs outputs;};
+        # > our main nixos configuration file <
+        modules = [
+          ./hosts/hp-server/configuration.nix
+        ];
       };
     };
 
@@ -56,18 +65,18 @@
         extraSpecialArgs = {inherit inputs outputs;};
         # > Our main home-manager configuration file <
         modules = [
-	nixvim.homeManagerModules.nixvim
-        ./home/marshmallow.nix
-	];
+          nixvim.homeManagerModules.nixvim
+          ./home/marshmallow.nix
+        ];
       };
       "kimb@total-eclipse" = home-manager.lib.homeManagerConfiguration {
         pkgs = nixpkgs.legacyPackages.x86_64-linux; # Home-manager requires 'pkgs' instance
         extraSpecialArgs = {inherit inputs outputs;};
         # > Our main home-manager configuration file <
         modules = [
-	nixvim.homeManagerModules.nixvim
-	./home/total-eclipse.nix
-	];
+          nixvim.homeManagerModules.nixvim
+          ./home/total-eclipse.nix
+        ];
       };
     };
   };

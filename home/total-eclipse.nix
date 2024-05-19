@@ -45,7 +45,7 @@
 
   # Add stuff for your user as you see fit:
   # programs.neovim.enable = true;
-  home.packages = with pkgs; [ 
+  home.packages = with pkgs; [
     nil
     nh
   ];
@@ -75,7 +75,7 @@
     mouse = true;
     keyMode = "vi";
   };
-  
+
   # Nicely reload system units when changing configs
   systemd.user.startServices = "sd-switch";
 

@@ -1,15 +1,16 @@
 # Edit this configuration file to define what should be installed on
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running ‘nixos-help’).
-
-{ config, pkgs, ... }:
-
 {
-  imports =
-    [ # Include the results of the hardware scan.
-      ../default.nix
-      ./hardware-configuration.nix
-    ];
+  config,
+  pkgs,
+  ...
+}: {
+  imports = [
+    # Include the results of the hardware scan.
+    ../default.nix
+    ./hardware-configuration.nix
+  ];
 
   # Bootloader.
   boot.loader.grub.enable = true;
@@ -21,9 +22,9 @@
     remotePlay.openFirewall = true;
     dedicatedServer.openFirewall = true;
   };
-  
+
   # Nvidia Drivers
-  services.xserver.videoDrivers = [ "nvidia" ];
+  services.xserver.videoDrivers = ["nvidia"];
 
   networking.hostName = "total-eclipse"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
@@ -75,12 +76,12 @@
   users.users.kimb = {
     isNormalUser = true;
     description = "Kimberly";
-    extraGroups = [ "networkmanager" "wheel" ];
+    extraGroups = ["networkmanager" "wheel"];
     shell = pkgs.fish;
     packages = with pkgs; [
       firefox
       tealdeer
-    #  thunderbird
+      #  thunderbird
     ];
   };
 
@@ -90,18 +91,17 @@
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = [
-      pkgs.neovim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
-      pkgs.wget
-      pkgs.git
-      pkgs.hyprland
-      pkgs.steam
-      pkgs.legendary-gl
-      pkgs.sunshine
+    pkgs.neovim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
+    pkgs.wget
+    pkgs.git
+    pkgs.hyprland
+    pkgs.steam
+    pkgs.legendary-gl
+    pkgs.sunshine
   ];
 
-
   services.tailscale.enable = true;
-  
+
   programs.fish.enable = true;
 
   # Some programs need SUID wrappers, can be configured further or are
@@ -123,8 +123,7 @@
   # Or disable the firewall altogether.
   # networking.firewall.enable = false;
   networking.interfaces.eno2.wakeOnLan.enable = true;
-  networking.interfaces.eno2.wakeOnLan.policy = [ "unicast" ];
-  
+  networking.interfaces.eno2.wakeOnLan.policy = ["unicast"];
 
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions
@@ -133,5 +132,4 @@
   # Before changing this value read the documentation for this option
   # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
   system.stateVersion = "23.11"; # Did you read the comment?
-
 }
