@@ -55,6 +55,8 @@
   ];
 
   services.tailscale.enable = true;
+  
+  services.flatpak.enable = true;
 
   programs.fish.enable = true;
 
