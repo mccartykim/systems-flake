@@ -35,7 +35,7 @@
         specialArgs = {inherit inputs outputs;};
         # > our main nixos configuration file <
         modules = [
-	  ./hosts/marshmallow.nix
+	  ./hosts/marshmallow/configuration.nix
           nixos-hardware.nixosModules.lenovo-thinkpad-t490
 	];
       };
@@ -43,7 +43,7 @@
         specialArgs = {inherit inputs outputs;};
         # > our main nixos configuration file <
         modules = [
-	  ./hosts/total-eclipse.nix
+	  ./hosts/total-eclipse/configuration.nix
 	];
       };
     };

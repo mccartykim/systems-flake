@@ -7,8 +7,8 @@
 {
   imports =
     [ # Include the results of the hardware scan.
-      ./default.nix
-      ./total-eclipse-hardware.nix
+      ../default.nix
+      ./hardware-configuration.nix
     ];
 
   # Bootloader.
