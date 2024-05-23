@@ -12,6 +12,7 @@
     ./hardware-configuration.nix
     ./nixarr.nix
     ./smarthome.nix
+    ./containers.nix
   ];
   # Use the systemd-boot EFI boot loader.
   boot.loader.systemd-boot.enable = true;
