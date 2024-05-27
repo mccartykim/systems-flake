@@ -39,8 +39,7 @@
   # Enable the X11 windowing system.
   services.xserver.enable = true;
 
-  # Decapitation, so home-manager can do it, I think?
-  services.xserver.displayManager.gdm.enable = true;
+  services.xserver.displayManager.sddm.enable = true;
   services.xserver.desktopManager.plasma5.enable = true;
   services.xserver.desktopManager.plasma5.bigscreen.enable = true;
 
