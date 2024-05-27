@@ -25,6 +25,12 @@
 
   # Nvidia Drivers
   services.xserver.videoDrivers = ["nvidia"];
+    # Enable OpenGL
+  hardware.opengl = {
+    enable = true;
+    driSupport = true;
+    driSupport32Bit = true;
+  };
 
   networking.hostName = "total-eclipse"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
