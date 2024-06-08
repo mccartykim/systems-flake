@@ -47,7 +47,7 @@
           ./hosts/marshmallow/configuration.nix
           home-manager.nixosModules.home-manager
 	  {
-            home-manager.useGlobalPkgs = true;
+            # home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
 	    home-manager.users.kimb = ./home/marshmallow.nix;
 	  }
