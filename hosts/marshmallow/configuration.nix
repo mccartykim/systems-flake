@@ -11,6 +11,7 @@
     ../default.nix
     ./hardware-configuration.nix
   ];
+  stylix.image = ./peeps.jpg;
 
   # Bootloader.
   boot.loader.systemd-boot.enable = true;

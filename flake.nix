@@ -19,6 +19,7 @@
       # url = "github:nix-community/nixvim/nixos-23.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    stylix.url = "github:danth/stylix";
   };
 
   outputs = {
@@ -28,6 +29,7 @@
     nixos-hardware,
     nixvim,
     nil-flake,
+    stylix,
     ...
   } @ inputs: let
     inherit (self) outputs;
@@ -40,8 +42,14 @@
         specialArgs = {inherit inputs outputs;};
         # > our main nixos configuration file <
         modules = [
-          ./hosts/marshmallow/configuration.nix
+	  stylix.nixosModules.stylix
           nixos-hardware.nixosModules.lenovo-thinkpad-t490
+          ./hosts/marshmallow/configuration.nix
+	  {
+            home-manager.useGlobalPkgs = true;
+            home-manager.useUserPackages = true;
+	    home-manager.users.kimb = ./home/marshmallow.nix;
+	  }
         ];
       };
       total-eclipse = nixpkgs.lib.nixosSystem {
