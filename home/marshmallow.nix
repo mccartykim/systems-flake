@@ -16,6 +16,13 @@
     # ./nvim.nix
   ];
 
+  programs.zoxide.enable = true;
+  programs.fzf.enable = true;
+
+  programs.fish = {
+    enable = true;
+  };
+
   nixpkgs = {
     # You can add overlays here
     overlays = [
@@ -37,7 +44,6 @@
     };
   };
 
-  # TODO: Set your username
   home = {
     username = "kimb";
     homeDirectory = "/home/kimb";
