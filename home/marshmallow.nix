@@ -18,7 +18,7 @@
 
   programs.zoxide.enable = true;
   programs.fzf.enable = true;
-  programs.exa.enable = true;
+  programs.eza.enable = true;
 
   programs.fish = {
     enable = true;
