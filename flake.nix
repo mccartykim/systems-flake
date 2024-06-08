@@ -45,6 +45,7 @@
 	  stylix.nixosModules.stylix
           nixos-hardware.nixosModules.lenovo-thinkpad-t490
           ./hosts/marshmallow/configuration.nix
+          home-manager.nixosModules.home-manager
 	  {
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
