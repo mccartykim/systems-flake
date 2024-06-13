@@ -67,6 +67,10 @@
   # Nicely reload system units when changing configs
   systemd.user.startServices = "sd-switch";
 
+  wayland.windowManager.sway.enable = true;
+  programs.waybar.enable=true;
+  programs.waybar.systemd.enable = true;
+
   # https://nixos.wiki/wiki/FAQ/When_do_I_update_stateVersion
   home.stateVersion = "23.05";
 }
