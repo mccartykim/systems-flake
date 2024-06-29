@@ -4,6 +4,7 @@
 {
   config,
   pkgs,
+  stylix,
   ...
 }: {
   imports = [
@@ -11,7 +12,9 @@
     ../default.nix
     ./hardware-configuration.nix
   ];
+  stylix.enable = true;
   stylix.image = ./peeps.jpg;
+  stylix.autoEnable = true;
 
   # Bootloader.
   boot.loader.systemd-boot.enable = true;
