@@ -68,7 +68,7 @@
   systemd.user.startServices = "sd-switch";
 
   wayland.windowManager.sway.enable = true;
-  programs.waybar.enable=true;
+  programs.waybar.enable=false;
   programs.waybar.systemd.enable = true;
 
   # https://nixos.wiki/wiki/FAQ/When_do_I_update_stateVersion
