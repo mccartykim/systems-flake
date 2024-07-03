@@ -59,7 +59,7 @@
   programs.atuin.enable = true;
 
   programs.nixvim = {
-    enable = true;
+    enable = false;
     plugins.lightline.enable = true;
     plugins.treesitter.enable = true;
     opts = {
