@@ -13,7 +13,7 @@
     ./hardware-configuration.nix
   ];
   stylix.enable = true;
-  stylix.image = ./peeps.jpg;
+  stylix.image = ./poptart_oil.jpg;
   stylix.autoEnable = true;
 
   # Bootloader.
@@ -59,8 +59,6 @@
 
   hardware.opengl = {
     enable = true;
-    driSupport = true;
-    driSupport32Bit = true;
     extraPackages = with pkgs; [
       intel-media-driver
       intel-vaapi-driver
