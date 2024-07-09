@@ -23,6 +23,14 @@
 
   programs.fish = {
     enable = true;
+    plugins = [ 
+      {
+        name = "tide";
+	src = pkgs.fishPlugins.tide.src;
+      }
+      # autopair.src 
+      # colored-man-pages.src 
+    ];
   };
 
   nixpkgs = {
@@ -53,7 +61,7 @@
 
   # Add stuff for your user as you see fit:
   # programs.neovim.enable = true;
-  # home.packages = with pkgs; [ steam ];
+  home.packages = with pkgs; [ steam nerdfonts ];
 
   # Enable home-manager and git
   programs.home-manager.enable = true;

@@ -103,6 +103,11 @@
   };
 
   programs.fish.enable = true;
+  programs.fish.vendor = {
+    config.enable = true;
+    functions.enable = true;
+    completions.enable = true;
+  };
 
   programs.steam.enable = true;
 
