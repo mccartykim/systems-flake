@@ -122,7 +122,14 @@
     git
     wget
     fish
+    keybase-gui
+    kbfs
   ];
+
+  services.keybase.enable = true;
+  services.kbfs = {
+    enable = true;
+  };
 
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
