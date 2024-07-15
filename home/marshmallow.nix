@@ -5,7 +5,6 @@
   lib,
   config,
   pkgs,
-  nix-colors,
   ...
 }: {
   # You can import other home-manager modules here
