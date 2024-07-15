@@ -13,7 +13,7 @@
     ./hardware-configuration.nix
   ];
   stylix.enable = true;
-  stylix.image = ./kiwi.jpg;
+  stylix.image = ./marsh-flower.jpg;
   stylix.autoEnable = true;
 
   # Bootloader.
@@ -95,7 +95,6 @@
     description = "Kimb";
     extraGroups = ["networkmanager" "wheel" "docker"];
     packages = with pkgs; [
-      blender
       firefox
       kate
       nh
