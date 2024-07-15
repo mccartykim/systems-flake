@@ -64,7 +64,6 @@
     steam 
     nerdfonts 
     blender
-    houdini
   ];
 
   # Enable home-manager and git
