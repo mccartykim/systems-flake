@@ -13,7 +13,7 @@
     ./hardware-configuration.nix
   ];
   stylix.enable = true;
-  stylix.image = ./poptart_oil.jpg;
+  stylix.image = ./kiwi.jpg;
   stylix.autoEnable = true;
 
   # Bootloader.
@@ -54,6 +54,9 @@
 
   # Enable CUPS to print documents.
   services.printing.enable = true;
+  services.printing.drivers = [
+    pkgs.epson-escpr
+  ];
 
   hardware.bluetooth.enable = true;
 
@@ -124,6 +127,7 @@
     fish
     keybase-gui
     kbfs
+    epson-escpr
   ];
 
   services.keybase.enable = true;

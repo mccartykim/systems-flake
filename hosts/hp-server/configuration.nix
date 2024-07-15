@@ -57,7 +57,10 @@
   # services.xserver.xkbOptions = "eurosign:e,caps:escape";
 
   # Enable CUPS to print documents.
-  # services.printing.enable = true;
+  services.printing.enable = true;
+  services.printing.drivers = [
+    pkgs.epson-escpr
+  ];
 
   # Enable sound.
   sound.enable = true;
