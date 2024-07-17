@@ -15,6 +15,10 @@
   stylix.enable = true;
   stylix.image = ./marsh-flower.jpg;
   stylix.autoEnable = true;
+  stylix.fonts.monospace = {
+    package = pkgs.ibm-plex;
+    name = "IBM Plex Mono";
+  };
 
   # Bootloader.
   boot.loader.systemd-boot.enable = true;
