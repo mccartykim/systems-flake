@@ -82,6 +82,7 @@
   wayland.windowManager.sway.config.modifier = "Mod4";
   programs.waybar.enable=false;
   programs.waybar.systemd.enable = true;
+  programs.wofi.enable = true;
 
   services.swayidle.enable = true;
 
