@@ -79,8 +79,12 @@
   systemd.user.startServices = "sd-switch";
 
   wayland.windowManager.sway.enable = true;
+  wayland.windowManager.sway.config.modifier = "Mod4";
   programs.waybar.enable=false;
   programs.waybar.systemd.enable = true;
+
+  services.swayidle.enable = true;
+
 
   # https://nixos.wiki/wiki/FAQ/When_do_I_update_stateVersion
   home.stateVersion = "23.05";
