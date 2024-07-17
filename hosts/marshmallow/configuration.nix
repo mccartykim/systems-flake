@@ -50,6 +50,8 @@
   services.desktopManager.plasma6.enable = true;
   programs.sway.enable = true;
 
+  services.illum.enable = true;
+
   # Configure keymap in X11
   services.xserver = {
     xkb.layout = "us";
@@ -75,6 +77,7 @@
 
   # Enable sound with pipewire.
   sound.enable = true;
+  sound.mediaKeys.enable = true;
   hardware.pulseaudio.enable = false;
   security.rtkit.enable = true;
   services.pipewire = {
