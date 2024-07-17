@@ -85,10 +85,19 @@
     keybindings = let
   modifier = config.wayland.windowManager.sway.config.modifier;
 in lib.mkOptionDefault {
-  "${modifier}+e" = "exec ${pkgs.swayr}/bin/swayr switch-to-app-or-urgent-or-lru-window";
-};
+  "Mod1+Tab" = "exec ${pkgs.swayr}/bin/swayr switch-to-urgent-or-lru-window";
+  # 
+  # 
+    "${modifier}+Shift+f" = "floating toggle"; 
+    "${modifier}+Shift+w" = "focus mode_toggle"; 
+  "${modifier}+c" = "exec ${pkgs.swayr}/bin/swayr execute-swaymsg-command";
+  "${modifier}+Shift+c" = "exec ${pkgs.swayr}/bin/swayr execute-swayr-command";
+   "${modifier}+Tab" = "exec ${pkgs.swayr}/bin/swayr switch-window"; 
+   "${modifier}+Shift+Tab" = "exec ${pkgs.swayr}/bin/swayr switch-workspace-or-window";
+  };
   };
   programs.swayr.enable = true;
+  programs.swayr.systemd.enable = true;
   programs.swayr.settings = {
     menu = {
       executable = "${pkgs.wofi}/bin/wofi";
@@ -152,6 +161,7 @@ in lib.mkOptionDefault {
       allow_images = true;
       insensitive = true;
       allow_markup = true;
+      parse-search=true;
     };
     style = ''
       #entry {  
@@ -165,7 +175,7 @@ in lib.mkOptionDefault {
     '';
   };
 
-  services.swayidle.enable = true;
+  # services.swayidle.enable = true;
 
 
   # https://nixos.wiki/wiki/FAQ/When_do_I_update_stateVersion
