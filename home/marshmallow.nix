@@ -82,6 +82,11 @@
   wayland.windowManager.sway.config.modifier = "Mod4";
   wayland.windowManager.sway.config = {
     menu = "wofi --show drun,run";
+    keybindings = let
+  modifier = config.wayland.windowManager.sway.config.modifier;
+in lib.mkOptionDefault {
+  "${modifier}+e" = "exec ${pkgs.swayr}/bin/swayr switch-to-app-or-urgent-or-lru-window";
+};
   };
   programs.swayr.enable = true;
   programs.swayr.settings = {
