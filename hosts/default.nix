@@ -60,6 +60,10 @@
   ];
 
   services.tailscale.enable = true;
+  programs.tmux.enable = true;
+  programs.tmux.plugins = with pkgs.tmuxPlugins; [
+    sensible
+  ];
 
   services.flatpak.enable = true;
 
