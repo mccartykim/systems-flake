@@ -21,7 +21,7 @@
 
   nix.settings.experimental-features = ["nix-command" "flakes"];
   nix.settings.substituters = ["https://cache.garnix.io"];
-  nix.settings.trusted-substituters = ["https://cache.garnix.io" "https://mccartykim.garnix.io"];
+  nix.settings.trusted-substituters = ["https://cache.garnix.io"];
   nix.settings.trusted-public-keys = ["cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g="];
 
   networking.hostName = "rich-evans"; # Define your hostname.
@@ -108,7 +108,7 @@
   environment.variables = {
     EDITOR = "nvim";
   };
-  environment.sessionVariables.FLAKE = "/home/kimb/.config/nixos";
+  environment.sessionVariables.FLAKE = "/home/kimb/systems-flake";
 
   # Open ports in the firewall.
   # networking.firewall.allowedTCPPorts = [ ... ];
