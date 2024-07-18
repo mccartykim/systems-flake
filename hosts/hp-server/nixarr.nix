@@ -5,7 +5,7 @@
     group = "media";
   };
 
-  services.jellyseerr.enable = true;
+  services.jellyseerr.enable = false;
   services.jellyseerr.openFirewall = true;
   users.users.media.group = "media";
   users.users.media.isSystemUser = true;
