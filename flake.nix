@@ -20,6 +20,10 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     stylix.url = "github:danth/stylix";
+    lix-module = {
+      url = "https://git.lix.systems/lix-project/nixos-module/archive/2.90.0.tar.gz";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = {
@@ -30,6 +34,7 @@
     nixvim,
     nil-flake,
     stylix,
+    lix-module,
     ...
   } @ inputs: let
     inherit (self) outputs;
@@ -51,6 +56,7 @@
             home-manager.useUserPackages = true;
 	    home-manager.users.kimb = ./home/marshmallow.nix;
 	  }
+	  lix-module.nixosModules.default
         ];
       };
       total-eclipse = nixpkgs.lib.nixosSystem {
@@ -58,6 +64,7 @@
         # > our main nixos configuration file <
         modules = [
           ./hosts/total-eclipse/configuration.nix
+	  lix-module.nixosModules.default
         ];
       };
       rich-evans = nixpkgs.lib.nixosSystem {
@@ -66,6 +73,7 @@
         # > our main nixos configuration file <
         modules = [
           ./hosts/hp-server/configuration.nix
+	  lix-module.nixosModules.default
         ];
       };
       bartleby = nixpkgs.lib.nixosSystem {
@@ -84,6 +92,7 @@
             home-manager.useUserPackages = true;
             home-manager.users.kimb = import ./hosts/bartleby/home.nix;
           }
+	  lix-module.nixosModules.default
         ];
       };
     };
