@@ -47,16 +47,16 @@
         specialArgs = {inherit inputs outputs;};
         # > our main nixos configuration file <
         modules = [
-	  stylix.nixosModules.stylix
+          stylix.nixosModules.stylix
           nixos-hardware.nixosModules.lenovo-thinkpad-t490
           ./hosts/marshmallow/configuration.nix
           home-manager.nixosModules.home-manager
-	  {
+          {
             # home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
-	    home-manager.users.kimb = ./home/marshmallow.nix;
-	  }
-	  lix-module.nixosModules.default
+            home-manager.users.kimb = ./home/marshmallow.nix;
+          }
+          lix-module.nixosModules.default
         ];
       };
       total-eclipse = nixpkgs.lib.nixosSystem {
@@ -64,7 +64,7 @@
         # > our main nixos configuration file <
         modules = [
           ./hosts/total-eclipse/configuration.nix
-	  lix-module.nixosModules.default
+          lix-module.nixosModules.default
         ];
       };
       rich-evans = nixpkgs.lib.nixosSystem {
@@ -73,7 +73,7 @@
         # > our main nixos configuration file <
         modules = [
           ./hosts/hp-server/configuration.nix
-	  lix-module.nixosModules.default
+          lix-module.nixosModules.default
         ];
       };
       bartleby = nixpkgs.lib.nixosSystem {
@@ -92,7 +92,7 @@
             home-manager.useUserPackages = true;
             home-manager.users.kimb = import ./hosts/bartleby/home.nix;
           }
-	  lix-module.nixosModules.default
+          lix-module.nixosModules.default
         ];
       };
     };
@@ -121,10 +121,10 @@
     };
     devShell.x86_64-linux = let
       system = "x86_64-linux";
-      pkgs  = import nixpkgs { inherit system; };
+      pkgs = import nixpkgs {inherit system;};
     in
-    pkgs.mkShell {
-      packages = [ pkgs.tealdeer ];
-    };
+      pkgs.mkShell {
+        packages = [pkgs.tealdeer];
+      };
   };
 }

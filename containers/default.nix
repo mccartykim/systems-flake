@@ -17,11 +17,10 @@
     pkgs.git
   ];
 
-
   # List services that you want to enable:
 
-  services.tailscale = { 
-    enable = true; 
+  services.tailscale = {
+    enable = true;
     openFirewall = true;
   };
 

@@ -22,13 +22,13 @@
 
   programs.fish = {
     enable = true;
-    plugins = [ 
+    plugins = [
       {
         name = "tide";
-	src = pkgs.fishPlugins.tide.src;
+        src = pkgs.fishPlugins.tide.src;
       }
-      # autopair.src 
-      # colored-man-pages.src 
+      # autopair.src
+      # colored-man-pages.src
     ];
   };
 
@@ -60,9 +60,9 @@
 
   # Add stuff for your user as you see fit:
   # programs.neovim.enable = true;
-  home.packages = with pkgs; [ 
-    steam 
-    nerdfonts 
+  home.packages = with pkgs; [
+    steam
+    nerdfonts
     blender
   ];
 
@@ -83,18 +83,19 @@
   wayland.windowManager.sway.config = {
     menu = "wofi --show drun,run";
     keybindings = let
-  modifier = config.wayland.windowManager.sway.config.modifier;
-in lib.mkOptionDefault {
-  "Mod1+Tab" = "exec ${pkgs.swayr}/bin/swayr switch-to-urgent-or-lru-window";
-  # 
-  # 
-    "${modifier}+Shift+f" = "floating toggle"; 
-    "${modifier}+Shift+w" = "focus mode_toggle"; 
-  "${modifier}+c" = "exec ${pkgs.swayr}/bin/swayr execute-swaymsg-command";
-  "${modifier}+Shift+c" = "exec ${pkgs.swayr}/bin/swayr execute-swayr-command";
-   "${modifier}+Tab" = "exec ${pkgs.swayr}/bin/swayr switch-window"; 
-   "${modifier}+Shift+Tab" = "exec ${pkgs.swayr}/bin/swayr switch-workspace-or-window";
-  };
+      modifier = config.wayland.windowManager.sway.config.modifier;
+    in
+      lib.mkOptionDefault {
+        "Mod1+Tab" = "exec ${pkgs.swayr}/bin/swayr switch-to-urgent-or-lru-window";
+        #
+        #
+        "${modifier}+Shift+f" = "floating toggle";
+        "${modifier}+Shift+w" = "focus mode_toggle";
+        "${modifier}+c" = "exec ${pkgs.swayr}/bin/swayr execute-swaymsg-command";
+        "${modifier}+Shift+c" = "exec ${pkgs.swayr}/bin/swayr execute-swayr-command";
+        "${modifier}+Tab" = "exec ${pkgs.swayr}/bin/swayr switch-window";
+        "${modifier}+Shift+Tab" = "exec ${pkgs.swayr}/bin/swayr switch-workspace-or-window";
+      };
   };
   programs.swayr.enable = true;
   programs.swayr.systemd.enable = true;
@@ -102,14 +103,14 @@ in lib.mkOptionDefault {
     menu = {
       executable = "${pkgs.wofi}/bin/wofi";
       args = [
-	"--show=dmenu"
-	"--allow-markup"
-	"--allow-images"
-	"--insensitive"
-	"--cache-file=/dev/null"
-	"--parse-search"
-	"--height=40%"
-	"--prompt={prompt}"
+        "--show=dmenu"
+        "--allow-markup"
+        "--allow-images"
+        "--insensitive"
+        "--cache-file=/dev/null"
+        "--parse-search"
+        "--height=40%"
+        "--prompt={prompt}"
       ];
     };
 
@@ -127,21 +128,21 @@ in lib.mkOptionDefault {
     layout = {
       auto_tile = false;
       auto_tile_min_window_width_per_output_width = [
-	[ 800 400 ]
-	[ 1024 500 ]
-	[ 1280 600 ]
-	[ 1400 680 ]
-	[ 1440 700 ]
-	[ 1600 780 ]
-	[ 1680 780 ]
-	[ 1920 920 ]
-	[ 2048 980 ]
-	[ 2560 1000 ]
-	[ 3440 1200 ]
-	[ 3840 1280 ]
-	[ 4096 1400 ]
-	[ 4480 1600 ]
-	[ 7680 2400 ]
+        [800 400]
+        [1024 500]
+        [1280 600]
+        [1400 680]
+        [1440 700]
+        [1600 780]
+        [1680 780]
+        [1920 920]
+        [2048 980]
+        [2560 1000]
+        [3440 1200]
+        [3840 1280]
+        [4096 1400]
+        [4480 1600]
+        [7680 2400]
       ];
     };
 
@@ -153,30 +154,29 @@ in lib.mkOptionDefault {
       seq_inhibit = false;
     };
   };
-  programs.waybar.enable= true;
+  programs.waybar.enable = true;
   programs.waybar.systemd.enable = true;
-  programs.wofi = { 
+  programs.wofi = {
     enable = true;
     settings = {
       allow_images = true;
       insensitive = true;
       allow_markup = true;
-      parse-search=true;
+      parse-search = true;
     };
     style = ''
-      #entry {  
-	padding: 0px;  
-	margin: 0px;              
-	border-bottom-style: solid;  
-	border-width: 2px;                                  
-	border-color: @base02;  
-	background-color: @base00;
-      }
+           #entry {
+      padding: 0px;
+      margin: 0px;
+      border-bottom-style: solid;
+      border-width: 2px;
+      border-color: @base02;
+      background-color: @base00;
+           }
     '';
   };
 
   # services.swayidle.enable = true;
-
 
   # https://nixos.wiki/wiki/FAQ/When_do_I_update_stateVersion
   home.stateVersion = "23.05";
