@@ -14,6 +14,7 @@
   ];
   stylix.enable = true;
   stylix.image = ./marsh-flower.jpg;
+  stylix.polarity = "dark";
   stylix.autoEnable = true;
   stylix.fonts.monospace = {
     package = pkgs.ibm-plex;
