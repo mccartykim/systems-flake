@@ -134,16 +134,16 @@ in {
         which-key-nvim
         calendar-vim
         telescope-media-files-nvim
-	telescope-fzf-native-nvim
+        telescope-fzf-native-nvim
       ];
       extraLuaConfig = ''
         vim.g.mapleader = ","
                require("oil").setup({
-	         defaultFileExplorer = true,
-	       })
-	       local ts = require('telescope')
-	       -- ts.load_extension('media_files')
-	       ts.load_extension('fzf')
+          defaultFileExplorer = true,
+        })
+        local ts = require('telescope')
+        -- ts.load_extension('media_files')
+        ts.load_extension('fzf')
                require('telekasten').setup({
                  home = vim.fn.expand("~/zettelkasten"), -- Put the name of your notes directory here
                })
