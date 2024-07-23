@@ -144,11 +144,10 @@ in {
         local ts = require('telescope')
         -- ts.load_extension('media_files')
         ts.load_extension('fzf')
-               require('telekasten').setup({
-                 home = vim.fn.expand("~/zettelkasten"), -- Put the name of your notes directory here
-               })
-               local wk = require("which-key")
-
+               
+       require('telekasten').setup({
+	 home = vim.fn.expand("~/zettelkasten"), -- Put the name of your notes directory here
+       })
 
         -- Launch panel if nothing is typed after <leader>z
         vim.keymap.set("n", "<leader>z", "<cmd>Telekasten panel<CR>")
@@ -166,7 +165,7 @@ in {
         -- Call insert link automatically when we start typing a link
         vim.keymap.set("i", "[[", "<cmd>Telekasten insert_link<CR>")
 
-        wk.register(mappings, opts)
+        local wk = require("which-key")
       '';
       coc = {
         enable = true;
