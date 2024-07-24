@@ -16,9 +16,17 @@
   stylix.image = ./marsh-flower.jpg;
   stylix.polarity = "dark";
   stylix.autoEnable = true;
-  stylix.fonts.monospace = {
-    package = pkgs.ibm-plex;
-    name = "IBM Plex Mono";
+  stylix.fonts = 
+    monospace = {
+      package = pkgs.ibm-plex;
+      name = "IBM Plex Mono";
+    };
+
+    sizes = {
+      desktop = 16;
+      popup = 16;
+      terminal = 18;
+    };
   };
 
   # Bootloader.
