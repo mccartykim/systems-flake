@@ -22,6 +22,7 @@ in {
   system.defaults.NSGlobalDomain.AppleKeyboardUIMode = 3;
   home-manager.useGlobalPkgs = true;
   home-manager.useUserPackages = true;
+  home-manager.backupFileExtension = "backup";
   home-manager.users."kimberly.mccarty" = {
     home.stateVersion = "23.05";
     home.packages = [
@@ -60,6 +61,10 @@ in {
     programs.git = {
       enable = true;
       delta.enable = true;
+    };
+
+    programs.zellij = {
+      enable = true;
     };
 
     programs.fzf = {
