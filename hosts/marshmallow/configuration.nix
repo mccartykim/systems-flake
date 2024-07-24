@@ -16,7 +16,7 @@
   stylix.image = ./marsh-flower.jpg;
   stylix.polarity = "dark";
   stylix.autoEnable = true;
-  stylix.fonts = 
+  stylix.fonts = {
     monospace = {
       package = pkgs.ibm-plex;
       name = "IBM Plex Mono";
