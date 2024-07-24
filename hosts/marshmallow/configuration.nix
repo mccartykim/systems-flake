@@ -24,7 +24,6 @@
 
     sizes = {
       desktop = 16;
-      popup = 16;
       terminal = 18;
     };
   };
