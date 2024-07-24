@@ -67,6 +67,8 @@ in {
       enable = true;
     };
 
+    programs.nix-index.enable = true;
+
     programs.fzf = {
       enable = true;
       enableFishIntegration = true;
