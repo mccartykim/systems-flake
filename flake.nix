@@ -13,12 +13,6 @@
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
 
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
-    # nixvim = {
-    #   url = "github:nix-community/nixvim";
-    #   # If you are not running an unstable channel of nixpkgs, select the corresponding branch of nixvim.
-    #   # url = "github:nix-community/nixvim/nixos-23.05";
-    #   inputs.nixpkgs.follows = "nixpkgs";
-    # };
     stylix.url = "github:danth/stylix";
     lix-module = {
       url = "https://git.lix.systems/lix-project/nixos-module/archive/2.90.0.tar.gz";
@@ -33,7 +27,6 @@
     nixpkgs,
     home-manager,
     nixos-hardware,
-    # nixvim,
     nil-flake,
     stylix,
     nix-darwin,
@@ -47,9 +40,9 @@
         ./darwin/kmccarty-YM2K/configuration.nix
         home-manager.darwinModules.home-manager
         ./darwin/kmccarty-YM2K/default.nix
+	./home/work-laptop.nix
       ];
     };
-    darwinPackages = self.darwinConfigurations."kmccarty-YM2K".pkgs;
 
     formatter.aarch64-darwin = nixpkgs.legacyPackages.aarch64-darwin.alejandra;
 
@@ -81,6 +74,7 @@
         modules = [
           ./hosts/total-eclipse/configuration.nix
           lix-module.nixosModules.default
+          stylix.nixosModules.stylix
         ];
       };
       rich-evans = nixpkgs.lib.nixosSystem {
@@ -90,6 +84,7 @@
         modules = [
           ./hosts/hp-server/configuration.nix
           lix-module.nixosModules.default
+          stylix.nixosModules.stylix
         ];
       };
       bartleby = nixpkgs.lib.nixosSystem {
@@ -110,6 +105,7 @@
             home-manager.users.kimb = import ./hosts/bartleby/home.nix;
           }
           lix-module.nixosModules.default
+          stylix.nixosModules.stylix
         ];
       };
     };
@@ -122,8 +118,8 @@
         extraSpecialArgs = {inherit inputs outputs;};
         # > Our main home-manager configuration file <
         modules = [
-          # nixvim.homeManagerModules.nixvim
           ./home/marshmallow.nix
+          stylix.nixosModules.stylix
         ];
       };
       "kimb@total-eclipse" = home-manager.lib.homeManagerConfiguration {
@@ -131,8 +127,8 @@
         extraSpecialArgs = {inherit inputs outputs;};
         # > Our main home-manager configuration file <
         modules = [
-          # nixvim.homeManagerModules.nixvim
           ./home/total-eclipse.nix
+          stylix.nixosModules.stylix
         ];
       };
     };
