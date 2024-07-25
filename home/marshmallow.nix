@@ -159,6 +159,7 @@
   };
   programs.waybar.enable = true;
   programs.waybar.systemd.enable = true;
+  programs.nix-index.enable = true;
   programs.wofi = {
     enable = true;
     settings = {
