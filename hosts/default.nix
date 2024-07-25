@@ -9,7 +9,7 @@
   ...
 }: {
   imports = [
-    ../stylix.nix
+    ./stylix.nix
   ];
 
   # Flakes and keys
