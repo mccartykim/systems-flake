@@ -42,7 +42,6 @@
   services.displayManager.sddm.wayland.enable = true;
   services.desktopManager.plasma6.enable = false;
   programs.sway.enable = true;
-
   services.illum.enable = true;
 
   # Configure keymap in X11
