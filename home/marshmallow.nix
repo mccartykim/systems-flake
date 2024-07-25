@@ -32,6 +32,8 @@
     ];
   };
 
+  programs.foot.enable = true;
+
   nixpkgs = {
     # You can add overlays here
     overlays = [
@@ -165,14 +167,19 @@
       parse-search = true;
     };
     style = ''
-           #entry {
-      padding: 0px;
-      margin: 0px;
-      border-bottom-style: solid;
-      border-width: 2px;
-      border-color: @base02;
-      background-color: @base00;
-           }
+            #entry {
+      	padding: 0px;
+      	margin: 0px;
+      	border-bottom-style: solid;
+      	border-width: 2px;
+      	border-color: @base02;
+      	background-color: @base01;
+            }
+            #entry:selected {
+              background-color: @base00;
+            }
+
+      background-color: #5291e2; }
     '';
   };
 

@@ -5,8 +5,13 @@
   config,
   pkgs,
   nixpkgs,
+  stylix,
   ...
 }: {
+  imports = [
+    ../stylix.nix
+  ];
+
   # Flakes and keys
   nix.settings.experimental-features = ["nix-command" "flakes"];
   nix.settings.trusted-public-keys = [
