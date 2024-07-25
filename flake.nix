@@ -44,9 +44,9 @@
   in {
     darwinConfigurations."kmccarty-YM2K" = nix-darwin.lib.darwinSystem {
       modules = [
-        ./darwin/configuration.nix
+        ./darwin/kmccarty-YM2K/configuration.nix
         home-manager.darwinModules.home-manager
-        ./darwin/hosts/kmccarty-YM2K/default.nix
+        ./darwin/kmccarty-YM2K/default.nix
       ];
     };
     darwinPackages = self.darwinConfigurations."kmccarty-YM2K".pkgs;
