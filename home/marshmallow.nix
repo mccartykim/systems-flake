@@ -81,9 +81,11 @@
   systemd.user.startServices = "sd-switch";
 
   wayland.windowManager.sway.enable = true;
+  wayland.windowManager.sway.package = pkgs.swayfx;
   wayland.windowManager.sway.config.modifier = "Mod4";
   wayland.windowManager.sway.config = {
     menu = "wofi --show drun,run";
+    bars = [];
     keybindings = let
       modifier = config.wayland.windowManager.sway.config.modifier;
     in
