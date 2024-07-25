@@ -55,7 +55,6 @@
 
     formatter.x86_64-linux = nixpkgs.legacyPackages.x86_64-linux.alejandra;
 
-
     # NixOS configuration entrypoint
     # Available through 'nixos-rebuild --flake .#your-hostname'
     nixosConfigurations = {
@@ -68,7 +67,7 @@
           ./hosts/marshmallow/configuration.nix
           home-manager.nixosModules.home-manager
           {
-	    home-manager.backupFileExtension = "backup";
+            home-manager.backupFileExtension = "backup";
             # home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
             home-manager.users.kimb = ./home/marshmallow.nix;
@@ -105,7 +104,7 @@
           ./hosts/bartleby/configuration.nix
           home-manager.nixosModules.home-manager
           {
-	    home-manager.backupFileExtension = "backup";
+            home-manager.backupFileExtension = "backup";
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
             home-manager.users.kimb = import ./hosts/bartleby/home.nix;

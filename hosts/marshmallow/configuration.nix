@@ -4,29 +4,14 @@
 {
   config,
   pkgs,
-  stylix,
   ...
 }: {
   imports = [
     # Include the results of the hardware scan.
     ../default.nix
     ./hardware-configuration.nix
+    ./style/default.nix
   ];
-  stylix.enable = true;
-  stylix.image = ./marsh-flower.jpg;
-  stylix.polarity = "dark";
-  stylix.autoEnable = true;
-  stylix.fonts = {
-    monospace = {
-      package = pkgs.ibm-plex;
-      name = "IBM Plex Mono";
-    };
-
-    sizes = {
-      desktop = 16;
-      terminal = 18;
-    };
-  };
 
   # Bootloader.
   boot.loader.systemd-boot.enable = true;
