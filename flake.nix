@@ -20,6 +20,9 @@
     };
     nix-darwin.url = "github:LnL7/nix-darwin";
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
+
+    srvos.url = "github:nix-community/srvos";
+    srvos.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs = {
@@ -31,6 +34,7 @@
     stylix,
     nix-darwin,
     lix-module,
+    srvos,
     ...
   } @ inputs: let
     inherit (self) outputs;
@@ -55,6 +59,9 @@
         specialArgs = {inherit inputs outputs;};
         # > our main nixos configuration file <
         modules = [
+	  srvos.nixosModules.desktop
+	  srvos.nixosModules.mixins-trusted-nix-caches
+	  srvos.nixosModules.mixins-terminfo
           stylix.nixosModules.stylix
           nixos-hardware.nixosModules.lenovo-thinkpad-t490
           ./hosts/marshmallow/configuration.nix
