@@ -17,6 +17,11 @@
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
+  swapDevices = [ {
+    device = "/var/lib/swapfile";
+    size = 16*1024; # in mb, total 16gb
+  } ];
+
   virtualisation.docker.enable = true;
 
   networking.hostName = "marshmallow"; # Define your hostname.
