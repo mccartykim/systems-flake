@@ -1,3 +1,6 @@
+## Use this file to specify nix-darwin options, 
+## which are mostly configuration changes to MacOS. You mayyyy need to rerun 
+## `darwin-rebuild switch --flake $THIS_FLAKE` after MacOS updates
 {
   pkgs,
   config,
@@ -20,8 +23,8 @@ in {
 
   programs.fish.enable = true;
   system.defaults.NSGlobalDomain.AppleKeyboardUIMode = 3;
+
   home-manager.useGlobalPkgs = true;
   home-manager.useUserPackages = true;
   home-manager.backupFileExtension = "backup";
-  home-manager.users."kimberly.mccarty".packages = [ corretto17 ];
 }
