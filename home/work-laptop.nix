@@ -1,5 +1,5 @@
 { pkgs, config, lib, ... } : let
-   config = { home.stateVersion = "23.05";
+   home-config = { home.stateVersion = "23.05";
     home.packages = [
       pkgs.atuin
       pkgs.chafa
@@ -167,7 +167,6 @@
     };
     programs.zoxide.enable = true;
     programs.direnv.enable = true;
-  } in {
-    home-manager.users."kimberly.mccarty" = config;
-  };
-
+  }; in {
+    home-manager.users."kimberly.mccarty" = home-config;
+  }
