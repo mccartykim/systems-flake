@@ -41,6 +41,9 @@
     useRoutingFeatures = "server";
   };
   
+  networking.firewall.allowedTCPPorts = [ 9001 ];
+  networking.firewall.allowedUDPPorts = [ 65535 ];
+
   services.yggdrasil = {
     enable = true;
     persistentKeys = true;
