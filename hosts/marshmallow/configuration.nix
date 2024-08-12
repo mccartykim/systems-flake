@@ -39,6 +39,10 @@
     openFirewall = true;
   };
 
+  services.libinput = {
+    mouse.naturalScrolling = true;
+  };
+
   # Enable the X11 windowing system.
   services.xserver.enable = true;
 
@@ -128,7 +132,23 @@
     keybase-gui
     kbfs
     epson-escpr
+    gparted
   ];
+
+  services.yggdrasil = {
+    enable = true;
+    persistentKeys = true;
+    openMulticastPort = true;
+    group = "wheel";
+    settings = {
+      Peers = [
+	"tcp://longseason.1200bps.xyz:13121"
+	"tls://longseason.1200bps.xyz:13122"
+	"quic://198.23.229.154:9003"
+      ];
+      LinkLocalTCPPort = 65535;
+    };
+  };
 
   services.keybase.enable = true;
   services.kbfs = {
@@ -149,8 +169,8 @@
   # services.openssh.enable = true;
 
   # Open ports in the firewall.
-  # networking.firewall.allowedTCPPorts = [ ... ];
-  # networking.firewall.allowedUDPPorts = [ ... ];
+  networking.firewall.allowedTCPPorts = [ 9001 ];
+  networking.firewall.allowedUDPPorts = [ 65535 ];
   # Or disable the firewall altogether.
   # networking.firewall.enable = false;
 
