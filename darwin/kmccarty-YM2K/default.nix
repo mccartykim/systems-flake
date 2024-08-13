@@ -7,11 +7,9 @@
   lib,
   ...
 }: let
-  # TODO - Update script?
-  corretto17Revision = "17.0.11.9.1";
   corretto17 = pkgs.fetchzip {
     name = "corretto17";
-    url = "https://corretto.aws/downloads/${corretto17Revision}/amazon-corretto-17-aarch64-macos-jdk.tar.gz";
+    url = "https://corretto.aws/downloads/latest/amazon-corretto-17-aarch64-macos-jdk.tar.gz";
     hash = "sha256-VN4CxbqER62saesbUApjE62deK6xKQXI/iEZbZztupM=";
   };
 in {
