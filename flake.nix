@@ -45,6 +45,7 @@
         home-manager.darwinModules.home-manager
         ./darwin/kmccarty-YM2K/default.nix
 	./home/work-laptop.nix
+	lix-module.nixosModules.default
       ];
     };
 
