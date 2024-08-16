@@ -32,7 +32,7 @@
     ];
   };
 
-  programs.foot.enable = true;
+  programs.wezterm.enable = true;
   programs.zellij.enable = true;
 
   nixpkgs = {
