@@ -17,6 +17,10 @@
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
+  services.devmon.enable = true;
+  services.gvfs.enable = true;
+  services.udisks2.enable = true;
+
   swapDevices = [ {
     device = "/var/lib/swapfile";
     size = 16*1024; # in mb, total 16gb
