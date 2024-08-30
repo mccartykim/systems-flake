@@ -39,6 +39,7 @@
 
   # Enable networking
   networking.networkmanager.enable = true;
+  networking.networkmanager.wifi.backend = "iwd";
 
   services.tailscale = {
     enable = true;
