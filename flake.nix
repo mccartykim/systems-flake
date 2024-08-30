@@ -44,8 +44,8 @@
         ./darwin/kmccarty-YM2K/configuration.nix
         home-manager.darwinModules.home-manager
         ./darwin/kmccarty-YM2K/default.nix
-	./home/work-laptop.nix
-	lix-module.nixosModules.default
+        ./home/work-laptop.nix
+        lix-module.nixosModules.default
       ];
     };
 
@@ -60,9 +60,9 @@
         specialArgs = {inherit inputs outputs;};
         # > our main nixos configuration file <
         modules = [
-	  srvos.nixosModules.desktop
-	  srvos.nixosModules.mixins-trusted-nix-caches
-	  srvos.nixosModules.mixins-terminfo
+          srvos.nixosModules.desktop
+          srvos.nixosModules.mixins-trusted-nix-caches
+          srvos.nixosModules.mixins-terminfo
           stylix.nixosModules.stylix
           nixos-hardware.nixosModules.lenovo-thinkpad-t490
           ./hosts/marshmallow/configuration.nix

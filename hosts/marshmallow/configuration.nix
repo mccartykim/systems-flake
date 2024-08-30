@@ -21,10 +21,12 @@
   services.gvfs.enable = true;
   services.udisks2.enable = true;
 
-  swapDevices = [ {
-    device = "/var/lib/swapfile";
-    size = 16*1024; # in mb, total 16gb
-  } ];
+  swapDevices = [
+    {
+      device = "/var/lib/swapfile";
+      size = 16 * 1024; # in mb, total 16gb
+    }
+  ];
 
   virtualisation.docker.enable = true;
 
@@ -146,9 +148,9 @@
     group = "wheel";
     settings = {
       Peers = [
-	"tcp://longseason.1200bps.xyz:13121"
-	"tls://longseason.1200bps.xyz:13122"
-	"quic://198.23.229.154:9003"
+        "tcp://longseason.1200bps.xyz:13121"
+        "tls://longseason.1200bps.xyz:13122"
+        "quic://198.23.229.154:9003"
       ];
       LinkLocalTCPPort = 65535;
     };
@@ -173,8 +175,8 @@
   # services.openssh.enable = true;
 
   # Open ports in the firewall.
-  networking.firewall.allowedTCPPorts = [ 9001 ];
-  networking.firewall.allowedUDPPorts = [ 65535 ];
+  networking.firewall.allowedTCPPorts = [9001];
+  networking.firewall.allowedUDPPorts = [65535];
   # Or disable the firewall altogether.
   # networking.firewall.enable = false;
 

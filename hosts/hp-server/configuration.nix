@@ -40,9 +40,9 @@
     enable = true;
     useRoutingFeatures = "server";
   };
-  
-  networking.firewall.allowedTCPPorts = [ 9001 ];
-  networking.firewall.allowedUDPPorts = [ 65535 ];
+
+  networking.firewall.allowedTCPPorts = [9001];
+  networking.firewall.allowedUDPPorts = [65535];
 
   services.yggdrasil = {
     enable = true;
@@ -51,9 +51,9 @@
     group = "wheel";
     settings = {
       Peers = [
-	"tcp://longseason.1200bps.xyz:13121"
-	"tls://longseason.1200bps.xyz:13122"
-	"quic://198.23.229.154:9003"
+        "tcp://longseason.1200bps.xyz:13121"
+        "tls://longseason.1200bps.xyz:13122"
+        "quic://198.23.229.154:9003"
       ];
       LinkLocalTCPPort = 65535;
     };

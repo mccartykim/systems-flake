@@ -1,5 +1,5 @@
-## Use this file to specify nix-darwin options, 
-## which are mostly configuration changes to MacOS. You mayyyy need to rerun 
+## Use this file to specify nix-darwin options,
+## which are mostly configuration changes to MacOS. You mayyyy need to rerun
 ## `darwin-rebuild switch --flake $THIS_FLAKE` after MacOS updates
 {
   pkgs,
