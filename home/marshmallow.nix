@@ -34,6 +34,7 @@
 
   programs.foot.enable = true;
   programs.zellij.enable = true;
+  programs.zellij.enableFishIntegration = true;
 
   nixpkgs = {
     # You can add overlays here
