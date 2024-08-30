@@ -22,6 +22,8 @@
     environment.TMPDIR = "/var/tmp";
   };
 
+  boot.initrd.systemd.enable = true;
+
   services.devmon.enable = true;
   services.gvfs.enable = true;
   services.udisks2.enable = true;
