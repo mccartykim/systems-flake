@@ -17,6 +17,11 @@
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
+  boot.tmp.useTempfs = true;
+  systemd.services.nix-daemon = {
+    environment.TMPDIR = "/var/tmp";
+  };
+
   services.devmon.enable = true;
   services.gvfs.enable = true;
   services.udisks2.enable = true;
