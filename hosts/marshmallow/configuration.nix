@@ -117,7 +117,7 @@
       firefox
       kate
       nh
-      swaylock-effects
+      # swaylock-effects
       #  thunderbird
     ];
     shell = pkgs.fish;
