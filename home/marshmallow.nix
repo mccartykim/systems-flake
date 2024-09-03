@@ -71,6 +71,7 @@
     })
     blender
     tealdeer
+    poetry
   ];
 
   # Enable home-manager and git
