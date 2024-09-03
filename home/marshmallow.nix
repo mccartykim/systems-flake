@@ -66,9 +66,9 @@
   # programs.neovim.enable = true;
   home.packages = with pkgs; [
     steam
-    nerdfonts.override {
+    (nerdfonts.override {
       fonts = [ "NerdFontsSymbolsOnly" ];
-    }
+    })
     blender
     tealdeer
   ];
