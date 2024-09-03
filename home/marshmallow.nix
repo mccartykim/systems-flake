@@ -103,7 +103,7 @@
         "${modifier}+Shift+Tab" = "exec ${pkgs.swayr}/bin/swayr switch-workspace-or-window";
 	"XF86AudioRaiseVolume" = "exec ${pkgs.pamixer}/bin/pamixer -i 5";
 	"XF86AudioLowerVolume" = "exec ${pkgs.pamixer}/bin/pamixer -d 5";
-	"XF86AudioMuteVolume" = "exec ${pkgs.pamixer}/bin/pamixer --toggleMute";
+	"XF86AudioMute" = "exec ${pkgs.pamixer}/bin/pamixer --toggleMute";
       };
   };
   programs.swayr.enable = true;
