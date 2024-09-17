@@ -131,6 +131,8 @@
     completions.enable = true;
   };
 
+  programs.mosh.enable = true;
+
   programs.steam.enable = true;
 
   # Allow unfree packages
