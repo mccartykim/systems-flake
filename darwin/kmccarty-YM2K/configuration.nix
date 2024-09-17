@@ -29,7 +29,7 @@
   ];
 
   nix.settings.auto-optimise-store = true;
-  nix.useDaemon = true;
+  # nix.useDaemon = true;
 
   security.pam.enableSudoTouchIdAuth = true;
 
