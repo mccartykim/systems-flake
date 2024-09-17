@@ -24,6 +24,8 @@
   nix.settings.trusted-substituters = ["https://cache.garnix.io"];
   nix.settings.trusted-public-keys = ["cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g="];
 
+  programs.mosh.enable = true;
+
   networking.hostName = "rich-evans"; # Define your hostname.
   # Pick only one of the below networking options.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
@@ -92,6 +94,7 @@
     extraGroups = ["wheel" "networkmanager"];
     packages = with pkgs; [
       nh
+      zoxide
     ];
 
     openssh.authorizedKeys.keys = [
