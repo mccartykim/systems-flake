@@ -30,6 +30,7 @@
 
   nix.settings.auto-optimise-store = true;
   # nix.useDaemon = true;
+  services.nix-daemon.enable = true;
 
   security.pam.enableSudoTouchIdAuth = true;
 
