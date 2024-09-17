@@ -10,7 +10,7 @@
   corretto17 = pkgs.fetchzip {
     name = "corretto17";
     url = "https://corretto.aws/downloads/latest/amazon-corretto-17-aarch64-macos-jdk.tar.gz";
-    hash = "sha256-VN4CxbqER62saesbUApjE62deK6xKQXI/iEZbZztupM=";
+    hash = "sha256-VN4CxbqER62saesbUApjE62deK6xKQXI/iEZbZztupM=sha256-d8wUoRbr1+dzjrXiyVs3QG/Sg6ri1jj7dHiHhngpFUs=";
   };
 in {
   # DO NOT SET ENVIRONMENTAL VARIABLES ELSEWHERE
