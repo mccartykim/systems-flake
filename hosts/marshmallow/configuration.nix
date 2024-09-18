@@ -23,6 +23,7 @@
   };
 
   boot.initrd.systemd.enable = true;
+  boot.loader.systemd-boot.netbootxyz.enable = true;
 
   services.devmon.enable = true;
   services.gvfs.enable = true;
