@@ -82,7 +82,7 @@
     pkgs.epson-escpr
   ];
   services.printing.openFirewall = true;
-  services.printing.listenAddresses = [ ":631" ];
+  services.printing.listenAddresses = [ "0.0.0.0:631" ];
 
   # Enable sound.
   hardware.pulseaudio.enable = true;
