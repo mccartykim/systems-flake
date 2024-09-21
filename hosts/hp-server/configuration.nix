@@ -81,6 +81,7 @@
   services.printing.drivers = [
     pkgs.epson-escpr
   ];
+  services.printing.openFirewall = true;
 
   # Enable sound.
   hardware.pulseaudio.enable = true;
