@@ -83,6 +83,11 @@
   ];
   services.printing.openFirewall = true;
   services.printing.listenAddresses = [ "0.0.0.0:631" ];
+    services.avahi = {
+    enable = true;
+    nssmdns = true;
+  };
+
 
   # Enable sound.
   hardware.pulseaudio.enable = true;
