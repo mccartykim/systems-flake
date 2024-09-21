@@ -117,12 +117,18 @@
     packages = with pkgs; [
       firefox
       kate
+      neovim
       nh
       # swaylock-effects
-      #  thunderbird
     ];
     shell = pkgs.fish;
     initialPassword = "recovery";
+  };
+
+  users.groups = {
+    dialout = {
+      members = [ "kimb" ];
+    };
   };
 
   programs.fish.enable = true;
