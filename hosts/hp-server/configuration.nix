@@ -79,7 +79,7 @@
   # Enable CUPS to print documents.
   services.printing.enable = true;
   services.printing.drivers = [
-    pkgs.epson-escpr
+    pkgs.gutenprint
   ];
   services.printing.openFirewall = true;
   services.printing.listenAddresses = [ "0.0.0.0:631" ];
