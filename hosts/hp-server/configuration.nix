@@ -78,6 +78,7 @@
 
   # Enable CUPS to print documents.
   services.printing.enable = true;
+  services.printing.browsing = true;
   services.printing.drivers = [
     pkgs.brgenml1cupswrapper
   ];
