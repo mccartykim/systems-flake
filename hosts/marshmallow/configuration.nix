@@ -77,8 +77,14 @@
   # Enable CUPS to print documents.
   services.printing.enable = true;
   services.printing.drivers = [
-    pkgs.epson-escpr
   ];
+  services.avahi = {
+    enable = true;
+    nssmdns4 = true;
+    openFirewall = true;
+  };
+
+
 
   hardware.bluetooth.enable = true;
 
