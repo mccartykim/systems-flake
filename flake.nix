@@ -23,8 +23,6 @@
 
     srvos.url = "github:nix-community/srvos";
     srvos.inputs.nixpkgs.follows = "nixpkgs";
-
-    nix-serve-ng.url = github:aristanetworks/nix-serve-ng;
   };
 
   outputs = {
@@ -37,7 +35,6 @@
     nix-darwin,
     lix-module,
     srvos,
-    nix-serve-ng,
     ...
   } @ inputs: let
     inherit (self) outputs;
@@ -86,7 +83,6 @@
           ./hosts/total-eclipse/configuration.nix
           lix-module.nixosModules.default
           stylix.nixosModules.stylix
-	  nix-serve-ng.nixosModules.default
         ];
       };
       rich-evans = nixpkgs.lib.nixosSystem {

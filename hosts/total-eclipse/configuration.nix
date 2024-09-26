@@ -35,6 +35,7 @@
   };
 
   services.nix-serve.enable = true;
+  services.nix-serve.openFirewall = true;
 
   # Enable OpenGL
   hardware.opengl = {
