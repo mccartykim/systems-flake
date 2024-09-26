@@ -20,6 +20,10 @@
   boot.kernelPackages = pkgs.linuxPackages_zen;
 
   services.miniflux.enable = true;
+  services.homepage-dashboard = { 
+    enable = true;
+    openFirewall = true;
+  };
 
   nix.settings.experimental-features = ["nix-command" "flakes"];
   nix.settings.substituters = ["https://cache.garnix.io"];
