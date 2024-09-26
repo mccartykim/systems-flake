@@ -19,6 +19,16 @@
   boot.loader.grub.device = "/dev/nvme0n1";
   boot.loader.grub.useOSProber = true;
 
+  boot.loader.systemd-boot.netbootxyz.enable = true;
+
+  services.fstrim.enable = true;
+
+  services.dbus.implementation = "broker";
+  boot.tmp.useTmpfs = true;
+  systemd.services.nix-daemon = {
+    environment.TMPDIR = "/var/tmp";
+  };
+
   programs.steam = {
     enable = true;
     remotePlay.openFirewall = true;
@@ -52,6 +62,8 @@
   # Enable networking
   networking.networkmanager.enable = true;
   networking.networkmanager.wifi.backend = "iwd";
+
+  networking.nftables.enable = true;
 
   # Enable the X11 windowing system.
   services.xserver.enable = true;

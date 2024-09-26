@@ -22,6 +22,11 @@
     environment.TMPDIR = "/var/tmp";
   };
 
+  services.fstrim.enable = true;
+
+  services.dbus.implementation = "broker";
+  networking.nftables.enable = true;
+
   boot.initrd.systemd.enable = true;
   boot.loader.systemd-boot.netbootxyz.enable = true;
 
