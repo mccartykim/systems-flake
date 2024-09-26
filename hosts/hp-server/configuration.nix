@@ -19,6 +19,8 @@
   boot.loader.efi.canTouchEfiVariables = true;
   boot.kernelPackages = pkgs.linuxPackages_zen;
 
+  services.miniflux.enable = true;
+
   nix.settings.experimental-features = ["nix-command" "flakes"];
   nix.settings.substituters = ["https://cache.garnix.io"];
   nix.settings.trusted-substituters = ["https://cache.garnix.io"];
