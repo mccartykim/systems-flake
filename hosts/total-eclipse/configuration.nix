@@ -34,6 +34,8 @@
     open = false;
   };
 
+  services.nix-serve.enable = true;
+
   # Enable OpenGL
   hardware.opengl = {
     enable = true;

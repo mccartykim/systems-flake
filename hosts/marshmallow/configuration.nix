@@ -124,7 +124,7 @@
     packages = with pkgs; [
       firefox
       kate
-      neovim
+      # neovim
       nh
       # swaylock-effects
     ];

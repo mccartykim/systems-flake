@@ -20,6 +20,7 @@
   ];
   nix.settings.substituters = [
     "https://cache.garnix.io"
+    "total-eclipse:5000"
   ];
 
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
