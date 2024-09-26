@@ -84,6 +84,7 @@
   services.printing.drivers = [
     pkgs.brgenml1cupswrapper
   ];
+  services.ipp-usb.enable = true;
   services.printing.openFirewall = true;
   services.printing.listenAddresses = [ "0.0.0.0:631" ];
   services.avahi = {
