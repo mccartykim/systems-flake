@@ -37,6 +37,7 @@
     nix-darwin,
     lix-module,
     srvos,
+    nix-serve-ng,
     ...
   } @ inputs: let
     inherit (self) outputs;
