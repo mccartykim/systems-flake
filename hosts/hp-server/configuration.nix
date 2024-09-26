@@ -19,10 +19,15 @@
   boot.loader.efi.canTouchEfiVariables = true;
   boot.kernelPackages = pkgs.linuxPackages_zen;
 
-  services.miniflux.enable = true;
   services.homepage-dashboard = { 
     enable = true;
     openFirewall = true;
+  };
+
+  services.miniflux.enable = true;
+  services.miniflux.adminCredentialsFile = "/etc/miniflux-credentials";
+  services.miniflux.config = {
+    LISTEN_ADDR = "0.0.0.0:8080";
   };
 
   nix.settings.experimental-features = ["nix-command" "flakes"];

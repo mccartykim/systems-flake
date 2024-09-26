@@ -139,6 +139,8 @@
     source = "${pkgs.sunshine}/bin/sunshine";
   };
 
+  services.sunshine.openFirewall = true;
+
   services.avahi.publish.enable = true;
   services.avahi.publish.userServices = true;
 
