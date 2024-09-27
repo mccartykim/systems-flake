@@ -67,7 +67,7 @@
   home.packages = with pkgs; [
     steam
     (nerdfonts.override {
-      fonts = [ "NerdFontsSymbolsOnly" ];
+      fonts = ["NerdFontsSymbolsOnly"];
     })
     blender
     tealdeer
@@ -104,9 +104,9 @@
         "${modifier}+Shift+c" = "exec ${pkgs.swayr}/bin/swayr execute-swayr-command";
         "${modifier}+Tab" = "exec ${pkgs.swayr}/bin/swayr switch-window";
         "${modifier}+Shift+Tab" = "exec ${pkgs.swayr}/bin/swayr switch-workspace-or-window";
-	"XF86AudioRaiseVolume" = "exec ${pkgs.pamixer}/bin/pamixer -i 5";
-	"XF86AudioLowerVolume" = "exec ${pkgs.pamixer}/bin/pamixer -d 5";
-	"XF86AudioMute" = "exec ${pkgs.pamixer}/bin/pamixer --toggle-mute";
+        "XF86AudioRaiseVolume" = "exec ${pkgs.pamixer}/bin/pamixer -i 5";
+        "XF86AudioLowerVolume" = "exec ${pkgs.pamixer}/bin/pamixer -d 5";
+        "XF86AudioMute" = "exec ${pkgs.pamixer}/bin/pamixer --toggle-mute";
       };
   };
   programs.swayr.enable = true;
