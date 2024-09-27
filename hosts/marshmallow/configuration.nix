@@ -90,8 +90,6 @@
     openFirewall = true;
   };
 
-
-
   hardware.bluetooth.enable = true;
 
   hardware.graphics = {
@@ -139,7 +137,7 @@
 
   users.groups = {
     dialout = {
-      members = [ "kimb" ];
+      members = ["kimb"];
     };
   };
 

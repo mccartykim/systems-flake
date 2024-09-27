@@ -19,7 +19,7 @@
   boot.loader.efi.canTouchEfiVariables = true;
   boot.kernelPackages = pkgs.linuxPackages_zen;
 
-  services.homepage-dashboard = { 
+  services.homepage-dashboard = {
     enable = true;
     openFirewall = true;
   };
@@ -95,7 +95,7 @@
   ];
   services.ipp-usb.enable = true;
   services.printing.openFirewall = true;
-  services.printing.listenAddresses = [ "0.0.0.0:631" ];
+  services.printing.listenAddresses = ["0.0.0.0:631"];
   services.avahi = {
     enable = true;
     nssmdns4 = true;
