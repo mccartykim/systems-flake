@@ -12,7 +12,6 @@
     ./hardware-configuration.nix
   ];
 
-  hardware.nvidia.package = config.boot.kernelPackages.nvidiaPackages.stable;
 
   # Bootloader.
   boot.loader.grub.enable = true;
@@ -35,17 +34,19 @@
     dedicatedServer.openFirewall = true;
   };
 
+  services.xrdp.enable = true;
+  services.xrdp.openFirewall = true;
+
   # Nvidia Drivers
   services.xserver.videoDrivers = ["nvidia"];
   hardware.nvidia = {
+    package = config.boot.kernelPackages.nvidiaPackages.stable;
     modesetting.enable = true;
     powerManagement.enable = true;
 
+    nvidiaPersistenced = true;
     open = false;
   };
-
-  services.nix-serve.enable = true;
-  services.nix-serve.openFirewall = true;
 
   # Enable OpenGL
   hardware.opengl = {
@@ -104,7 +105,7 @@
   users.users.kimb = {
     isNormalUser = true;
     description = "Kimberly";
-    extraGroups = ["networkmanager" "wheel"];
+    extraGroups = ["networkmanager" "wheel" "input"];
     shell = pkgs.fish;
     packages = with pkgs; [
       firefox
@@ -132,14 +133,9 @@
 
   programs.fish.enable = true;
 
-  security.wrappers.sunshine = {
-    owner = "root";
-    group = "root";
-    capabilities = "cap_sys_admin+p";
-    source = "${pkgs.sunshine}/bin/sunshine";
-  };
-
+  services.sunshine.enable = true;
   services.sunshine.openFirewall = true;
+  services.sunshine.capSysAdmin = true;
 
   services.avahi.publish.enable = true;
   services.avahi.publish.userServices = true;
@@ -168,6 +164,7 @@
 
   # Enable the OpenSSH daemon.
   services.openssh.enable = true;
+  services.openssh.settings.PasswordAuthentication = false;
 
   # Open ports in the firewall.
   # networking.firewall.allowedTCPPorts = [ ... ];
