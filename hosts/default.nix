@@ -19,11 +19,9 @@
     "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
   ];
   nix.settings.substituters = [
-    "http://total-eclipse:5000"
     "https://cache.garnix.io"
   ];
   nix.settings.trusted-substituters = [
-    "http://total-eclipse:5000"
     "https://cache.garnix.io"
   ];
 
