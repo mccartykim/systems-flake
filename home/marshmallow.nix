@@ -13,6 +13,7 @@
     # inputs.nix-colors.homeManagerModule
 
     # You can also split up your configuration and import pieces of it here:
+    ./default.nix
     ./neovim.nix
   ];
 
@@ -32,7 +33,7 @@
     ];
   };
 
-  programs.foot.enable = true;
+  programs.kitty.enable = true;
   programs.zellij.enable = true;
   programs.zellij.enableFishIntegration = true;
 
