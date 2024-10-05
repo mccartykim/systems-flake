@@ -73,6 +73,7 @@
     blender
     tealdeer
     poetry
+    lazygit
   ];
 
   # Enable home-manager and git
