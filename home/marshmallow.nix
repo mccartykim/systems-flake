@@ -70,6 +70,7 @@
     (nerdfonts.override {
       fonts = ["NerdFontsSymbolsOnly"];
     })
+    noto-fonts-monochrome-emoji
     blender
     tealdeer
     poetry
@@ -90,6 +91,7 @@
 
   wayland.windowManager.sway.enable = true;
   wayland.windowManager.sway.config.modifier = "Mod4";
+  wayland.windowManager.sway.config.terminal = "kitty";
   wayland.windowManager.sway.config = {
     menu = "wofi --show drun,run";
     bars = [];
