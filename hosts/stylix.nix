@@ -10,8 +10,8 @@
     };
 
     emoji = {
-      package = pkgs.nerdfonts.override {fonts = ["Noto"];};
-      name = "Noto Color Emoji";
+      package = pkgs.noto-fonts-monochrome-emoji;
+      name = "Noto Emoji";
     };
   };
 }
