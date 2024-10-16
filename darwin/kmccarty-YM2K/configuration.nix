@@ -11,6 +11,8 @@
     pkgs.terminal-notifier
     pkgs.cachix
     pkgs.scrcpy
+    pkgs.lazygit
+    pkgs.comma
   ];
 
   # Auto upgrade nix package and the daemon service.
