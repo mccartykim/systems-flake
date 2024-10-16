@@ -5,6 +5,8 @@
     allowBroken = true;
     allowUnfree = true;
   };
+  nixpkgs.flake.setNixPath = true;
+  nixpkgs.flake.setFlakeRegistry = true;
   environment.systemPackages = [
     pkgs.terminal-notifier
     pkgs.cachix
