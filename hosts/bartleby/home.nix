@@ -8,7 +8,7 @@
     pkgs.obsidian
     # pkgs.hyprland
     pkgs.moonlight-qt
-    pkgs.armcord
+    pkgs.legcord
     pkgs.nil
   ];
 
