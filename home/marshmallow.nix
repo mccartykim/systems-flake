@@ -37,6 +37,14 @@
   programs.zellij.enable = true;
   programs.zellij.enableFishIntegration = true;
 
+  programs.jujutsu.enable = true;
+  programs.jujutsu.settings = {
+    user = {
+      email = "kimb@kimb.dev";
+      name = "Kimberly McCarty";
+    };
+  }
+
   nixpkgs = {
     # You can add overlays here
     overlays = [
