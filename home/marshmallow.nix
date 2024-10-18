@@ -43,7 +43,7 @@
       email = "kimb@kimb.dev";
       name = "Kimberly McCarty";
     };
-  }
+  };
 
   nixpkgs = {
     # You can add overlays here
