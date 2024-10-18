@@ -165,7 +165,6 @@
     fish
     keybase-gui
     kbfs
-    epson-escpr
     gparted
   ];
 
