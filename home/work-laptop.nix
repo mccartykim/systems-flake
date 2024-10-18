@@ -96,6 +96,9 @@
       viAlias = true;
       vimAlias = true;
       vimdiffAlias = true;
+      extraPackages = with pkgs; [
+      	nodejs_22
+      ];
       plugins = with pkgs.vimPlugins; [
         nvim-treesitter
         nvim-treesitter-parsers.c
