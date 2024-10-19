@@ -93,7 +93,7 @@
 
   # Enable the OpenSSH daemon.
   services.openssh.enable = true;
-  services.openssh.settings.PasswordAuthentication = lib.mkDefault config.services.tailscale.enable;
+  services.openssh.settings.PasswordAuthentication = lib.mkDefault (!config.services.tailscale.enable);
 
   # Open ports in the firewall.
   # networking.firewall.allowedTCPPorts = [ ... ];
