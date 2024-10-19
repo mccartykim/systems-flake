@@ -22,6 +22,9 @@
     environment.TMPDIR = "/var/tmp";
   };
 
+  virtualisation.podman.enable = true;
+  virtualisation.podman.dockerCompat = true;
+
   services.fstrim.enable = true;
 
   services.dbus.implementation = "broker";
