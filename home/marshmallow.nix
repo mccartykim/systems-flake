@@ -83,6 +83,8 @@
     tealdeer
     poetry
     lazygit
+    jetbrains.idea-community
+    android-studio
   ];
 
   # Enable home-manager and git
