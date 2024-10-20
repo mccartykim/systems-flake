@@ -83,7 +83,6 @@
     tealdeer
     poetry
     lazygit
-    jetbrains.idea-community
     android-studio
   ];
 
