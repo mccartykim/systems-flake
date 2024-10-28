@@ -48,7 +48,7 @@
       ts.load_extension('fzf')
       ts.load_extension('media_files')
       require("telekasten").setup({
-        home = vim.fn.expand("~/zettelkasten"),
+        home = vim.fn.expand("~/jujutsu/zettelkasten"),
       });
 
       -- Most used functions
