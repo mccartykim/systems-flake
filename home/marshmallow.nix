@@ -100,6 +100,7 @@
 
   wayland.windowManager.sway.enable = true;
   wayland.windowManager.sway.config.modifier = "Mod4";
+  wayland.windowManager.sway.systemd.enable = true;
   wayland.windowManager.sway.config.terminal = "kitty";
   wayland.windowManager.sway.config = {
     menu = "wofi --show drun,run";
@@ -192,7 +193,24 @@
     };
   };
 
-  # services.swayidle.enable = true;
+  services.swayidle = {
+    enable = true;
+    events = [
+      { event = "before-sleep"; command = "${pkgs.swaylock}/bin/swaylock -fF"; }
+    ];
+    timeouts = [
+      { timeout = 60 * 5; command = "${pkgs.swaylock}/bin/swaylock -fF"; }
+      { timeout = 60 * 20; command = "${pkgs.systemd}/bin/systemctl suspend"; }
+    ];
+  };
+  programs.swaylock = {
+    enable = true;
+  };
+  services.clipmenu = {
+    enable = true;
+    launcher = "wofi";
+  };
+  services.swayosd.enable = true;
 
   # https://nixos.wiki/wiki/FAQ/When_do_I_update_stateVersion
   home.stateVersion = "23.05";
