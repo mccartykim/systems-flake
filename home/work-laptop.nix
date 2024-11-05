@@ -33,7 +33,6 @@
       pkgs.git-sync
       pkgs.ripgrep
       pkgs.poppler_utils
-      pkgs.neovide
     ];
 
     programs.bat.enable = true;
