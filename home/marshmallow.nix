@@ -79,11 +79,10 @@
       fonts = ["NerdFontsSymbolsOnly"];
     })
     noto-fonts-monochrome-emoji
-    blender
     tealdeer
     poetry
     lazygit
-    # android-studio
+    android-studio
   ];
 
   # Enable home-manager and git
