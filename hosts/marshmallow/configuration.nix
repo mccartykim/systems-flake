@@ -25,6 +25,7 @@
   virtualisation.podman.enable = true;
 
   services.fstrim.enable = true;
+  services.hardware.bolt.enable = true;
 
   services.dbus.implementation = "broker";
   networking.nftables.enable = true;
