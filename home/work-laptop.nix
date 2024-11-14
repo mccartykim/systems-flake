@@ -35,6 +35,7 @@
       pkgs.poppler_utils
     ];
 
+    programs.rio.enable = true;
     programs.bat.enable = true;
     programs.yt-dlp.enable = true;
     programs.git = {
