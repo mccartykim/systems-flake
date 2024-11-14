@@ -32,15 +32,11 @@
     "cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g="
   ];
 
-  nix.settings.auto-optimise-store = true;
-  # nix.useDaemon = true;
+  nix.optimise.automatic = true;
   services.nix-daemon.enable = true;
 
   security.pam.enableSudoTouchIdAuth = true;
 
-  # Create /etc/zshrc that loads the nix-darwin environment.
-  # programs.zsh.enable = true; # default shell on catalina
-  # programs.fish.enable = true;
   programs.nix-index.enable = true;
 
   # fonts.fontDir.enable = true;
