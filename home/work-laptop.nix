@@ -37,6 +37,15 @@
 
     programs.rio.enable = true;
     programs.bat.enable = true;
+
+    programs.jujutsu.enable = true;
+    programs.jujutsu.settings = {
+      user = {
+        email = "redacted@example.com";
+	name = "Kimberly McCarty";
+      };
+    };
+
     programs.yt-dlp.enable = true;
     programs.git = {
       enable = true;
