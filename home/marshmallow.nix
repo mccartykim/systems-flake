@@ -17,7 +17,7 @@
     ./neovim.nix
   ];
 
-  programs.rio.enable = true;
+  programs.rio.enable = false;
   programs.zoxide.enable = true;
   programs.fzf.enable = true;
   programs.eza.enable = true;
