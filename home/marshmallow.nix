@@ -34,7 +34,9 @@
   };
 
   programs.kitty.enable = true;
-  programs.less.enable = true;
+  programs.kitty.environment = {
+    "PAGER" = ":builtin";
+  };
   programs.zellij.enable = true;
   programs.zellij.enableFishIntegration = true;
 
