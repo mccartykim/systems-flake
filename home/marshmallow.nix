@@ -17,7 +17,6 @@
     ./neovim.nix
   ];
 
-  programs.rio.enable = false;
   programs.zoxide.enable = true;
   programs.fzf.enable = true;
   programs.eza.enable = true;
@@ -35,6 +34,7 @@
   };
 
   programs.kitty.enable = true;
+  programs.less.enable = true;
   programs.zellij.enable = true;
   programs.zellij.enableFishIntegration = true;
 
