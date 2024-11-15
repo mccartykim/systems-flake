@@ -17,6 +17,7 @@
     ./neovim.nix
   ];
 
+  programs.rio.enable = true;
   programs.zoxide.enable = true;
   programs.fzf.enable = true;
   programs.eza.enable = true;
@@ -33,7 +34,7 @@
     ];
   };
 
-  programs.kitty.enable = true;
+  programs.kitty.enable = false;
   programs.zellij.enable = true;
   programs.zellij.enableFishIntegration = true;
 
@@ -100,7 +101,7 @@
   wayland.windowManager.sway.enable = true;
   wayland.windowManager.sway.config.modifier = "Mod4";
   wayland.windowManager.sway.systemd.enable = true;
-  wayland.windowManager.sway.config.terminal = "kitty";
+  wayland.windowManager.sway.config.terminal = "rio";
   wayland.windowManager.sway.config = {
     menu = "wofi --show drun,run";
     bars = [];

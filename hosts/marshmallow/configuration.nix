@@ -168,6 +168,7 @@
     keybase-gui
     kbfs
     gparted
+    niri
   ];
 
   services.yggdrasil = {
