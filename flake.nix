@@ -23,6 +23,9 @@
 
     srvos.url = "github:nix-community/srvos";
     srvos.inputs.nixpkgs.follows = "nixpkgs";
+
+    nix-index-database.url = "github:nix-community/nix-index-database";
+    nix-index-database.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs = {
@@ -35,6 +38,7 @@
     nix-darwin,
     lix-module,
     srvos,
+    nix-index-database,
     ...
   } @ inputs: let
     inherit (self) outputs;
@@ -45,6 +49,8 @@
         home-manager.darwinModules.home-manager
         ./darwin/kmccarty-YM2K/default.nix
         ./home/work-laptop.nix
+	nix-index-database.darwinModules.nix-index
+	{ programs.nix-index-database.comma.enable = true; }
       ];
     };
 
@@ -73,6 +79,8 @@
             home-manager.users.kimb = ./home/marshmallow.nix;
           }
           lix-module.nixosModules.default
+	  nix-index-database.nixosModules.nix-index
+	  { programs.nix-index-database.comma.enable = true; }
         ];
       };
       total-eclipse = nixpkgs.lib.nixosSystem {
@@ -82,6 +90,8 @@
           ./hosts/total-eclipse/configuration.nix
           lix-module.nixosModules.default
           stylix.nixosModules.stylix
+	  nix-index-database.nixosModules.nix-index
+	  { programs.nix-index-database.comma.enable = true; }
         ];
       };
       rich-evans = nixpkgs.lib.nixosSystem {
@@ -92,6 +102,8 @@
           ./hosts/hp-server/configuration.nix
           lix-module.nixosModules.default
           stylix.nixosModules.stylix
+	  nix-index-database.nixosModules.nix-index
+	  { programs.nix-index-database.comma.enable = true; }
         ];
       };
       bartleby = nixpkgs.lib.nixosSystem {
@@ -113,6 +125,8 @@
           }
           lix-module.nixosModules.default
           stylix.nixosModules.stylix
+	  nix-index-database.nixosModules.nix-index
+	  { programs.nix-index-database.comma.enable = true; }
         ];
       };
     };
