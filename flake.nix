@@ -14,10 +14,6 @@
 
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
     stylix.url = "github:danth/stylix";
-    lix-module = {
-      url = "https://git.lix.systems/lix-project/nixos-module/archive/2.91.0.tar.gz";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     nix-darwin.url = "github:LnL7/nix-darwin";
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
 
@@ -36,7 +32,6 @@
     nil-flake,
     stylix,
     nix-darwin,
-    lix-module,
     srvos,
     nix-index-database,
     ...
@@ -78,7 +73,6 @@
             home-manager.useUserPackages = true;
             home-manager.users.kimb = ./home/marshmallow.nix;
           }
-          lix-module.nixosModules.default
 	  nix-index-database.nixosModules.nix-index
 	  { programs.nix-index-database.comma.enable = true; }
         ];
@@ -88,7 +82,6 @@
         # > our main nixos configuration file <
         modules = [
           ./hosts/total-eclipse/configuration.nix
-          lix-module.nixosModules.default
           stylix.nixosModules.stylix
 	  nix-index-database.nixosModules.nix-index
 	  { programs.nix-index-database.comma.enable = true; }
@@ -100,7 +93,6 @@
         # > our main nixos configuration file <
         modules = [
           ./hosts/hp-server/configuration.nix
-          lix-module.nixosModules.default
           stylix.nixosModules.stylix
 	  nix-index-database.nixosModules.nix-index
 	  { programs.nix-index-database.comma.enable = true; }
@@ -123,7 +115,6 @@
             home-manager.useUserPackages = true;
             home-manager.users.kimb = import ./hosts/bartleby/home.nix;
           }
-          lix-module.nixosModules.default
           stylix.nixosModules.stylix
 	  nix-index-database.nixosModules.nix-index
 	  { programs.nix-index-database.comma.enable = true; }
