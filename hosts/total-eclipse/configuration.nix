@@ -138,24 +138,24 @@
   services.sunshine.enable = true;
   services.sunshine.openFirewall = true;
   services.sunshine.capSysAdmin = true;
-  services.sunshine.applications = {
-    env = {
-      PATH = "$(PATH):$(HOME)/.local/bin";
-    };
-    apps = [
-      {
-	name = "Desktop";
-	# prep-cmd = [
-	#   {
-	#     do = "${pkgs.kdePackages.libkscreen}/bin/kscreen-doctor output.DP-4.mode.2560x1440@144";
-	#     undo = "${pkgs.kdePackages.libkscreen}/bin/kscreen-doctor output.DP-4.mode.3440x1440@144";
-	#   }
-	# ];
-	exclude-global-prep-cmd = "false";
-	auto-detach = "true";
-      }
-    ];
-  };
+  # services.sunshine.applications = {
+  #   env = {
+  #     PATH = "$(PATH):$(HOME)/.local/bin";
+  #   };
+  #   apps = [
+  #     {
+  #       name = "Desktop";
+  #       prep-cmd = [
+  #         {
+  #           do = "${pkgs.kdePackages.libkscreen}/bin/kscreen-doctor output.445.mode.471";
+  #           undo = "${pkgs.kdePackages.libkscreen}/bin/kscreen-doctor output.445.mode.452";
+  #         }
+  #       ];
+  #       exclude-global-prep-cmd = "false";
+  #       auto-detach = "true";
+  #     }
+  #   ];
+  # };
 
   services.avahi.publish.enable = true;
   services.avahi.publish.userServices = true;
@@ -182,7 +182,7 @@
 
   # List services that you want to enable:
 
-  # Enable the OpenSSH daemon.
+  # Enable the OpenSSH daemon
   services.openssh.enable = true;
   services.openssh.settings.PasswordAuthentication = false;
 
