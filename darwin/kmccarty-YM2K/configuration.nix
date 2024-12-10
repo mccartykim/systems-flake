@@ -13,6 +13,12 @@
     pkgs.scrcpy
     pkgs.lazygit
   ];
+  nix.nixPath = pkgs.lib.mkForce [{
+    darwin-config = builtins.concatStringsSep ":" [
+      "$HOME/.nixpkgs/darwin-configuration.nix"
+      "$HOME/.nix-defexpr/channels"
+    ];
+  }];
 
   # Auto upgrade nix package and the daemon service.
   # services.nix-daemon.enable = true;
@@ -41,7 +47,9 @@
   # fonts.fontDir.enable = true;
   fonts.packages = with pkgs; [
     recursive
-    (nerdfonts.override {fonts = ["JetBrainsMono" "Inconsolata"];})
+    # (nerdfonts.override {fonts = ["JetBrainsMono" "Inconsolata"];})
+    nerd-fonts.jetbrains-mono
+    nerd-fonts.inconsolata
   ];
 
   # Set Git commit hash for darwin-version.

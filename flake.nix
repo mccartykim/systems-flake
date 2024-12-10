@@ -46,6 +46,7 @@
         ./home/work-laptop.nix
 	nix-index-database.darwinModules.nix-index
 	{ programs.nix-index-database.comma.enable = true; }
+	# { nix.registry.nixpkgs.flake = inputs.nixpkgs; }
       ];
     };
 
