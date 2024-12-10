@@ -13,7 +13,6 @@
       pkgs.shell-gpt
       pkgs.tealdeer
       pkgs.delta
-      pkgs.doing
       pkgs.ripgrep
       pkgs.fd
       pkgs.ffmpeg
@@ -22,21 +21,18 @@
       pkgs.nil
       pkgs.nb
       pkgs.watchman
-      pkgs.ibm-plex
-      pkgs.watchman
       pkgs.allure
-      (
-        pkgs.nerdfonts.override
-        {fonts = ["NerdFontsSymbolsOnly" "IBMPlexMono"];}
-      )
+      pkgs.nerd-fonts.symbols-only
+      pkgs.nerd-fonts.blex-mono
       pkgs.terminal-notifier
-      pkgs.git-sync
       pkgs.ripgrep
-      pkgs.poppler_utils
     ];
 
-    programs.rio.enable = true;
     programs.bat.enable = true;
+    programs.eza.enable = true;
+    programs.eza.icons = "auto";
+
+    programs.fd.enable = true;
 
     programs.jujutsu.enable = true;
     programs.jujutsu.settings = {
