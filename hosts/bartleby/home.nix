@@ -4,9 +4,7 @@
   home.stateVersion = "23.05";
 
   home.packages = [
-    pkgs.nerdfonts
     pkgs.obsidian
-    # pkgs.hyprland
     pkgs.moonlight-qt
     pkgs.legcord
     pkgs.nil
