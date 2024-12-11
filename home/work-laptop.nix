@@ -38,7 +38,7 @@
     programs.jujutsu.settings = {
       user = {
         email = "redacted@example.com";
-	name = "Kimberly McCarty";
+        name = "Kimberly McCarty";
       };
     };
 
@@ -102,7 +102,7 @@
       vimAlias = true;
       vimdiffAlias = true;
       extraPackages = with pkgs; [
-      	nodejs_22
+        nodejs_22
       ];
       plugins = with pkgs.vimPlugins; [
         nvim-treesitter

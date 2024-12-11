@@ -44,9 +44,9 @@
         home-manager.darwinModules.home-manager
         ./darwin/kmccarty-YM2K/default.nix
         ./home/work-laptop.nix
-	nix-index-database.darwinModules.nix-index
-	{ programs.nix-index-database.comma.enable = true; }
-	# { nix.registry.nixpkgs.flake = inputs.nixpkgs; }
+        nix-index-database.darwinModules.nix-index
+        {programs.nix-index-database.comma.enable = true;}
+        # { nix.registry.nixpkgs.flake = inputs.nixpkgs; }
       ];
     };
 
@@ -74,8 +74,8 @@
             home-manager.useUserPackages = true;
             home-manager.users.kimb = ./home/marshmallow.nix;
           }
-	  nix-index-database.nixosModules.nix-index
-	  { programs.nix-index-database.comma.enable = true; }
+          nix-index-database.nixosModules.nix-index
+          {programs.nix-index-database.comma.enable = true;}
         ];
       };
       total-eclipse = nixpkgs.lib.nixosSystem {
@@ -84,8 +84,8 @@
         modules = [
           ./hosts/total-eclipse/configuration.nix
           stylix.nixosModules.stylix
-	  nix-index-database.nixosModules.nix-index
-	  { programs.nix-index-database.comma.enable = true; }
+          nix-index-database.nixosModules.nix-index
+          {programs.nix-index-database.comma.enable = true;}
         ];
       };
       rich-evans = nixpkgs.lib.nixosSystem {
@@ -95,8 +95,8 @@
         modules = [
           ./hosts/hp-server/configuration.nix
           stylix.nixosModules.stylix
-	  nix-index-database.nixosModules.nix-index
-	  { programs.nix-index-database.comma.enable = true; }
+          nix-index-database.nixosModules.nix-index
+          {programs.nix-index-database.comma.enable = true;}
         ];
       };
       bartleby = nixpkgs.lib.nixosSystem {
@@ -117,8 +117,8 @@
             home-manager.users.kimb = import ./hosts/bartleby/home.nix;
           }
           stylix.nixosModules.stylix
-	  nix-index-database.nixosModules.nix-index
-	  { programs.nix-index-database.comma.enable = true; }
+          nix-index-database.nixosModules.nix-index
+          {programs.nix-index-database.comma.enable = true;}
         ];
       };
     };

@@ -13,12 +13,14 @@
     pkgs.scrcpy
     pkgs.lazygit
   ];
-  nix.nixPath = pkgs.lib.mkForce [{
-    darwin-config = builtins.concatStringsSep ":" [
-      "$HOME/.nixpkgs/darwin-configuration.nix"
-      "$HOME/.nix-defexpr/channels"
-    ];
-  }];
+  nix.nixPath = pkgs.lib.mkForce [
+    {
+      darwin-config = builtins.concatStringsSep ":" [
+        "$HOME/.nixpkgs/darwin-configuration.nix"
+        "$HOME/.nix-defexpr/channels"
+      ];
+    }
+  ];
 
   # Auto upgrade nix package and the daemon service.
   # services.nix-daemon.enable = true;
