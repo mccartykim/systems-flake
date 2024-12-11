@@ -17,6 +17,7 @@ in {
   launchd.user.envVariables = {
     ANDROID_HOME = "/Users/kimberly.mccarty/Library/Android/sdk/";
     JAVA_HOME = "${corretto17}/Contents/Home/";
+    GRADLE_LOCAL_JAVA_HOME = "${corretto17}/Contents/Home/";
   };
 
   programs.fish.enable = true;
