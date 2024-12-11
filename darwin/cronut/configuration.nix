@@ -5,11 +5,19 @@
     allowBroken = true;
     allowUnfree = true;
   };
-  nixpkgs.flake.setNixPath = true;
+  # nixpkgs.flake.setNixPath = true;
   nixpkgs.flake.setFlakeRegistry = true;
   environment.systemPackages = [
     pkgs.terminal-notifier
     pkgs.cachix
+  ];
+  nix.nixPath = pkgs.lib.mkForce [
+    {
+      darwin-config = builtins.concatStringsSep ":" [
+        "$HOME/.nixpkgs/darwin-configuration.nix"
+        "$HOME/.nix-defexpr/channels"
+      ];
+    }
   ];
 
   programs.fish.enable = true;
