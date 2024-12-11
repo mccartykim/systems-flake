@@ -98,9 +98,9 @@
   # Nicely reload system units when changing configs
   systemd.user.startServices = "sd-switch";
 
-  wayland.windowManager.sway.enable = true;
+  wayland.windowManager.sway.enable = false;
   wayland.windowManager.sway.config.modifier = "Mod4";
-  wayland.windowManager.sway.systemd.enable = true;
+  wayland.windowManager.sway.systemd.enable = false;
   wayland.windowManager.sway.config.terminal = "kitty";
   wayland.windowManager.sway.config = {
     menu = "wofi --show drun,run";
@@ -180,11 +180,11 @@
       seq_inhibit = false;
     };
   };
-  programs.waybar.enable = true;
-  programs.waybar.systemd.enable = true;
+  programs.waybar.enable = false;
+  programs.waybar.systemd.enable = false;
   programs.nix-index.enable = true;
   programs.wofi = {
-    enable = true;
+    enable = false;
     settings = {
       allow_images = true;
       insensitive = true;
@@ -194,7 +194,7 @@
   };
 
   services.swayidle = {
-    enable = true;
+    enable = false;
     events = [
       { event = "before-sleep"; command = "${pkgs.swaylock}/bin/swaylock -fF"; }
     ];
