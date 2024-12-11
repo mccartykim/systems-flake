@@ -12,7 +12,6 @@
     ./hardware-configuration.nix
   ];
 
-
   # Bootloader.
   boot.loader.grub.enable = true;
   boot.loader.grub.device = "/dev/nvme0n1";
@@ -166,7 +165,10 @@
         from = 47998;
         to = 48020;
       }
-      { from = 8000; to = 8010; }
+      {
+        from = 8000;
+        to = 8010;
+      }
     ];
   };
 
