@@ -43,7 +43,6 @@
     modesetting.enable = true;
     powerManagement.enable = true;
 
-    nvidiaPersistenced = true;
     nvidiaSettings = true;
     open = true;
   };
@@ -161,13 +160,13 @@
 
   networking.firewall = {
     enable = true;
-    allowedTCPPorts = [47984 47989 47990 48010];
+    allowedTCPPorts = [47984 47989 47990 48000 48010];
     allowedUDPPortRanges = [
       {
         from = 47998;
-        to = 48000;
+        to = 48020;
       }
-      #{ from = 8000; to = 8010; }
+      { from = 8000; to = 8010; }
     ];
   };
 
