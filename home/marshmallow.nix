@@ -78,9 +78,7 @@
   # programs.neovim.enable = true;
   home.packages = with pkgs; [
     steam
-    (nerdfonts.override {
-      fonts = ["NerdFontsSymbolsOnly"];
-    })
+    nerd-fonts.symbols-only
     noto-fonts-monochrome-emoji
     tealdeer
     poetry
