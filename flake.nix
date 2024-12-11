@@ -38,19 +38,30 @@
   } @ inputs: let
     inherit (self) outputs;
   in {
-    darwinConfigurations."kmccarty-YM2K" = nix-darwin.lib.darwinSystem {
-      modules = [
-        ./darwin/kmccarty-YM2K/configuration.nix
-        home-manager.darwinModules.home-manager
-        ./darwin/kmccarty-YM2K/default.nix
-        ./home/work-laptop.nix
-        nix-index-database.darwinModules.nix-index
-        {programs.nix-index-database.comma.enable = true;}
-        # { nix.registry.nixpkgs.flake = inputs.nixpkgs; }
-      ];
+    darwinConfigurations = {
+      "kmccarty-YM2K" = nix-darwin.lib.darwinSystem {
+        modules = [
+          ./darwin/kmccarty-YM2K/configuration.nix
+          home-manager.darwinModules.home-manager
+          ./darwin/kmccarty-YM2K/default.nix
+          ./home/work-laptop.nix
+          nix-index-database.darwinModules.nix-index
+          { programs.nix-index-database.comma.enable = true; }
+        ];
+      };
+      "cronut" = nix-darwin.lib.darwinSystem {
+        modules = [
+          ./darwin/cronut/configuration.nix
+          home-manager.darwinModules.home-manager
+          ./home/cronut.nix
+          nix-index-database.darwinModules.nix-index
+          { programs.nix-index-database.comma.enable = true; }
+        ];
+      };
     };
 
     formatter.aarch64-darwin = nixpkgs.legacyPackages.aarch64-darwin.alejandra;
+    formatter.x86_64-darwin = nixpkgs.legacyPackages.x86_64-darwin.alejandra;
 
     formatter.x86_64-linux = nixpkgs.legacyPackages.x86_64-linux.alejandra;
 
