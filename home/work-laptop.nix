@@ -26,6 +26,7 @@
       pkgs.nerd-fonts.blex-mono
       pkgs.terminal-notifier
       pkgs.ripgrep
+      pkgs.just
     ];
 
     programs.bat.enable = true;
