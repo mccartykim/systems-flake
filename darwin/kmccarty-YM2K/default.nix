@@ -13,11 +13,14 @@
     hash = "sha256-d8wUoRbr1+dzjrXiyVs3QG/Sg6ri1jj7dHiHhngpFUs=";
   };
 in {
-  # DO NOT SET ENVIRONMENTAL VARIABLES ELSEWHERE
   launchd.user.envVariables = {
     ANDROID_HOME = "/Users/kimberly.mccarty/Library/Android/sdk/";
     JAVA_HOME = "${corretto17}/Contents/Home/";
     GRADLE_LOCAL_JAVA_HOME = "${corretto17}/Contents/Home/";
+  };
+  # For shell only
+  environment.variables = {
+    EDITOR = "nvim";
   };
 
   programs.fish.enable = true;
