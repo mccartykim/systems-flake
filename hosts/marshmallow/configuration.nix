@@ -29,8 +29,6 @@
   services.fstrim.enable = true;
   services.hardware.bolt.enable = true;
 
-  programs.nix-ld.enable = true;
-
   services.dbus.implementation = "broker";
   networking.nftables.enable = true;
 
