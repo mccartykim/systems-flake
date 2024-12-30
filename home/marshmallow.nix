@@ -123,8 +123,8 @@
         "XF86AudioMute" = "exec ${pkgs.pamixer}/bin/pamixer --toggle-mute";
       };
   };
-  programs.swayr.enable = true;
-  programs.swayr.systemd.enable = true;
+  programs.swayr.enable = false;
+  programs.swayr.systemd.enable = false;
   programs.swayr.settings = {
     menu = {
       executable = "${pkgs.wofi}/bin/wofi";
