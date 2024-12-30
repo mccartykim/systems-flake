@@ -104,7 +104,7 @@
     isNormalUser = true;
     description = "Kimberly";
     extraGroups = ["networkmanager" "wheel" "input"];
-    shell = pkgs.fish;
+    # shell = pkgs.fish;
     packages = with pkgs; [
       firefox
       tealdeer
