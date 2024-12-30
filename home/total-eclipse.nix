@@ -50,6 +50,13 @@
     nil
     nh
   ];
+  programs.jujutsu.enable = true;
+  programs.jujutsu.settings = {
+    user = {
+      email = "kimb@kimb.dev";
+      name = "Kimberly McCarty";
+    };
+  };
 
   # Enable home-manager and git
   programs.home-manager.enable = true;
@@ -58,18 +65,6 @@
   programs.zoxide.enable = true;
   programs.fish.enable = true;
   programs.atuin.enable = true;
-
-  programs.nixvim = {
-    enable = false;
-    plugins.lightline.enable = true;
-    plugins.treesitter.enable = true;
-    opts = {
-      number = true;
-      shiftwidth = 2;
-      smartindent = true;
-      smarttab = true;
-    };
-  };
 
   programs.tmux = {
     enable = true;

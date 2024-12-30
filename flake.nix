@@ -94,6 +94,13 @@
         # > our main nixos configuration file <
         modules = [
           ./hosts/total-eclipse/configuration.nix
+          home-manager.nixosModules.home-manager
+          {
+            home-manager.backupFileExtension = "backup";
+            # home-manager.useGlobalPkgs = true;
+            home-manager.useUserPackages = true;
+            home-manager.users.kimb = ./home/total-eclipse.nix;
+          }
           stylix.nixosModules.stylix
           nix-index-database.nixosModules.nix-index
           {programs.nix-index-database.comma.enable = true;}
