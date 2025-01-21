@@ -46,7 +46,7 @@
           ./darwin/kmccarty-YM2K/default.nix
           ./home/work-laptop.nix
           nix-index-database.darwinModules.nix-index
-          { programs.nix-index-database.comma.enable = true; }
+          {programs.nix-index-database.comma.enable = true;}
         ];
       };
       "cronut" = nix-darwin.lib.darwinSystem {
@@ -55,7 +55,7 @@
           home-manager.darwinModules.home-manager
           ./home/cronut.nix
           nix-index-database.darwinModules.nix-index
-          { programs.nix-index-database.comma.enable = true; }
+          {programs.nix-index-database.comma.enable = true;}
         ];
       };
     };
