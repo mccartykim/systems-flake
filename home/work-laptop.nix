@@ -182,6 +182,22 @@
     };
     programs.zoxide.enable = true;
     programs.direnv.enable = true;
+
+    programs.gradle = {
+      enable = true;
+      settings = {
+        "com.onepeloton.appsToBuild" = "home";
+        "org.gradle.caching" = true;
+        "org.gradle.configureondemand" = true;
+        "org.gradle.daemon" = true;
+        "org.gradle.jvmargs" = "-Xmx16g -Xms4g -XX:+HeapDumpOnOutOfMemoryError -XX:+UseParallelGC";
+        "org.gradle.parallel" = true;
+        "org.gradle.unsafe.configuration-cache" = false;
+        "systemProp.http.proxyPort" = 80;
+        "systemProp.https.proxyPort" = 80;
+        "test.testLogging.showStandardStreams" = true;
+      };
+    };
   };
 in {
   home-manager.users."kimberly.mccarty" = home-config;
