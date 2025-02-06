@@ -226,11 +226,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1738610386,
-        "narHash": "sha256-yb6a5efA1e8xze1vcdN2HBxqYr340EsxFMrDUHL3WZM=",
+        "lastModified": 1738789832,
+        "narHash": "sha256-HdlMPfObPu5y7oDfH/w3vvlU3UTQ/bQjSULChZARm5M=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "066ba0c5cfddbc9e0dddaec73b1561ad38aa8abe",
+        "rev": "30ea6fed4e4b41693cebc2263373dd810de4de49",
         "type": "github"
       },
       "original": {
@@ -287,11 +287,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1738277753,
-        "narHash": "sha256-iyFcCOk0mmDiv4ut9mBEuMxMZIym3++0qN1rQBg8FW0=",
+        "lastModified": 1738743987,
+        "narHash": "sha256-O3bnAfsObto6l2tQOmQlrO6Z2kD6yKwOWfs7pA0CpOc=",
         "owner": "LnL7",
         "repo": "nix-darwin",
-        "rev": "49b807fa7c37568d7fbe2aeaafb9255c185412f9",
+        "rev": "ae406c04577ff9a64087018c79b4fdc02468c87c",
         "type": "github"
       },
       "original": {
@@ -322,11 +322,11 @@
     },
     "nixos-hardware": {
       "locked": {
-        "lastModified": 1738638143,
-        "narHash": "sha256-ZYMe4c4OCtIUBn5hx15PEGr0+B1cNEpl2dsaLxwY2W0=",
+        "lastModified": 1738814804,
+        "narHash": "sha256-b/X1gQzsqN3NJsa4BPPUP9BK5UZoK7HB15jGRsLSadI=",
         "owner": "NixOS",
         "repo": "nixos-hardware",
-        "rev": "9bdd53f5908453e4d03f395eb1615c3e9a351f70",
+        "rev": "d9819a6791f7e7eec0bbbaf1b79d2e0c1879b183",
         "type": "github"
       },
       "original": {
@@ -354,11 +354,11 @@
     },
     "nixpkgs_2": {
       "locked": {
-        "lastModified": 1738553537,
-        "narHash": "sha256-HrrsuYIOl14dreCDUsXQGrWxdiU8LPKxcIo759jUk6Q=",
+        "lastModified": 1738734093,
+        "narHash": "sha256-UEYOKfXXKU49fR7dGB05As0s2pGbLK4xDo48Qtdm7xs=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "2d31b9476b7c6f5b029e595586b0b112a7ad130b",
+        "rev": "5b2753b0356d1c951d7a3ef1d086ba5a71fff43c",
         "type": "github"
       },
       "original": {
@@ -424,11 +424,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1738198321,
-        "narHash": "sha256-lhnHBXO9Y8xEn92JqxjancdL8Gh16ONuxZp60iZfmX4=",
+        "lastModified": 1738803210,
+        "narHash": "sha256-28/+C9I0z/R1Z64rTn25biIHZ9QEt4rlGr7tYb0186A=",
         "owner": "nix-community",
         "repo": "srvos",
-        "rev": "7d5a4aaadac9ff63f9ed4347df95175aceee5079",
+        "rev": "9c9423e8f947af2ec80b1d9da677e1dd166e3377",
         "type": "github"
       },
       "original": {
