@@ -13,6 +13,8 @@
     ./style/default.nix
   ];
 
+  programs.nix-ld.enable = true;
+
   boot.kernelPackages = pkgs.linuxKernel.packages.linux_6_11;
 
   # Bootloader.
