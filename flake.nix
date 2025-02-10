@@ -132,7 +132,7 @@
             home-manager.backupFileExtension = "backup";
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
-            home-manager.users.kimb = import ./hosts/bartleby/home.nix;
+            home-manager.users.kimb = ./home/bartleby.nix;
           }
           stylix.nixosModules.stylix
           nix-index-database.nixosModules.nix-index
