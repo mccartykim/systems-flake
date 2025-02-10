@@ -27,6 +27,7 @@
       pkgs.terminal-notifier
       pkgs.ripgrep
       pkgs.just
+      pkgs.nodejs_23
     ];
 
     programs.bat.enable = true;
