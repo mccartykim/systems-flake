@@ -28,6 +28,9 @@
       pkgs.ripgrep
       pkgs.just
       pkgs.nodejs_23
+      pkgs.uv
+      pkgs.sox
+      pkgs.rtl-sdr
     ];
 
     programs.bat.enable = true;
