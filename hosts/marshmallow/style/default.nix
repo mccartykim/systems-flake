@@ -4,7 +4,7 @@
   stylix,
   ...
 }: {
-  stylix.enable = true;
+  stylix.enable = false;
   stylix.image = ./marsh-flower.jpg;
   stylix.base16Scheme = "${pkgs.base16-schemes}/share/themes/monokai.yaml";
   stylix.fonts = {
