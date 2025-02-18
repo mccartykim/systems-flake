@@ -83,7 +83,6 @@
     tealdeer
     poetry
     lazygit
-    android-studio
   ];
 
   # Enable home-manager and git
