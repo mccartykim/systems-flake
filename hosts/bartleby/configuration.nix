@@ -32,6 +32,8 @@
     ];
   };
 
+  xdg.portal.config.common.default = "*";
+
   swapDevices = [
     {
       device = "/var/lib/swapfile";
@@ -88,7 +90,6 @@
       ];
     };
 
-    videoDrivers = ["intel"];
     deviceSection = ''
       Option "DRI" "2"
       Option "TearFree" "true"
