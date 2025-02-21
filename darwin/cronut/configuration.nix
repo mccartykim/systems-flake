@@ -26,9 +26,6 @@
   home-manager.useGlobalPkgs = true;
   home-manager.useUserPackages = true;
   home-manager.backupFileExtension = "backup";
-  # Auto upgrade nix package and the daemon service.
-  # services.nix-daemon.enable = true;
-  # nix.package = pkgs.nix;
 
   # Necessary for using flakes on this system.
   nix.settings.experimental-features = "nix-command flakes";
@@ -44,7 +41,6 @@
   ];
 
   nix.optimise.automatic = true;
-  services.nix-daemon.enable = true;
 
   security.pam.enableSudoTouchIdAuth = true;
 
