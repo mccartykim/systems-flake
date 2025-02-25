@@ -63,4 +63,22 @@
 
   # The platform the configuration will be used on.
   nixpkgs.hostPlatform = "aarch64-darwin";
+
+  programs.fish = {
+    shellInit = ''
+      source (/Applications/Visual\ Studio\ Code\ -\ Insiders.app/Contents/Resources/app/bin/code --locate-shell-integration-path fish)
+    '';
+  };
+
+  programs.zsh = {
+    shellInit = ''
+      . "$(/Applications/Visual Studio Code - Insiders.app/Contents/Resources/app/bin/code --locate-shell-integration-path zsh)"
+    '';
+  };
+
+  programs.bash = {
+    interactiveShellInit = ''
+      . "$(/Applications/Visual Studio Code - Insiders.app/Contents/Resources/app/bin/code --locate-shell-integration-path bash)"
+    '';
+  };
 }

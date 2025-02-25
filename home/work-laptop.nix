@@ -28,9 +28,6 @@
       pkgs.ripgrep
       pkgs.just
       pkgs.nodejs_23
-      pkgs.uv
-      pkgs.sox
-      pkgs.rtl-sdr
     ];
 
     programs.bat.enable = true;
@@ -186,6 +183,10 @@
     };
     programs.zoxide.enable = true;
     programs.direnv.enable = true;
+
+    programs.vscode = {
+      enable = true;
+    };
 
     programs.gradle = {
       enable = true;
