@@ -39,7 +39,7 @@
   networking.networkmanager.enable = true;
   xdg.portal.enable = true;
   # xdg.portal.common.default = "*";
-  xdg.portal.extraPortals = [pkgs.xdg-desktop-portal-kde];
+  xdg.portal.extraPortals = [ pkgs.kdePackages.xdg-desktop-portal-kde ];
 
   # Set your time zone.
   time.timeZone = "America/New_York";
