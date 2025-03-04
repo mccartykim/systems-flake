@@ -5,12 +5,11 @@
   config,
   pkgs,
   nixpkgs,
-  stylix,
   lib,
   ...
 }: rec {
   imports = [
-    ./stylix.nix
+
   ];
 
   # Flakes and keys

@@ -13,7 +13,6 @@
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
 
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
-    stylix.url = "github:danth/stylix";
     nix-darwin.url = "github:LnL7/nix-darwin";
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
 
@@ -30,7 +29,6 @@
     home-manager,
     nixos-hardware,
     nil-flake,
-    stylix,
     nix-darwin,
     srvos,
     nix-index-database,
@@ -75,7 +73,6 @@
           srvos.nixosModules.desktop
           srvos.nixosModules.mixins-trusted-nix-caches
           srvos.nixosModules.mixins-terminfo
-          stylix.nixosModules.stylix
           nixos-hardware.nixosModules.lenovo-thinkpad-t490
           ./hosts/marshmallow/configuration.nix
           home-manager.nixosModules.home-manager
