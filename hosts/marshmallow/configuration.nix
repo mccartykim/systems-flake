@@ -10,7 +10,6 @@
     # Include the results of the hardware scan.
     ../default.nix
     ./hardware-configuration.nix
-    ./style/default.nix
   ];
 
   programs.nix-ld.enable = true;
