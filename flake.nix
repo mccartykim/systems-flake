@@ -103,7 +103,6 @@
             home-manager.useUserPackages = true;
             home-manager.users.kimb = ./home/total-eclipse.nix;
           }
-          stylix.nixosModules.stylix
         ];
       };
       rich-evans = nixpkgs.lib.nixosSystem {
@@ -112,7 +111,6 @@
         # > our main nixos configuration file <
         modules = [
           ./hosts/hp-server/configuration.nix
-          stylix.nixosModules.stylix
           nix-index-database.nixosModules.nix-index
           {programs.nix-index-database.comma.enable = true;}
         ];
@@ -134,7 +132,6 @@
             home-manager.useUserPackages = true;
             home-manager.users.kimb = ./home/bartleby.nix;
           }
-          stylix.nixosModules.stylix
           nix-index-database.nixosModules.nix-index
           {programs.nix-index-database.comma.enable = true;}
         ];
