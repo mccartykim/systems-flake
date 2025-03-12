@@ -82,7 +82,7 @@
     noto-fonts-monochrome-emoji
     tealdeer
     poetry
-    lazygit
+    goose-cli
   ];
 
   # Enable home-manager and git
