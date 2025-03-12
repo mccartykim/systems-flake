@@ -30,6 +30,10 @@
   services.fstrim.enable = true;
   services.hardware.bolt.enable = true;
 
+  nix.settings = {
+    trusted-users = [ "root" "kimb" ];
+  };
+
   services.dbus.implementation = "broker";
   networking.nftables.enable = true;
 
