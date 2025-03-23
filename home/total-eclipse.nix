@@ -49,6 +49,7 @@
   home.packages = with pkgs; [
     nil
     nh
+    umu-launcher
   ];
   programs.jujutsu.enable = true;
   programs.jujutsu.settings = {
