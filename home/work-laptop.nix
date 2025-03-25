@@ -28,6 +28,7 @@
       pkgs.ripgrep
       pkgs.just
       pkgs.nodejs_23
+      pkgs.waveterm
     ];
 
     programs.bat.enable = true;
