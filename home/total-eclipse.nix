@@ -51,6 +51,7 @@
     nh
     umu-launcher
     goose-cli
+    claude-code
   ];
   programs.jujutsu.enable = true;
   programs.jujutsu.settings = {
