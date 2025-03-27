@@ -124,8 +124,6 @@
     pkgs.neovim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
     pkgs.wget
     pkgs.git
-    pkgs.hyprland
-    pkgs.steam
     pkgs.legendary-gl
     pkgs.sunshine
   ];
