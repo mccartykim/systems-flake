@@ -99,12 +99,11 @@
   services.avahi = {
     enable = true;
     nssmdns4 = true;
-    nssmdns = true;
     openFirewall = true;
   };
 
   # Enable sound.
-  hardware.pulseaudio.enable = true;
+  services.pulseaudio.enable = true;
 
   # Enable touchpad support (enabled default in most desktopManager).
   # services.xserver.libinput.enable = true;

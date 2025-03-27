@@ -37,7 +37,7 @@
   # Enable networking
   networking.networkmanager.enable = true;
   xdg.portal.enable = true;
-  # xdg.portal.common.default = "*";
+  xdg.portal.config.common.default = "*";
   xdg.portal.extraPortals = [ pkgs.kdePackages.xdg-desktop-portal-kde ];
 
   # Set your time zone.

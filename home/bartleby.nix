@@ -33,7 +33,7 @@
 
   programs.kitty = {
     enable = true;
-    theme = "Grass";
+    themeFile = "Grass.conf";
     font = {
       package = pkgs.ibm-plex;
       name = "IBM Plex Mono";
