@@ -14,7 +14,7 @@
 
   programs.nix-ld.enable = true;
 
-  boot.kernelPackages = pkgs.linuxKernel.packages.linux_6_11;
+  boot.kernelPackages = pkgs.linuxKernel.packages.linux_6_14;
 
   # Bootloader.
   boot.loader.systemd-boot.enable = true;
