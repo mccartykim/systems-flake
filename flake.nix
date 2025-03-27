@@ -135,7 +135,7 @@
       };
     };
 
-    devShell.x86_64-linux = let
+    devShells.x86_64-linux.default = let
       system = "x86_64-linux";
       pkgs = import nixpkgs {inherit system;};
     in
