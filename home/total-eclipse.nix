@@ -50,6 +50,7 @@
     nil
     nh
     umu-launcher
+    goose-cli
   ];
   programs.jujutsu.enable = true;
   programs.jujutsu.settings = {
