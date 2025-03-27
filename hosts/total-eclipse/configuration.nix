@@ -135,24 +135,6 @@
   services.sunshine.enable = true;
   services.sunshine.openFirewall = true;
   services.sunshine.capSysAdmin = true;
-  # services.sunshine.applications = {
-  #   env = {
-  #     PATH = "$(PATH):$(HOME)/.local/bin";
-  #   };
-  #   apps = [
-  #     {
-  #       name = "Desktop";
-  #       prep-cmd = [
-  #         {
-  #           do = "${pkgs.kdePackages.libkscreen}/bin/kscreen-doctor output.445.mode.471";
-  #           undo = "${pkgs.kdePackages.libkscreen}/bin/kscreen-doctor output.445.mode.452";
-  #         }
-  #       ];
-  #       exclude-global-prep-cmd = "false";
-  #       auto-detach = "true";
-  #     }
-  #   ];
-  # };
 
   services.avahi.publish.enable = true;
   services.avahi.publish.userServices = true;
