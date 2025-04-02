@@ -126,6 +126,8 @@
     pkgs.git
     pkgs.legendary-gl
     pkgs.sunshine
+    pkgs.wineWowPackages.waylandFull
+    pkgs.wineWow64Packages.waylandFull
   ];
 
   services.tailscale.enable = true;
