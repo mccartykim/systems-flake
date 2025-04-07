@@ -15,7 +15,6 @@
   # Use the systemd-boot EFI boot loader.
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
-  boot.kernelPackages = pkgs.linuxPackages_zen;
   boot.extraModulePackages = [config.boot.kernelPackages.broadcom_sta];
   boot.kernelModules = ["wl"];
   boot.initrd.kernelModules = ["kvm-intel" "wl"];
