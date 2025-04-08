@@ -36,6 +36,14 @@
   ];
 
   nix.optimise.automatic = true;
+  nix.gc.automatic = true;
+  nix.gc.interval = [ 
+    {
+      Hour = 17;
+      Minute = 0;
+      Weekday = 5;
+    } 
+  ];
   security.pam.services.sudo_local.touchIdAuth = true;
 
   programs.nix-index.enable = true;
