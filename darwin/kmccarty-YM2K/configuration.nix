@@ -12,6 +12,7 @@
     pkgs.cachix
     pkgs.scrcpy
     pkgs.lazygit
+    pkgs.nix-output-monitor
   ];
   nix.nixPath = pkgs.lib.mkForce [
     {
