@@ -205,7 +205,7 @@
               local wk = require("which-key")
       '';
       coc = {
-        enable = true;
+        enable = false;
 
         settings = {
           "languageserver" = {
