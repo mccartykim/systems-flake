@@ -30,6 +30,8 @@
   services.fstrim.enable = true;
   services.hardware.bolt.enable = true;
 
+  services.fwupd.enable = true;
+
   nix.settings = {
     trusted-users = [ "root" "kimb" ];
   };
