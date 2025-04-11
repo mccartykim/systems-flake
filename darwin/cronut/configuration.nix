@@ -29,6 +29,9 @@
 
   # Necessary for using flakes on this system.
   nix.settings.experimental-features = "nix-command flakes";
+  nix.settings.trusted-users=[
+    "kim"
+  ];
   nix.settings.substituters = [
     "https://cache.nixos.org/"
     "https://nix-community.cachix.org/"
