@@ -26,6 +26,13 @@
     environment.TMPDIR = "/var/tmp";
   };
 
+  swapDevices = [
+    {
+      device = "/var/swapfile";
+      size = 32 * 1024; 
+    }
+  ];
+
   programs.steam = {
     enable = true;
     remotePlay.openFirewall = true;
