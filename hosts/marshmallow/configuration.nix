@@ -33,7 +33,7 @@
   services.fwupd.enable = true;
 
   nix.settings = {
-    trusted-users = [ "root" "kimb" ];
+    trusted-users = ["root" "kimb"];
   };
 
   services.dbus.implementation = "broker";
