@@ -29,7 +29,7 @@
   swapDevices = [
     {
       device = "/var/swapfile";
-      size = 32 * 1024; 
+      size = 32 * 1024;
     }
   ];
 
@@ -37,7 +37,7 @@
     enable = true;
     remotePlay.openFirewall = true;
     dedicatedServer.openFirewall = true;
-    extraCompatPackages = with pkgs; [ 
+    extraCompatPackages = with pkgs; [
       proton-ge-bin
     ];
   };

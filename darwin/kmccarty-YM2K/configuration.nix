@@ -36,16 +36,16 @@
     "cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g="
   ];
 
-  nix.settings.trusted-users = [ "@admin" ];
+  nix.settings.trusted-users = ["@admin"];
 
   nix.optimise.automatic = true;
   nix.gc.automatic = true;
-  nix.gc.interval = [ 
+  nix.gc.interval = [
     {
       Hour = 17;
       Minute = 0;
       Weekday = 5;
-    } 
+    }
   ];
   security.pam.services.sudo_local.touchIdAuth = true;
 
