@@ -18,6 +18,8 @@
 
   # Bootloader.
   boot.loader.systemd-boot.enable = true;
+  boot.loader.systemd-boot.netbootxyz.enable = true;
+  boot.loader.systemd-boot.memtest86.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
   boot.tmp.useTmpfs = true;
@@ -40,7 +42,6 @@
   networking.nftables.enable = true;
 
   boot.initrd.systemd.enable = true;
-  boot.loader.systemd-boot.netbootxyz.enable = true;
 
   services.devmon.enable = true;
   services.gvfs.enable = true;
@@ -137,7 +138,6 @@
       firefox
       neovim
       nh
-      # swaylock-effects
     ];
     shell = pkgs.fish;
     initialPassword = "recovery";
