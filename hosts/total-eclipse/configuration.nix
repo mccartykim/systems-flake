@@ -12,16 +12,13 @@
     ./hardware-configuration.nix
   ];
 
-  # Bootloader.
-  boot.loader.grub.enable = true;
-  boot.loader.grub.device = "/dev/nvme0n1";
-
-  boot.loader.systemd-boot.netbootxyz.enable = true;
-
   services.fstrim.enable = true;
 
   services.dbus.implementation = "broker";
   boot.tmp.useTmpfs = true;
+  boot.loader.grub.enable = true;
+  boot.loader.grub.device = "/dev/nvme0n1";
+
   systemd.services.nix-daemon = {
     environment.TMPDIR = "/var/tmp";
   };

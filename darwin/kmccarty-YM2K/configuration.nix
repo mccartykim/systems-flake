@@ -1,7 +1,6 @@
 {pkgs, ...}: {
+  imports = [./default.nix];
 
-  imports = [ ./default.nix ];
-  
   # For some reason, nix-darwin needs this stated explicitly
   users.users."kimberly.mccarty".home = "/Users/kimberly.mccarty";
   nixpkgs.config = {
