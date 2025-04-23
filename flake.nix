@@ -39,9 +39,9 @@
     darwinConfigurations = {
       "kmccarty-YM2K" = nix-darwin.lib.darwinSystem {
         modules = [
-	  srvos.darwinModules.desktop
-	  srvos.darwinModules.mixins-nix-experimental
-	  srvos.darwinModules.mixins-trusted-nix-caches
+          srvos.darwinModules.desktop
+          srvos.darwinModules.mixins-nix-experimental
+          srvos.darwinModules.mixins-trusted-nix-caches
           home-manager.darwinModules.home-manager
           ./darwin/kmccarty-YM2K/configuration.nix
           ./home/work-laptop.nix
@@ -51,9 +51,9 @@
       };
       "cronut" = nix-darwin.lib.darwinSystem {
         modules = [
-	  srvos.darwinModules.desktop
-	  srvos.darwinModules.mixins-nix-experimental
-	  srvos.darwinModules.mixins-trusted-nix-caches
+          srvos.darwinModules.desktop
+          srvos.darwinModules.mixins-nix-experimental
+          srvos.darwinModules.mixins-trusted-nix-caches
           home-manager.darwinModules.home-manager
           ./darwin/cronut/configuration.nix
           ./home/cronut.nix
@@ -78,6 +78,9 @@
           srvos.nixosModules.desktop
           srvos.nixosModules.mixins-trusted-nix-caches
           srvos.nixosModules.mixins-terminfo
+          srvos.nixosModules.mixins-systemd-boot
+          srvos.nixosModules.mixins-nix-experimental
+          srvos.nixosModules.mixins-trusted-nix-caches
           nixos-hardware.nixosModules.lenovo-thinkpad-t490
           ./hosts/marshmallow/configuration.nix
           home-manager.nixosModules.home-manager
@@ -97,6 +100,9 @@
         modules = [
           ./hosts/total-eclipse/configuration.nix
           nix-index-database.nixosModules.nix-index
+          srvos.nixosModules.desktop
+          srvos.nixosModules.mixins-nix-experimental
+          srvos.nixosModules.mixins-trusted-nix-caches
           {programs.nix-index-database.comma.enable = true;}
           home-manager.nixosModules.home-manager
           {
@@ -113,6 +119,10 @@
         # > our main nixos configuration file <
         modules = [
           ./hosts/hp-server/configuration.nix
+          srvos.nixosModules.server
+          srvos.nixosModules.mixins-trusted-nix-caches
+          srvos.nixosModules.mixins-systemd-boot
+          srvos.nixosModules.mixins-nix-experimental
           nix-index-database.nixosModules.nix-index
           {programs.nix-index-database.comma.enable = true;}
         ];
@@ -120,6 +130,10 @@
       bartleby = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         modules = [
+          srvos.nixosModules.desktop
+          srvos.nixosModules.mixins-systemd-boot
+          srvos.nixosModules.mixins-nix-experimental
+          srvos.nixosModules.mixins-trusted-nix-caches
           nixos-hardware.nixosModules.lenovo-thinkpad
           {
             nixpkgs.overlays = [
