@@ -70,6 +70,8 @@
     sensible
   ];
 
+  programs.nix-ld.enable = true;
+
   services.flatpak.enable = true;
 
   programs.fish.enable = true;
