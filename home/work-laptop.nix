@@ -224,10 +224,6 @@
     programs.zoxide.enable = true;
     programs.direnv.enable = true;
 
-    programs.vscode = {
-      enable = true;
-    };
-
     programs.gradle = {
       enable = true;
       settings = {
