@@ -28,6 +28,7 @@
   };
 
   virtualisation.podman.enable = true;
+  virtualisation.waydroid.enable = true;
 
   services.fstrim.enable = true;
   services.hardware.bolt.enable = true;
