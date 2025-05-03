@@ -127,6 +127,7 @@
 
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
+  nixpkgs.config.cudaSupport = true;
 
   # List packages installed in system profile. To search, run:
   # $ nix search wget
@@ -136,10 +137,13 @@
     pkgs.git
     pkgs.legendary-gl
     pkgs.sunshine
+    pkgs.toolbox
   ];
 
   services.tailscale.enable = true;
 
+  virtualisation.podman.enable = true;
+  hardware.nvidia-container-toolkit.enable = true;
   programs.fish.enable = true;
 
   services.sunshine.enable = true;
