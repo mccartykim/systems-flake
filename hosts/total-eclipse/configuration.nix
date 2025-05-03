@@ -43,6 +43,8 @@
     enable = true;
   };
 
+  virtualisation.waydroid.enable = true;
+
   services.xrdp.enable = true;
   services.xrdp.openFirewall = true;
 
