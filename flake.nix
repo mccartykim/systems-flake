@@ -113,6 +113,25 @@
           }
         ];
       };
+      historian = nixpkgs.lib.nixosSystem {
+        specialArgs = {inherit inputs outputs;};
+        # > our main nixos configuration file <
+        modules = [
+          ./hosts/historian/configuration.nix
+          nix-index-database.nixosModules.nix-index
+          srvos.nixosModules.desktop
+          srvos.nixosModules.mixins-nix-experimental
+          srvos.nixosModules.mixins-trusted-nix-caches
+          {programs.nix-index-database.comma.enable = true;}
+          home-manager.nixosModules.home-manager
+          {
+            home-manager.backupFileExtension = "backup";
+            # home-manager.useGlobalPkgs = true;
+            home-manager.useUserPackages = true;
+            home-manager.users.kimb = ./home/total-eclipse.nix;
+          }
+        ];
+      };
       rich-evans = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         specialArgs = {inherit inputs outputs;};
