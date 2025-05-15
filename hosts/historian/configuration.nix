@@ -13,6 +13,11 @@
   ];
 
   services.fstrim.enable = true;
+  boot.loader.systemd-boot.enable = true;
+  boot.loader.systemd-boot.netbootxyz.enable = true;
+  boot.loader.systemd-boot.memtest86.enable = true;
+
+  hardware.amdgpu.opencl.enable = true;
 
   services.dbus.implementation = "broker";
   boot.tmp.useTmpfs = true;
@@ -42,11 +47,12 @@
   # Enable OpenGL
   hardware.graphics = {
     enable = true;
+    enable32Bit = true;
   };
 
   hardware.bluetooth.enable = true;
 
-  networking.hostName = "total-eclipse"; # Define your hostname.
+  networking.hostName = "historian"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
   # Configure network proxy if necessary
@@ -108,7 +114,7 @@
 
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
-  nixpkgs.config.cudaSupport = true;
+  nixpkgs.config.rocmSupport = true;
 
   # List packages installed in system profile. To search, run:
   # $ nix search wget
