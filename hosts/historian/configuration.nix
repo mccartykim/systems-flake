@@ -126,6 +126,7 @@
     pkgs.legendary-gl
     pkgs.sunshine
     pkgs.toolbox
+    pkgs.cachix
   ];
 
   services.tailscale.enable = true;
