@@ -18,6 +18,8 @@
   boot.loader.systemd-boot.memtest86.enable = true;
   zramSwap.enable = true;
 
+  services.open-webui.enable = true;
+
   hardware.amdgpu.opencl.enable = true;
 
   services.dbus.implementation = "broker";
@@ -38,6 +40,8 @@
 
   services.ollama = {
     enable = true;
+    acceleration = "rocm";
+    rocmOverrideGfx="11.5.0";
   };
 
   virtualisation.waydroid.enable = true;
