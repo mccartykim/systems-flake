@@ -16,6 +16,7 @@
   boot.loader.systemd-boot.enable = true;
   boot.loader.systemd-boot.netbootxyz.enable = true;
   boot.loader.systemd-boot.memtest86.enable = true;
+  zramSwap.enable = true;
 
   hardware.amdgpu.opencl.enable = true;
 
