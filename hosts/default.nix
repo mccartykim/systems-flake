@@ -24,6 +24,11 @@
     "https://cache.garnix.io"
   ];
 
+  programs.appimage = {
+    enable = true;
+    binfmt = true;
+  };
+
   # Slow fish fix
   documentation.man.generateCaches = false;
 
