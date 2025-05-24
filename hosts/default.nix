@@ -25,8 +25,17 @@
   ];
 
   programs.appimage = {
-    enable = true;
     binfmt = true;
+    package = 
+      pkgs.appimage-run.override {
+	extraPkgs = pkgs: [ 
+	  pkgs.webkitgtk_4_1
+	  pkgs.libspnav
+	  pkgs.gst_all_1.gstreamer
+	  pkgs.gst_all_1.gst-plugins-bad
+	];
+      }
+    ;
   };
 
   # Slow fish fix
