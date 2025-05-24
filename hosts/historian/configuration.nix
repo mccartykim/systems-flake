@@ -17,6 +17,7 @@
   boot.loader.systemd-boot.netbootxyz.enable = true;
   boot.loader.systemd-boot.memtest86.enable = true;
   zramSwap.enable = true;
+  nix.settings.auto-optimise-store = true;
 
   services.open-webui.enable = true;
 
@@ -29,6 +30,8 @@
     environment.TMPDIR = "/var/tmp";
   };
 
+  programs.appimage.enable = true;
+
   programs.steam = {
     enable = true;
     remotePlay.openFirewall = true;
@@ -38,6 +41,7 @@
     ];
   };
 
+  
   services.ollama = {
     enable = true;
     acceleration = "rocm";
@@ -131,6 +135,7 @@
     pkgs.sunshine
     pkgs.toolbox
     pkgs.cachix
+    pkgs.lmstudio
   ];
 
   services.tailscale.enable = true;
