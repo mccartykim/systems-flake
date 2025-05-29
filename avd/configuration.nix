@@ -12,6 +12,21 @@
   
   ];
 
+  nix.settings.trusted-public-keys = [
+    "cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g="
+    "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
+  ];
+  nix.settings.substituters = [
+    "https://cache.garnix.io"
+  ];
+  nix.settings.trusted-substituters = [
+    "https://cache.garnix.io"
+  ];
+
+  services.tailscale.enable = true;
+
+  nixpkgs.config.allowUnfree = true;
+
   # Change default user
   # avf.defaultUser = "droid";
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
