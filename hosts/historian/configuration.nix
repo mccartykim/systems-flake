@@ -19,8 +19,6 @@
   zramSwap.enable = true;
   nix.settings.auto-optimise-store = true;
 
-  services.open-webui.enable = true;
-
   hardware.amdgpu.opencl.enable = true;
 
   services.dbus.implementation = "broker";
