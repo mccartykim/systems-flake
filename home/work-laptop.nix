@@ -27,7 +27,7 @@
       pkgs.terminal-notifier
       pkgs.ripgrep
       pkgs.just
-      pkgs.nodejs_23
+      pkgs.nodejs_22
       pkgs.waveterm
     ];
 
