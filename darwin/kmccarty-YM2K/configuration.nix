@@ -3,6 +3,7 @@
 
   # For some reason, nix-darwin needs this stated explicitly
   users.users."kimberly.mccarty".home = "/Users/kimberly.mccarty";
+  system.primaryUser = "kimberly.mccarty";
   nixpkgs.config = {
     allowBroken = true;
     allowUnfree = true;
