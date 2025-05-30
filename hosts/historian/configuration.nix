@@ -39,11 +39,10 @@
     ];
   };
 
-  
   services.ollama = {
     enable = true;
     acceleration = "rocm";
-    rocmOverrideGfx="11.5.0";
+    rocmOverrideGfx = "11.5.0";
   };
 
   virtualisation.waydroid.enable = true;
