@@ -76,18 +76,20 @@
     nixos = inputs.nixpkgs.lib.nixosSystem {
       # system to build for
       system = "aarch64-linux";
-      # modules to use
-      modules = [
-        ./avd/configuration.nix # our previous config file
-        home-manager.nixosModules.home-manager # make home manager available to configuration.nix
-        {
-          # use system-level nixpkgs rather than the HM private ones
-          # "This saves an extra Nixpkgs evaluation, adds consistency, and removes the dependency on NIX_PATH, which is otherwise used for importing Nixpkgs."
-          home-manager.useGlobalPkgs = true;
-        }
-        nixos-avf.nixosModules.avf
-      ];
-    };
+	# modules to use
+	modules = [
+	  ./avd/bonbon/configuration.nix # our previous config file
+	  home-manager.nixosModules.home-manager # make home manager available to configuration.nix
+	  {
+	    # use system-level nixpkgs rather than the HM private ones
+	    # "This saves an extra Nixpkgs evaluation, adds consistency, and removes the dependency on NIX_PATH, which is otherwise used for importing Nixpkgs."
+	    home-manager.useGlobalPkgs = true;
+	  }
+	  nixos-avf.nixosModules.avf
+          nix-index-database.nixosModules.nix-index
+          {programs.nix-index-database.comma.enable = true;}
+	];
+      };
 
       marshmallow = nixpkgs.lib.nixosSystem {
         specialArgs = {inherit inputs outputs;};
