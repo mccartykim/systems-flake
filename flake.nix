@@ -84,6 +84,8 @@
             # use system-level nixpkgs rather than the HM private ones
             # "This saves an extra Nixpkgs evaluation, adds consistency, and removes the dependency on NIX_PATH, which is otherwise used for importing Nixpkgs."
             home-manager.useGlobalPkgs = true;
+	    home-manager.users.droid = ./home/bonbon.nix;
+	    home-manager.backupFileExtension = "backup";
           }
           nixos-avf.nixosModules.avf
           nix-index-database.nixosModules.nix-index
