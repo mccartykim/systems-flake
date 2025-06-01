@@ -13,6 +13,7 @@
     git
     neovim
     wget
+    nh
   ];
 
   nixpkgs.config.allowUnfree = true;

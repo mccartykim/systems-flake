@@ -17,6 +17,8 @@
   programs.tealdeer.enable = true;
   programs.ripgrep.enable = true;
   programs.zoxide.enable = true;
+  programs.eza.enable = true;
+  programs.bat.enable = true;
   programs.jujutsu = {
     enable = true;
     settings = {
