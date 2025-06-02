@@ -239,6 +239,8 @@
         "test.testLogging.showStandardStreams" = true;
       };
     };
+
+    programs.uv.enable = true;
   };
 in {
   home-manager.users."kimberly.mccarty" = home-config;
