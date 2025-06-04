@@ -1,183 +1,81 @@
-# Edit this configuration file to define what should be installed on
-# your system.  Help is available in the configuration.nix(5) man page
-# and in the NixOS manual (accessible by running ‘nixos-help’).
+# Marshmallow - ThinkPad T490 (Intel graphics, gaming laptop)
 {
   config,
   pkgs,
   ...
 }: {
   imports = [
-    # Include the results of the hardware scan.
-    ../default.nix
+    # Hardware configuration
     ./hardware-configuration.nix
+
+    # Role-based profiles
+    ../profiles/base.nix
+    ../profiles/desktop.nix
+    ../profiles/laptop.nix
+    ../profiles/gaming.nix
   ];
 
-  programs.nix-ld.enable = true;
+  # Host identification
+  networking.hostName = "marshmallow";
 
+  # Intel graphics hardware configuration
+  hardware.graphics.extraPackages = with pkgs; [
+    intel-media-driver # For Broadwell+ iGPUs
+    intel-gmmlib # Intel Graphics Memory Management Library
+    vaapiIntel # VAAPI driver for Intel graphics
+    vaapiVdpau
+    libvdpau-va-gl
+    intel-compute-runtime # OpenCL support
+  ];
+
+  # Intel-specific optimizations
+  boot.kernelModules = ["i915"];
+  boot.kernelParams = [
+    "i915.enable_fbc=1"
+    "i915.enable_psr=2"
+  ];
+
+  # Hardware acceleration for media
+  environment.sessionVariables = {
+    VDPAU_DRIVER = "va_gl";
+    LIBVA_DRIVER_NAME = "iHD"; # For newer Intel graphics
+  };
+
+  # Kernel version
   boot.kernelPackages = pkgs.linuxKernel.packages.linux_6_14;
 
-  # Bootloader.
-  boot.loader.systemd-boot.enable = true;
+  # Boot loader customizations
   boot.loader.systemd-boot.netbootxyz.enable = true;
   boot.loader.systemd-boot.memtest86.enable = true;
-  boot.loader.efi.canTouchEfiVariables = true;
 
-  boot.tmp.useTmpfs = true;
-  systemd.services.nix-daemon = {
-    environment.TMPDIR = "/var/tmp";
-  };
-
-  virtualisation.podman.enable = true;
-  virtualisation.waydroid.enable = true;
-
-  services.fstrim.enable = true;
-  services.hardware.bolt.enable = true;
-
-  services.fwupd.enable = true;
-
-  nix.settings = {
-    trusted-users = ["root" "kimb"];
-  };
-
-  services.dbus.implementation = "broker";
-  networking.nftables.enable = true;
-
+  # systemd initrd
   boot.initrd.systemd.enable = true;
 
-  services.devmon.enable = true;
-  services.gvfs.enable = true;
-  services.udisks2.enable = true;
-
+  # Swap configuration
   swapDevices = [
     {
       device = "/var/lib/swapfile";
-      size = 16 * 1024; # in mb, total 16gb
+      size = 16 * 1024; # 16GB
     }
   ];
 
-  networking.hostName = "marshmallow"; # Define your hostname.
-  # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
-
-  # Configure network proxy if necessary
-  # networking.proxy.default = "http://user:password@proxy:port/";
-  # networking.proxy.noProxy = "127.0.0.1,localhost,internal.domain";
-
-  # Enable networking
-  networking.networkmanager.enable = true;
+  # Wi-Fi backend
   networking.networkmanager.wifi.backend = "iwd";
 
-  services.tailscale = {
-    enable = true;
-    openFirewall = true;
-  };
+  # Touchpad configuration
+  services.libinput.mouse.naturalScrolling = true;
 
-  services.libinput = {
-    mouse.naturalScrolling = true;
-  };
-
-  # Enable the X11 windowing system.
-  services.xserver.enable = true;
-
-  # Enable the KDE Plasma Desktop Environment.
-  services.displayManager.sddm.enable = true;
+  # Wayland support for SDDM
   services.displayManager.sddm.wayland.enable = true;
-  services.desktopManager.plasma6.enable = true;
   programs.sway.enable = false;
   services.illum.enable = false;
 
-  # Configure keymap in X11
-  services.xserver = {
-    xkb.layout = "us";
-    xkb.variant = "";
-  };
+  # Additional user groups
+  users.users.kimb.extraGroups = ["docker" "dialout"];
+  users.users.kimb.initialPassword = "recovery";
+  users.groups.dialout.members = ["kimb"];
 
-  # Enable CUPS to print documents.
-  services.printing.enable = true;
-  services.printing.drivers = [
-  ];
-  services.avahi = {
-    enable = true;
-    nssmdns4 = true;
-    openFirewall = true;
-  };
-
-  hardware.bluetooth.enable = true;
-
-  hardware.graphics = {
-    enable = true;
-    extraPackages = with pkgs; [
-      intel-media-driver
-      # intel-vaapi-driver
-      intel-gmmlib
-    ];
-  };
-
-  services.pulseaudio.enable = false;
-  security.rtkit.enable = true;
-  services.pipewire = {
-    enable = true;
-    alsa.enable = true;
-    alsa.support32Bit = true;
-    pulse.enable = true;
-    # If you want to use JACK applications, uncomment this
-    #jack.enable = true;
-
-    # use the example session manager (no others are packaged yet so this is enabled by default,
-    # no need to redefine it in your config for now)
-    #media-session.enable = true;
-  };
-
-  # Enable touchpad support (enabled default in most desktopManager).
-  # services.xserver.libinput.enable = true;
-
-  # Define a user account. Don't forget to set a password with ‘passwd’.
-  users.users.kimb = {
-    isNormalUser = true;
-    description = "Kimb";
-    extraGroups = ["networkmanager" "wheel" "docker"];
-    packages = with pkgs; [
-      firefox
-      neovim
-      nh
-    ];
-    shell = pkgs.fish;
-    initialPassword = "recovery";
-  };
-
-  users.groups = {
-    dialout = {
-      members = ["kimb"];
-    };
-  };
-
-  programs.fish.enable = true;
-  programs.fish.vendor = {
-    config.enable = true;
-    functions.enable = true;
-    completions.enable = true;
-  };
-
-  programs.mosh.enable = true;
-
-  programs.steam.enable = true;
-
-  # Allow unfree packages
-  nixpkgs.config.allowUnfree = true;
-
-  # List packages installed in system profile. To search, run:
-  # $ nix search wget
-  environment.systemPackages = with pkgs; [
-    neovim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
-    tailscale
-    git
-    wget
-    fish
-    keybase-gui
-    kbfs
-    gparted
-    niri
-  ];
-
+  # Marshmallow-specific services
   services.yggdrasil = {
     enable = true;
     persistentKeys = true;
@@ -194,34 +92,36 @@
   };
 
   services.keybase.enable = true;
-  services.kbfs = {
-    enable = true;
+  services.kbfs.enable = true;
+
+  # Additional packages specific to marshmallow
+  environment.systemPackages = with pkgs; [
+    keybase-gui
+    kbfs
+    gparted
+    niri
+    nh
+  ];
+
+  # Additional programs
+  programs.nix-ld.enable = true;
+  programs.mosh.enable = true;
+
+  # Fish shell vendor configuration
+  programs.fish.vendor = {
+    config.enable = true;
+    functions.enable = true;
+    completions.enable = true;
   };
 
-  # Some programs need SUID wrappers, can be configured further or are
-  # started in user sessions.
-  # programs.mtr.enable = true;
-  # programs.gnupg.agent = {
-  #   enable = true;
-  #   enableSSHSupport = true;
-  # };
+  # Trusted users for nix
+  nix.settings.trusted-users = ["root" "kimb"];
 
-  # List services that you want to enable:
+  # Firewall configuration
+  networking.firewall = {
+    allowedTCPPorts = [9001];
+    allowedUDPPorts = [65535];
+  };
 
-  # Enable the OpenSSH daemon.
-  # services.openssh.enable = true;
-
-  # Open ports in the firewall.
-  networking.firewall.allowedTCPPorts = [9001];
-  networking.firewall.allowedUDPPorts = [65535];
-  # Or disable the firewall altogether.
-  # networking.firewall.enable = false;
-
-  # This value determines the NixOS release from which the default
-  # settings for stateful data, like file locations and database versions
-  # on your system were taken. It‘s perfectly fine and recommended to leave
-  # this value at the release version of the first install of this system.
-  # Before changing this value read the documentation for this option
-  # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
-  system.stateVersion = "23.05"; # Did you read the comment?
+  system.stateVersion = "23.05";
 }

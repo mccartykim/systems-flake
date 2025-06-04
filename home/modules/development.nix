@@ -1,18 +1,20 @@
-{ config, lib, pkgs, ... }:
-
-with lib;
-
 {
+  config,
+  lib,
+  pkgs,
+  ...
+}:
+with lib; {
   options.modules.development = {
     enable = mkEnableOption "development tools and configurations";
-    
+
     jujutsu = {
       email = mkOption {
         type = types.str;
         default = "kimb@kimb.dev";
         description = "Email for jujutsu commits";
       };
-      
+
       name = mkOption {
         type = types.str;
         default = "Kimberly McCarty";
@@ -23,7 +25,7 @@ with lib;
 
   config = mkIf config.modules.development.enable {
     programs.git.enable = true;
-    
+
     programs.jujutsu = {
       enable = true;
       settings = {
@@ -33,7 +35,7 @@ with lib;
         };
       };
     };
-    
+
     home.packages = with pkgs; [
       nil
       nh

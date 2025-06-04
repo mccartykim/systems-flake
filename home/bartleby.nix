@@ -4,11 +4,11 @@
     ./modules/development.nix
     ./modules/terminal-enhanced.nix
   ];
-  
+
   home.username = "kimb";
   home.homeDirectory = "/home/kimb";
   home.stateVersion = "23.05";
-  
+
   # Enable modules
   modules.shell-essentials.enable = true;
   modules.development.enable = true;
@@ -27,10 +27,10 @@
 
   programs.home-manager.enable = true;
   xdg.enable = true;
-  
+
   # Additional shell for bartleby
   programs.nushell.enable = true;
-  
+
   # Bartleby-specific kitty config
   programs.kitty = {
     themeFile = "Grass.conf";

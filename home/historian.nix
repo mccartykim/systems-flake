@@ -15,7 +15,7 @@
     # You can also split up your configuration and import pieces of it here:
     ./default.nix
     ./neovim.nix
-    
+
     # Import our custom modules
     ./modules/shell-essentials.nix
     ./modules/development.nix

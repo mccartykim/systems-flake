@@ -1,4 +1,3 @@
-
 # This is your home-manager configuration file
 # Use this to configure your home environment (it replaces ~/.config/nixpkgs/home.nix)
 {
@@ -25,8 +24,8 @@
     enable = true;
     settings = {
       user = {
-	email = "kimb@kimb.dev";
-	name = "Kimberly McCarty";
+        email = "kimb@kimb.dev";
+        name = "Kimberly McCarty";
       };
     };
   };
