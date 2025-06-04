@@ -73,7 +73,7 @@
     # NixOS configuration entrypoint
     # Available through 'nixos-rebuild --flake .#your-hostname'
     nixosConfigurations = {
-      nixos = inputs.nixpkgs.lib.nixosSystem {
+      bonbon = inputs.nixpkgs.lib.nixosSystem {
         # system to build for
         system = "aarch64-linux";
         # modules to use
