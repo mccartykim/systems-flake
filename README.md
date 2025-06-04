@@ -13,6 +13,8 @@ But to get the ultimate configuration experience, it should apply changes to all
 * total-eclipse: Circa 2020 gaming PC with a GeForce 2040 RTX whatever. I don't know. It played death stranding fine. Now it can run a modest stable diffusion setup. I should put that in a flake. I should focus tho.
 * marshmallow: My newest machine. A Thinkpad T490 with an 8th gen i5. Seems nice. Faster than what I was used to, and while it came broken, I fixed everything wrong with it easily. Just a few captive screws and some scary but strong clips and you're in. I'm hoping it can be a cozy long-form typing machine. It's called marshmallow to embody that coziness. My mind was somewhere else when I named this.
 
+Plus a few others. Sweets are portable, anything goes for desktops and servers :)
+
 ## To Do
 * Figure out a universal home profile for others to inherit from
 * Replace imports with modules when I feel comfortable.
@@ -31,4 +33,4 @@ But to get the ultimate configuration experience, it should apply changes to all
 ## Wish list
 * Create a few simple configs that suit my idea of an archetypal config, for easier installs down the line.
 * Steamdeck
-* Some kind of clever garnix friendly scheme to autoconfig tailscale from the box
+* Some kind of clever garnix friendly scheme to autoconfig tailscale from the box, maybe some garbo like agenix?
