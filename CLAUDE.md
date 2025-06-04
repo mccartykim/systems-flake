@@ -8,6 +8,11 @@
 - Format code: `nix fmt` (using Alejandra formatter)
 - Check flake: `nix flake check`
 
+## Version Control
+- **VCS**: This repository uses Jujutsu (jj) for version control
+- **Workflow**: Working-copy-as-commit model - changes are automatically tracked
+- **Commands**: Use `jj` instead of `git` commands
+
 ## Commit Conventions
 Use conventional commits format:
 ```
@@ -18,8 +23,10 @@ Use conventional commits format:
 <optional footer>
 ```
 - **Types**: feat, fix, refactor, perf, style, test, docs, build, ops, chore
-- **Scope**: Usually the hostname (e.g., marshmallow, bartleby)
-- **Example**: `feat(marshmallow): add hyprland configuration`
+- **Scope**: Usually the hostname (e.g., marshmallow, bartleby, historian)
+- **Examples**: 
+  - `feat(historian): upgrade to kernel 6.14 for AMD VCN fixes`
+  - `fix(marshmallow): resolve hyprland configuration issue`
 
 ## Code Style Guidelines
 - **Formatting**: Use Alejandra (configured as formatter in flake.nix)
