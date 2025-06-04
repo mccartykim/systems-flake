@@ -41,9 +41,6 @@
     darwinConfigurations = {
       "kmccarty-YM2K" = nix-darwin.lib.darwinSystem {
         modules = [
-          srvos.darwinModules.desktop
-          srvos.darwinModules.mixins-nix-experimental
-          srvos.darwinModules.mixins-trusted-nix-caches
           home-manager.darwinModules.home-manager
           ./darwin/kmccarty-YM2K/configuration.nix
           ./home/work-laptop.nix
@@ -53,9 +50,6 @@
       };
       "cronut" = nix-darwin.lib.darwinSystem {
         modules = [
-          srvos.darwinModules.desktop
-          srvos.darwinModules.mixins-nix-experimental
-          srvos.darwinModules.mixins-trusted-nix-caches
           home-manager.darwinModules.home-manager
           ./darwin/cronut/configuration.nix
           ./home/cronut.nix
