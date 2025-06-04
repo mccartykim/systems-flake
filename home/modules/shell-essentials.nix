@@ -1,8 +1,10 @@
-{ config, lib, pkgs, ... }:
-
-with lib;
-
 {
+  config,
+  lib,
+  pkgs,
+  ...
+}:
+with lib; {
   options.modules.shell-essentials = {
     enable = mkEnableOption "essential shell tools and configurations";
   };
@@ -11,7 +13,7 @@ with lib;
     programs.fish.enable = true;
     programs.zoxide.enable = true;
     programs.atuin.enable = true;
-    
+
     programs.direnv = {
       enable = true;
       nix-direnv.enable = true;

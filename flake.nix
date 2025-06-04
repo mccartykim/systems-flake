@@ -84,8 +84,8 @@
             # use system-level nixpkgs rather than the HM private ones
             # "This saves an extra Nixpkgs evaluation, adds consistency, and removes the dependency on NIX_PATH, which is otherwise used for importing Nixpkgs."
             home-manager.useGlobalPkgs = true;
-	    home-manager.users.droid = ./home/bonbon.nix;
-	    home-manager.backupFileExtension = "backup";
+            home-manager.users.droid = ./home/bonbon.nix;
+            home-manager.backupFileExtension = "backup";
           }
           nixos-avf.nixosModules.avf
           nix-index-database.nixosModules.nix-index
@@ -159,7 +159,7 @@
         specialArgs = {inherit inputs outputs;};
         # > our main nixos configuration file <
         modules = [
-          ./hosts/hp-server/configuration.nix
+          ./hosts/rich-evans/configuration.nix
           srvos.nixosModules.server
           srvos.nixosModules.mixins-trusted-nix-caches
           srvos.nixosModules.mixins-systemd-boot
