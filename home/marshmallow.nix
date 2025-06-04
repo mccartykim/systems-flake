@@ -15,38 +15,35 @@
     # You can also split up your configuration and import pieces of it here:
     ./default.nix
     ./neovim.nix
+    
+    # Import our custom modules
+    ./modules/shell-essentials.nix
+    ./modules/development.nix
+    ./modules/terminal-enhanced.nix
+    ./modules/gaming.nix
+    ./modules/ai-tools.nix
   ];
 
-  programs.zoxide.enable = true;
-  programs.fzf.enable = true;
-  programs.eza.enable = true;
-
-  programs.fish = {
+  # Enable modules
+  modules.shell-essentials.enable = true;
+  modules.development.enable = true;
+  modules.terminal-enhanced = {
     enable = true;
-    plugins = [
-      {
-        name = "tide";
-        src = pkgs.fishPlugins.tide.src;
-      }
-      # autopair.src
-      # colored-man-pages.src
-    ];
+    kitty = true;
   };
+  modules.gaming = {
+    enable = true;
+    steam = true;
+  };
+  modules.ai-tools.enable = true;
 
-  programs.kitty.enable = true;
-  programs.kitty.environment = {
-    "PAGER" = ":builtin";
-  };
-  programs.zellij.enable = true;
-  programs.zellij.enableFishIntegration = true;
-
-  programs.jujutsu.enable = true;
-  programs.jujutsu.settings = {
-    user = {
-      email = "kimb@kimb.dev";
-      name = "Kimberly McCarty";
-    };
-  };
+  # Fish plugins specific to marshmallow
+  programs.fish.plugins = [
+    {
+      name = "tide";
+      src = pkgs.fishPlugins.tide.src;
+    }
+  ];
 
   nixpkgs = {
     # You can add overlays here
@@ -74,23 +71,18 @@
 
   # Add stuff for your user as you see fit:
   # programs.neovim.enable = true;
+  # Marshmallow-specific packages
   home.packages = with pkgs; [
-    steam
     nerd-fonts.symbols-only
     noto-fonts-monochrome-emoji
-    tealdeer
     poetry
-    goose-cli
   ];
 
-  # Enable home-manager and git
+  # Enable home-manager
   programs.home-manager.enable = true;
-  programs.git.enable = true;
-
-  programs.direnv.enable = true;
-  programs.direnv.nix-direnv.enable = true;
-
-  programs.atuin.enable = true;
+  
+  # Enable nix-index for marshmallow
+  programs.nix-index.enable = true;
 
   # Nicely reload system units when changing configs
   systemd.user.startServices = "sd-switch";
@@ -179,7 +171,6 @@
   };
   programs.waybar.enable = false;
   programs.waybar.systemd.enable = false;
-  programs.nix-index.enable = true;
   programs.wofi = {
     enable = false;
     settings = {

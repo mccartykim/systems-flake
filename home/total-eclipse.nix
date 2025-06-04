@@ -15,6 +15,13 @@
     # You can also split up your configuration and import pieces of it here:
     ./default.nix
     ./neovim.nix
+    
+    # Import our custom modules
+    ./modules/shell-essentials.nix
+    ./modules/development.nix
+    ./modules/terminal-enhanced.nix
+    ./modules/gaming.nix
+    ./modules/ai-tools.nix
   ];
 
   nixpkgs = {
@@ -44,29 +51,18 @@
     homeDirectory = "/home/kimb";
   };
 
-  # Add stuff for your user as you see fit:
-  # programs.neovim.enable = true;
-  home.packages = with pkgs; [
-    nil
-    nh
-    umu-launcher
-    goose-cli
-    claude-code
-  ];
-  programs.jujutsu.enable = true;
-  programs.jujutsu.settings = {
-    user = {
-      email = "kimb@kimb.dev";
-      name = "Kimberly McCarty";
-    };
+  # Enable modules
+  modules.shell-essentials.enable = true;
+  modules.development.enable = true;
+  modules.terminal-enhanced = {
+    enable = true;
+    tmux = true;
   };
+  modules.gaming.enable = true;
+  modules.ai-tools.enable = true;
 
-  # Enable home-manager and git
+  # Enable home-manager
   programs.home-manager.enable = true;
-  programs.git.enable = true;
-
-  programs.zoxide.enable = true;
-  programs.fish.enable = true;
   programs.fish.functions = {
     fish_jj_prompt = ''
       # Is jj installed?
@@ -125,15 +121,6 @@
       end
     '';
   };
-  programs.atuin.enable = true;
-
-  programs.tmux = {
-    enable = true;
-    mouse = true;
-    keyMode = "vi";
-  };
-
-  programs.zellij.enable = true;
 
   # Nicely reload system units when changing configs
   systemd.user.startServices = "sd-switch";
