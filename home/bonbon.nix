@@ -11,7 +11,9 @@
   home.packages = with pkgs; [
     uv
     goose-cli
+    claude-code
   ];
+  programs.bash.enable = true;
   programs.atuin.enable = true;
   programs.nix-index.enable = true;
   programs.tealdeer.enable = true;
