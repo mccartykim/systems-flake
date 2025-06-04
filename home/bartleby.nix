@@ -1,38 +1,38 @@
 {pkgs, ...}: {
+  imports = [
+    ./modules/shell-essentials.nix
+    ./modules/development.nix
+    ./modules/terminal-enhanced.nix
+  ];
+  
   home.username = "kimb";
   home.homeDirectory = "/home/kimb";
   home.stateVersion = "23.05";
+  
+  # Enable modules
+  modules.shell-essentials.enable = true;
+  modules.development.enable = true;
+  modules.terminal-enhanced = {
+    enable = true;
+    kitty = true;
+    tealdeer = true;
+  };
 
+  # Bartleby-specific packages
   home.packages = [
     pkgs.obsidian
     pkgs.moonlight-qt
     pkgs.legcord
-    pkgs.nil
   ];
 
   programs.home-manager.enable = true;
-
-  programs.tealdeer.enable = true;
-  # wayland.windowManager.hyprland.enable = true;
-  # wayland.windowManager.hyprland.xwayland.enable = true;
-
-  programs.direnv = {
-    enable = true;
-    nix-direnv.enable = true;
-  };
-
   xdg.enable = true;
-
-  programs.fish = {
-    enable = true;
-  };
-
-  programs.nushell = {
-    enable = true;
-  };
-
+  
+  # Additional shell for bartleby
+  programs.nushell.enable = true;
+  
+  # Bartleby-specific kitty config
   programs.kitty = {
-    enable = true;
     themeFile = "Grass.conf";
     font = {
       package = pkgs.ibm-plex;
@@ -40,9 +40,6 @@
       size = 14;
     };
   };
-
-  programs.zoxide.enable = true;
-  programs.atuin.enable = true;
 
   programs.neovim = {
     enable = true;
