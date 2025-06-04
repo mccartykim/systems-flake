@@ -150,7 +150,7 @@
             home-manager.backupFileExtension = "backup";
             # home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
-            home-manager.users.kimb = ./home/total-eclipse.nix;
+            home-manager.users.kimb = ./home/historian.nix;
           }
         ];
       };
