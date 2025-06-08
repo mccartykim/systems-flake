@@ -14,6 +14,8 @@
     ../profiles/gaming.nix
   ];
 
+  programs.nix-ld.enable = true;
+
   # Host identification
   networking.hostName = "historian";
 
