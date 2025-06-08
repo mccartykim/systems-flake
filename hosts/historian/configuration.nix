@@ -74,7 +74,7 @@
   # Additional user groups
   users.users.kimb = {
     description = "Kimberly";
-    extraGroups = ["input"];
+    extraGroups = [ "docker" "dialout" "input" ];
   };
 
   # Additional programs
