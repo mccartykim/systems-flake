@@ -48,6 +48,7 @@
     programs.yt-dlp.enable = true;
     programs.git = {
       enable = true;
+      lfs.enable = true;
       delta.enable = true;
     };
 
