@@ -56,6 +56,7 @@
   modules.development.enable = true;
   modules.terminal-enhanced = {
     enable = true;
+    kitty = true;
     tmux = true;
   };
   modules.gaming.enable = true;
