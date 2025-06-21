@@ -76,6 +76,7 @@
     nerd-fonts.symbols-only
     noto-fonts-monochrome-emoji
     poetry
+    zettlr
   ];
 
   # Enable home-manager
