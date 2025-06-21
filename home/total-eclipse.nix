@@ -51,6 +51,10 @@
     homeDirectory = "/home/kimb";
   };
 
+  home.packages = with pkgs; [
+    zettlr
+  ];
+
   # Enable modules
   modules.shell-essentials.enable = true;
   modules.development.enable = true;
