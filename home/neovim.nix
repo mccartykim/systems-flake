@@ -2,7 +2,8 @@
   pkgs,
   home-manager,
   ...
-}: {
+}:
+{
   programs.neovim = {
     enable = true;
     defaultEditor = true;
@@ -27,6 +28,9 @@
       ripgrep
       fd
       chafa
+      rebar3
+      erlang
+      gleam
     ];
 
     extraConfig = ''
@@ -49,6 +53,7 @@
       ts.load_extension('fzf')
       ts.load_extension('media_files')
 
+      vim.lsp.enable('gleam')
     '';
   };
 }

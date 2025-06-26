@@ -3,7 +3,8 @@
   config,
   pkgs,
   ...
-}: {
+}:
+{
   imports = [
     # Hardware configuration
     ./hardware-configuration.nix
@@ -20,7 +21,7 @@
   networking.hostName = "historian";
 
   # AMD graphics hardware configuration
-  services.xserver.videoDrivers = ["amdgpu"];
+  services.xserver.videoDrivers = [ "amdgpu" ];
 
   # AMD GPU hardware acceleration
   hardware.graphics.extraPackages = with pkgs; [
@@ -34,7 +35,7 @@
   ];
 
   # AMD-specific kernel modules
-  boot.kernelModules = ["amdgpu"];
+  boot.kernelModules = [ "amdgpu" ];
   boot.kernelPackages = pkgs.linuxKernel.packages.linux_6_14;
 
   # Environment variables for AMD
@@ -76,7 +77,11 @@
   # Additional user groups
   users.users.kimb = {
     description = "Kimberly";
-    extraGroups = [ "docker" "dialout" "input" ];
+    extraGroups = [
+      "docker"
+      "dialout"
+      "input"
+    ];
   };
 
   # Additional programs
@@ -94,6 +99,9 @@
     cachix
     lmstudio
     tealdeer
+    rebar3
+    erlang
+    gleam
   ];
 
   # Avahi for service discovery
@@ -105,12 +113,18 @@
   # Network interface configuration
   networking.interfaces.eno2.wakeOnLan = {
     enable = true;
-    policy = ["unicast"];
+    policy = [ "unicast" ];
   };
 
   # Extended firewall configuration for streaming
   networking.firewall = {
-    allowedTCPPorts = [47984 47989 47990 48000 48010];
+    allowedTCPPorts = [
+      47984
+      47989
+      47990
+      48000
+      48010
+    ];
     allowedUDPPortRanges = [
       {
         from = 47998;
