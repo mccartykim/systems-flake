@@ -4,7 +4,8 @@
   pkgs,
   ...
 }:
-with lib; {
+with lib;
+{
   options.modules.development = {
     enable = mkEnableOption "development tools and configurations";
 
@@ -34,6 +35,15 @@ with lib; {
           name = config.modules.development.jujutsu.name;
         };
       };
+    };
+
+    programs.zed = {
+      enable = true;
+      extensions = [
+        "xy-zed"
+        "nix"
+        "gleam"
+      ];
     };
 
     home.packages = with pkgs; [
