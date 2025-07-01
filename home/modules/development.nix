@@ -37,7 +37,7 @@ with lib;
       };
     };
 
-    programs.zed = {
+    programs.zed-editor = {
       enable = true;
       extensions = [
         "xy-zed"
