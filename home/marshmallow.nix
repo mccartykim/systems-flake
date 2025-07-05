@@ -77,6 +77,12 @@
     noto-fonts-monochrome-emoji
     poetry
     zettlr
+    claude-code
+    # Erlang/Elixir/Gleam development
+    erlang
+    elixir
+    gleam
+    rebar3
   ];
 
   # Enable home-manager
@@ -84,6 +90,9 @@
 
   # Enable nix-index for marshmallow
   programs.nix-index.enable = true;
+
+  # Enable zed editor
+  programs.zed-editor.enable = true;
 
   # Nicely reload system units when changing configs
   systemd.user.startServices = "sd-switch";
