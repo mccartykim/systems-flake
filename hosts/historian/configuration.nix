@@ -51,7 +51,7 @@
 
   # AMD-specific kernel modules
   boot.kernelModules = [ "amdgpu" ];
-  boot.kernelPackages = pkgs.linuxKernel.packages.linux_6_14;
+  boot.kernelPackages = pkgs.linuxKernel.packages.linux_6_15;
 
   # Environment variables for AMD
   environment.sessionVariables = {
