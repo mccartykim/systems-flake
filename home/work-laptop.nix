@@ -28,7 +28,7 @@
       pkgs.ripgrep
       pkgs.just
       pkgs.nodejs_22
-      pkgs.waveterm
+      pkgs.meld
     ];
 
     programs.bat.enable = true;
@@ -43,6 +43,13 @@
         email = "kimberly.mccarty@onepeloton.com";
         name = "Kimberly McCarty";
       };
+      ui.diff-editor = "meld-3";
+      ui.diff-formatter = [
+      "${pkgs.difftastic}/bin/difft"
+      "--color=always"
+      "$left"
+      "$right"
+      ];
     };
 
     programs.yt-dlp.enable = true;
