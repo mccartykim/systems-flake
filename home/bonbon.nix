@@ -27,6 +27,12 @@
         email = "kimb@kimb.dev";
         name = "Kimberly McCarty";
       };
+      ui.diff-formatter = [
+        "${pkgs.difftastic}/bin/difft"
+        "--color=always"
+        "$left"
+        "$right"
+      ];
     };
   };
   home.stateVersion = "23.05";

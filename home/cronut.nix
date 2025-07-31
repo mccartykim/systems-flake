@@ -26,6 +26,7 @@
       pkgs.nerd-fonts.blex-mono
       pkgs.terminal-notifier
       pkgs.ripgrep
+      pkgs.meld
     ];
 
     programs.bat.enable = true;
@@ -40,6 +41,13 @@
         email = "kimb@kimb.dev";
         name = "Kimb";
       };
+      ui.diff-editor = "meld-3";
+      ui.diff-formatter = [
+        "${pkgs.difftastic}/bin/difft"
+        "--color=always"
+        "$left"
+        "$right"
+      ];
     };
 
     programs.yt-dlp.enable = true;
