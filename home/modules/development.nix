@@ -34,6 +34,13 @@ with lib;
           email = config.modules.development.jujutsu.email;
           name = config.modules.development.jujutsu.name;
         };
+        ui.diff-editor = "meld-3";
+        ui.diff-formatter = [
+          "${pkgs.difftastic}/bin/difft"
+          "--color=always"
+          "$left"
+          "$right"
+        ];
       };
     };
 
@@ -49,6 +56,7 @@ with lib;
     home.packages = with pkgs; [
       nil
       nh
+      meld
     ];
   };
 }
