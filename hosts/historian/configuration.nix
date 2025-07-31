@@ -54,7 +54,7 @@
   ];
 
   # AMD-specific kernel modules
-  boot.kernelModules = [ "amdgpu" ];
+  boot.kernelModules = [ "amdgpu" "kvm-amd" ];
   boot.kernelPackages = pkgs.linuxKernel.packages.linux_6_15;
 
   # Environment variables for AMD
@@ -100,6 +100,7 @@
       "docker"
       "dialout"
       "input"
+      "libvirtd"
     ];
   };
 
@@ -153,6 +154,9 @@
         from = 8000;
         to = 8010;
       }
+    ];
+    trustedInterfaces = [
+      "virbr0"
     ];
   };
 
