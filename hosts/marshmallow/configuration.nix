@@ -41,9 +41,6 @@
     LIBVA_DRIVER_NAME = "iHD"; # For newer Intel graphics
   };
 
-  # Kernel version
-  boot.kernelPackages = pkgs.linuxKernel.packages.linux_6_14;
-
   # Boot loader customizations
   boot.loader.systemd-boot.netbootxyz.enable = true;
   boot.loader.systemd-boot.memtest86.enable = true;
