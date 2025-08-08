@@ -67,6 +67,14 @@
     # NixOS configuration entrypoint
     # Available through 'nixos-rebuild --flake .#your-hostname'
     nixosConfigurations = {
+      installer = inputs.nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+      	modules = [
+      	  "${nixpkgs}/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix"
+      	  ./installer/installer.nix
+      	];
+      };
+
       bonbon = inputs.nixpkgs.lib.nixosSystem {
         # system to build for
         system = "aarch64-linux";
