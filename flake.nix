@@ -22,6 +22,11 @@
     nix-index-database.url = "github:nix-community/nix-index-database";
     nix-index-database.inputs.nixpkgs.follows = "nixpkgs";
     nixos-avf.url = "github:nix-community/nixos-avf";
+
+    nixos-generators = {
+      url = "github:nix-community/nixos-generators";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = {
@@ -34,10 +39,21 @@
     srvos,
     nix-index-database,
     nixos-avf,
+    nixos-generators,
     ...
   } @ inputs: let
     inherit (self) outputs;
   in {
+
+    packages.x86_64-linux = {
+      rich-evans-installer = nixos-generators.nixosGenerate {
+        system = "x86_64-linux";
+        modules = [
+          ./installer/installer.nix
+        ];
+        format = "install-iso";
+      };
+    };
     darwinConfigurations = {
       "kmccarty-YM2K" = nix-darwin.lib.darwinSystem {
         modules = [
@@ -67,7 +83,7 @@
     # NixOS configuration entrypoint
     # Available through 'nixos-rebuild --flake .#your-hostname'
     nixosConfigurations = {
-      installer = inputs.nixpkgs.lib.nixosSystem {
+      rich-evans-installer = inputs.nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
       	modules = [
       	  "${nixpkgs}/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix"

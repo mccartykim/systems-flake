@@ -9,35 +9,36 @@ in
     source = ../.;
   };
 
-  isoImage.squashfsCompression = "gzip -Xcompression-level 1";
+  isoImage.compressImage = false;
+
+  systemd.services.sshd.enable = true;
+  isoImage.makeEfiBootable = true;
+  isoImage.makeUsbBootable = true;
 
   systemd.services.auto-install = {
     description = "Automated install of nixos flake config";
-    after = ["multi-user.target"];
+    after = [ "getty.target" "nscd.service" ];
     wantedBy = [ "multi-user.target" ];
+    path = ["/run/current-system/sw"];
 
     script = ''
-    #!/usr/bin/env bash
-
-    # TODO - try disko?
+    set -euxo pipefail
     echo "Partitioning Disk"
-    parted ${target_disk} -- mklabel gpt
-    parted ${target_disk} -- mkpart primary 512MB -8GB
-    parted ${target_disk} -- mkpart primary linux-swap -8GB 100%
-    parted ${target_disk} -- mkpart ESP fat32 1MB 512MB
-    parted ${target_disk} -- set 3 esp on
+    parted -s ${target_disk} -- mklabel gpt
+    parted -s ${target_disk} -- mkpart primary 512MB 100%
+    parted -s ${target_disk} -- mkpart ESP fat32 1MB 512MB
+    parted -s ${target_disk} -- set 2 esp on
 
     echo "Formatting partions"
-    mkfs.ext4 -L nixos ${target_disk}1
-    mkswap -L swap ${target_disk}2
-    mkfs.fat -F 32 -n boot ${target_disk}3
+    mkfs.ext4 -F -L nixos ${target_disk}1
+    echo "y" | mkfs.fat -F 32 -n boot ${target_disk}2
+
+    sleep 5
 
     echo "Mounting partitions"
     mount /dev/disk/by-label/nixos /mnt
     mkdir -p /mnt/boot
     mount /dev/disk/by-label/boot /mnt/boot
-    mount /dev/disk/by-label/swap /mnt/swap
-    swapon /dev/disk/by-label/swap
 
     mkdir -p /mnt/etc/nixos
     cp -r /etc/systems-flake/* /mnt/etc/nixos/

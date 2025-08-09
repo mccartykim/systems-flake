@@ -18,18 +18,13 @@
   boot.extraModulePackages = [];
 
   fileSystems."/" = {
-    device = "/dev/disk/by-uuid/6cb70c9e-ef3b-454f-b8aa-49568813d467";
+    device = "/dev/disk/by-label/nixos";
     fsType = "ext4";
   };
 
   fileSystems."/boot" = {
-    device = "/dev/disk/by-uuid/006C-CFB4";
+    device = "/dev/disk/by-label/boot";
     fsType = "vfat";
-  };
-
-  fileSystems."/mnt/seagate" = {
-    device = "/dev/disk/by-uuid/980870c5-7397-45dd-9f01-972f9b51d0f6";
-    fsType = "ext4";
   };
 
   swapDevices = [];
