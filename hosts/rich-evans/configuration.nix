@@ -22,6 +22,11 @@
   # Host identification
   networking.hostName = "rich-evans";
 
+  boot.loader.systemd-boot.enable = true;
+  boot.loader.systemd-boot.edk2-uefi-shell.enable = true;
+  boot.loader.systemd-boot.netbootxyz.enable = true;
+
+
   # Server-specific services
   services.homepage-dashboard = {
     enable = true;
@@ -29,7 +34,7 @@
   };
 
   services.miniflux = {
-    enable = true;
+    enable = false;
     adminCredentialsFile = "/etc/miniflux-credentials";
     config = {
       LISTEN_ADDR = "0.0.0.0:8080";
@@ -41,7 +46,7 @@
 
   # Mesh networking
   services.yggdrasil = {
-    enable = true;
+    enable = false;
     persistentKeys = true;
     openMulticastPort = true;
     group = "wheel";
@@ -75,6 +80,7 @@
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICZ+5yePKB5vKsm5MJg6SOZSwO0GCV9UBw5cmGx7NmEg mccartykim@zoho.com"
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIN2bgYbsq7Hp5RoM1Dlt59CdGEjvV6CoCi75pR4JiG5e mccartykim@zoho.com" # current historian ssh key
     ];
+    initialPassword = "changeme";
   };
 
   # Additional programs
