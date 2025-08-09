@@ -61,6 +61,7 @@
   };
   modules.gaming.enable = true;
   modules.ai-tools.enable = true;
+  programs.helix.enable = true;
 
   # Enable home-manager
   programs.home-manager.enable = true;
