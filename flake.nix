@@ -27,11 +27,14 @@
       url = "github:nix-community/nixos-generators";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    copyparty.url = "github:9001/copyparty";
   };
 
   outputs = {
     self,
     nixpkgs,
+    copyparty,
     home-manager,
     nixos-hardware,
     nil-flake,
@@ -177,13 +180,14 @@
         specialArgs = {inherit inputs outputs;};
         # > our main nixos configuration file <
         modules = [
-          ./hosts/rich-evans/configuration.nix
+          copyparty.nixosModules.default
           srvos.nixosModules.server
           srvos.nixosModules.mixins-trusted-nix-caches
           srvos.nixosModules.mixins-systemd-boot
           srvos.nixosModules.mixins-nix-experimental
           nix-index-database.nixosModules.nix-index
           {programs.nix-index-database.comma.enable = true;}
+          ./hosts/rich-evans/configuration.nix
         ];
       };
       bartleby = nixpkgs.lib.nixosSystem {
