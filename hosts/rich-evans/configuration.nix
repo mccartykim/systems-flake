@@ -2,6 +2,7 @@
 {
   config,
   lib,
+  copyparty,
   pkgs,
   ...
 }: {
@@ -32,6 +33,8 @@
     enable = true;
     openFirewall = true;
   };
+  nixpkgs.overlays = [ copyparty.overlays.default ];
+  services.copyparty.enable = true;
 
   services.miniflux = {
     enable = false;
