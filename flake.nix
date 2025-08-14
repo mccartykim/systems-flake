@@ -56,6 +56,13 @@
         ];
         format = "install-iso";
       };
+      oracle-image = nixos-generators.nixosGenerate {
+        system = "x86_64-linux";
+        modules = [
+          ./hosts/oracle-lighthouse/configuration.nix
+        ];
+        format = "qcow";
+      };
     };
     darwinConfigurations = {
       "kmccarty-YM2K" = nix-darwin.lib.darwinSystem {
@@ -211,6 +218,17 @@
             home-manager.useUserPackages = true;
             home-manager.users.kimb = ./home/bartleby.nix;
           }
+          nix-index-database.nixosModules.nix-index
+          {programs.nix-index-database.comma.enable = true;}
+        ];
+      };
+      oracle-lighthouse = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        modules = [
+          srvos.nixosModules.server
+          srvos.nixosModules.mixins-nix-experimental
+          srvos.nixosModules.mixins-trusted-nix-caches
+          ./hosts/oracle-lighthouse/configuration.nix
           nix-index-database.nixosModules.nix-index
           {programs.nix-index-database.comma.enable = true;}
         ];
