@@ -35,6 +35,8 @@
     programs.eza.enable = true;
     programs.eza.icons = "auto";
 
+    programs.helix.enable = true;
+
     programs.fd.enable = true;
 
     programs.jujutsu.enable = true;
@@ -43,7 +45,6 @@
         email = "kimberly.mccarty@onepeloton.com";
         name = "Kimberly McCarty";
       };
-      ui.diff-editor = "meld-3";
       ui.diff-formatter = [
       "${pkgs.difftastic}/bin/difft"
       "--color=always"
