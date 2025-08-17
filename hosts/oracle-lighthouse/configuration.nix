@@ -1,65 +1,42 @@
-{ config, pkgs, lib, ... }:
+{ config, pkgs, lib, modulesPath, ... }:
 
 {
-  # Boot configuration for Oracle Cloud
-  boot.loader.grub = {
-    enable = true;
-    device = "/dev/sda";
-    efiSupport = false;  # Oracle requires BIOS mode
-  };
-
-  boot.kernelParams = [
-    "console=ttyS0"
-    "console=tty0"
+  imports = [
+    ./disk-config.nix
+    ../../modules/nebula-mesh.nix
   ];
 
-  # Enable growpart to expand disk on boot
-  boot.growPartition = true;
-  
-  # Filesystem
-  fileSystems."/" = {
-    device = "/dev/disk/by-label/nixos";
-    fsType = "ext4";
-    autoResize = true;
-  };
-
-  # Enable swap file for 1GB RAM instance
-  swapDevices = [{
-    device = "/var/swapfile";
-    size = 2048;
-  }];
-
-  # Optimize for low memory
-  boot.kernel.sysctl = {
-    "vm.swappiness" = 10;
-    "vm.vfs_cache_pressure" = 50;
-  };
-
-  # Network configuration
-  networking.useDHCP = true;
-  networking.useNetworkd = true;
+  # Oracle ARM instance configuration
   networking.hostName = "oracle-lighthouse";
+
+  # Boot configuration for Oracle Cloud ARM
+  boot = {
+    loader = {
+      systemd-boot.enable = true;
+      efi.canTouchEfiVariables = true;
+    };
+    kernelParams = [ "net.ifnames=0" ];
+    initrd.systemd.enable = false;  # Disable for first boot compatibility
+  };
   
-  # Firewall
+  # Re-enable firewall with specific rules
   networking.firewall = {
     enable = true;
     allowedTCPPorts = [ 22 ];
-    # allowedUDPPorts = [ 4242 ]; # Nebula lighthouse port
+    allowedUDPPorts = [ 4242 ]; # Nebula lighthouse
   };
-
-  # Time zone
-  time.timeZone = "UTC";
 
   # SSH configuration
   services.openssh = {
     enable = true;
     settings = {
       PasswordAuthentication = false;
-      PermitRootLogin = "prohibit-password";
+      PermitRootLogin = "no";
+      KbdInteractiveAuthentication = false;
     };
   };
 
-  # User configuration
+  # Our admin user
   users.users.admin = {
     isNormalUser = true;
     extraGroups = [ "wheel" ];
@@ -68,42 +45,29 @@
     ];
   };
 
-  security.sudo.wheelNeedsPassword = false;
-
-  # Ultra-minimal packages
+  # Minimal packages
   environment.systemPackages = with pkgs; [
     vim
-    git
+    htop
   ];
-  
-  # Enable flakes for remote updates
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
-  nix.settings.trusted-users = [ "admin" ];
 
-  # Optimize journald for low disk usage
-  services.journald.extraConfig = ''
-    SystemMaxUse=100M
-    RuntimeMaxUse=100M
-  '';
-
-  # Automatic garbage collection
+  # Standard GC settings for ARM instance
   nix.gc = {
     automatic = true;
     dates = "weekly";
     options = "--delete-older-than 7d";
   };
 
-  # Optimize Nix store
-  nix.settings.auto-optimise-store = true;
-  
-  # Reduce memory usage during builds
-  nix.settings.max-jobs = 1;
-  nix.settings.cores = 1;
-
-  # Cloud-init for initial setup
-  services.cloud-init = {
+  # Nebula lighthouse configuration using our module
+  services.nebula-mesh = {
     enable = true;
-    network.enable = true;
+    hostName = "oracle-lighthouse";
+    hostIP = "10.100.0.1";
+    groups = [ "lighthouse" ];
+    lighthouse = {
+      enable = true;
+      externalIP = "1.2.3.4"; # Update this with Oracle instance IP
+    };
   };
 
   system.stateVersion = "24.05";
