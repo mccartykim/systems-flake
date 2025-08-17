@@ -1,0 +1,51 @@
+pki:
+  ca: /etc/nebula/ca.crt
+  cert: /etc/nebula/NODE_NAME.crt
+  key: /etc/nebula/NODE_NAME.key
+
+static_host_map:
+  "10.100.0.1": ["34.172.63.123:4242"]
+
+lighthouse:
+  am_lighthouse: false
+  interval: 60
+  hosts:
+    - "10.100.0.1"
+
+listen:
+  host: 0.0.0.0
+  port: 0
+
+punchy:
+  punch: true
+
+relay:
+  relays:
+    - 10.100.0.1
+  am_relay: false
+  use_relays: true
+
+tun:
+  disabled: false
+  dev: nebula1
+
+logging:
+  level: info
+
+firewall:
+  conntrack:
+    tcp_timeout: 12m
+    udp_timeout: 3m
+
+  outbound:
+    - port: any
+      proto: any
+      host: any
+
+  inbound:
+    - port: any
+      proto: icmp
+      host: any
+    - port: 22
+      proto: tcp
+      host: any

@@ -22,6 +22,8 @@
     nix-index-database.url = "github:nix-community/nix-index-database";
     nix-index-database.inputs.nixpkgs.follows = "nixpkgs";
     nixos-avf.url = "github:nix-community/nixos-avf";
+    disko.url = "github:nix-community/disko";
+    disko.inputs.nixpkgs.follows = "nixpkgs";
 
     nixos-generators = {
       url = "github:nix-community/nixos-generators";
@@ -29,6 +31,7 @@
     };
 
     copyparty.url = "github:9001/copyparty";
+    
   };
 
   outputs = {
@@ -43,6 +46,7 @@
     nix-index-database,
     nixos-avf,
     nixos-generators,
+    disko,
     ...
   } @ inputs: let
     inherit (self) outputs;
@@ -56,10 +60,10 @@
         ];
         format = "install-iso";
       };
-      oracle-image = nixos-generators.nixosGenerate {
+      google-image = nixos-generators.nixosGenerate {
         system = "x86_64-linux";
         modules = [
-          ./hosts/oracle-lighthouse/configuration.nix
+          ./hosts/google-lighthouse/configuration.nix
         ];
         format = "qcow";
       };
@@ -223,8 +227,9 @@
         ];
       };
       oracle-lighthouse = nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
+        system = "aarch64-linux";
         modules = [
+          disko.nixosModules.disko
           srvos.nixosModules.server
           srvos.nixosModules.mixins-nix-experimental
           srvos.nixosModules.mixins-trusted-nix-caches
