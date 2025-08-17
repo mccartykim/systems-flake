@@ -24,10 +24,9 @@
     libvdpau-va-gl
   ];
 
-  # Kernel modules for Broadcom WiFi
-  boot.extraModulePackages = [config.boot.kernelPackages.broadcom_sta];
-  boot.kernelModules = ["wl"];
-  boot.initrd.kernelModules = ["kvm-intel" "wl"];
+  # Kernel modules for Broadcom WiFi (open-source driver)
+  hardware.firmware = [ pkgs.linux-firmware ];
+  boot.initrd.kernelModules = ["kvm-intel"];
 
   # Swap configuration
   swapDevices = [
