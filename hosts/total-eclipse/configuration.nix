@@ -2,6 +2,7 @@
 {
   config,
   pkgs,
+  inputs,
   ...
 }: {
   imports = [
@@ -12,6 +13,9 @@
     ../profiles/base.nix
     ../profiles/desktop.nix
     ../profiles/gaming.nix
+    
+    # Nebula mesh network with agenix
+    ./nebula.nix
   ];
 
   # Host identification
@@ -109,6 +113,7 @@
   # Extended firewall configuration for streaming
   networking.firewall = {
     allowedTCPPorts = [47984 47989 47990 48000 48010];
+    allowedUDPPorts = [ 4242 ]; # Nebula
     allowedUDPPortRanges = [
       {
         from = 47998;
