@@ -1,2 +1,10 @@
 result
 .DS_Store
+
+# Age/Agenix - these are safe to commit
+# *.age files are encrypted and safe
+# But NEVER commit these:
+secrets/age-key.txt
+secrets/.age-recipients.backup
+*.key
+*.crt

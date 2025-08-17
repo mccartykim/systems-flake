@@ -18,6 +18,9 @@
     ./nixarr.nix
     ./smarthome.nix
     # ./containers.nix
+    
+    # Nebula mesh network with agenix
+    ./nebula.nix
   ];
 
   # Host identification

@@ -32,6 +32,8 @@
 
     copyparty.url = "github:9001/copyparty";
     
+    agenix.url = "github:ryantm/agenix";
+    agenix.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs = {
@@ -47,6 +49,7 @@
     nixos-avf,
     nixos-generators,
     disko,
+    agenix,
     ...
   } @ inputs: let
     inherit (self) outputs;
@@ -59,13 +62,6 @@
           ./installer/installer.nix
         ];
         format = "install-iso";
-      };
-      google-image = nixos-generators.nixosGenerate {
-        system = "x86_64-linux";
-        modules = [
-          ./hosts/google-lighthouse/configuration.nix
-        ];
-        format = "qcow";
       };
     };
     darwinConfigurations = {
@@ -188,8 +184,7 @@
       };
       rich-evans = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
-        specialArgs = {inherit inputs outputs;};
-        # > our main nixos configuration file <
+        specialArgs = {inherit inputs outputs copyparty;};
         modules = [
           copyparty.nixosModules.default
           srvos.nixosModules.server
@@ -222,18 +217,6 @@
             home-manager.useUserPackages = true;
             home-manager.users.kimb = ./home/bartleby.nix;
           }
-          nix-index-database.nixosModules.nix-index
-          {programs.nix-index-database.comma.enable = true;}
-        ];
-      };
-      oracle-lighthouse = nixpkgs.lib.nixosSystem {
-        system = "aarch64-linux";
-        modules = [
-          disko.nixosModules.disko
-          srvos.nixosModules.server
-          srvos.nixosModules.mixins-nix-experimental
-          srvos.nixosModules.mixins-trusted-nix-caches
-          ./hosts/oracle-lighthouse/configuration.nix
           nix-index-database.nixosModules.nix-index
           {programs.nix-index-database.comma.enable = true;}
         ];

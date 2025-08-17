@@ -76,6 +76,13 @@ in
       description = "Directory containing Nebula certificates";
     };
 
+    ageSecretsFile = mkOption {
+      type = types.nullOr types.str;
+      default = null;
+      description = "Path to age-encrypted secrets file containing certificates";
+      example = "/path/to/nebula-secrets.age";
+    };
+
     extraSettings = mkOption {
       type = types.attrs;
       default = {};
