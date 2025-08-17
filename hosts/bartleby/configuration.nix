@@ -2,6 +2,7 @@
 {
   config,
   pkgs,
+  inputs,
   ...
 }: {
   imports = [
@@ -12,6 +13,9 @@
     ../profiles/base.nix
     ../profiles/laptop.nix
     ../profiles/i3-desktop.nix
+    
+    # Nebula mesh network with agenix
+    ./nebula.nix
   ];
 
   # Host identification

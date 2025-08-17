@@ -198,6 +198,7 @@
       };
       bartleby = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
+        specialArgs = {inherit inputs outputs;};
         modules = [
           srvos.nixosModules.desktop
           srvos.nixosModules.mixins-systemd-boot
