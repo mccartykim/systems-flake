@@ -13,6 +13,9 @@
     ../profiles/desktop.nix
     ../profiles/laptop.nix
     ../profiles/gaming.nix
+    
+    # Nebula mesh network with agenix
+    ./nebula.nix
   ];
 
   # Host identification
