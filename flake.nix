@@ -34,6 +34,9 @@
     
     agenix.url = "github:ryantm/agenix";
     agenix.inputs.nixpkgs.follows = "nixpkgs";
+    
+    mist-blog.url = "git+ssh://git@github.com/mccartykim/mist-blog";
+    mist-blog.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs = {
