@@ -58,7 +58,7 @@
       ip = "10.100.0.50";
       isLighthouse = false;
       role = "router";  # Datto 1000 router/firewall
-      publicKey = null;  # Will be filled after installation
+      publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGXJ4JeYtJiV8ltScewAu+N8KYLy+muo+mP07XznOzjX";
     };
     
     # To add a new device:

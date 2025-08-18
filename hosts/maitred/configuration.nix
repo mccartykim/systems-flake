@@ -6,8 +6,8 @@
     # Hardware configuration will be generated during install
     ./hardware-configuration.nix
     
-    # TODO: Enable Nebula once we have SSH host key and certificates
-    # ./nebula.nix
+    # Nebula mesh network with agenix
+    ./nebula.nix
   ];
 
   # Host identification
@@ -25,8 +25,8 @@
 
   # Network configuration using systemd-networkd
   networking = {
-    useDHCP = true;  # Use DHCP for now - will get IP from existing router
-    # useNetworkd = true;
+    useDHCP = false;  # Managed by systemd-networkd
+    useNetworkd = true;
     
     # Use rich-evans for DNS (via Nebula once configured)
     nameservers = [ 
@@ -35,48 +35,50 @@
     ];
   };
 
-  # TODO: Enable these when ready to take over router duties
-  # # WAN interface - DHCP from ISP
-  # systemd.network.networks."10-wan" = {
-  #   matchConfig.Name = "enp3s0";
-  #   networkConfig = {
-  #     DHCP = "yes";
-  #     DNSOverTLS = false;
-  #     DNSSEC = false;
-  #     IPv6PrivacyExtensions = false;
-  #   };
-  #   dhcpV4Config = {
-  #     RouteMetric = 512;
-  #     UseDNS = false;  # Don't use ISP DNS
-  #   };
-  #   linkConfig.RequiredForOnline = "routable";
-  # };
+  # Enable systemd-networkd
+  systemd.network.enable = true;
+  
+  # WAN interface - DHCP from ISP
+  systemd.network.networks."10-wan" = {
+    matchConfig.Name = "enp3s0";
+    networkConfig = {
+      DHCP = "yes";
+      DNSOverTLS = false;
+      DNSSEC = false;
+      IPv6PrivacyExtensions = false;
+    };
+    dhcpV4Config = {
+      RouteMetric = 512;
+      UseDNS = false;  # Don't use ISP DNS
+    };
+    linkConfig.RequiredForOnline = "routable";
+  };
 
-  # # LAN interface - Static IP
-  # systemd.network.networks."20-lan" = {
-  #   matchConfig.Name = "enp2s0";
-  #   address = [
-  #     "192.168.68.1/24"
-  #   ];
-  #   networkConfig = {
-  #     DHCPServer = true;
-  #     IPv6SendRA = false;  # Disable IPv6 RA for now
-  #   };
-  #   dhcpServerConfig = {
-  #     PoolOffset = 100;
-  #     PoolSize = 100;  # .100 to .199
-  #     EmitDNS = true;
-  #     DNS = [ "192.168.68.200" ];  # Point clients to rich-evans
-  #     EmitRouter = true;
-  #   };
-  # };
+  # LAN interface - Static IP
+  systemd.network.networks."20-lan" = {
+    matchConfig.Name = "enp2s0";
+    address = [
+      "192.168.68.1/24"
+    ];
+    networkConfig = {
+      DHCPServer = true;
+      IPv6SendRA = false;  # Disable IPv6 RA for now
+    };
+    dhcpServerConfig = {
+      PoolOffset = 100;
+      PoolSize = 100;  # .100 to .199
+      EmitDNS = true;
+      DNS = [ "192.168.68.1" ];  # Point clients to router DNS
+      EmitRouter = true;
+    };
+  };
 
-  # # Firewall and NAT
-  # networking.nat = {
-  #   enable = true;
-  #   externalInterface = "enp3s0";  # WAN
-  #   internalInterfaces = [ "enp2s0" ];  # LAN
-  # };
+  # Firewall and NAT
+  networking.nat = {
+    enable = true;
+    externalInterface = "enp3s0";  # WAN
+    internalInterfaces = [ "enp2s0" ];  # LAN
+  };
 
   networking.firewall = {
     enable = true;
@@ -87,7 +89,7 @@
     ];
     
     allowedUDPPorts = [ 
-      # 4242  # Nebula (when enabled)
+      4242  # Nebula
     ];
     
     # Trust LAN interface
@@ -131,10 +133,37 @@
     useRoutingFeatures = "server";  # Can route LAN traffic if needed
   };
 
+  # Disable systemd-resolved to avoid port 53 conflict
+  services.resolved.enable = false;
+
+  # DNS Server with Nebula name resolution  
+  services.unbound = {
+    enable = true;
+    settings = {
+      server = {
+        interface = [
+          "0.0.0.0"       # Listen on all interfaces for now
+          "127.0.0.1"     # localhost
+        ];
+        access-control = [
+          "192.168.68.0/24 allow"
+          "127.0.0.0/8 allow"
+        ];
+        # Auto-generate Nebula host entries from registry
+        local-data = 
+          let
+            registry = import ../nebula-registry.nix;
+          in
+            builtins.map (name: "\"${name}.nebula. A ${registry.nodes.${name}.ip}\"") 
+              (builtins.attrNames registry.nodes);
+      };
+    };
+  };
+
   # Basic monitoring
   services.prometheus.exporters.node = {
     enable = true;
-    listenAddress = "192.168.68.1";
+    listenAddress = "0.0.0.0";  # Listen on all interfaces for now
     port = 9100;
   };
 
@@ -168,6 +197,9 @@
 
   # Enable sudo
   security.sudo.wheelNeedsPassword = true;
+
+  # Allow trusted users for remote deployment
+  nix.settings.trusted-users = [ "kimb" "root" ];
 
   # Minimal installation
   documentation.enable = false;
