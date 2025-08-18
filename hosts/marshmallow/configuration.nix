@@ -118,6 +118,12 @@
   # Trusted users for nix
   nix.settings.trusted-users = ["root" "kimb"];
 
+  # Use rich-evans for DNS
+  networking.nameservers = [ 
+    "10.100.0.40"  # Rich-evans via Nebula
+    "1.1.1.1"      # Fallback
+  ];
+
   # Firewall configuration
   networking.firewall = {
     allowedTCPPorts = [9001];
