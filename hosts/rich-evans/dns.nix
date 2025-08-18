@@ -2,15 +2,11 @@
 { config, lib, pkgs, ... }:
 
 let
-  # Define Nebula network hosts - single source of truth
-  nebulaNodes = {
-    lighthouse = "10.100.0.1";
-    rich-evans = "10.100.0.40";  # Adjust based on actual config
-    bartleby = "10.100.0.3";
-    marshmallow = "10.100.0.4";
-    historian = "10.100.0.10";  # This is historian's actual IP
-    total-eclipse = "10.100.0.6";
-  };
+  # Import centralized node registry
+  registry = import ../nebula-registry.nix;
+  
+  # Extract Nebula IPs from registry
+  nebulaNodes = builtins.mapAttrs (name: node: node.ip) registry.nodes;
   
   # Define local network static IPs
   localNodes = {

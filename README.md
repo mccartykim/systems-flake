@@ -30,7 +30,53 @@ Plus a few others. Sweets are portable, anything goes for desktops and servers :
 6. Add import of default nix config. Test again.
 7. Strip out redundant components, leaving just the quirks for that machine in the config.
 
+## Nebula Mesh Network
+
+All machines are connected via a [Nebula](https://github.com/slackhq/nebula) mesh network with age-encrypted certificates. The lighthouse runs on Google Cloud.
+
+### Network Layout
+- **Subnet**: `10.100.0.0/16`
+- **Lighthouse**: `10.100.0.1` (external: `35.222.40.201:4242`)
+- **DNS Server**: rich-evans at `10.100.0.40` (serves `.nebula` and `.local` domains)
+
+### Adding New Devices
+
+1. **Add to registry**: Edit `hosts/nebula-registry.nix` and add your device:
+   ```nix
+   my-new-device = {
+     ip = "10.100.0.7";  # Next available IP
+     isLighthouse = false;
+     role = "laptop";  # or "desktop", "server"
+     publicKey = null;  # Will be filled in step 3
+   };
+   ```
+
+2. **Add NixOS config**: Create `hosts/my-new-device/configuration.nix` and add to `flake.nix`:
+   ```nix
+   nixosConfigurations.my-new-device = nixpkgs.lib.nixosSystem {
+     specialArgs = {inherit inputs outputs;};
+     modules = [
+       ./hosts/my-new-device/configuration.nix
+       # ... other modules
+     ];
+   };
+   ```
+
+3. **Get SSH host key**: Deploy the basic config, then run:
+   ```bash
+   ./scripts/collect-age-keys.sh
+   ```
+   Update the `publicKey` field in the registry with the output.
+
+4. **Generate certificates**: The system automatically creates encrypted Nebula certs for all devices in the registry.
+
+5. **Deploy**: Build and deploy your config. The device will automatically join the mesh!
+
+### DNS Resolution
+- `hostname.nebula` - Nebula mesh IPs (e.g., `historian.nebula` → `10.100.0.10`)
+- `hostname.local` - LAN IPs (e.g., `rich-evans.local` → `192.168.68.200`)
+
 ## Wish list
 * Create a few simple configs that suit my idea of an archetypal config, for easier installs down the line.
 * Steamdeck
-* Some kind of clever garnix friendly scheme to autoconfig tailscale from the box, maybe some garbo like agenix?
+* ~~Some kind of clever garnix friendly scheme to autoconfig tailscale from the box, maybe some garbo like agenix?~~ ✅ Done with Nebula + agenix!

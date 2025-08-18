@@ -50,5 +50,11 @@
   users.defaultUserShell = pkgs.fish;
   environment.shells = [pkgs.fish];
 
+  # Use rich-evans for DNS
+  networking.nameservers = [ 
+    "10.100.0.40"  # Rich-evans via Nebula
+    "1.1.1.1"      # Fallback
+  ];
+
   system.stateVersion = "23.05";
 }
