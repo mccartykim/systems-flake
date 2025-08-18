@@ -6,8 +6,20 @@
     # Hardware configuration will be generated during install
     ./hardware-configuration.nix
     
+    # Base profile for all hosts
+    ../profiles/base.nix
+    
     # Nebula mesh network with agenix
     ./nebula.nix
+    
+    # Reverse proxy container
+    ./reverse-proxy.nix
+    
+    # Blog service container
+    ./blog-service.nix
+    
+    # Dynamic DNS
+    ./dns-update.nix
   ];
 
   # Host identification
@@ -27,6 +39,7 @@
   networking = {
     useDHCP = false;  # Managed by systemd-networkd
     useNetworkd = true;
+    nftables.enable = lib.mkForce false;  # Override base profile - use iptables for router
     
     # Use rich-evans for DNS (via Nebula once configured)
     nameservers = [ 
@@ -86,6 +99,8 @@
     # Allow essential services
     allowedTCPPorts = [ 
       22    # SSH (consider restricting to LAN only)
+      80    # HTTP (forwarded to blog container)
+      443   # HTTPS (forwarded to blog container)
     ];
     
     allowedUDPPorts = [ 
@@ -195,8 +210,7 @@
     initialPassword = "changeme";  # Change after first login
   };
 
-  # Enable sudo
-  security.sudo.wheelNeedsPassword = true;
+  # Sudo configured in base profile
 
   # Allow trusted users for remote deployment
   nix.settings.trusted-users = [ "kimb" "root" ];

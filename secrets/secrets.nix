@@ -13,6 +13,9 @@ in
   # Shared CA certificate - all systems can decrypt
   "nebula-ca.age".publicKeys = allSystems;
   
+  # Cloudflare API token - only maitred needs this
+  "cloudflare-api-token.age".publicKeys = [ registry.nodes.maitred.publicKey ];
+  
   # Individual certificates - only the specific system can decrypt
   # Generated dynamically from registry
 } // (
