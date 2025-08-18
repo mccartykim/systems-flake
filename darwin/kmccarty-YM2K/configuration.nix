@@ -27,6 +27,17 @@
   ];
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
+  launchd.daemons.nix-darwin-activate = {
+    serviceConfig = {
+      ProgramArguments = [ "/var/run/current-system/activate" ];
+      RunAtLoad = true;
+      KeepAlive = false;
+      UserName = "root";
+      StandardOutPath = "/var/log/nix-darwin-activate.log";
+      StandardErrorPath = "/var/log/nix-darwin-activate.log";
+    };
+  };
+
   # Necessary for using flakes on this system.
   nix.settings.substituters = [
     "https://cache.garnix.io"
@@ -67,22 +78,4 @@
 
   # The platform the configuration will be used on.
   nixpkgs.hostPlatform = "aarch64-darwin";
-
-  programs.fish = {
-    shellInit = ''
-      source (/Applications/Visual\ Studio\ Code\ -\ Insiders.app/Contents/Resources/app/bin/code --locate-shell-integration-path fish)
-    '';
-  };
-
-  programs.zsh = {
-    shellInit = ''
-      . "$(/Applications/Visual Studio Code - Insiders.app/Contents/Resources/app/bin/code --locate-shell-integration-path zsh)"
-    '';
-  };
-
-  programs.bash = {
-    interactiveShellInit = ''
-      . "$(/Applications/Visual Studio Code - Insiders.app/Contents/Resources/app/bin/code --locate-shell-integration-path bash)"
-    '';
-  };
 }
