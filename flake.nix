@@ -233,12 +233,35 @@
       };
     };
 
+    # Colmena deployment configuration
+    colmena = let
+      registry = import ./hosts/nebula-registry.nix;
+      # Helper to create colmena node from registry entry
+      makeColmenaNode = name: node: {
+        deployment = {
+          targetHost = if name == "maitred" then "maitred" else node.ip;  # Use Nebula IPs for direct connection
+          targetUser = "kimb";
+          buildOnTarget = false;
+        };
+        imports = self.nixosConfigurations.${name}._module.args.modules;
+      };
+    in {
+      meta = {
+        nixpkgs = import nixpkgs { 
+          system = "x86_64-linux"; 
+          overlays = [];
+        };
+        specialArgs = {inherit inputs outputs copyparty;};
+      };
+    } // (builtins.mapAttrs makeColmenaNode 
+          (builtins.removeAttrs registry.nodes ["lighthouse"])); # Skip non-NixOS lighthouse
+
     devShells.x86_64-linux.default = let
       system = "x86_64-linux";
       pkgs = import nixpkgs {inherit system;};
     in
       pkgs.mkShell {
-        packages = [pkgs.tealdeer];
+        packages = [pkgs.tealdeer pkgs.colmena];
       };
   };
 }
