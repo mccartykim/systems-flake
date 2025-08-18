@@ -78,6 +78,12 @@
     description = lib.mkDefault "Kimb";
     extraGroups = ["wheel" "networkmanager"];
     shell = pkgs.fish;
+    openssh.authorizedKeys.keys = [
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICZ+5yePKB5vKsm5MJg6SOZSwO0GCV9UBw5cmGx7NmEg mccartykim@zoho.com"  # Main key
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIN2bgYbsq7Hp5RoM1Dlt59CdGEjvV6CoCi75pR4JiG5e mccartykim@zoho.com"  # historian key
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJY8TB1PRV5e8e8QgdwFRPbuRIzjeS1oFY1WOUKTYnrj mccartykim@zoho.com"  # total-eclipse key
+      # Add marshmallow, bartleby keys when available
+    ];
   };
 
   # Enable sudo for wheel group
