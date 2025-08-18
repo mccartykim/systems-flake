@@ -21,6 +21,12 @@
     
     # Nebula mesh network with agenix
     ./nebula.nix
+    
+    # DNS server
+    ./dns.nix
+    
+    # Static networking
+    ./networking.nix
   ];
 
   # Host identification
