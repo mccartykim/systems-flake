@@ -140,6 +140,12 @@
     policy = [ "unicast" ];
   };
 
+  # Use rich-evans for DNS
+  networking.nameservers = [ 
+    "10.100.0.40"  # Rich-evans via Nebula
+    "1.1.1.1"      # Fallback
+  ];
+
   # Extended firewall configuration for streaming
   networking.firewall = {
     allowedTCPPorts = [
@@ -164,7 +170,6 @@
       "virbr0"
     ];
   };
-
 
   system.stateVersion = "23.11";
 }
