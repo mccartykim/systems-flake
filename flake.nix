@@ -196,6 +196,15 @@
           ./hosts/rich-evans/configuration.nix
         ];
       };
+      maitred = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        specialArgs = {inherit inputs outputs;};
+        modules = [
+          ./hosts/maitred/configuration.nix
+          nix-index-database.nixosModules.nix-index
+          {programs.nix-index-database.comma.enable = true;}
+        ];
+      };
       bartleby = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         specialArgs = {inherit inputs outputs;};

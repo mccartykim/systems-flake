@@ -54,6 +54,13 @@
       publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAII25uGB19xLNzpzOFKUHp93EtNPxHXgeKotRDsdqdWa7";
     };
     
+    maitred = {
+      ip = "10.100.0.50";
+      isLighthouse = false;
+      role = "router";  # Datto 1000 router/firewall
+      publicKey = null;  # Will be filled after installation
+    };
+    
     # To add a new device:
     # 1. Add entry here with next available IP
     # 2. Add nixosConfiguration in flake.nix
