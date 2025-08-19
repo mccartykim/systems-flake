@@ -242,7 +242,7 @@
       # Helper to create colmena node from registry entry
       makeColmenaNode = name: node: {
         deployment = {
-          targetHost = if name == "maitred" then "maitred" else node.ip;  # Use Nebula IPs for direct connection
+          targetHost = node.ip;  # Use Nebula IPs for direct connection to all hosts
           targetUser = "kimb";
           buildOnTarget = false;
         };

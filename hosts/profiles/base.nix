@@ -19,6 +19,9 @@
   networking.networkmanager.enable = true;
   networking.nftables.enable = true;
   services.tailscale.enable = true;
+  
+  # Disable systemd-resolved to respect DHCP-provided DNS servers
+  services.resolved.enable = lib.mkDefault false;
 
   # SSH
   services.openssh = {

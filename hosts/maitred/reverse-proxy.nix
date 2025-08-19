@@ -15,17 +15,65 @@
       services.caddy = {
         enable = true;
         email = "mccartykim@zoho.com";
+        
+        # Enable metrics for monitoring
+        globalConfig = ''
+          servers {
+            metrics
+          }
+        '';
+        
         virtualHosts = {
+          # External domains (Let's Encrypt certificates)
           "kimb.dev" = {
             extraConfig = ''
               reverse_proxy 192.168.100.3:8080
             '';
           };
+          "blog.kimb.dev" = {
+            extraConfig = ''
+              reverse_proxy 192.168.100.3:8080
+            '';
+          };
+          "auth.kimb.dev" = {
+            extraConfig = ''
+              reverse_proxy 192.168.100.4:9091
+            '';
+          };
+          "home.kimb.dev" = {
+            extraConfig = ''
+              forward_auth 192.168.100.4:9091 {
+                uri /api/verify?rd=https://auth.kimb.dev
+                copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
+              }
+              reverse_proxy 192.168.100.1:8082 {
+                header_up Host 192.168.100.1:8082
+              }
+            '';
+          };
+          "grafana.kimb.dev" = {
+            extraConfig = ''
+              forward_auth 192.168.100.4:9091 {
+                uri /api/verify?rd=https://auth.kimb.dev
+                copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
+              }
+              reverse_proxy 192.168.100.1:3000
+            '';
+          };
+          "prometheus.kimb.dev" = {
+            extraConfig = ''
+              forward_auth 192.168.100.4:9091 {
+                uri /api/verify?rd=https://auth.kimb.dev
+                copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
+              }
+              reverse_proxy 192.168.100.1:9090
+            '';
+          };
         };
       };
       
-      # Open firewall for HTTP/HTTPS
-      networking.firewall.allowedTCPPorts = [ 80 443 ];
+      # Open firewall for HTTP/HTTPS and metrics
+      networking.firewall.allowedTCPPorts = [ 80 443 2019 ];
       
       # Minimal system packages
       environment.systemPackages = with pkgs; [
@@ -39,18 +87,19 @@
   
   # Port forwarding from router to proxy container
   networking.nat.forwardPorts = [
-    # HTTP
+    # HTTP from WAN
     {
       sourcePort = 80;
       destination = "192.168.100.2:80";
       proto = "tcp";
     }
-    # HTTPS  
+    # HTTPS from WAN
     {
       sourcePort = 443;
       destination = "192.168.100.2:443";
       proto = "tcp";
     }
+    # Hairpin NAT removed - using split-brain DNS instead
   ];
   
   # Add container network to NAT for outbound internet access
