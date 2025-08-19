@@ -16,6 +16,12 @@ in
   # Cloudflare API token - only maitred needs this
   "cloudflare-api-token.age".publicKeys = [ registry.nodes.maitred.publicKey ];
   
+  # Authelia secrets - maitred and historian (for initial setup)
+  "authelia-jwt-secret.age".publicKeys = [ registry.nodes.maitred.publicKey registry.nodes.historian.publicKey ];
+  "authelia-session-secret.age".publicKeys = [ registry.nodes.maitred.publicKey registry.nodes.historian.publicKey ];
+  "authelia-storage-key.age".publicKeys = [ registry.nodes.maitred.publicKey registry.nodes.historian.publicKey ];
+  "authelia-users.age".publicKeys = [ registry.nodes.maitred.publicKey registry.nodes.historian.publicKey ];
+  
   # Individual certificates - only the specific system can decrypt
   # Generated dynamically from registry
 } // (
@@ -29,4 +35,4 @@ in
   in
     builtins.foldl' (acc: entry: acc // entry) {} 
       (builtins.attrValues (builtins.mapAttrs createNodeSecrets registry.nodes))
-}
+)

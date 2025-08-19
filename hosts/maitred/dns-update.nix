@@ -27,7 +27,15 @@ period = 300
 provider cloudflare.com {
     username = kimb.dev
     password = $token
-    hostname = kimb.dev
+    hostname = "@"
+    ttl = 1
+    proxied = false
+}
+
+provider cloudflare.com {
+    username = kimb.dev
+    password = $token
+    hostname = "*.kimb.dev"
     ttl = 1
     proxied = false
 }

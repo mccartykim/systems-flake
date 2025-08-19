@@ -20,6 +20,15 @@
     
     # Dynamic DNS
     ./dns-update.nix
+    
+    # Monitoring (Prometheus & Grafana)
+    ./monitoring.nix
+    
+    # Homepage dashboard
+    ./homepage.nix
+    
+    # Authelia authentication
+    ./authelia.nix
   ];
 
   # Host identification
@@ -33,6 +42,9 @@
   boot.kernel.sysctl = {
     "net.ipv4.ip_forward" = 1;
     "net.ipv6.conf.all.forwarding" = 1;
+    # Enable hairpin NAT for all interfaces
+    "net.bridge.bridge-nf-call-iptables" = 1;
+    "net.bridge.bridge-nf-call-ip6tables" = 1;
   };
 
   # Network configuration using systemd-networkd
@@ -41,11 +53,8 @@
     useNetworkd = true;
     nftables.enable = lib.mkForce false;  # Override base profile - use iptables for router
     
-    # Use rich-evans for DNS (via Nebula once configured)
-    nameservers = [ 
-      "192.168.68.200"  # Rich-evans on LAN
-      "1.1.1.1"         # Cloudflare fallback
-    ];
+    # Override base profile - maitred uses its own unbound DNS server only
+    nameservers = [ "127.0.0.1" ];
   };
 
   # Enable systemd-networkd
@@ -71,7 +80,7 @@
   systemd.network.networks."20-lan" = {
     matchConfig.Name = "enp2s0";
     address = [
-      "192.168.68.1/24"
+      "192.168.69.1/24"
     ];
     networkConfig = {
       DHCPServer = true;
@@ -81,7 +90,7 @@
       PoolOffset = 100;
       PoolSize = 100;  # .100 to .199
       EmitDNS = true;
-      DNS = [ "192.168.68.1" ];  # Point clients to router DNS
+      DNS = [ "192.168.69.1" ];  # Point clients to router DNS
       EmitRouter = true;
     };
   };
@@ -96,9 +105,8 @@
   networking.firewall = {
     enable = true;
     
-    # Allow essential services
+    # Allow essential services (SSH removed from public access)
     allowedTCPPorts = [ 
-      22    # SSH (consider restricting to LAN only)
       80    # HTTP (forwarded to blog container)
       443   # HTTPS (forwarded to blog container)
     ];
@@ -126,6 +134,8 @@
       
       # Block WAN to LAN (except established)
       iptables -A FORWARD -i enp3s0 -o enp2s0 -m conntrack --ctstate NEW -j DROP
+      
+      # Removed hairpin NAT - using split-brain DNS instead
     '';
   };
 
@@ -136,10 +146,11 @@
       PasswordAuthentication = false;
       PermitRootLogin = "no";
     };
-    # Listen on all interfaces for now (restrict when router mode active)
-    # listenAddresses = [
-    #   { addr = "192.168.68.1"; port = 22; }  # TODO: When router mode enabled
-    # ];
+    # Restrict SSH to LAN and Nebula VPN only - NO public access
+    listenAddresses = [
+      { addr = "192.168.69.1"; port = 22; }    # LAN access
+      { addr = "10.100.0.50"; port = 22; }     # Nebula VPN access
+    ];
   };
 
   # Tailscale for backup access
@@ -161,24 +172,34 @@
           "127.0.0.1"     # localhost
         ];
         access-control = [
-          "192.168.68.0/24 allow"
+          "192.168.69.0/24 allow"
           "127.0.0.0/8 allow"
         ];
-        # Auto-generate Nebula host entries from registry
+        # Local DNS entries for Nebula hosts and local domains
         local-data = 
           let
             registry = import ../nebula-registry.nix;
-          in
-            builtins.map (name: "\"${name}.nebula. A ${registry.nodes.${name}.ip}\"") 
+            nebula-hosts = builtins.map (name: "\"${name}.nebula. A ${registry.nodes.${name}.ip}\"") 
               (builtins.attrNames registry.nodes);
+            local-domains = [
+              # Split-brain DNS: LAN clients get container IP for kimb.dev domains
+              "\"kimb.dev. A 192.168.100.2\""
+              "\"auth.kimb.dev. A 192.168.100.2\""  
+              "\"blog.kimb.dev. A 192.168.100.2\""
+              "\"home.kimb.dev. A 192.168.100.2\""
+              "\"grafana.kimb.dev. A 192.168.100.2\""
+              "\"prometheus.kimb.dev. A 192.168.100.2\""
+            ];
+          in
+            nebula-hosts ++ local-domains;
       };
     };
   };
 
-  # Basic monitoring
+  # Basic monitoring (restricted to LAN)
   services.prometheus.exporters.node = {
     enable = true;
-    listenAddress = "0.0.0.0";  # Listen on all interfaces for now
+    listenAddress = "192.168.69.1";  # LAN only - no public access
     port = 9100;
   };
 
@@ -207,10 +228,9 @@
     openssh.authorizedKeys.keys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICZ+5yePKB5vKsm5MJg6SOZSwO0GCV9UBw5cmGx7NmEg mccartykim@zoho.com"
     ];
-    initialPassword = "changeme";  # Change after first login
+    initialPassword = "changeme";  # CRITICAL: Change this password immediately after deployment!
   };
 
-  # Sudo configured in base profile
 
   # Allow trusted users for remote deployment
   nix.settings.trusted-users = [ "kimb" "root" ];
