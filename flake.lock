@@ -29,11 +29,11 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1755447066,
-        "narHash": "sha256-5L7F1+D7jTRbf/0NeKJ/XTgn2c4UlBZcusDKSOhUeDg=",
+        "lastModified": 1755732626,
+        "narHash": "sha256-qLAElW0E2QmcrKAbLPjFdueAOpjp3HmlxaOQf4R4jas=",
         "owner": "9001",
         "repo": "copyparty",
-        "rev": "b5c6b4fa9972ed663e06d9bc73603c089f6f39a7",
+        "rev": "cd8771fa522d1cf645c3c7e0193f07b53d81559c",
         "type": "github"
       },
       "original": {
@@ -145,11 +145,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1755538029,
-        "narHash": "sha256-XVsragfuN8A/tMiPToejH7RofH15toeIGhlXraX+yBo=",
+        "lastModified": 1755625756,
+        "narHash": "sha256-t57ayMEdV9g1aCfHzoQjHj1Fh3LDeyblceADm2hsLHM=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "bf450a0844e80e6aa22652d3f3728f20cd974527",
+        "rev": "dd026d86420781e84d0732f2fa28e1c051117b59",
         "type": "github"
       },
       "original": {
@@ -167,11 +167,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1755554363,
-        "narHash": "sha256-gv+CE24k5LrBHRJaqMQ88o+V8Iz26Y8OGzyiQO2Qi4o=",
+        "lastModified": 1755733763,
+        "narHash": "sha256-/vhm8AcHCtX+pJyxB97HZGDMMNufn5PSBfpPaeIXnWA=",
         "ref": "refs/heads/main",
-        "rev": "7e4ba868f3b4e3bf92b996c7ba28dd48b47d1a26",
-        "revCount": 14,
+        "rev": "ea219ea98a929e0af35ed8c713f9545cb5425060",
+        "revCount": 18,
         "type": "git",
         "url": "ssh://git@github.com/mccartykim/mist-blog"
       },
@@ -220,11 +220,11 @@
     },
     "nix-gleam": {
       "locked": {
-        "lastModified": 1717670865,
-        "narHash": "sha256-+dAPiKAwCzlKWtx3aIHXfR6jydh1JyangewqZKJx500=",
+        "lastModified": 1754383305,
+        "narHash": "sha256-GcKEBpF4fUnaqCHLOgnJUsFx9NEue0Y4MxYWhj2Levs=",
         "owner": "arnarg",
         "repo": "nix-gleam",
-        "rev": "c69abe0e57a01991654d3de63dcd93a8b91b98ff",
+        "rev": "05d3394d2213128f2c56e63fc301ac9ce21b4888",
         "type": "github"
       },
       "original": {
@@ -353,11 +353,11 @@
     },
     "nixpkgs_3": {
       "locked": {
-        "lastModified": 1755268003,
-        "narHash": "sha256-nNaeJjo861wFR0tjHDyCnHs1rbRtrMgxAKMoig9Sj/w=",
+        "lastModified": 1755577059,
+        "narHash": "sha256-5hYhxIpco8xR+IpP3uU56+4+Bw7mf7EMyxS/HqUYHQY=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "32f313e49e42f715491e1ea7b306a87c16fe0388",
+        "rev": "97eb7ee0da337d385ab015a23e15022c865be75c",
         "type": "github"
       },
       "original": {

@@ -21,7 +21,8 @@
   services.tailscale.enable = true;
   
   # Disable systemd-resolved to respect DHCP-provided DNS servers
-  services.resolved.enable = lib.mkDefault false;
+  # Use mkForce to override systemd-networkd's default enabling of resolved
+  services.resolved.enable = lib.mkForce false;
 
   # SSH
   services.openssh = {
