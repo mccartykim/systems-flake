@@ -5,52 +5,61 @@
   pkgs,
   ...
 }: {
-  # X11 and display manager
-  services.xserver.enable = true;
-  services.displayManager.sddm.enable = true;
-  services.desktopManager.plasma6.enable = true;
+  # Services configuration
+  services = {
+    # X11 and display manager
+    xserver = {
+      enable = true;
+      # Keyboard configuration
+      xkb = {
+        layout = "us";
+        variant = "";
+      };
+    };
+    displayManager.sddm.enable = true;
+    desktopManager.plasma6.enable = true;
 
-  # Keyboard configuration
-  services.xserver.xkb = {
-    layout = "us";
-    variant = "";
+    # Audio stack - PipeWire
+    pulseaudio.enable = false;
+    pipewire = {
+      enable = true;
+      alsa.enable = true;
+      alsa.support32Bit = true;
+      pulse.enable = true;
+      jack.enable = true;
+    };
+
+    # Printing
+    printing.enable = true;
+    avahi = {
+      enable = true;
+      nssmdns4 = true;
+      openFirewall = true;
+    };
+
+    # Additional desktop services
+    gvfs.enable = true;
+    udisks2.enable = true;
+    devmon.enable = true;
+
+    # Flatpak support
+    flatpak.enable = true;
   };
 
-  # Audio stack - PipeWire
-  services.pulseaudio.enable = false;
+  # Security configuration
   security.rtkit.enable = true;
-  services.pipewire = {
-    enable = true;
-    alsa.enable = true;
-    alsa.support32Bit = true;
-    pulse.enable = true;
-    jack.enable = true;
+
+  # Hardware configuration
+  hardware = {
+    # Bluetooth
+    bluetooth.enable = true;
+
+    # Graphics
+    graphics = {
+      enable = true;
+      enable32Bit = true;
+    };
   };
-
-  # Bluetooth
-  hardware.bluetooth.enable = true;
-
-  # Graphics
-  hardware.graphics = {
-    enable = true;
-    enable32Bit = true;
-  };
-
-  # Printing
-  services.printing.enable = true;
-  services.avahi = {
-    enable = true;
-    nssmdns4 = true;
-    openFirewall = true;
-  };
-
-  # Additional desktop services
-  services.gvfs.enable = true;
-  services.udisks2.enable = true;
-  services.devmon.enable = true;
-
-  # Flatpak support
-  services.flatpak.enable = true;
   xdg.portal.enable = true;
 
   # Add desktop-specific packages

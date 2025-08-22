@@ -5,56 +5,60 @@
   pkgs,
   ...
 }: {
-  # X11 and display manager with i3
-  services.xserver = {
-    enable = true;
-    desktopManager.xterm.enable = false;
-    windowManager.i3 = {
+  # Services configuration
+  services = {
+    # X11 and display manager with i3
+    xserver = {
       enable = true;
-      extraPackages = with pkgs; [
-        dmenu
-        i3status
-        i3lock
-      ];
+      desktopManager.xterm.enable = false;
+      windowManager.i3 = {
+        enable = true;
+        extraPackages = with pkgs; [
+          dmenu
+          i3status
+          i3lock
+        ];
+      };
+      deviceSection = ''
+        Option "DRI" "2"
+        Option "TearFree" "true"
+      '';
+      # Keyboard configuration
+      xkb.layout = "us";
     };
-    deviceSection = ''
-      Option "DRI" "2"
-      Option "TearFree" "true"
-    '';
-  };
 
-  services.displayManager.defaultSession = "none+i3";
+    displayManager.defaultSession = "none+i3";
 
-  # Keyboard configuration
-  services.xserver.xkb.layout = "us";
+    # Audio - minimal pipewire setup
+    pipewire.enable = true;
 
-  # Audio - minimal pipewire setup
-  services.pipewire.enable = true;
+    # Printing
+    printing.enable = true;
 
-  # Printing
-  services.printing.enable = true;
-
-  # Minimal touchpad configuration
-  services.libinput = {
-    enable = lib.mkForce false;
-    touchpad.tapping = false;
+    # Minimal touchpad configuration
+    libinput = {
+      enable = lib.mkForce false;
+      touchpad.tapping = false;
+    };
   };
 
   # XDG portal configuration
   xdg.portal.config.common.default = "*";
 
   # Environment setup for i3
-  environment.pathsToLink = ["/libexec"];
-  environment.variables = {
-    EDITOR = "nvim";
-    TERMINAL = "kitty";
-  };
+  environment = {
+    pathsToLink = ["/libexec"];
+    variables = {
+      EDITOR = "nvim";
+      TERMINAL = "kitty";
+    };
 
-  # Basic packages for i3 environment
-  environment.systemPackages = with pkgs; [
-    firefox
-    kitty
-    brightnessctl
-    linux-firmware
-  ];
+    # Basic packages for i3 environment
+    systemPackages = with pkgs; [
+      firefox
+      kitty
+      brightnessctl
+      linux-firmware
+    ];
+  };
 }

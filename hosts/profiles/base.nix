@@ -5,31 +5,43 @@
   pkgs,
   ...
 }: {
-  # Bootloader - can be overridden by hosts
-  boot.loader.systemd-boot.enable = lib.mkDefault true;
-  boot.loader.efi.canTouchEfiVariables = lib.mkDefault true;
+  # Boot configuration
+  boot = {
+    # Bootloader - can be overridden by hosts
+    loader = {
+      systemd-boot.enable = lib.mkDefault true;
+      efi.canTouchEfiVariables = lib.mkDefault true;
+    };
 
-  # Performance optimizations
-  boot.tmp.useTmpfs = true;
+    # Performance optimizations
+    tmp.useTmpfs = true;
+  };
+
   systemd.services.nix-daemon.environment.TMPDIR = "/var/tmp";
-  services.fstrim.enable = true;
-  services.dbus.implementation = "broker";
 
   # Networking
-  networking.networkmanager.enable = true;
-  networking.nftables.enable = true;
-  services.tailscale.enable = true;
-  
-  # Disable systemd-resolved to respect DHCP-provided DNS servers
-  # Use mkForce to override systemd-networkd's default enabling of resolved
-  services.resolved.enable = lib.mkForce false;
+  networking = {
+    networkmanager.enable = true;
+    nftables.enable = true;
+  };
 
-  # SSH
-  services.openssh = {
-    enable = true;
-    settings = {
-      PasswordAuthentication = lib.mkDefault false;
-      KbdInteractiveAuthentication = false;
+  # System services
+  services = {
+    fstrim.enable = true;
+    dbus.implementation = "broker";
+    tailscale.enable = true;
+
+    # Disable systemd-resolved to respect DHCP-provided DNS servers
+    # Use mkForce to override systemd-networkd's default enabling of resolved
+    resolved.enable = lib.mkForce false;
+
+    # SSH
+    openssh = {
+      enable = true;
+      settings = {
+        PasswordAuthentication = lib.mkDefault false;
+        KbdInteractiveAuthentication = false;
+      };
     };
   };
 
@@ -83,9 +95,9 @@
     extraGroups = ["wheel" "networkmanager"];
     shell = pkgs.fish;
     openssh.authorizedKeys.keys = [
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICZ+5yePKB5vKsm5MJg6SOZSwO0GCV9UBw5cmGx7NmEg mccartykim@zoho.com"  # Main key
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIN2bgYbsq7Hp5RoM1Dlt59CdGEjvV6CoCi75pR4JiG5e mccartykim@zoho.com"  # historian key
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJY8TB1PRV5e8e8QgdwFRPbuRIzjeS1oFY1WOUKTYnrj mccartykim@zoho.com"  # total-eclipse key
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICZ+5yePKB5vKsm5MJg6SOZSwO0GCV9UBw5cmGx7NmEg mccartykim@zoho.com" # Main key
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIN2bgYbsq7Hp5RoM1Dlt59CdGEjvV6CoCi75pR4JiG5e mccartykim@zoho.com" # historian key
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJY8TB1PRV5e8e8QgdwFRPbuRIzjeS1oFY1WOUKTYnrj mccartykim@zoho.com" # total-eclipse key
       # Add marshmallow, bartleby keys when available
     ];
   };

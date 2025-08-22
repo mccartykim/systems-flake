@@ -1,13 +1,15 @@
 # Nebula configuration with agenix secrets
-{ config, lib, pkgs, inputs, ... }:
-
-with lib;
-
-let
-  cfg = config.services.nebula-mesh;
-in
 {
-  imports = [ 
+  config,
+  lib,
+  pkgs,
+  inputs,
+  ...
+}:
+with lib; let
+  cfg = config.services.nebula-mesh;
+in {
+  imports = [
     ./nebula-mesh.nix
     inputs.agenix.nixosModules.default
   ];
@@ -22,7 +24,7 @@ in
         group = "nebula-mesh";
         mode = "0644";
       };
-      
+
       nebula-cert = {
         file = ../secrets/nebula-${config.networking.hostName}-cert.age;
         path = "/etc/nebula/${config.networking.hostName}.crt";
@@ -30,7 +32,7 @@ in
         group = "nebula-mesh";
         mode = "0644";
       };
-      
+
       nebula-key = {
         file = ../secrets/nebula-${config.networking.hostName}-key.age;
         path = "/etc/nebula/${config.networking.hostName}.key";
@@ -49,8 +51,8 @@ in
 
     # Ensure Nebula starts after agenix
     systemd.services."nebula@mesh" = {
-      after = [ "agenix.service" ];
-      wants = [ "agenix.service" ];
+      after = ["agenix.service"];
+      wants = ["agenix.service"];
     };
   };
 }

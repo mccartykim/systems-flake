@@ -1,11 +1,12 @@
-{ lib, config, pkgs, ... }:
-
-with lib;
-
-let
-  cfg = config.services.nebula-mesh;
-in
 {
+  lib,
+  config,
+  pkgs,
+  ...
+}:
+with lib; let
+  cfg = config.services.nebula-mesh;
+in {
   options.services.nebula-mesh = {
     enable = mkEnableOption "Nebula mesh network";
 
@@ -31,12 +32,12 @@ in
       type = types.listOf types.str;
       default = [];
       description = "Groups this host belongs to";
-      example = [ "laptops" "nixos" ];
+      example = ["laptops" "nixos"];
     };
 
     lighthouse = {
       enable = mkEnableOption "lighthouse mode";
-      
+
       externalIP = mkOption {
         type = types.str;
         description = "External IP address of this lighthouse";
@@ -58,11 +59,11 @@ in
             description = "Lighthouse's mesh IP address";
             example = "10.100.0.1";
           };
-          
+
           publicEndpoints = mkOption {
             type = types.listOf types.str;
             description = "Public endpoints to reach this lighthouse";
-            example = [ "203.0.113.1:4242" ];
+            example = ["203.0.113.1:4242"];
           };
         };
       });
@@ -88,8 +89,8 @@ in
       default = {};
       description = "Additional Nebula configuration";
       example = {
-        punchy = { punch = true; };
-        logging = { level = "info"; };
+        punchy = {punch = true;};
+        logging = {level = "info";};
       };
     };
   };
@@ -99,52 +100,57 @@ in
     services.nebula.networks.mesh = {
       enable = true;
       isLighthouse = cfg.lighthouse.enable;
-      
+
       ca = "${cfg.certificatesDir}/ca.crt";
       cert = "${cfg.certificatesDir}/${cfg.hostName}.crt";
       key = "${cfg.certificatesDir}/${cfg.hostName}.key";
 
       lighthouses = mkIf (!cfg.lighthouse.enable) (map (lh: lh.meshIP) cfg.lighthouses);
-      
+
       staticHostMap = mkIf (!cfg.lighthouse.enable) (
         listToAttrs (map (lh: {
-          name = lh.meshIP;
-          value = lh.publicEndpoints;
-        }) cfg.lighthouses)
+            name = lh.meshIP;
+            value = lh.publicEndpoints;
+          })
+          cfg.lighthouses)
       );
 
       listen = mkIf cfg.lighthouse.enable {
         host = "0.0.0.0";
-        port = cfg.lighthouse.port;
+        inherit (cfg.lighthouse) port;
       };
 
-      settings = recursiveUpdate {
-        tun = {
-          disabled = false;
-          dev = "nebula1";
-        };
+      settings =
+        recursiveUpdate {
+          tun = {
+            disabled = false;
+            dev = "nebula1";
+          };
 
-        logging = {
-          level = "info";
-        };
+          logging = {
+            level = "info";
+          };
 
-        punchy = {
-          punch = true;
-        };
+          punchy = {
+            punch = true;
+          };
 
-        relay = mkIf (!cfg.lighthouse.enable) {
-          relays = map (lh: lh.meshIP) cfg.lighthouses;
-          am_relay = false;
-          use_relays = true;
-        };
-      } cfg.extraSettings;
+          relay = mkIf (!cfg.lighthouse.enable) {
+            relays = map (lh: lh.meshIP) cfg.lighthouses;
+            am_relay = false;
+            use_relays = true;
+          };
+        }
+        cfg.extraSettings;
 
       firewall = {
-        outbound = [{
-          port = "any";
-          proto = "any";
-          host = "any";
-        }];
+        outbound = [
+          {
+            port = "any";
+            proto = "any";
+            host = "any";
+          }
+        ];
 
         inbound = [
           {
@@ -162,7 +168,7 @@ in
     };
 
     # Open firewall for Nebula
-    networking.firewall.allowedUDPPorts = [ cfg.lighthouse.port ];
+    networking.firewall.allowedUDPPorts = [cfg.lighthouse.port];
 
     # Ensure certificates directory exists
     systemd.tmpfiles.rules = [

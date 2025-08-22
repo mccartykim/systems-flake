@@ -17,20 +17,23 @@
   ];
 
   nixpkgs.config.allowUnfree = true;
-  nix.settings.trusted-public-keys = [
-    "cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g="
-    "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
-  ];
-  nix.settings.substituters = [
-    "https://cache.garnix.io"
-  ];
-  nix.settings.trusted-substituters = [
-    "https://cache.garnix.io"
-  ];
+
+  nix.settings = {
+    trusted-public-keys = [
+      "cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g="
+      "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
+    ];
+    substituters = [
+      "https://cache.garnix.io"
+    ];
+    trusted-substituters = [
+      "https://cache.garnix.io"
+    ];
+    experimental-features = ["nix-command" "flakes"];
+  };
 
   # Change default user
   # avf.defaultUser = "droid";
-  nix.settings.experimental-features = ["nix-command" "flakes"];
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions
   # on your system were taken. It's perfectly fine and recommended to leave

@@ -1,8 +1,11 @@
 # Authelia authentication service for maitred
 # Provides SSO for monitoring and dashboard services
-{ config, pkgs, inputs, ... }:
-
 {
+  config,
+  pkgs,
+  inputs,
+  ...
+}: {
   imports = [
     inputs.agenix.nixosModules.default
   ];
@@ -12,7 +15,7 @@
     authelia-jwt-secret = {
       file = ../../secrets/authelia-jwt-secret.age;
       path = "/etc/authelia/jwt-secret";
-      mode = "0444";  # World-readable since container will access it
+      mode = "0444"; # World-readable since container will access it
     };
     authelia-session-secret = {
       file = ../../secrets/authelia-session-secret.age;
@@ -35,9 +38,9 @@
   containers.authelia = {
     autoStart = true;
     privateNetwork = true;
-    hostAddress = "192.168.100.1";      # Router's container bridge IP
-    localAddress = "192.168.100.4";     # Authelia container IP
-    
+    hostAddress = "192.168.100.1"; # Router's container bridge IP
+    localAddress = "192.168.100.4"; # Authelia container IP
+
     bindMounts = {
       "/etc/authelia/jwt-secret" = {
         hostPath = "/run/agenix/authelia-jwt-secret";
@@ -56,31 +59,35 @@
         isReadOnly = true;
       };
     };
-    
-    config = { config, pkgs, ... }: {
+
+    config = {
+      config,
+      pkgs,
+      ...
+    }: {
       # Authelia service
       services.authelia.instances.main = {
         enable = true;
-        
+
         secrets = {
           jwtSecretFile = "/etc/authelia/jwt-secret";
           sessionSecretFile = "/etc/authelia/session-secret";
           storageEncryptionKeyFile = "/etc/authelia/storage-key";
         };
-        
+
         settings = {
           theme = "dark";
           default_2fa_method = "webauthn";
-          
+
           server = {
             address = "tcp://0.0.0.0:9091";
           };
-          
+
           log = {
             level = "info";
             format = "text";
           };
-          
+
           authentication_backend = {
             password_reset.disable = true;
             file = {
@@ -99,7 +106,7 @@
               };
             };
           };
-          
+
           session = {
             name = "authelia_session";
             same_site = "lax";
@@ -113,20 +120,20 @@
               }
             ];
           };
-          
+
           storage = {
             local = {
               path = "/var/lib/authelia-main/db.sqlite3";
             };
           };
-          
+
           notifier = {
             disable_startup_check = true;
             filesystem = {
               filename = "/var/lib/authelia-main/notifications.txt";
             };
           };
-          
+
           access_control = {
             default_policy = "deny";
             rules = [
@@ -156,7 +163,7 @@
               }
             ];
           };
-          
+
           webauthn = {
             disable = false;
             display_name = "kimb.dev Authentication";
@@ -164,7 +171,7 @@
             user_verification = "required";
             timeout = "60s";
           };
-          
+
           totp = {
             disable = false;
             issuer = "kimb.dev";
@@ -176,16 +183,16 @@
           };
         };
       };
-      
+
       # Open firewall for Authelia
-      networking.firewall.allowedTCPPorts = [ 9091 ];
-      
+      networking.firewall.allowedTCPPorts = [9091];
+
       # Minimal system packages
       environment.systemPackages = with pkgs; [
         curl
         htop
       ];
-      
+
       system.stateVersion = "24.11";
     };
   };

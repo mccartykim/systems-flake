@@ -4,12 +4,15 @@
   # For some reason, nix-darwin needs this stated explicitly
   users.users."kimberly.mccarty".home = "/Users/kimberly.mccarty";
   system.primaryUser = "kimberly.mccarty";
-  nixpkgs.config = {
-    allowBroken = true;
-    allowUnfree = true;
+  nixpkgs = {
+    config = {
+      allowBroken = true;
+      allowUnfree = true;
+    };
+    flake.setNixPath = true;
+    flake.setFlakeRegistry = true;
+    hostPlatform = "aarch64-darwin";
   };
-  nixpkgs.flake.setNixPath = true;
-  nixpkgs.flake.setFlakeRegistry = true;
   environment.systemPackages = [
     pkgs.terminal-notifier
     pkgs.cachix
@@ -17,19 +20,41 @@
     pkgs.lazygit
     pkgs.nix-output-monitor
   ];
-  nix.nixPath = pkgs.lib.mkForce [
-    {
-      darwin-config = builtins.concatStringsSep ":" [
-        "$HOME/.nixpkgs/darwin-configuration.nix"
-        "$HOME/.nix-defexpr/channels"
+  nix = {
+    nixPath = pkgs.lib.mkForce [
+      {
+        darwin-config = builtins.concatStringsSep ":" [
+          "$HOME/.nixpkgs/darwin-configuration.nix"
+          "$HOME/.nix-defexpr/channels"
+        ];
+      }
+    ];
+    settings = {
+      experimental-features = ["nix-command" "flakes"];
+      substituters = [
+        "https://cache.garnix.io"
       ];
-    }
-  ];
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+      trusted-public-keys = [
+        "cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g="
+      ];
+      trusted-users = ["@admin"];
+    };
+    optimise.automatic = true;
+    gc = {
+      automatic = true;
+      interval = [
+        {
+          Hour = 17;
+          Minute = 0;
+          Weekday = 5;
+        }
+      ];
+    };
+  };
 
   launchd.daemons.nix-darwin-activate = {
     serviceConfig = {
-      ProgramArguments = [ "/var/run/current-system/activate" ];
+      ProgramArguments = ["/var/run/current-system/activate"];
       RunAtLoad = true;
       KeepAlive = false;
       UserName = "root";
@@ -37,26 +62,6 @@
       StandardErrorPath = "/var/log/nix-darwin-activate.log";
     };
   };
-
-  # Necessary for using flakes on this system.
-  nix.settings.substituters = [
-    "https://cache.garnix.io"
-  ];
-  nix.settings.trusted-public-keys = [
-    "cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g="
-  ];
-
-  nix.settings.trusted-users = ["@admin"];
-
-  nix.optimise.automatic = true;
-  nix.gc.automatic = true;
-  nix.gc.interval = [
-    {
-      Hour = 17;
-      Minute = 0;
-      Weekday = 5;
-    }
-  ];
   security.pam.services.sudo_local.touchIdAuth = true;
 
   programs.nix-index.enable = true;
@@ -75,7 +80,4 @@
   # Used for backwards compatibility, please read the changelog before changing.
   # $ darwin-rebuild changelog
   system.stateVersion = 5;
-
-  # The platform the configuration will be used on.
-  nixpkgs.hostPlatform = "aarch64-darwin";
 }
