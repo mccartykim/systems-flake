@@ -36,6 +36,12 @@
   boot.loader.systemd-boot.edk2-uefi-shell.enable = true;
   boot.loader.systemd-boot.netbootxyz.enable = true;
 
+  # Mount external storage
+  fileSystems."/mnt/seagate" = {
+    device = "/dev/disk/by-uuid/980870c5-7397-45dd-9f01-972f9b51d0f6";
+    fsType = "ext4";
+    options = [ "defaults" "nofail" ];
+  };
 
   # Server-specific services
   services.homepage-dashboard = {
@@ -43,7 +49,39 @@
     openFirewall = true;
   };
   nixpkgs.overlays = [ copyparty.overlays.default ];
-  services.copyparty.enable = true;
+  services.copyparty = {
+    enable = true;
+    settings = {
+      # Listen on all interfaces for LAN and Nebula access
+      i = "0.0.0.0";
+      # Keep default port 3923
+      
+      # Header-based SSO authentication with Authelia
+      # Map Remote-User header from Authelia to Copyparty users
+      idp-h-usr = "Remote-User";
+      idp-h-grp = "Remote-Groups";
+      
+      # Trust maitred proxy for X-Forwarded-For and SSO headers
+      xff-src = "10.100.0.0/16,192.168.100.0/24";
+      
+      # CORS configuration for reverse proxy uploads
+      acao = "https://copyparty.kimb.dev";  # Allow cross-origin from reverse proxy domain
+      acam = "GET,POST,PUT,DELETE,HEAD,OPTIONS";  # Allow necessary HTTP methods
+    };
+    
+    # Configure volumes with SSO user permissions
+    volumes = {
+      "/" = {
+        path = "/mnt/seagate/copyparty";
+        access = {
+          # Give kimb full admin permissions via SSO header
+          rwadmG = ["kimb"];
+          # Allow all authenticated users to read
+          r = "*";
+        };
+      };
+    };
+  };
 
   services.miniflux = {
     enable = false;
@@ -121,8 +159,23 @@
 
   # Firewall configuration
   networking.firewall = {
-    allowedTCPPorts = [9001];
-    allowedUDPPorts = [65535];
+    allowedTCPPorts = [
+      9001       # Existing service
+      3923       # Copyparty HTTP
+      3921       # Copyparty FTP  
+      3945       # Copyparty SMB
+      3990       # Copyparty additional
+    ];
+    allowedTCPPortRanges = [
+      { from = 12000; to = 12099; }  # Copyparty dynamic ports
+    ];
+    allowedUDPPorts = [
+      65535      # Existing
+      69         # TFTP
+      1900       # UPnP
+      3969       # Copyparty TFTP
+      5353       # mDNS/Bonjour
+    ];
   };
 
   system.stateVersion = "23.11";

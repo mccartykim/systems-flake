@@ -173,6 +173,7 @@
         ];
         access-control = [
           "192.168.69.0/24 allow"
+          "192.168.100.0/24 allow"  # Container network
           "127.0.0.0/8 allow"
         ];
         # Local DNS entries for Nebula hosts and local domains
@@ -189,6 +190,7 @@
               "\"home.kimb.dev. A 192.168.100.2\""
               "\"grafana.kimb.dev. A 192.168.100.2\""
               "\"prometheus.kimb.dev. A 192.168.100.2\""
+              "\"copyparty.kimb.dev. A 192.168.100.2\""
             ];
           in
             nebula-hosts ++ local-domains;
@@ -201,6 +203,20 @@
     enable = true;
     listenAddress = "192.168.69.1";  # LAN only - no public access
     port = 9100;
+  };
+
+  # Port forward for Copyparty on rich-evans via Nebula
+  systemd.services.copyparty-proxy = {
+    description = "Copyparty proxy to rich-evans";
+    after = [ "network.target" "nebula@mesh.service" ];
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      ExecStart = "${pkgs.socat}/bin/socat TCP4-LISTEN:3923,fork,reuseaddr TCP4:10.100.0.40:3923";
+      Restart = "always";
+      RestartSec = "5";
+      User = "nobody";
+      Group = "nogroup";
+    };
   };
 
   # Network monitoring

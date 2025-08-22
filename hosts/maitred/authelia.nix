@@ -104,8 +104,8 @@
             name = "authelia_session";
             same_site = "lax";
             expiration = "1M";
-            inactivity = "5m";
-            remember_me = "1y";
+            inactivity = "2h";
+            remember_me = "30d";
             cookies = [
               {
                 domain = "kimb.dev";
@@ -149,14 +149,19 @@
                 policy = "one_factor";
                 subject = ["group:admins"];
               }
+              {
+                domain = ["copyparty.kimb.dev"];
+                policy = "one_factor";
+                subject = ["group:admins" "group:users"];
+              }
             ];
           };
           
           webauthn = {
             disable = false;
-            display_name = "kimb.dev";
-            attestation_conveyance_preference = "indirect";
-            selection_criteria.user_verification = "preferred";
+            display_name = "kimb.dev Authentication";
+            attestation_conveyance_preference = "direct";
+            user_verification = "required";
             timeout = "60s";
           };
           

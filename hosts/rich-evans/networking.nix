@@ -1,29 +1,34 @@
-# Static networking configuration for rich-evans
+# Networking configuration for rich-evans
 { config, lib, pkgs, ... }:
 
 {
+  # Disable NetworkManager on this server - use systemd-networkd instead
+  networking.networkmanager.enable = lib.mkForce false;
+  
+  # Use systemd-networkd for server networking
+  networking.useNetworkd = true;
+  systemd.network.enable = true;
+  
   networking = {
-    # Keep DHCP as fallback initially
-    useDHCP = false;
+    useDHCP = false;  # Managed by systemd-networkd
     
-    interfaces.eno1 = {
-      useDHCP = false;
-      ipv4.addresses = [{
-        address = "192.168.68.200";  # Static IP in high range to avoid DHCP
-        prefixLength = 24;
-      }];
-    };
-    
-    defaultGateway = {
-      address = "192.168.68.1";
-      interface = "eno1";
-    };
-    nameservers = [ 
-      "1.1.1.1"  # Cloudflare for now
-      "1.0.0.1"  # Will become self once DNS is running
-    ];
+    # Note: If you want a static IP later, you can:
+    # 1. Set a DHCP reservation on maitred based on MAC address
+    # 2. Or configure a static IP matching the current subnet
   };
   
-  # Fallback: if static IP fails, you can still connect via Nebula
-  # at 10.100.0.40 or Tailscale to fix it
+  # Configure eno1 interface with DHCP via systemd-networkd
+  systemd.network.networks."10-eno1" = {
+    matchConfig.Name = "eno1";
+    networkConfig = {
+      DHCP = "yes";
+      # Get IP from maitred's DHCP pool (192.168.69.100-199)
+    };
+    linkConfig.RequiredForOnline = "routable";
+  };
+  
+  # Access via: 
+  # - Nebula: 10.100.0.40 (always works)
+  # - Tailscale: backup access
+  # - rich-evans.local: mDNS discovery
 }
