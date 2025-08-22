@@ -15,6 +15,9 @@
   # Server networking optimizations
   networking.firewall.enable = true;
   services.tailscale.useRoutingFeatures = "server";
+  
+  # Servers should use systemd-networkd, not NetworkManager
+  networking.networkmanager.enable = lib.mkForce false;
 
   # Performance and maintenance
   services.fstrim.enable = true;

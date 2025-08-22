@@ -86,6 +86,41 @@
           proto = "tcp";
           host = "any";
         }
+        {
+          port = 3923;  # Copyparty HTTP
+          proto = "tcp";
+          host = "any";
+        }
+        {
+          port = 3921;  # Copyparty FTP
+          proto = "tcp";
+          host = "any";
+        }
+        {
+          port = 3945;  # Copyparty SMB
+          proto = "tcp";
+          host = "any";
+        }
+        {
+          port = 3990;  # Copyparty additional
+          proto = "tcp";
+          host = "any";
+        }
+        {
+          port = "12000-12099";  # Copyparty dynamic ports
+          proto = "tcp";
+          host = "any";
+        }
+        {
+          port = 69;  # TFTP
+          proto = "udp";
+          host = "any";
+        }
+        {
+          port = 3969;  # Copyparty TFTP
+          proto = "udp";
+          host = "any";
+        }
       ];
     };
   };

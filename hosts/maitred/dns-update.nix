@@ -24,18 +24,58 @@
 # In-A-Dyn configuration with agenix token
 period = 300
 
-provider cloudflare.com {
+provider cloudflare.com:1 {
     username = kimb.dev
     password = $token
-    hostname = "@"
+    hostname = "kimb.dev"
     ttl = 1
     proxied = false
 }
 
-provider cloudflare.com {
+provider cloudflare.com:2 {
     username = kimb.dev
     password = $token
-    hostname = "*.kimb.dev"
+    hostname = "auth.kimb.dev"
+    ttl = 1
+    proxied = false
+}
+
+provider cloudflare.com:3 {
+    username = kimb.dev
+    password = $token
+    hostname = "blog.kimb.dev"
+    ttl = 1
+    proxied = false
+}
+
+provider cloudflare.com:4 {
+    username = kimb.dev
+    password = $token
+    hostname = "home.kimb.dev"
+    ttl = 1
+    proxied = false
+}
+
+provider cloudflare.com:5 {
+    username = kimb.dev
+    password = $token
+    hostname = "grafana.kimb.dev"
+    ttl = 1
+    proxied = false
+}
+
+provider cloudflare.com:6 {
+    username = kimb.dev
+    password = $token
+    hostname = "prometheus.kimb.dev"
+    ttl = 1
+    proxied = false
+}
+
+provider cloudflare.com:7 {
+    username = kimb.dev
+    password = $token
+    hostname = "copyparty.kimb.dev"
     ttl = 1
     proxied = false
 }
