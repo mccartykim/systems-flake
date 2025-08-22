@@ -13,7 +13,7 @@
     ../profiles/base.nix
     ../profiles/laptop.nix
     ../profiles/i3-desktop.nix
-    
+
     # Nebula mesh network with agenix
     ./nebula.nix
   ];
@@ -29,7 +29,7 @@
   ];
 
   # Kernel modules for Broadcom WiFi (open-source driver)
-  hardware.firmware = [ pkgs.linux-firmware ];
+  hardware.firmware = [pkgs.linux-firmware];
   boot.initrd.kernelModules = ["kvm-intel"];
 
   # Swap configuration
@@ -51,9 +51,9 @@
   environment.shells = [pkgs.fish];
 
   # Use rich-evans for DNS
-  networking.nameservers = [ 
-    "10.100.0.40"  # Rich-evans via Nebula
-    "1.1.1.1"      # Fallback
+  networking.nameservers = [
+    "10.100.0.40" # Rich-evans via Nebula
+    "1.1.1.1" # Fallback
   ];
 
   system.stateVersion = "23.05";

@@ -49,81 +49,86 @@
   home = {
     username = "kimb";
     homeDirectory = "/home/kimb";
+    packages = with pkgs; [
+      zettlr
+    ];
   };
-
-  home.packages = with pkgs; [
-    zettlr
-  ];
 
   # Enable modules
-  modules.shell-essentials.enable = true;
-  modules.development.enable = true;
-  modules.terminal-enhanced = {
-    enable = true;
-    tmux = true;
+  modules = {
+    shell-essentials.enable = true;
+    development.enable = true;
+    terminal-enhanced = {
+      enable = true;
+      tmux = true;
+    };
+    gaming.enable = true;
+    ai-tools.enable = true;
   };
-  modules.gaming.enable = true;
-  modules.ai-tools.enable = true;
 
-  # Enable home-manager
-  programs.home-manager.enable = true;
-  programs.fish.functions = {
-    fish_jj_prompt = ''
-      # Is jj installed?
-      if not command -sq jj
-          return 1
-      end
+  # Programs configuration
+  programs = {
+    # Enable home-manager
+    home-manager.enable = true;
 
-      # Are we in a jj repo?
-      if not jj root --quiet --no-pager &>/dev/null
-          return 1
-      end
+    fish.functions = {
+      fish_jj_prompt = ''
+        # Is jj installed?
+        if not command -sq jj
+            return 1
+        end
 
-      # Generate prompt
-      jj log --ignore-working-copy --no-pager --no-graph --color always -r @ -T '
-          surround(
-              " (",
-              ")",
-              separate(
-                  " ",
-                  bookmarks.join(", "),
-                  coalesce(
-                      surround(
-                          "\"",
-                          "\"",
-                          if(
-                              description.first_line().substr(0, 24).starts_with(description.first_line()),
-                              description.first_line().substr(0, 24),
-                              description.first_line().substr(0, 23) ++ "…"
-                          )
-                      ),
-                      "(no desc)"
-                  ),
-                  change_id.shortest(),
-                  commit_id.shortest(),
-                  if(conflict, "(conflict)"),
-                  if(empty, "(empty)"),
-                  if(divergent, "(divergent)"),
-                  if(hidden, "(hidden)"),
-              )
-          )
-      '
-    '';
-    fish_vcs_prompt = ''
-            # Defined in /nix/store/j2qz2d900y518k2hq6myl60g2vyh7l19-fish-4.0.1/share/fish/functions/fish_vcs_prompt.fish @ line 1
-            function fish_vcs_prompt --description 'Print all vcs prompts'
-            # If a prompt succeeded, we assume that it's printed the correct info.
-            # This is so we don't try svn if git already worked.
-      	fish_jj_prompt $argv
-      	or fish_git_prompt $argv
-      	or fish_hg_prompt $argv
-      	or fish_fossil_prompt $argv
-          # The svn prompt is disabled by default because it's quite slow on common svn repositories.
-          # To enable it uncomment it.
-          # You can also only use it in specific directories by checking $PWD.
-          # or fish_svn_prompt
-      end
-    '';
+        # Are we in a jj repo?
+        if not jj root --quiet --no-pager &>/dev/null
+            return 1
+        end
+
+        # Generate prompt
+        jj log --ignore-working-copy --no-pager --no-graph --color always -r @ -T '
+            surround(
+                " (",
+                ")",
+                separate(
+                    " ",
+                    bookmarks.join(", "),
+                    coalesce(
+                        surround(
+                            "\"",
+                            "\"",
+                            if(
+                                description.first_line().substr(0, 24).starts_with(description.first_line()),
+                                description.first_line().substr(0, 24),
+                                description.first_line().substr(0, 23) ++ "…"
+                            )
+                        ),
+                        "(no desc)"
+                    ),
+                    change_id.shortest(),
+                    commit_id.shortest(),
+                    if(conflict, "(conflict)"),
+                    if(empty, "(empty)"),
+                    if(divergent, "(divergent)"),
+                    if(hidden, "(hidden)"),
+                )
+            )
+        '
+      '';
+      fish_vcs_prompt = ''
+              # Defined in /nix/store/j2qz2d900y518k2hq6myl60g2vyh7l19-fish-4.0.1/share/fish/functions/fish_vcs_prompt.fish @ line 1
+              function fish_vcs_prompt --description 'Print all vcs prompts'
+              # If a prompt succeeded, we assume that it's printed the correct info.
+              # This is so we don't try svn if git already worked.
+        	fish_jj_prompt $argv
+        	or fish_git_prompt $argv
+        	or fish_hg_prompt $argv
+        	or fish_fossil_prompt $argv
+            # The svn prompt is disabled by default because it's quite slow on common svn repositories.
+            # To enable it uncomment it.
+            # You can also only use it in specific directories by checking $PWD.
+            # or fish_svn_prompt
+        end
+      '';
+    };
   };
 
   # Nicely reload system units when changing configs

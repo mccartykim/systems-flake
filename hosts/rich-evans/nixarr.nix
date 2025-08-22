@@ -1,36 +1,64 @@
 {pkgs, ...}: {
-  services.jellyfin = {
-    enable = false;
-    user = "media";
-    group = "media";
+  services = {
+    jellyfin = {
+      enable = false;
+      user = "media";
+      group = "media";
+    };
+
+    jellyseerr = {
+      enable = false;
+      openFirewall = true;
+    };
+
+    transmission = {
+      enable = false;
+      home = "/mnt/seagate/torrent_zone/transmission";
+      user = "media";
+      group = "media";
+      openFirewall = true;
+      openRPCPort = true;
+      settings = {
+        rpc-bind-address = "0.0.0.0";
+        rpc-whitelist = ["127.0.0.1" "192.168.*.*" "100.*.*.*" "rich-evans" "kims-macbook-pro"];
+        rpc-whitelist-enabled = true;
+        rpc-host-whitelist = ["127.0.0.1" "192.168.*.*" "100.*.*.*" "rich-evans"];
+        rpc-host-whitelist-enabled = true;
+        bind-address-ipv4 = "205.142.240.210";
+        port-forwarding-enabled = true;
+        rpc-enabled = true;
+        rpc-username = "kimb";
+        rpc-password = "kimb";
+      };
+    };
+
+    sonarr = {
+      enable = false;
+      user = "media";
+      group = "media";
+      openFirewall = true;
+    };
+    prowlarr = {
+      enable = false;
+      openFirewall = true;
+    };
+    radarr = {
+      enable = false;
+      user = "media";
+      group = "media";
+      openFirewall = true;
+    };
   };
 
-  services.jellyseerr.enable = false;
-  services.jellyseerr.openFirewall = true;
-  users.users.media.group = "media";
-  users.users.media.isSystemUser = true;
-  users.groups.media = {};
-  users.users."kimb".extraGroups = ["media"];
-
-  services.transmission = {
-    enable = false;
-    home = "/mnt/seagate/torrent_zone/transmission";
-    user = "media";
-    group = "media";
-    openFirewall = true;
-    openRPCPort = true;
-    settings = {
-      rpc-bind-address = "0.0.0.0";
-      rpc-whitelist = ["127.0.0.1" "192.168.*.*" "100.*.*.*" "rich-evans" "kims-macbook-pro"];
-      rpc-whitelist-enabled = true;
-      rpc-host-whitelist = ["127.0.0.1" "192.168.*.*" "100.*.*.*" "rich-evans"];
-      rpc-host-whitelist-enabled = true;
-      bind-address-ipv4 = "205.142.240.210";
-      port-forwarding-enabled = true;
-      rpc-enabled = true;
-      rpc-username = "kimb";
-      rpc-password = "kimb";
+  users = {
+    users = {
+      media = {
+        group = "media";
+        isSystemUser = true;
+      };
+      "kimb".extraGroups = ["media"];
     };
+    groups.media = {};
   };
 
   virtualisation.oci-containers = let
@@ -199,50 +227,36 @@
     "d /mnt/seagate/torrent_zone/ 0770 - media - -"
   ];
 
-  services.sonarr = {
-    enable = false;
-    user = "media";
-    group = "media";
-    openFirewall = true;
-  };
-  services.prowlarr = {
-    enable = false;
-    openFirewall = true;
-  };
-  services.radarr = {
-    enable = false;
-    user = "media";
-    group = "media";
-    openFirewall = true;
-  };
   # services.mullvad-vpn.enable = true;
-  networking.iproute2.enable = true;
-  networking.wg-quick.interfaces = let
-    # [Peer] section -> Endpoint
-    server_ip = "205.142.240.210";
-  in {
-    wg0 = {
-      autostart = false;
-      # [Interface] section -> Address
-      address = ["10.2.0.2/32"];
+  networking = {
+    iproute2.enable = true;
+    wg-quick.interfaces = let
+      # [Peer] section -> Endpoint
+      server_ip = "205.142.240.210";
+    in {
+      wg0 = {
+        autostart = false;
+        # [Interface] section -> Address
+        address = ["10.2.0.2/32"];
 
-      # [Peer] section -> Endpoint:port
-      listenPort = 51820;
-      dns = ["10.2.0.1"];
+        # [Peer] section -> Endpoint:port
+        listenPort = 51820;
+        dns = ["10.2.0.1"];
 
-      # Path to the private key file.
-      privateKeyFile = "/etc/proton-vpn.key";
+        # Path to the private key file.
+        privateKeyFile = "/etc/proton-vpn.key";
 
-      peers = [
-        {
-          # [Peer] section -> PublicKey
-          publicKey = "/HvEnSU5JaswyBC/YFs74eGLXqLdzsaFeVT8SD1KYAc=";
-          # [Peer] section -> AllowedIPs
-          allowedIPs = ["0.0.0.0/0"];
-          # [Peer] section -> Endpoint:port
-          endpoint = "${server_ip}:51820";
-        }
-      ];
+        peers = [
+          {
+            # [Peer] section -> PublicKey
+            publicKey = "/HvEnSU5JaswyBC/YFs74eGLXqLdzsaFeVT8SD1KYAc=";
+            # [Peer] section -> AllowedIPs
+            allowedIPs = ["0.0.0.0/0"];
+            # [Peer] section -> Endpoint:port
+            endpoint = "${server_ip}:51820";
+          }
+        ];
+      };
     };
   };
 }

@@ -5,24 +5,34 @@
   pkgs,
   ...
 }: {
-  # Enhanced SSH configuration for servers
-  services.openssh.settings = {
-    PasswordAuthentication = false;
-    PermitRootLogin = "no";
-    X11Forwarding = false;
+  # Services configuration
+  services = {
+    # Enhanced SSH configuration for servers
+    openssh.settings = {
+      PasswordAuthentication = false;
+      PermitRootLogin = "no";
+      X11Forwarding = false;
+    };
+
+    # Server networking optimizations
+    tailscale.useRoutingFeatures = "server";
+
+    # Performance and maintenance
+    fstrim.enable = true;
+    locate.enable = true;
+    logrotate.enable = true;
+
+    # Disable unnecessary desktop services
+    udisks2.enable = false;
+    gvfs.enable = false;
   };
 
   # Server networking optimizations
-  networking.firewall.enable = true;
-  services.tailscale.useRoutingFeatures = "server";
-  
-  # Servers should use systemd-networkd, not NetworkManager
-  networking.networkmanager.enable = lib.mkForce false;
-
-  # Performance and maintenance
-  services.fstrim.enable = true;
-  services.locate.enable = true;
-  services.logrotate.enable = true;
+  networking = {
+    firewall.enable = true;
+    # Servers should use systemd-networkd, not NetworkManager
+    networkmanager.enable = lib.mkForce false;
+  };
 
   # Monitoring and maintenance packages
   environment.systemPackages = with pkgs; [
@@ -36,9 +46,6 @@
     rsync
   ];
 
-  # Disable unnecessary desktop services
-  services.udisks2.enable = false;
-  services.gvfs.enable = false;
   hardware.bluetooth.enable = false;
 
   # Security hardening

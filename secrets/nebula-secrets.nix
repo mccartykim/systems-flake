@@ -7,7 +7,7 @@
     externalIP = "35.222.40.201";
     secrets = [
       "ca.crt"
-      "lighthouse.crt" 
+      "lighthouse.crt"
       "lighthouse.key"
     ];
   };
@@ -16,7 +16,7 @@
   nodes = {
     historian = {
       hostIP = "10.100.0.10";
-      groups = [ "laptops" "nixos" ];
+      groups = ["laptops" "nixos"];
       secrets = [
         "ca.crt"
         "historian.crt"
@@ -26,7 +26,7 @@
 
     marshmallow = {
       hostIP = "10.100.0.20";
-      groups = [ "laptops" "nixos" ];
+      groups = ["laptops" "nixos"];
       secrets = [
         "ca.crt"
         "marshmallow.crt"
@@ -36,7 +36,7 @@
 
     bartleby = {
       hostIP = "10.100.0.30";
-      groups = [ "laptops" "nixos" ];
+      groups = ["laptops" "nixos"];
       secrets = [
         "ca.crt"
         "bartleby.crt"
@@ -46,7 +46,7 @@
 
     rich-evans = {
       hostIP = "10.100.0.40";
-      groups = [ "servers" "nixos" ];
+      groups = ["servers" "nixos"];
       secrets = [
         "ca.crt"
         "rich-evans.crt"
@@ -59,7 +59,7 @@
   lighthouses = [
     {
       meshIP = "10.100.0.1";
-      publicEndpoints = [ "35.222.40.201:4242" ];
+      publicEndpoints = ["35.222.40.201:4242"];
     }
   ];
 }

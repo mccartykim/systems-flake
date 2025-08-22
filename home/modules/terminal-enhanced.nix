@@ -46,20 +46,22 @@ with lib; {
   };
 
   config = mkIf config.modules.terminal-enhanced.enable {
-    programs.fzf.enable = config.modules.terminal-enhanced.fzf;
-    programs.eza.enable = config.modules.terminal-enhanced.eza;
-    programs.zellij.enable = config.modules.terminal-enhanced.zellij;
+    programs = {
+      fzf.enable = config.modules.terminal-enhanced.fzf;
+      eza.enable = config.modules.terminal-enhanced.eza;
+      zellij.enable = config.modules.terminal-enhanced.zellij;
 
-    programs.tmux = mkIf config.modules.terminal-enhanced.tmux {
-      enable = true;
-      mouse = true;
-      keyMode = "vi";
-    };
+      tmux = mkIf config.modules.terminal-enhanced.tmux {
+        enable = true;
+        mouse = true;
+        keyMode = "vi";
+      };
 
-    programs.kitty = mkIf config.modules.terminal-enhanced.kitty {
-      enable = true;
-      environment = {
-        "PAGER" = ":builtin";
+      kitty = mkIf config.modules.terminal-enhanced.kitty {
+        enable = true;
+        environment = {
+          "PAGER" = ":builtin";
+        };
       };
     };
 

@@ -31,10 +31,10 @@
     };
 
     copyparty.url = "github:9001/copyparty";
-    
+
     agenix.url = "github:ryantm/agenix";
     agenix.inputs.nixpkgs.follows = "nixpkgs";
-    
+
     mist-blog.url = "git+ssh://git@github.com/mccartykim/mist-blog";
     mist-blog.inputs.nixpkgs.follows = "nixpkgs";
   };
@@ -57,7 +57,6 @@
   } @ inputs: let
     inherit (self) outputs;
   in {
-
     packages.x86_64-linux = {
       rich-evans-installer = nixos-generators.nixosGenerate {
         system = "x86_64-linux";
@@ -88,20 +87,21 @@
       };
     };
 
-    formatter.aarch64-darwin = nixpkgs.legacyPackages.aarch64-darwin.alejandra;
-    formatter.x86_64-darwin = nixpkgs.legacyPackages.x86_64-darwin.alejandra;
-
-    formatter.x86_64-linux = nixpkgs.legacyPackages.x86_64-linux.alejandra;
+    formatter = {
+      aarch64-darwin = nixpkgs.legacyPackages.aarch64-darwin.alejandra;
+      x86_64-darwin = nixpkgs.legacyPackages.x86_64-darwin.alejandra;
+      x86_64-linux = nixpkgs.legacyPackages.x86_64-linux.alejandra;
+    };
 
     # NixOS configuration entrypoint
     # Available through 'nixos-rebuild --flake .#your-hostname'
     nixosConfigurations = {
       rich-evans-installer = inputs.nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
-      	modules = [
-      	  "${nixpkgs}/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix"
-      	  ./installer/installer.nix
-      	];
+        modules = [
+          "${nixpkgs}/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix"
+          ./installer/installer.nix
+        ];
       };
 
       bonbon = inputs.nixpkgs.lib.nixosSystem {
@@ -114,9 +114,11 @@
           {
             # use system-level nixpkgs rather than the HM private ones
             # "This saves an extra Nixpkgs evaluation, adds consistency, and removes the dependency on NIX_PATH, which is otherwise used for importing Nixpkgs."
-            home-manager.useGlobalPkgs = true;
-            home-manager.users.droid = ./home/bonbon.nix;
-            home-manager.backupFileExtension = "backup";
+            home-manager = {
+              useGlobalPkgs = true;
+              users.droid = ./home/bonbon.nix;
+              backupFileExtension = "backup";
+            };
           }
           nixos-avf.nixosModules.avf
           nix-index-database.nixosModules.nix-index
@@ -138,10 +140,12 @@
           ./hosts/marshmallow/configuration.nix
           home-manager.nixosModules.home-manager
           {
-            home-manager.backupFileExtension = "backup";
-            # home-manager.useGlobalPkgs = true;
-            home-manager.useUserPackages = true;
-            home-manager.users.kimb = ./home/marshmallow.nix;
+            home-manager = {
+              backupFileExtension = "backup";
+              # useGlobalPkgs = true;
+              useUserPackages = true;
+              users.kimb = ./home/marshmallow.nix;
+            };
           }
           nix-index-database.nixosModules.nix-index
           {programs.nix-index-database.comma.enable = true;}
@@ -159,10 +163,12 @@
           {programs.nix-index-database.comma.enable = true;}
           home-manager.nixosModules.home-manager
           {
-            home-manager.backupFileExtension = "backup";
-            # home-manager.useGlobalPkgs = true;
-            home-manager.useUserPackages = true;
-            home-manager.users.kimb = ./home/total-eclipse.nix;
+            home-manager = {
+              backupFileExtension = "backup";
+              # useGlobalPkgs = true;
+              useUserPackages = true;
+              users.kimb = ./home/total-eclipse.nix;
+            };
           }
         ];
       };
@@ -178,10 +184,12 @@
           {programs.nix-index-database.comma.enable = true;}
           home-manager.nixosModules.home-manager
           {
-            home-manager.backupFileExtension = "backup";
-            # home-manager.useGlobalPkgs = true;
-            home-manager.useUserPackages = true;
-            home-manager.users.kimb = ./home/historian.nix;
+            home-manager = {
+              backupFileExtension = "backup";
+              # useGlobalPkgs = true;
+              useUserPackages = true;
+              users.kimb = ./home/historian.nix;
+            };
           }
         ];
       };
@@ -225,10 +233,12 @@
           ./hosts/bartleby/configuration.nix
           home-manager.nixosModules.home-manager
           {
-            home-manager.backupFileExtension = "backup";
-            home-manager.useGlobalPkgs = true;
-            home-manager.useUserPackages = true;
-            home-manager.users.kimb = ./home/bartleby.nix;
+            home-manager = {
+              backupFileExtension = "backup";
+              useGlobalPkgs = true;
+              useUserPackages = true;
+              users.kimb = ./home/bartleby.nix;
+            };
           }
           nix-index-database.nixosModules.nix-index
           {programs.nix-index-database.comma.enable = true;}
@@ -242,22 +252,24 @@
       # Helper to create colmena node from registry entry
       makeColmenaNode = name: node: {
         deployment = {
-          targetHost = node.ip;  # Use Nebula IPs for direct connection to all hosts
+          targetHost = node.ip; # Use Nebula IPs for direct connection to all hosts
           targetUser = "kimb";
           buildOnTarget = false;
         };
         imports = self.nixosConfigurations.${name}._module.args.modules;
       };
-    in {
-      meta = {
-        nixpkgs = import nixpkgs { 
-          system = "x86_64-linux"; 
-          overlays = [];
+    in
+      {
+        meta = {
+          nixpkgs = import nixpkgs {
+            system = "x86_64-linux";
+            overlays = [];
+          };
+          specialArgs = {inherit inputs outputs copyparty;};
         };
-        specialArgs = {inherit inputs outputs copyparty;};
-      };
-    } // (builtins.mapAttrs makeColmenaNode 
-          (builtins.removeAttrs registry.nodes ["lighthouse"])); # Skip non-NixOS lighthouse
+      }
+      // (builtins.mapAttrs makeColmenaNode
+        (builtins.removeAttrs registry.nodes ["lighthouse"])); # Skip non-NixOS lighthouse
 
     devShells.x86_64-linux.default = let
       system = "x86_64-linux";

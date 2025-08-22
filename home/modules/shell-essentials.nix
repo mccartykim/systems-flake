@@ -10,13 +10,15 @@ with lib; {
   };
 
   config = mkIf config.modules.shell-essentials.enable {
-    programs.fish.enable = true;
-    programs.zoxide.enable = true;
-    programs.atuin.enable = true;
+    programs = {
+      fish.enable = true;
+      zoxide.enable = true;
+      atuin.enable = true;
 
-    programs.direnv = {
-      enable = true;
-      nix-direnv.enable = true;
+      direnv = {
+        enable = true;
+        nix-direnv.enable = true;
+      };
     };
   };
 }

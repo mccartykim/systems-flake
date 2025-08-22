@@ -1,7 +1,11 @@
 # Nebula configuration for rich-evans with agenix
-{ config, lib, pkgs, inputs, ... }:
-
 {
+  config,
+  lib,
+  pkgs,
+  inputs,
+  ...
+}: {
   imports = [
     inputs.agenix.nixosModules.default
   ];
@@ -15,7 +19,7 @@
       group = "nebula-mesh";
       mode = "0644";
     };
-    
+
     nebula-cert = {
       file = ../../secrets/nebula-rich-evans-cert.age;
       path = "/etc/nebula/rich-evans.crt";
@@ -23,7 +27,7 @@
       group = "nebula-mesh";
       mode = "0644";
     };
-    
+
     nebula-key = {
       file = ../../secrets/nebula-rich-evans-key.age;
       path = "/etc/nebula/rich-evans.key";
@@ -37,44 +41,46 @@
   services.nebula.networks.mesh = {
     enable = true;
     isLighthouse = false;
-    
+
     ca = config.age.secrets.nebula-ca.path;
     cert = config.age.secrets.nebula-cert.path;
     key = config.age.secrets.nebula-key.path;
-    
-    lighthouses = [ "10.100.0.1" ];
+
+    lighthouses = ["10.100.0.1"];
     staticHostMap = {
-      "10.100.0.1" = [ "35.222.40.201:4242" ];
+      "10.100.0.1" = ["35.222.40.201:4242"];
     };
-    
+
     settings = {
       punchy = {
         punch = true;
       };
-      
+
       relay = {
-        relays = [ "10.100.0.1" ];
+        relays = ["10.100.0.1"];
         am_relay = false;
         use_relays = true;
       };
-      
+
       tun = {
         disabled = false;
         dev = "nebula1";
       };
-      
+
       logging = {
         level = "info";
       };
     };
-    
+
     firewall = {
-      outbound = [{
-        port = "any";
-        proto = "any";
-        host = "any";
-      }];
-      
+      outbound = [
+        {
+          port = "any";
+          proto = "any";
+          host = "any";
+        }
+      ];
+
       inbound = [
         {
           port = "any";
@@ -87,37 +93,37 @@
           host = "any";
         }
         {
-          port = 3923;  # Copyparty HTTP
+          port = 3923; # Copyparty HTTP
           proto = "tcp";
           host = "any";
         }
         {
-          port = 3921;  # Copyparty FTP
+          port = 3921; # Copyparty FTP
           proto = "tcp";
           host = "any";
         }
         {
-          port = 3945;  # Copyparty SMB
+          port = 3945; # Copyparty SMB
           proto = "tcp";
           host = "any";
         }
         {
-          port = 3990;  # Copyparty additional
+          port = 3990; # Copyparty additional
           proto = "tcp";
           host = "any";
         }
         {
-          port = "12000-12099";  # Copyparty dynamic ports
+          port = "12000-12099"; # Copyparty dynamic ports
           proto = "tcp";
           host = "any";
         }
         {
-          port = 69;  # TFTP
+          port = 69; # TFTP
           proto = "udp";
           host = "any";
         }
         {
-          port = 3969;  # Copyparty TFTP
+          port = 3969; # Copyparty TFTP
           proto = "udp";
           host = "any";
         }
@@ -127,10 +133,10 @@
 
   # Ensure Nebula starts after agenix
   systemd.services."nebula@mesh" = {
-    after = [ "agenix.service" ];
-    wants = [ "agenix.service" ];
+    after = ["agenix.service"];
+    wants = ["agenix.service"];
   };
 
   # Open firewall for Nebula
-  networking.firewall.allowedUDPPorts = [ 4242 ];
+  networking.firewall.allowedUDPPorts = [4242];
 }

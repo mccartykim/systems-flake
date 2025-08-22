@@ -4,8 +4,7 @@
   pkgs,
   inputs,
   ...
-}:
-{
+}: {
   imports = [
     # Hardware configuration
     ./hardware-configuration.nix
@@ -14,12 +13,13 @@
     ../profiles/base.nix
     ../profiles/desktop.nix
     ../profiles/gaming.nix
-    
+
     # Nebula mesh network with agenix
     ./nebula.nix
   ];
-  virtualisation.containers.enable = true;
+  # Virtualization configuration
   virtualisation = {
+    containers.enable = true;
     podman = {
       enable = true;
 
@@ -29,22 +29,63 @@
       # Required for containers under podman-compose to be able to talk to each other.
       defaultNetwork.settings.dns_enabled = true;
     };
+
+    libvirtd.enable = true;
+    virtualbox.host = {
+      enable = true;
+      enableKvm = true;
+      enableExtensionPack = true;
+      addNetworkInterface = false;
+    };
   };
 
-  programs.nix-ld.enable = true;
+  # Host identification and networking configuration
+  networking = {
+    hostName = "historian";
 
-  virtualisation.libvirtd.enable = true;
-  programs.virt-manager.enable = true;
-  virtualisation.virtualbox.host.enable = true;
-  virtualisation.virtualbox.host.enableKvm = true;
-  virtualisation.virtualbox.host.enableExtensionPack = true;
-  virtualisation.virtualbox.host.addNetworkInterface = false;
+    # Wi-Fi backend
+    networkmanager.wifi.backend = "iwd";
 
-  # Host identification
-  networking.hostName = "historian";
+    # Network interface configuration
+    interfaces.eno2.wakeOnLan = {
+      enable = true;
+      policy = ["unicast"];
+    };
+
+    # Use rich-evans for DNS
+    nameservers = [
+      "10.100.0.40" # Rich-evans via Nebula
+      "1.1.1.1" # Fallback
+    ];
+
+    # Extended firewall configuration for streaming
+    firewall = {
+      allowedTCPPorts = [
+        47984
+        47989
+        47990
+        48000
+        48010
+      ];
+      allowedUDPPorts = [4242]; # Nebula
+      allowedUDPPortRanges = [
+        {
+          from = 47998;
+          to = 48020;
+        }
+        {
+          from = 8000;
+          to = 8010;
+        }
+      ];
+      trustedInterfaces = [
+        "virbr0"
+      ];
+    };
+  };
 
   # AMD graphics hardware configuration
-  services.xserver.videoDrivers = [ "amdgpu" ];
+  services.xserver.videoDrivers = ["amdgpu"];
 
   # AMD GPU hardware acceleration
   hardware.graphics.extraPackages = with pkgs; [
@@ -52,49 +93,82 @@
     rocmPackages.clr.icd
   ];
 
+  # AMD-specific configuration
+  hardware.amdgpu.opencl.enable = true;
+
   # ROCm support for compute workloads
   systemd.tmpfiles.rules = [
     "L+    /opt/rocm/hip   -    -    -     -    ${pkgs.rocmPackages.clr}"
   ];
 
-  # AMD-specific kernel modules
-  boot.kernelModules = [ "amdgpu" "kvm-amd" ];
-  boot.kernelPackages = pkgs.linuxKernel.packages.linux_6_15;
+  # Boot configuration
+  boot = {
+    # AMD-specific kernel modules
+    kernelModules = ["amdgpu" "kvm-amd"];
+    kernelPackages = pkgs.linuxKernel.packages.linux_6_15;
 
-  # Environment variables for AMD
-  environment.sessionVariables = {
-    LIBVA_DRIVER_NAME = "radeonsi";
-    VDPAU_DRIVER = "radeonsi";
+    # Boot loader customizations
+    loader.systemd-boot = {
+      netbootxyz.enable = true;
+      memtest86.enable = true;
+    };
   };
 
-  # Boot loader customizations
-  boot.loader.systemd-boot.netbootxyz.enable = true;
-  boot.loader.systemd-boot.memtest86.enable = true;
+  # Environment configuration
+  environment = {
+    # Environment variables for AMD
+    sessionVariables = {
+      LIBVA_DRIVER_NAME = "radeonsi";
+      VDPAU_DRIVER = "radeonsi";
+    };
+
+    # Additional packages specific to historian
+    systemPackages = with pkgs; [
+      # ROCm packages for compute
+      rocmPackages.rocm-smi
+      radeontop
+      # Historian specific packages
+      legendary-gl
+      sunshine
+      toolbox
+      cachix
+      lmstudio
+      tealdeer
+      rebar3
+      erlang
+      gleam
+    ];
+  };
 
   # Memory management - use zram instead of file swap
   zramSwap.enable = true;
 
-  # Wi-Fi backend
-  networking.networkmanager.wifi.backend = "iwd";
-
   # AMD-specific configuration
-  hardware.amdgpu.opencl.enable = true;
   nixpkgs.config.rocmSupport = true;
 
-  # AI/ML services with ROCm acceleration
-  services.ollama = {
-    enable = true;
-    acceleration = "rocm";
-    rocmOverrideGfx = "11.5.0";
-  };
+  # Services configuration
+  services = {
+    # AI/ML services with ROCm acceleration
+    ollama = {
+      enable = true;
+      acceleration = "rocm";
+      rocmOverrideGfx = "11.5.0";
+    };
 
-  # Enable Sunshine for game streaming
-  services.sunshine.enable = true;
+    # Enable Sunshine for game streaming
+    sunshine.enable = true;
 
-  # Additional services
-  services.xrdp = {
-    enable = true;
-    openFirewall = true;
+    # Additional services
+    xrdp = {
+      enable = true;
+      openFirewall = true;
+    };
+
+    # Avahi for service discovery
+    avahi.publish = {
+      enable = true;
+      userServices = true;
+    };
   };
 
   # Additional user groups
@@ -108,67 +182,11 @@
     ];
   };
 
-  # Additional programs
-  programs.appimage.enable = true;
-
-  # Additional packages specific to historian
-  environment.systemPackages = with pkgs; [
-    # ROCm packages for compute
-    rocmPackages.rocm-smi
-    radeontop
-    # Historian specific packages
-    legendary-gl
-    sunshine
-    toolbox
-    cachix
-    lmstudio
-    tealdeer
-    rebar3
-    erlang
-    gleam
-  ];
-
-  # Avahi for service discovery
-  services.avahi.publish = {
-    enable = true;
-    userServices = true;
-  };
-
-  # Network interface configuration
-  networking.interfaces.eno2.wakeOnLan = {
-    enable = true;
-    policy = [ "unicast" ];
-  };
-
-  # Use rich-evans for DNS
-  networking.nameservers = [ 
-    "10.100.0.40"  # Rich-evans via Nebula
-    "1.1.1.1"      # Fallback
-  ];
-
-  # Extended firewall configuration for streaming
-  networking.firewall = {
-    allowedTCPPorts = [
-      47984
-      47989
-      47990
-      48000
-      48010
-    ];
-    allowedUDPPorts = [ 4242 ]; # Nebula
-    allowedUDPPortRanges = [
-      {
-        from = 47998;
-        to = 48020;
-      }
-      {
-        from = 8000;
-        to = 8010;
-      }
-    ];
-    trustedInterfaces = [
-      "virbr0"
-    ];
+  # Programs configuration
+  programs = {
+    nix-ld.enable = true;
+    virt-manager.enable = true;
+    appimage.enable = true;
   };
 
   system.stateVersion = "23.11";

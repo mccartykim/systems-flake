@@ -4,8 +4,7 @@
   pkgs,
   ...
 }:
-with lib;
-{
+with lib; {
   options.modules.development = {
     enable = mkEnableOption "development tools and configurations";
 
@@ -25,31 +24,32 @@ with lib;
   };
 
   config = mkIf config.modules.development.enable {
-    programs.git.enable = true;
+    programs = {
+      git.enable = true;
 
-    programs.jujutsu = {
-      enable = true;
-      settings = {
-        user = {
-          email = config.modules.development.jujutsu.email;
-          name = config.modules.development.jujutsu.name;
+      jujutsu = {
+        enable = true;
+        settings = {
+          user = {
+            inherit (config.modules.development.jujutsu) email name;
+          };
+          ui.diff-formatter = [
+            "${pkgs.difftastic}/bin/difft"
+            "--color=always"
+            "$left"
+            "$right"
+          ];
         };
-        ui.diff-formatter = [
-          "${pkgs.difftastic}/bin/difft"
-          "--color=always"
-          "$left"
-          "$right"
+      };
+
+      zed-editor = {
+        enable = true;
+        extensions = [
+          "xy-zed"
+          "nix"
+          "gleam"
         ];
       };
-    };
-
-    programs.zed-editor = {
-      enable = true;
-      extensions = [
-        "xy-zed"
-        "nix"
-        "gleam"
-      ];
     };
 
     home.packages = with pkgs; [
