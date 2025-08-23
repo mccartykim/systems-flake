@@ -9,10 +9,18 @@ let
     builtins.filter (node: node.publicKey != null)
     (builtins.attrValues registry.nodes);
   allSystems = map (node: node.publicKey) nodesWithKeys;
+  
+  # Temporary: Only working machines (skip laptops for now)
+  workingMachines = [
+    registry.nodes.historian.publicKey
+    registry.nodes.maitred.publicKey  
+    registry.nodes.rich-evans.publicKey
+    registry.nodes.total-eclipse.publicKey
+  ];
 in
   {
-    # Shared CA certificate - all systems can decrypt
-    "nebula-ca.age".publicKeys = allSystems;
+    # Shared CA certificate - working systems only (temporary)
+    "nebula-ca.age".publicKeys = workingMachines;
 
     # Cloudflare API token - only maitred needs this
     "cloudflare-api-token.age".publicKeys = [registry.nodes.maitred.publicKey];
@@ -28,7 +36,10 @@ in
   }
   // (
     let
-      # Create cert/key entries for each node with a public key
+      # Create cert/key entries only for working nodes (temporary)
+      workingNodes = {
+        inherit (registry.nodes) historian maitred rich-evans total-eclipse;
+      };
       createNodeSecrets = nodeName: node:
         if node.publicKey != null
         then {
@@ -38,5 +49,5 @@ in
         else {};
     in
       builtins.foldl' (acc: entry: acc // entry) {}
-      (builtins.attrValues (builtins.mapAttrs createNodeSecrets registry.nodes))
+      (builtins.attrValues (builtins.mapAttrs createNodeSecrets workingNodes))
   )

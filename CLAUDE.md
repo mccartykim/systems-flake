@@ -113,6 +113,34 @@ services.caddy = {
 
 ## Secret Management with Agenix
 
+### Bootstrap Pattern for Certificate Re-encryption
+**Problem**: When agenix certificates are encrypted with old/missing SSH keys, causing "no identity matched any of the recipients" errors.
+
+**Solution**: Bootstrap re-encryption using user SSH key:
+1. **Add user SSH key temporarily** to `secrets.nix`:
+   ```nix
+   myUserKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5...";
+   workingMachines = [
+     registry.nodes.historian.publicKey
+     # ... other host keys
+     myUserKey  # Temporary for bootstrap
+   ];
+   ```
+
+2. **Remove old encrypted files** and create fresh ones:
+   ```bash
+   rm nebula-ca.age
+   cat /path/to/source/ca.crt | agenix -e nebula-ca.age -i ~/.ssh/id_ed25519
+   ```
+
+3. **Remove user key** from `secrets.nix` after re-encryption
+4. **Deploy with colmena** - certificates should now decrypt with host SSH keys
+
+**Key Requirements**:
+- Configure `age.identityPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];` in NixOS config
+- Use `agenix -e FILE -i IDENTITY` for manual encryption with specific keys
+- Host must have `/etc/ssh/ssh_host_ed25519_key` readable by agenix (usually via sudo/root)
+
 ### Pattern for Dynamic Configuration
 ```nix
 # Use activation scripts to read agenix secrets into config files

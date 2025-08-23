@@ -126,6 +126,10 @@
       dhcpV4Config = {
         RouteMetric = 512;
         UseDNS = false; # Don't use ISP DNS
+        # Fix FiOS DHCP lease renewal issues
+        ClientIdentifier = "mac";
+        RequestBroadcast = true;
+        # Use defaults for other options - NixOS systemd-networkd module is restrictive
       };
       linkConfig.RequiredForOnline = "routable";
     };
@@ -163,6 +167,21 @@
       Group = "nogroup";
     };
   };
+
+  # Guacamole proxy service - DISABLED 
+  # TODO: Re-enable when Guacamole is working properly
+  # systemd.services.guacamole-proxy = {
+  #   description = "Guacamole proxy to rich-evans";
+  #   after = ["network.target" "nebula@mesh.service"];
+  #   wantedBy = ["multi-user.target"];
+  #   serviceConfig = {
+  #     ExecStart = "${pkgs.socat}/bin/socat TCP4-LISTEN:8080,fork,reuseaddr TCP4:10.100.0.40:8080";
+  #     Restart = "always";
+  #     RestartSec = "5";
+  #     User = "nobody";
+  #     Group = "nogroup";
+  #   };
+  # };
 
   # System services
   services = {
@@ -224,6 +243,7 @@
               "\"grafana.kimb.dev. A 192.168.100.2\""
               "\"prometheus.kimb.dev. A 192.168.100.2\""
               "\"copyparty.kimb.dev. A 192.168.100.2\""
+              # "\"remote.kimb.dev. A 192.168.100.2\""  # DISABLED - Guacamole not ready
             ];
           in
             nebula-hosts ++ local-domains;

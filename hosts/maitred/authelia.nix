@@ -161,6 +161,11 @@
                 policy = "one_factor";
                 subject = ["group:admins" "group:users"];
               }
+              # {
+              #   domain = ["remote.kimb.dev"];  # DISABLED - Guacamole not ready
+              #   policy = "one_factor";
+              #   subject = ["group:admins" "group:users"];
+              # }
             ];
           };
 
