@@ -15,9 +15,8 @@
     ../profiles/server.nix
 
     # Server-specific modules
-    ./nixarr.nix
+    ./guacamole.nix
     ./smarthome.nix
-    # ./containers.nix
 
     # Nebula mesh network with agenix
     ./nebula.nix
@@ -177,6 +176,8 @@
       3921 # Copyparty FTP
       3945 # Copyparty SMB
       3990 # Copyparty additional
+      4822 # Guacamole daemon
+      8080 # Guacamole web interface
     ];
     allowedTCPPortRanges = [
       {

@@ -1,71 +1,77 @@
-# Nebula network node registry
-# Single source of truth for all Nebula network nodes
+# Authoritative Nebula Network Registry
+# Single source of truth for all nebula network configuration
+# All other files should reference this for IP addresses and SSH keys
+let
+  networkIPs = import ./network-ips.nix;
+in
 {
-  # Nebula network configuration
+  # Network configuration
   network = {
-    subnet = "10.100.0.0/16";
+    subnet = networkIPs.nebula.subnet;
     lighthouse = {
-      host = "35.222.40.201";
-      port = 4242;
+      ip = networkIPs.nebula.lighthouse.ip;
+      external = networkIPs.nebula.lighthouse.external;
     };
   };
 
-  # All nodes in the Nebula mesh
+  # All nebula nodes with their complete configuration
   nodes = {
     lighthouse = {
-      ip = "10.100.0.1";
-      external = "35.222.40.201:4242";
+      ip = networkIPs.nebula.lighthouse.ip;
+      external = networkIPs.nebula.lighthouse.external;
       isLighthouse = true;
-      publicKey = null; # Google Cloud instance, not NixOS managed
+      role = "lighthouse";
+      groups = ["lighthouse"];
+      # No SSH key - external Google Cloud instance
+      publicKey = null;
     };
 
     rich-evans = {
-      ip = "10.100.0.40";
+      ip = networkIPs.nebula.hosts.rich-evans;
       isLighthouse = false;
-      role = "server"; # Home server for DNS, print, media
+      role = "server";
+      groups = ["servers" "nixos"];
       publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOCXEs7zN0NNdWyZ9MJ4pI0R8RAPH6EFj3E2Qp2Xzc1k";
     };
 
-    historian = {
-      ip = "10.100.0.10";
+    maitred = {
+      ip = networkIPs.nebula.hosts.maitred;
       isLighthouse = false;
-      role = "desktop"; # AMD gaming/AI workstation
+      role = "router";
+      groups = ["routers" "nixos"];
+      publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGXJ4JeYtJiV8ltScewAu+N8KYLy+muo+mP07XznOzjX";
+    };
+
+    historian = {
+      ip = networkIPs.nebula.hosts.historian;
+      isLighthouse = false;
+      role = "desktop";
+      groups = ["desktops" "nixos"];
       publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBXpuMSA1RXsYs6cEhvNqzhWpbIe2NB0ya1MUte87SD+";
     };
 
-    marshmallow = {
-      ip = "10.100.0.4";
+    total-eclipse = {
+      ip = networkIPs.nebula.hosts.total-eclipse;
       isLighthouse = false;
-      role = "laptop"; # ThinkPad T490
+      role = "desktop";
+      groups = ["desktops" "nixos"];
+      publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAII25uGB19xLNzpzOFKUHp93EtNPxHXgeKotRDsdqdWa7";
+    };
+
+    marshmallow = {
+      ip = networkIPs.nebula.hosts.marshmallow;
+      isLighthouse = false;
+      role = "laptop";
+      groups = ["laptops" "nixos"];
       publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILlKSgkr7eXGq9Lcg/5TfH9eudHLEP1q4zAvA8zhq9wh";
     };
 
     bartleby = {
-      ip = "10.100.0.3";
+      ip = networkIPs.nebula.hosts.bartleby;
       isLighthouse = false;
-      role = "laptop"; # ThinkPad 131e netbook
+      role = "laptop";
+      groups = ["laptops" "nixos"];
       publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGCZ/lfNz+FcRNwbRMeT658YOH0YdCgLRBn/bcegj7pi";
     };
-
-    total-eclipse = {
-      ip = "10.100.0.6";
-      isLighthouse = false;
-      role = "desktop"; # Gaming desktop with NVIDIA
-      publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAII25uGB19xLNzpzOFKUHp93EtNPxHXgeKotRDsdqdWa7";
-    };
-
-    maitred = {
-      ip = "10.100.0.50";
-      isLighthouse = false;
-      role = "router"; # Datto 1000 router/firewall
-      publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGXJ4JeYtJiV8ltScewAu+N8KYLy+muo+mP07XznOzjX";
-    };
-
-    # To add a new device:
-    # 1. Add entry here with next available IP
-    # 2. Add nixosConfiguration in flake.nix
-    # 3. Run scripts/collect-age-keys.sh to get SSH key
-    # 4. Update publicKey field above
-    # 5. Build and deploy!
   };
 }

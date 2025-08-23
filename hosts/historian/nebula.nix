@@ -10,6 +10,9 @@
     inputs.agenix.nixosModules.default
   ];
 
+  # Configure agenix to use SSH host key
+  age.identityPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
+
   # Agenix secrets for Nebula
   age.secrets = {
     nebula-ca = {

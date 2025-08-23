@@ -127,6 +127,16 @@
           proto = "udp";
           host = "any";
         }
+        {
+          port = 4822; # Guacamole daemon
+          proto = "tcp";
+          host = "any";
+        }
+        {
+          port = 8080; # Guacamole web interface (Tomcat)
+          proto = "tcp";
+          host = "any";
+        }
       ];
     };
   };

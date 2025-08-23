@@ -142,6 +142,26 @@
               reverse_proxy 192.168.100.1:3923
             '';
           };
+          # remote.kimb.dev - DISABLED (Guacamole not ready)
+          # TODO: Re-enable when Guacamole SSO is properly configured
+          # "remote.kimb.dev" = {
+          #   extraConfig = ''
+          #     forward_auth 192.168.100.4:9091 {
+          #       uri /api/verify?rd=https://auth.kimb.dev
+          #       copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
+          #     }
+          #     reverse_proxy 192.168.100.1:8080
+          #   '';
+          # };
+          # "http://remote.kimb.dev" = {
+          #   extraConfig = ''
+          #     forward_auth 192.168.100.4:9091 {
+          #       uri /api/verify?rd=https://auth.kimb.dev
+          #       copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
+          #     }
+          #     reverse_proxy 192.168.100.1:8080
+          #   '';
+          # };
         };
       };
 
