@@ -36,15 +36,15 @@ All machines are connected via a [Nebula](https://github.com/slackhq/nebula) mes
 
 ### Network Layout
 - **Subnet**: `10.100.0.0/16`
-- **Lighthouse**: `10.100.0.1` (external: `35.222.40.201:4242`)
-- **DNS Server**: rich-evans at `10.100.0.40` (serves `.nebula` and `.local` domains)
+- **Lighthouse**: Uses centralized registry (`registry.network.lighthouse.ip`)
+- **DNS Server**: maitred router at `registry.nodes.maitred.ip` (primary DNS for network)
 
 ### Adding New Devices
 
 1. **Add to registry**: Edit `hosts/nebula-registry.nix` and add your device:
    ```nix
    my-new-device = {
-     ip = "10.100.0.7";  # Next available IP
+     ip = networkIPs.nebula.hosts.my-new-device;  # Define in network-ips.nix first
      isLighthouse = false;
      role = "laptop";  # or "desktop", "server"
      publicKey = null;  # Will be filled in step 3

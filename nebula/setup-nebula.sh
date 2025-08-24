@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Nebula network setup script
+# LEGACY Nebula network setup script - Use registry instead!
+# NOTE: This script is outdated. Current devices are managed via hosts/nebula-registry.nix
 # This creates a CA and certificates for all your devices
 
 NEBULA_VERSION="v1.9.3"
@@ -19,20 +20,21 @@ DEVICES=(
     "google-lighthouse:10.100.0.1:lighthouse:true"
     
     # Laptops/Desktops
-    "marshmallow:10.100.0.10:laptops,nixos:false"
-    "bartleby:10.100.0.11:laptops,nixos:false"
-    "total-eclipse:10.100.0.12:desktops,nixos:false"
-    "historian:10.100.0.13:desktops,nixos:false"
+    "marshmallow:10.100.0.4:laptops,nixos:false"
+    "bartleby:10.100.0.3:laptops,nixos:false"
+    "total-eclipse:10.100.0.6:desktops,nixos:false"
+    "historian:10.100.0.10:desktops,nixos:false"
+    
+    # Router/Gateway
+    "maitred:10.100.0.50:routers,nixos:false"
     
     # Servers
-    "rich-evans:10.100.0.20:servers,nixos:false"
+    "rich-evans:10.100.0.40:servers,nixos:false"
     
-    # Mobile/ARM devices
-    "bonbon:10.100.0.30:mobile,nixos:false"
-    
-    # macOS devices
-    "cronut:10.100.0.40:laptops,macos:false"
-    "kmccarty-YM2K:10.100.0.41:laptops,macos,work:false"
+    # Legacy devices - remove or update these IPs if still in use
+    # "bonbon:10.100.0.30:mobile,nixos:false"
+    # "cronut:10.100.0.X:laptops,macos:false"  # Update IP if still used
+    # "kmccarty-YM2K:10.100.0.X:laptops,macos,work:false"  # Update IP if still used
 )
 
 # Download nebula-cert if not present

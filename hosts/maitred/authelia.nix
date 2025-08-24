@@ -32,14 +32,20 @@
       path = "/etc/authelia/users.yml";
       mode = "0444";
     };
+    authelia-smtp-password = {
+      file = ../../secrets/authelia-smtp-password.age;
+      path = "/etc/authelia/smtp-password";
+      mode = "0444";
+    };
   };
 
   # NixOS container for Authelia
   containers.authelia = {
     autoStart = true;
-    privateNetwork = true;
-    hostAddress = "192.168.100.1"; # Router's container bridge IP
-    localAddress = "192.168.100.4"; # Authelia container IP
+    privateNetwork = false; # Use host network to fix DNS/SMTP connectivity
+    # hostAddress = "192.168.100.1"; # Not needed with host network
+    # localAddress = "192.168.100.4"; # Not needed with host network
+    
 
     bindMounts = {
       "/etc/authelia/jwt-secret" = {
@@ -58,6 +64,10 @@
         hostPath = "/run/agenix/authelia-users";
         isReadOnly = true;
       };
+      "/etc/authelia/smtp-password" = {
+        hostPath = "/run/agenix/authelia-smtp-password";
+        isReadOnly = true;
+      };
     };
 
     config = {
@@ -65,6 +75,8 @@
       pkgs,
       ...
     }: {
+      # Open firewall for Authelia on host network
+      networking.firewall.allowedTCPPorts = [9091];
       # Authelia service
       services.authelia.instances.main = {
         enable = true;
@@ -75,9 +87,13 @@
           storageEncryptionKeyFile = "/etc/authelia/storage-key";
         };
 
+        environmentVariables = {
+          AUTHELIA_NOTIFIER_SMTP_PASSWORD_FILE = "/etc/authelia/smtp-password";
+        };
+
         settings = {
           theme = "dark";
-          default_2fa_method = "webauthn";
+          default_2fa_method = "totp"; # TOTP (authenticator apps) as default, WebAuthn also available
 
           server = {
             address = "tcp://0.0.0.0:9091";
@@ -121,6 +137,7 @@
             ];
           };
 
+
           storage = {
             local = {
               path = "/var/lib/authelia-main/db.sqlite3";
@@ -128,9 +145,18 @@
           };
 
           notifier = {
-            disable_startup_check = true;
-            filesystem = {
-              filename = "/var/lib/authelia-main/notifications.txt";
+            disable_startup_check = false; # Re-enable now that host network should work
+            smtp = {
+              # Zoho configuration 
+              address = "submissions://smtp.zoho.com:465";
+              username = "mccartykim@zoho.com";
+              sender = "Authelia <mccartykim@zoho.com>";
+              subject = "[kimb.dev Auth] {title}";
+              identifier = "kimb.dev";
+              timeout = "5s";
+              startup_check_address = "mccartykim@zoho.com";
+              disable_require_tls = false;
+              disable_html_emails = false;
             };
           };
 
@@ -143,7 +169,7 @@
               }
               {
                 domain = ["home.kimb.dev"];
-                policy = "one_factor";
+                policy = "two_factor";
                 subject = ["group:admins" "group:users"];
               }
               {
@@ -153,12 +179,12 @@
               }
               {
                 domain = ["prometheus.kimb.dev"];
-                policy = "one_factor";
+                policy = "two_factor";
                 subject = ["group:admins"];
               }
               {
                 domain = ["copyparty.kimb.dev"];
-                policy = "one_factor";
+                policy = "two_factor";
                 subject = ["group:admins" "group:users"];
               }
               # {
@@ -189,8 +215,6 @@
         };
       };
 
-      # Open firewall for Authelia
-      networking.firewall.allowedTCPPorts = [9091];
 
       # Minimal system packages
       environment.systemPackages = with pkgs; [

@@ -30,6 +30,7 @@ in
     "authelia-session-secret.age".publicKeys = [registry.nodes.maitred.publicKey registry.nodes.historian.publicKey];
     "authelia-storage-key.age".publicKeys = [registry.nodes.maitred.publicKey registry.nodes.historian.publicKey];
     "authelia-users.age".publicKeys = [registry.nodes.maitred.publicKey registry.nodes.historian.publicKey];
+    "authelia-smtp-password.age".publicKeys = [registry.nodes.maitred.publicKey registry.nodes.historian.publicKey];
 
     # Individual certificates - only the specific system can decrypt
     # Generated dynamically from registry
