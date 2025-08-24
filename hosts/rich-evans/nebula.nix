@@ -140,6 +140,11 @@ in {
           proto = "tcp";
           host = "any";
         }
+        {
+          port = 3100; # Wiki.js
+          proto = "tcp";
+          host = "any";
+        }
       ];
     };
   };
