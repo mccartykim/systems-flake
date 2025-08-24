@@ -5,7 +5,10 @@
   pkgs,
   inputs,
   ...
-}: {
+}: 
+let
+  registry = import ../nebula-registry.nix;
+in {
   imports = [
     inputs.agenix.nixosModules.default
   ];
@@ -49,9 +52,9 @@
     cert = config.age.secrets.nebula-cert.path;
     key = config.age.secrets.nebula-key.path;
 
-    lighthouses = ["10.100.0.1"];
+    lighthouses = [registry.network.lighthouse.ip];
     staticHostMap = {
-      "10.100.0.1" = ["35.222.40.201:4242"];
+      "${registry.network.lighthouse.ip}" = [registry.network.lighthouse.external];
     };
 
     settings = {
@@ -60,7 +63,7 @@
       };
 
       relay = {
-        relays = ["10.100.0.1"];
+        relays = [registry.network.lighthouse.ip];
         am_relay = false;
         use_relays = true;
       };
