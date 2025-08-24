@@ -50,9 +50,11 @@
   users.defaultUserShell = pkgs.fish;
   environment.shells = [pkgs.fish];
 
-  # Use rich-evans for DNS
-  networking.nameservers = [
-    "10.100.0.40" # Rich-evans via Nebula
+  # Use maitred router for DNS
+  networking.nameservers = let
+    registry = import ../nebula-registry.nix;
+  in [
+    registry.nodes.maitred.ip # maitred router via Nebula
     "1.1.1.1" # Fallback
   ];
 
