@@ -1,19 +1,22 @@
 # Example: Simple Nebula setup without age (for testing)
 # Copy certificates manually to /etc/nebula/
-{config, ...}: {
+{config, ...}: 
+let
+  registry = import ../hosts/nebula-registry.nix;
+in {
   imports = [../modules/nebula-mesh.nix];
 
   services.nebula-mesh = {
     enable = true;
     inherit (config.networking) hostName;
-    hostIP = "10.100.0.50"; # Pick an unused IP
+    hostIP = "10.100.0.X"; # Choose unused IP and add to network-ips.nix
     groups = ["nixos"];
 
     # Point to lighthouse
     lighthouses = [
       {
-        meshIP = "10.100.0.1";
-        publicEndpoints = ["35.222.40.201:4242"];
+        meshIP = registry.network.lighthouse.ip;
+        publicEndpoints = [registry.network.lighthouse.external];
       }
     ];
   };

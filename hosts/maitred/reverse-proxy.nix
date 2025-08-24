@@ -63,12 +63,12 @@
           };
           "auth.kimb.dev" = {
             extraConfig = ''
-              reverse_proxy 192.168.100.4:9091
+              reverse_proxy 192.168.100.1:9091
             '';
           };
           "home.kimb.dev" = {
             extraConfig = ''
-              forward_auth 192.168.100.4:9091 {
+              forward_auth 192.168.100.1:9091 {
                 uri /api/verify?rd=https://auth.kimb.dev
                 copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
               }
@@ -79,7 +79,7 @@
           };
           "http://home.kimb.dev" = {
             extraConfig = ''
-              forward_auth 192.168.100.4:9091 {
+              forward_auth 192.168.100.1:9091 {
                 uri /api/verify?rd=https://auth.kimb.dev
                 copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
               }
@@ -90,7 +90,7 @@
           };
           "grafana.kimb.dev" = {
             extraConfig = ''
-              forward_auth 192.168.100.4:9091 {
+              forward_auth 192.168.100.1:9091 {
                 uri /api/verify?rd=https://auth.kimb.dev
                 copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
               }
@@ -99,7 +99,7 @@
           };
           "http://grafana.kimb.dev" = {
             extraConfig = ''
-              forward_auth 192.168.100.4:9091 {
+              forward_auth 192.168.100.1:9091 {
                 uri /api/verify?rd=https://auth.kimb.dev
                 copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
               }
@@ -108,7 +108,7 @@
           };
           "prometheus.kimb.dev" = {
             extraConfig = ''
-              forward_auth 192.168.100.4:9091 {
+              forward_auth 192.168.100.1:9091 {
                 uri /api/verify?rd=https://auth.kimb.dev
                 copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
               }
@@ -117,7 +117,7 @@
           };
           "http://prometheus.kimb.dev" = {
             extraConfig = ''
-              forward_auth 192.168.100.4:9091 {
+              forward_auth 192.168.100.1:9091 {
                 uri /api/verify?rd=https://auth.kimb.dev
                 copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
               }
@@ -126,7 +126,7 @@
           };
           "copyparty.kimb.dev" = {
             extraConfig = ''
-              forward_auth 192.168.100.4:9091 {
+              forward_auth 192.168.100.1:9091 {
                 uri /api/verify?rd=https://auth.kimb.dev
                 copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
               }
@@ -135,7 +135,7 @@
           };
           "http://copyparty.kimb.dev" = {
             extraConfig = ''
-              forward_auth 192.168.100.4:9091 {
+              forward_auth 192.168.100.1:9091 {
                 uri /api/verify?rd=https://auth.kimb.dev
                 copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
               }

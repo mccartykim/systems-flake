@@ -108,7 +108,7 @@ services.caddy = {
 
 ### Network Access Control
 - **LAN**: `192.168.0.0/16` (local network)
-- **Nebula**: `10.100.0.0/24` (mesh VPN)
+- **Nebula**: `10.100.0.0/16` (mesh VPN)
 - **Tailscale**: `100.64.0.0/10` (backup VPN)
 
 ## Secret Management with Agenix

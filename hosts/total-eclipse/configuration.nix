@@ -30,9 +30,11 @@
       policy = ["unicast"];
     };
 
-    # Use rich-evans for DNS
-    nameservers = [
-      "10.100.0.40" # Rich-evans via Nebula
+    # Use maitred router for DNS
+    nameservers = let
+      registry = import ../nebula-registry.nix;
+    in [
+      registry.nodes.maitred.ip # maitred router via Nebula
       "1.1.1.1" # Fallback
     ];
 
