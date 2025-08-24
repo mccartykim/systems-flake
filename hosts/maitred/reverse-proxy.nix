@@ -142,6 +142,23 @@
               reverse_proxy 192.168.100.1:3923
             '';
           };
+          # "wiki.kimb.dev" - DISABLED
+          # "wiki.kimb.dev" = {
+          #   extraConfig = ''
+          #     @websockets {
+          #       header Connection *Upgrade*
+          #       header Upgrade websocket
+          #     }
+          #     reverse_proxy @websockets 10.100.0.40:3100
+          #     
+          #     reverse_proxy 10.100.0.40:3100 {
+          #       header_up Host {http.request.host}
+          #       header_up X-Real-IP {remote_host}
+          #       header_up X-Forwarded-For {remote_host}
+          #       header_up X-Forwarded-Proto {scheme}
+          #     }
+          #   '';
+          # };
           # remote.kimb.dev - DISABLED (Guacamole not ready)
           # TODO: Re-enable when Guacamole SSO is properly configured
           # "remote.kimb.dev" = {
@@ -207,6 +224,13 @@
         # Allow traffic between containers
         iptables -A FORWARD -d 192.168.100.0/24 -j ACCEPT
         iptables -A FORWARD -s 192.168.100.0/24 -j ACCEPT
+        
+        # Allow container to access Nebula network
+        iptables -A FORWARD -s 192.168.100.0/24 -d 10.100.0.0/16 -j ACCEPT
+        iptables -A FORWARD -s 10.100.0.0/16 -d 192.168.100.0/24 -j ACCEPT
+        
+        # Enable NAT for container -> Nebula traffic
+        iptables -t nat -A POSTROUTING -s 192.168.100.0/24 -d 10.100.0.0/16 -j MASQUERADE
       '';
     };
   };

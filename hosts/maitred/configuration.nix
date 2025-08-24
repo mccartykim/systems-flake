@@ -243,6 +243,7 @@
               "\"grafana.kimb.dev. A 192.168.100.2\""
               "\"prometheus.kimb.dev. A 192.168.100.2\""
               "\"copyparty.kimb.dev. A 192.168.100.2\""
+              # "\"wiki.kimb.dev. A 192.168.100.2\""  # DISABLED
               # "\"remote.kimb.dev. A 192.168.100.2\""  # DISABLED - Guacamole not ready
             ];
           in
