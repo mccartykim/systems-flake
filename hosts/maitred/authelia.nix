@@ -1,228 +1,120 @@
-# Authelia authentication service for maitred
-# Provides SSO for monitoring and dashboard services
-{
-  config,
-  pkgs,
-  inputs,
-  ...
-}: {
-  imports = [
-    inputs.agenix.nixosModules.default
-  ];
+# Authelia authentication service using kimb-services options
+{ config, lib, pkgs, ... }:
 
-  # Authelia secrets
-  age.secrets = {
-    authelia-jwt-secret = {
-      file = ../../secrets/authelia-jwt-secret.age;
-      path = "/etc/authelia/jwt-secret";
-      mode = "0444"; # World-readable since container will access it
+let
+  cfg = config.kimb;
+
+in {
+  # Authelia authentication service (host network)
+  services.authelia.instances.main = lib.mkIf cfg.services.authelia.enable {
+    enable = true;
+    
+    settings = {
+      server = {
+        host = "0.0.0.0";
+        port = cfg.services.authelia.port;
+      };
+
+      log = {
+        level = "info";
+        format = "text";
+      };
+
+      totp = {
+        issuer = cfg.domain;
+      };
+
+      authentication_backend = {
+        file = {
+          path = "/var/lib/authelia-main/users_database.yml";
+        };
+      };
+
+      access_control = 
+      let
+        # Helper to create access control rule for a service
+        mkAccessRule = policy: services: {
+          domain = map (service: "${service.subdomain}.${cfg.domain}") services;
+          inherit policy;
+        };
+        
+        # Get enabled services by auth policy
+        authServices = lib.filterAttrs (name: service: 
+          service.enable && 
+          service.publicAccess && 
+          service.auth == "authelia"
+        ) cfg.services;
+        
+        # Group services by auth requirements
+        oneFactorServices = lib.attrValues (lib.filterAttrs (name: service: 
+          name == "grafana"  # Grafana only needs one factor
+        ) authServices);
+        
+        twoFactorServices = lib.attrValues (lib.filterAttrs (name: service: 
+          name != "grafana"  # All other services need two factor
+        ) authServices);
+        
+        # Generate rules dynamically
+        dynamicRules = lib.flatten [
+          (lib.optional (oneFactorServices != []) (mkAccessRule "one_factor" oneFactorServices))
+          (lib.optional (twoFactorServices != []) (mkAccessRule "two_factor" twoFactorServices))
+        ];
+        
+      in {
+        default_policy = "deny";
+        rules = [
+          {
+            domain = ["auth.${cfg.domain}"];
+            policy = "bypass";
+          }
+        ] ++ dynamicRules;
+      };
+
+      session = {
+        name = "authelia_session";
+        domain = cfg.domain;
+        same_site = "lax";
+        expiration = "1h";
+        inactivity = "5m";
+        remember_me_duration = "1M";
+      };
+
+      regulation = {
+        max_retries = 3;
+        find_time = "2m";
+        ban_time = "5m";
+      };
+
+      storage = {
+        local = {
+          path = "/var/lib/authelia-main/db.sqlite3";
+        };
+      };
+
+      notifier = {
+        disable_startup_check = false;
+        filesystem = {
+          filename = "/var/lib/authelia-main/notification.txt";
+        };
+      };
     };
-    authelia-session-secret = {
-      file = ../../secrets/authelia-session-secret.age;
-      path = "/etc/authelia/session-secret";
-      mode = "0444";
-    };
-    authelia-storage-key = {
-      file = ../../secrets/authelia-storage-key.age;
-      path = "/etc/authelia/storage-key";
-      mode = "0444";
-    };
-    authelia-users = {
-      file = ../../secrets/authelia-users.age;
-      path = "/etc/authelia/users.yml";
-      mode = "0444";
-    };
-    authelia-smtp-password = {
-      file = ../../secrets/authelia-smtp-password.age;
-      path = "/etc/authelia/smtp-password";
-      mode = "0444";
+
+    secrets = {
+      jwtSecretFile = "/run/secrets/authelia-jwt-secret";
+      sessionSecretFile = "/run/secrets/authelia-session-secret";  
+      storageEncryptionKeyFile = "/run/secrets/authelia-storage-secret";
     };
   };
 
-  # NixOS container for Authelia
-  containers.authelia = {
-    autoStart = true;
-    privateNetwork = false; # Use host network to fix DNS/SMTP connectivity
-    # hostAddress = "192.168.100.1"; # Not needed with host network
-    # localAddress = "192.168.100.4"; # Not needed with host network
-    
-
-    bindMounts = {
-      "/etc/authelia/jwt-secret" = {
-        hostPath = "/run/agenix/authelia-jwt-secret";
-        isReadOnly = true;
-      };
-      "/etc/authelia/session-secret" = {
-        hostPath = "/run/agenix/authelia-session-secret";
-        isReadOnly = true;
-      };
-      "/etc/authelia/storage-key" = {
-        hostPath = "/run/agenix/authelia-storage-key";
-        isReadOnly = true;
-      };
-      "/etc/authelia/users.yml" = {
-        hostPath = "/run/agenix/authelia-users";
-        isReadOnly = true;
-      };
-      "/etc/authelia/smtp-password" = {
-        hostPath = "/run/agenix/authelia-smtp-password";
-        isReadOnly = true;
-      };
-    };
-
-    config = {
-      config,
-      pkgs,
-      ...
-    }: {
-      # Open firewall for Authelia on host network
-      networking.firewall.allowedTCPPorts = [9091];
-      # Authelia service
-      services.authelia.instances.main = {
-        enable = true;
-
-        secrets = {
-          jwtSecretFile = "/etc/authelia/jwt-secret";
-          sessionSecretFile = "/etc/authelia/session-secret";
-          storageEncryptionKeyFile = "/etc/authelia/storage-key";
-        };
-
-        environmentVariables = {
-          AUTHELIA_NOTIFIER_SMTP_PASSWORD_FILE = "/etc/authelia/smtp-password";
-        };
-
-        settings = {
-          theme = "dark";
-          default_2fa_method = "totp"; # TOTP (authenticator apps) as default, WebAuthn also available
-
-          server = {
-            address = "tcp://0.0.0.0:9091";
-          };
-
-          log = {
-            level = "info";
-            format = "text";
-          };
-
-          authentication_backend = {
-            password_reset.disable = true;
-            file = {
-              path = "/etc/authelia/users.yml";
-              watch = true;
-              password = {
-                algorithm = "argon2";
-                argon2 = {
-                  variant = "argon2id";
-                  iterations = 3;
-                  memory = 65536;
-                  parallelism = 4;
-                  key_length = 32;
-                  salt_length = 16;
-                };
-              };
-            };
-          };
-
-          session = {
-            name = "authelia_session";
-            same_site = "lax";
-            expiration = "1M";
-            inactivity = "2h";
-            remember_me = "30d";
-            cookies = [
-              {
-                domain = "kimb.dev";
-                authelia_url = "https://auth.kimb.dev";
-              }
-            ];
-          };
-
-
-          storage = {
-            local = {
-              path = "/var/lib/authelia-main/db.sqlite3";
-            };
-          };
-
-          notifier = {
-            disable_startup_check = false; # Re-enable now that host network should work
-            smtp = {
-              # Zoho configuration 
-              address = "submissions://smtp.zoho.com:465";
-              username = "mccartykim@zoho.com";
-              sender = "Authelia <mccartykim@zoho.com>";
-              subject = "[kimb.dev Auth] {title}";
-              identifier = "kimb.dev";
-              timeout = "5s";
-              startup_check_address = "mccartykim@zoho.com";
-              disable_require_tls = false;
-              disable_html_emails = false;
-            };
-          };
-
-          access_control = {
-            default_policy = "deny";
-            rules = [
-              {
-                domain = ["auth.kimb.dev"];
-                policy = "bypass";
-              }
-              {
-                domain = ["home.kimb.dev"];
-                policy = "two_factor";
-                subject = ["group:admins" "group:users"];
-              }
-              {
-                domain = ["grafana.kimb.dev"];
-                policy = "one_factor";
-                subject = ["group:admins"];
-              }
-              {
-                domain = ["prometheus.kimb.dev"];
-                policy = "two_factor";
-                subject = ["group:admins"];
-              }
-              {
-                domain = ["copyparty.kimb.dev"];
-                policy = "two_factor";
-                subject = ["group:admins" "group:users"];
-              }
-              # {
-              #   domain = ["remote.kimb.dev"];  # DISABLED - Guacamole not ready
-              #   policy = "one_factor";
-              #   subject = ["group:admins" "group:users"];
-              # }
-            ];
-          };
-
-          webauthn = {
-            disable = false;
-            display_name = "kimb.dev Authentication";
-            attestation_conveyance_preference = "direct";
-            user_verification = "required";
-            timeout = "60s";
-          };
-
-          totp = {
-            disable = false;
-            issuer = "kimb.dev";
-            algorithm = "sha1";
-            digits = 6;
-            period = 30;
-            skew = 1;
-            secret_size = 32;
-          };
-        };
-      };
-
-
-      # Minimal system packages
-      environment.systemPackages = with pkgs; [
-        curl
-        htop
+  # Firewall configuration for authelia
+  networking.firewall = {
+    interfaces = {
+      "br-lan".allowedTCPPorts = lib.mkIf cfg.services.authelia.enable [
+        cfg.services.authelia.port
       ];
-
-      system.stateVersion = "24.11";
+      "nebula-kimb".allowedTCPPorts = lib.mkIf cfg.services.authelia.enable [
+        cfg.services.authelia.port
+      ];
     };
   };
 }

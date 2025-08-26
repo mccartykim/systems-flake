@@ -1,137 +1,110 @@
-# Monitoring configuration for maitred router
-# Prometheus, Grafana, and metrics collection
-{
-  config,
-  pkgs,
-  inputs,
-  ...
-}: {
-  imports = [
-    inputs.agenix.nixosModules.default
-  ];
+# Migrated monitoring stack using kimb-services options
+{ config, lib, pkgs, ... }:
 
-  # Prometheus monitoring server
-  services.prometheus = {
+let
+  cfg = config.kimb;
+
+in {
+  # Prometheus monitoring (host service)
+  services.prometheus = lib.mkIf cfg.services.prometheus.enable {
     enable = true;
-    port = 9090;
-    listenAddress = "0.0.0.0"; # Listen on all interfaces for container access
+    port = cfg.services.prometheus.port;
+    
+    # Scrape configurations - map over enabled services
+    scrapeConfigs = 
+    let
+      # Helper to create scrape config for a service
+      mkServiceScrapeConfig = name: service: {
+        job_name = name;
+        static_configs = [{
+          targets = [(
+            if service.host == "maitred" && !service.container 
+            then "localhost:${toString service.port}"
+            else if service.host == "maitred" && service.container && name == "reverse-proxy"
+            then "${cfg.networks.reverseProxyIP}:2019"  # Caddy metrics
+            else if service.host == "rich-evans"
+            then "10.100.0.40:${toString service.port}"
+            else "localhost:${toString service.port}"
+          )];
+        }];
+      };
+      
+      # Get scrape configs for enabled services with metrics
+      serviceScrapeConfigs = lib.mapAttrsToList mkServiceScrapeConfig (
+        lib.filterAttrs (name: service: 
+          service.enable && 
+          (name == "prometheus" || name == "reverse-proxy")  # Services that expose metrics
+        ) cfg.services
+      );
+      
+      # Always include node exporter
+      nodeExporterConfig = {
+        job_name = "node-exporter";
+        static_configs = [{ targets = [ "localhost:9100" ]; }];
+      };
+      
+    in [nodeExporterConfig] ++ serviceScrapeConfigs;
 
-    # Retention and storage
-    retentionTime = "30d";
-
-    # Scrape configuration
-    scrapeConfigs = [
-      # System metrics from node exporter
-      {
-        job_name = "maitred-node";
-        static_configs = [
-          {
-            targets = ["localhost:9100"];
-            labels = {
-              instance = "maitred";
-              role = "router";
-            };
-          }
-        ];
-        scrape_interval = "15s";
-      }
-
-      # Caddy metrics from reverse-proxy container
-      {
-        job_name = "caddy";
-        static_configs = [
-          {
-            targets = ["192.168.100.2:2019"];
-            labels = {
-              instance = "reverse-proxy";
-              service = "caddy";
-            };
-          }
-        ];
-        scrape_interval = "15s";
-      }
-
-      # Self-scraping for Prometheus health
-      {
-        job_name = "prometheus";
-        static_configs = [
-          {
-            targets = ["localhost:9090"];
-          }
-        ];
-      }
+    # Rules and alerting can be added here
+    ruleFiles = [ ];
+    
+    # Retention policy
+    extraFlags = [
+      "--storage.tsdb.retention.time=90d"
+      "--storage.tsdb.retention.size=10GB"
     ];
-
-    # Alertmanager rules (basic)
-    ruleFiles = [
-      (pkgs.writeText "maitred.rules" ''
-        groups:
-          - name: maitred.rules
-            rules:
-              - alert: HighCPUUsage
-                expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
-                for: 5m
-                labels:
-                  severity: warning
-                annotations:
-                  summary: "High CPU usage on {{ $labels.instance }}"
-
-              - alert: HighMemoryUsage
-                expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 90
-                for: 5m
-                labels:
-                  severity: warning
-                annotations:
-                  summary: "High memory usage on {{ $labels.instance }}"
-
-              - alert: CaddyDown
-                expr: up{job="caddy"} == 0
-                for: 2m
-                labels:
-                  severity: critical
-                annotations:
-                  summary: "Caddy reverse proxy is down"
-      '')
-    ];
+    
+    # Node exporter configuration
+    exporters.node = {
+      enable = true;
+      port = 9100;
+      enabledCollectors = [ "systemd" "processes" ];
+      # Only listen on localhost and Nebula
+      listenAddress = "0.0.0.0";
+      openFirewall = false; # Manually control access
+    };
   };
 
-  # Grafana dashboard server
-  services.grafana = {
+  # Grafana visualization (host service)
+  services.grafana = lib.mkIf cfg.services.grafana.enable {
     enable = true;
+    
     settings = {
       server = {
-        http_addr = "0.0.0.0";
-        http_port = 3000;
-        domain = "monitoring.kimb.dev";
-        root_url = "https://monitoring.kimb.dev/";
+        http_port = cfg.services.grafana.port;
+        http_addr = "127.0.0.1";
+        domain = "${cfg.services.grafana.subdomain}.${cfg.domain}";
+        root_url = "https://${cfg.services.grafana.subdomain}.${cfg.domain}";
       };
 
       security = {
-        admin_user = "admin";
-        admin_password = "admin"; # Change this after first login
+        admin_user = cfg.admin.name;
+        admin_password = "admin"; # TODO: Change default password
+        secret_key = "$__file{/run/secrets/grafana-secret-key}";
       };
 
-      analytics = {
-        reporting_enabled = false;
-        check_for_updates = false;
+      database = {
+        type = "sqlite3";
+        path = "/var/lib/grafana/grafana.db";
       };
+
+      analytics.reporting_enabled = false;
+      users.allow_sign_up = false;
     };
 
-    provision = {
+    provision = lib.mkIf cfg.services.prometheus.enable {
       enable = true;
-
-      # Data sources
+      
       datasources.settings.datasources = [
         {
           name = "Prometheus";
           type = "prometheus";
           access = "proxy";
-          url = "http://localhost:9090";
+          url = "http://127.0.0.1:${toString cfg.services.prometheus.port}";
           isDefault = true;
         }
       ];
 
-      # Dashboard provisioning
       dashboards.settings.providers = [
         {
           name = "default";
@@ -147,10 +120,21 @@
     };
   };
 
-  # No additional firewall rules needed - accessed via reverse-proxy container
 
-  # Create dashboard directory and populate with community dashboards
-  systemd.tmpfiles.rules = [
-    "d /var/lib/grafana/dashboards 0755 grafana grafana"
-  ];
+  # Firewall rules for monitoring services
+  networking.firewall = {
+    interfaces = {
+      # Allow monitoring services access from LAN and Nebula
+      "br-lan".allowedTCPPorts = lib.flatten [
+        (lib.optional cfg.services.grafana.enable cfg.services.grafana.port)
+        (lib.optional cfg.services.prometheus.enable cfg.services.prometheus.port)
+        [ 9100 ]  # node exporter
+      ];
+      "nebula-kimb".allowedTCPPorts = lib.flatten [
+        (lib.optional cfg.services.grafana.enable cfg.services.grafana.port)
+        (lib.optional cfg.services.prometheus.enable cfg.services.prometheus.port)
+        [ 9100 ]  # node exporter
+      ];
+    };
+  };
 }

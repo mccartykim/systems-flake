@@ -202,6 +202,49 @@
           srvos.nixosModules.mixins-trusted-nix-caches
           srvos.nixosModules.mixins-systemd-boot
           srvos.nixosModules.mixins-nix-experimental
+          ./modules/kimb-services.nix
+          
+          # Service configuration for rich-evans
+          {
+            kimb.services = {
+              # File sharing service
+              copyparty = {
+                enable = true;
+                port = 3923;
+                subdomain = "files";    # files.kimb.dev  
+                host = "rich-evans";
+                container = false;
+                auth = "authelia";      # Requires two-factor auth
+                publicAccess = true;
+                websockets = false;
+              };
+              
+              # Homepage on rich-evans
+              homepage = {
+                enable = true;
+                port = 8082;
+                subdomain = "home-rich";  # Different from maitred
+                host = "rich-evans";
+                container = false;
+                auth = "none";           # Local access only
+                publicAccess = false;    # Not exposed publicly
+                websockets = false;
+              };
+              
+              # Home Assistant (smart home)
+              homeassistant = {
+                enable = true;
+                port = 8123;
+                subdomain = "hass";
+                host = "rich-evans";
+                container = true;        # OCI container
+                auth = "builtin";        # Has its own auth
+                publicAccess = true;
+                websockets = true;       # Needs WebSocket support
+              };
+            };
+          }
+          
           nix-index-database.nixosModules.nix-index
           {programs.nix-index-database.comma.enable = true;}
           ./hosts/rich-evans/configuration.nix
@@ -211,6 +254,113 @@
         system = "x86_64-linux";
         specialArgs = {inherit inputs outputs;};
         modules = [
+          ./modules/kimb-services.nix
+          
+          # Service configuration using options system
+          {
+            kimb = {
+              domain = "kimb.dev";
+              admin = {
+                name = "kimb";
+                email = "mccartykim@zoho.com"; 
+                displayName = "Kimberly";
+              };
+              
+              services = {
+                # Authentication service (container)
+                authelia = {
+                  enable = true;
+                  port = 9091;
+                  subdomain = "auth";
+                  host = "maitred";
+                  container = false;  # Uses host network  
+                  auth = "none";      # No auth required for auth service
+                  publicAccess = true;
+                  websockets = false;
+                };
+                
+                # Monitoring stack (host services)
+                grafana = {
+                  enable = true;
+                  port = 3000;
+                  subdomain = "grafana";
+                  host = "maitred";
+                  container = false;
+                  auth = "authelia";
+                  publicAccess = true;
+                  websockets = false;
+                };
+                
+                prometheus = {
+                  enable = true;
+                  port = 9090;
+                  subdomain = "prometheus";
+                  host = "maitred";
+                  container = false;
+                  auth = "authelia";
+                  publicAccess = true;
+                  websockets = false;
+                };
+                
+                # Homepage dashboard (host service)
+                homepage = {
+                  enable = true;
+                  port = 8082;
+                  subdomain = "home";
+                  host = "maitred";
+                  container = false;
+                  auth = "authelia";
+                  publicAccess = true;
+                  websockets = false;
+                };
+                
+                # Blog service (container)
+                blog = {
+                  enable = true;
+                  port = 8080;
+                  subdomain = "blog";  # Creates blog.kimb.dev
+                  host = "maitred";
+                  container = true;
+                  auth = "none";       # Public blog
+                  publicAccess = true;
+                  websockets = false;
+                };
+                
+                # Reverse proxy (container) - always enabled on maitred
+                reverse-proxy = {
+                  enable = true;
+                  port = 80;
+                  subdomain = "www";   # Not used - handles all domains
+                  host = "maitred";
+                  container = true;
+                  auth = "none";
+                  publicAccess = true;
+                  websockets = false;
+                };
+              };
+              
+              networks = {
+                containerBridge = "192.168.100.1";
+                reverseProxyIP = "192.168.100.2";
+                trustedNetworks = [
+                  "192.168.0.0/16"   # LAN (192.168.69.0/24)
+                  "10.100.0.0/16"    # Nebula mesh
+                  "100.64.0.0/10"    # Tailscale
+                ];
+              };
+              
+              dns = {
+                provider = "cloudflare";
+                ttl = 1;
+                updatePeriod = 300;
+                servers = {
+                  primary = "192.168.69.1";  # maitred
+                  fallback = ["8.8.8.8" "8.8.4.4"];
+                };
+              };
+            };
+          }
+          
           ./hosts/maitred/configuration.nix
           nix-index-database.nixosModules.nix-index
           {programs.nix-index-database.comma.enable = true;}
@@ -225,6 +375,25 @@
           srvos.nixosModules.mixins-nix-experimental
           srvos.nixosModules.mixins-trusted-nix-caches
           nixos-hardware.nixosModules.lenovo-thinkpad
+          ./modules/kimb-services.nix
+          
+          # Service configuration for bartleby (desktop - no services by default)
+          {
+            kimb.services = {
+              # Fractal art service (available but disabled)
+              fractal-art = {
+                enable = false;  # Set to true to enable
+                port = 8000;
+                subdomain = "art";
+                host = "bartleby";
+                container = false;
+                auth = "none";
+                publicAccess = false;
+                websockets = false;
+              };
+            };
+          }
+          
           {
             nixpkgs.overlays = [
               nil-flake.overlays.nil
@@ -270,6 +439,41 @@
       }
       // (builtins.mapAttrs makeColmenaNode
         (builtins.removeAttrs registry.nodes ["lighthouse"])); # Skip non-NixOS lighthouse
+
+    # Test suite
+    tests = {
+      # Full integration test (requires working file paths)
+      integrationTest = import ./tests/integration-vm-test.nix {
+        pkgs = nixpkgs.legacyPackages.x86_64-linux;
+        lib = nixpkgs.legacyPackages.x86_64-linux.lib;
+        agenix = agenix;
+      };
+      
+      # Simple VM test with inline keys
+      simpleVMTest = import ./tests/simple-vm-test.nix {
+        pkgs = nixpkgs.legacyPackages.x86_64-linux;
+        lib = nixpkgs.legacyPackages.x86_64-linux.lib;
+      };
+      
+      # Minimal test for debugging
+      minimalTest = import ./tests/minimal-test.nix {
+        pkgs = nixpkgs.legacyPackages.x86_64-linux;
+      };
+      
+      # Multi-VM network test with kimb-services
+      networkTest = import ./tests/network-test.nix {
+        pkgs = nixpkgs.legacyPackages.x86_64-linux;
+      };
+      
+      # Working VM test for debugging
+      workingVMTest = import ./tests/working-vm-test.nix {
+        pkgs = nixpkgs.legacyPackages.x86_64-linux;
+      };
+    } // (import ./tests/integration-vm-test.nix {
+      pkgs = nixpkgs.legacyPackages.x86_64-linux;
+      lib = nixpkgs.legacyPackages.x86_64-linux.lib;
+      agenix = agenix;
+    });
 
     devShells.x86_64-linux.default = let
       system = "x86_64-linux";

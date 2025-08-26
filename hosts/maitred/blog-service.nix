@@ -1,51 +1,33 @@
-# Blog service container configuration for maitred
-# Runs just the mist-blog service in isolation
-{
-  config,
-  pkgs,
-  inputs,
-  ...
-}: {
-  # NixOS container for the blog service
-  containers.blog-service = {
+# Blog service container using kimb-services options
+{ config, lib, pkgs, inputs, ... }:
+
+let
+  cfg = config.kimb;
+
+in {
+  # Blog service container (uses mist-blog flake input)
+  containers.blog-service = lib.mkIf cfg.services.blog.enable {
     autoStart = true;
     privateNetwork = true;
-    hostAddress = "192.168.100.1"; # Router's container bridge IP
-    localAddress = "192.168.100.3"; # Blog service container IP (no internet access needed)
+    hostAddress = cfg.networks.containerBridge;
+    localAddress = "192.168.100.3";
 
-    config = {
-      config,
-      pkgs,
-      ...
-    }: {
-      # Mist blog service
+    config = { config, pkgs, ... }: {
+      environment.systemPackages = [ inputs.mist-blog.packages.x86_64-linux.default ];
+      
       systemd.services.mist-blog = {
         description = "Mist Blog Service";
-        wantedBy = ["multi-user.target"];
-        after = ["network-online.target"];
-        wants = ["network-online.target"];
+        after = [ "network.target" ];
+        wantedBy = [ "multi-user.target" ];
         serviceConfig = {
-          ExecStart = "${inputs.mist-blog.packages.${pkgs.system}.default}/bin/mist_blog";
+          ExecStart = "${inputs.mist-blog.packages.x86_64-linux.default}/bin/mist-blog";
           Restart = "always";
-          Type = "simple";
-          DynamicUser = true;
-          Environment = [
-            "PORT=8080"
-            "MIST_HOST=0.0.0.0" # Try Mist-specific variable
-            "HOST=0.0.0.0" # Keep generic one too
-          ];
+          User = "nobody";
+          WorkingDirectory = "/tmp";
         };
       };
 
-      # Open firewall for blog service
-      networking.firewall.allowedTCPPorts = [8080];
-
-      # Minimal system packages
-      environment.systemPackages = with pkgs; [
-        curl
-        htop
-      ];
-
+      networking.firewall.allowedTCPPorts = [ cfg.services.blog.port ];
       system.stateVersion = "24.11";
     };
   };

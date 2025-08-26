@@ -1,237 +1,100 @@
-# Reverse proxy container configuration for maitred
-# Handles HTTPS termination and routing to internal services
-{
-  config,
-  pkgs,
-  inputs,
-  ...
-}: {
-  # NixOS container for reverse proxy
-  containers.reverse-proxy = {
+# Migrated reverse proxy using kimb-services options
+{ config, lib, pkgs, ... }:
+
+let
+  cfg = config.kimb;
+  
+  # Generate Caddy virtual host for a service
+  mkServiceVirtualHost = serviceName: service: let
+    domain = "${service.subdomain}.${cfg.domain}";
+    needsAuth = service.auth == "authelia";
+    needsWebsockets = service.websockets;
+    
+    # Determine target IP based on host and container settings
+    targetIP = 
+      if service.host == "maitred" && service.container then
+        # Container service on maitred - use container IP
+        if serviceName == "blog" then "192.168.100.3"
+        else if serviceName == "reverse-proxy" then "192.168.100.2"
+        else "192.168.100.10"  # Default container IP
+      else if service.host == "rich-evans" then
+        "10.100.0.40"  # rich-evans Nebula IP
+      else if service.host == "bartleby" then
+        "10.100.0.30"  # bartleby Nebula IP
+      else
+        "127.0.0.1";   # localhost for maitred host services
+    
+    authConfig = lib.optionalString needsAuth ''
+      forward_auth ${cfg.networks.reverseProxyIP}:${toString cfg.services.authelia.port} {
+        uri /api/verify?rd=https://auth.${cfg.domain}
+        copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
+      }
+    '';
+    
+    websocketConfig = lib.optionalString needsWebsockets ''
+      @websockets {
+        header Connection *Upgrade*
+        header Upgrade websocket
+      }
+      reverse_proxy @websockets ${targetIP}:${toString service.port}
+    '';
+    
+  in lib.nameValuePair domain {
+    extraConfig = ''
+      ${authConfig}
+      ${websocketConfig}
+      reverse_proxy ${targetIP}:${toString service.port}
+    '';
+  };
+  
+  # Generate virtual hosts for all enabled public services (except reverse-proxy itself)
+  serviceVirtualHosts = lib.mapAttrs' mkServiceVirtualHost (
+    lib.filterAttrs (name: service: 
+      service.enable && 
+      service.publicAccess && 
+      name != "reverse-proxy"
+    ) cfg.services
+  );
+
+in {
+  # Only create reverse proxy if enabled
+  containers.reverse-proxy = lib.mkIf cfg.services.reverse-proxy.enable {
     autoStart = true;
     privateNetwork = true;
-    hostAddress = "192.168.100.1"; # Router's container bridge IP
-    localAddress = "192.168.100.2"; # Proxy container IP
+    hostAddress = cfg.networks.containerBridge;
+    localAddress = cfg.networks.reverseProxyIP;
 
-    config = {
-      config,
-      pkgs,
-      ...
-    }: {
-      # Configure DNS for external certificate resolution - use router's DNS
-      networking = {
-        nameservers = ["192.168.69.1"];
-        resolvconf.enable = false;
-
-        # Open firewall for HTTP/HTTPS and metrics
-        firewall.allowedTCPPorts = [80 443 2019];
-      };
-
-      services.resolved.enable = false;
-
-      # Force specific DNS configuration with fallback
-      environment.etc."resolv.conf".text = ''
-        nameserver 192.168.69.1
-        nameserver 8.8.8.8
-        nameserver 8.8.4.4
-        options edns0
-      '';
-
-      # Caddy for HTTPS termination and reverse proxy
+    config = { config, pkgs, ... }: {
       services.caddy = {
         enable = true;
-        email = "mccartykim@zoho.com";
+        email = cfg.admin.email;
 
-        # Enable metrics for monitoring
-        globalConfig = ''
-          servers {
-            metrics
-          }
-        '';
-
-        virtualHosts = {
-          # External domains (Let's Encrypt certificates)
-          "kimb.dev" = {
+        virtualHosts = serviceVirtualHosts // {
+          # Root domain points to blog
+          ${cfg.domain} = lib.mkIf cfg.services.blog.enable {
             extraConfig = ''
-              reverse_proxy 192.168.100.3:8080
+              reverse_proxy 192.168.100.3:${toString cfg.services.blog.port}
             '';
           };
-          "blog.kimb.dev" = {
-            extraConfig = ''
-              reverse_proxy 192.168.100.3:8080
-            '';
-          };
-          "auth.kimb.dev" = {
-            extraConfig = ''
-              reverse_proxy 192.168.100.1:9091
-            '';
-          };
-          "home.kimb.dev" = {
-            extraConfig = ''
-              forward_auth 192.168.100.1:9091 {
-                uri /api/verify?rd=https://auth.kimb.dev
-                copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
-              }
-              reverse_proxy 192.168.100.1:8082 {
-                header_up Host 192.168.100.1:8082
-              }
-            '';
-          };
-          "http://home.kimb.dev" = {
-            extraConfig = ''
-              forward_auth 192.168.100.1:9091 {
-                uri /api/verify?rd=https://auth.kimb.dev
-                copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
-              }
-              reverse_proxy 192.168.100.1:8082 {
-                header_up Host 192.168.100.1:8082
-              }
-            '';
-          };
-          "grafana.kimb.dev" = {
-            extraConfig = ''
-              forward_auth 192.168.100.1:9091 {
-                uri /api/verify?rd=https://auth.kimb.dev
-                copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
-              }
-              reverse_proxy 192.168.100.1:3000
-            '';
-          };
-          "http://grafana.kimb.dev" = {
-            extraConfig = ''
-              forward_auth 192.168.100.1:9091 {
-                uri /api/verify?rd=https://auth.kimb.dev
-                copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
-              }
-              reverse_proxy 192.168.100.1:3000
-            '';
-          };
-          "prometheus.kimb.dev" = {
-            extraConfig = ''
-              forward_auth 192.168.100.1:9091 {
-                uri /api/verify?rd=https://auth.kimb.dev
-                copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
-              }
-              reverse_proxy 192.168.100.1:9090
-            '';
-          };
-          "http://prometheus.kimb.dev" = {
-            extraConfig = ''
-              forward_auth 192.168.100.1:9091 {
-                uri /api/verify?rd=https://auth.kimb.dev
-                copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
-              }
-              reverse_proxy 192.168.100.1:9090
-            '';
-          };
-          "copyparty.kimb.dev" = {
-            extraConfig = ''
-              forward_auth 192.168.100.1:9091 {
-                uri /api/verify?rd=https://auth.kimb.dev
-                copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
-              }
-              reverse_proxy 192.168.100.1:3923
-            '';
-          };
-          "http://copyparty.kimb.dev" = {
-            extraConfig = ''
-              forward_auth 192.168.100.1:9091 {
-                uri /api/verify?rd=https://auth.kimb.dev
-                copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
-              }
-              reverse_proxy 192.168.100.1:3923
-            '';
-          };
-          # "wiki.kimb.dev" - DISABLED
-          # "wiki.kimb.dev" = {
-          #   extraConfig = ''
-          #     @websockets {
-          #       header Connection *Upgrade*
-          #       header Upgrade websocket
-          #     }
-          #     reverse_proxy @websockets 10.100.0.40:3100
-          #     
-          #     reverse_proxy 10.100.0.40:3100 {
-          #       header_up Host {http.request.host}
-          #       header_up X-Real-IP {remote_host}
-          #       header_up X-Forwarded-For {remote_host}
-          #       header_up X-Forwarded-Proto {scheme}
-          #     }
-          #   '';
-          # };
-          # remote.kimb.dev - DISABLED (Guacamole not ready)
-          # TODO: Re-enable when Guacamole SSO is properly configured
-          # "remote.kimb.dev" = {
-          #   extraConfig = ''
-          #     forward_auth 192.168.100.4:9091 {
-          #       uri /api/verify?rd=https://auth.kimb.dev
-          #       copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
-          #     }
-          #     reverse_proxy 192.168.100.1:8080
-          #   '';
-          # };
-          # "http://remote.kimb.dev" = {
-          #   extraConfig = ''
-          #     forward_auth 192.168.100.4:9091 {
-          #       uri /api/verify?rd=https://auth.kimb.dev
-          #       copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
-          #     }
-          #     reverse_proxy 192.168.100.1:8080
-          #   '';
-          # };
         };
       };
 
-      # Minimal system packages
-      environment.systemPackages = with pkgs; [
-        curl
-        htop
-      ];
-
+      networking.firewall.allowedTCPPorts = [ 80 443 2019 ];
       system.stateVersion = "24.11";
     };
   };
 
-  # Networking configuration for container proxy
-  networking = {
-    # NAT configuration
-    nat = {
-      # Port forwarding from router to proxy container
-      forwardPorts = [
-        # HTTP from WAN
-        {
-          sourcePort = 80;
-          destination = "192.168.100.2:80";
-          proto = "tcp";
-        }
-        # HTTPS from WAN
-        {
-          sourcePort = 443;
-          destination = "192.168.100.2:443";
-          proto = "tcp";
-        }
-        # Hairpin NAT removed - using split-brain DNS instead
-      ];
-
-      # Add container network to NAT for outbound internet access
-      internalInterfaces = ["ve-+"];
-    };
-
-    # Firewall configuration for container bridge traffic
-    firewall = {
-      trustedInterfaces = ["ve-+"]; # All container virtual ethernet interfaces
-      extraCommands = ''
-        # Allow traffic between containers
-        iptables -A FORWARD -d 192.168.100.0/24 -j ACCEPT
-        iptables -A FORWARD -s 192.168.100.0/24 -j ACCEPT
-        
-        # Allow container to access Nebula network
-        iptables -A FORWARD -s 192.168.100.0/24 -d 10.100.0.0/16 -j ACCEPT
-        iptables -A FORWARD -s 10.100.0.0/16 -d 192.168.100.0/24 -j ACCEPT
-        
-        # Enable NAT for container -> Nebula traffic
-        iptables -t nat -A POSTROUTING -s 192.168.100.0/24 -d 10.100.0.0/16 -j MASQUERADE
-      '';
-    };
-  };
+  # NAT port forwarding for HTTP/HTTPS traffic
+  networking.nat.forwardPorts = lib.mkIf cfg.services.reverse-proxy.enable [
+    {
+      sourcePort = 80;
+      destination = "${cfg.networks.reverseProxyIP}:80";
+      proto = "tcp";
+    }
+    {
+      sourcePort = 443;
+      destination = "${cfg.networks.reverseProxyIP}:443";
+      proto = "tcp";
+    }
+  ];
 }

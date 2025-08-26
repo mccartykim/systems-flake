@@ -14,6 +14,9 @@
     ../profiles/base.nix
     ../profiles/server.nix
 
+    # Services configuration
+    ./services.nix
+
     # Server-specific modules
     ./guacamole.nix
     ./smarthome.nix
@@ -50,45 +53,6 @@
 
   # Server-specific services
   services = {
-    homepage-dashboard = {
-      enable = true;
-      openFirewall = true;
-    };
-
-    copyparty = {
-      enable = true;
-      settings = {
-        # Listen on all interfaces for LAN and Nebula access
-        i = "0.0.0.0";
-        # Keep default port 3923
-
-        # Header-based SSO authentication with Authelia
-        # Map Remote-User header from Authelia to Copyparty users
-        idp-h-usr = "Remote-User";
-        idp-h-grp = "Remote-Groups";
-
-        # Trust maitred proxy for X-Forwarded-For and SSO headers
-        xff-src = "10.100.0.0/16,192.168.100.0/24";
-
-        # CORS configuration for reverse proxy uploads
-        acao = "https://copyparty.kimb.dev"; # Allow cross-origin from reverse proxy domain
-        acam = "GET,POST,PUT,DELETE,HEAD,OPTIONS"; # Allow necessary HTTP methods
-      };
-
-      # Configure volumes with SSO user permissions
-      volumes = {
-        "/" = {
-          path = "/mnt/seagate/copyparty";
-          access = {
-            # Give kimb full admin permissions via SSO header
-            rwadmG = ["kimb"];
-            # Allow all authenticated users to read
-            r = "*";
-          };
-        };
-      };
-    };
-
     miniflux = {
       enable = false;
       adminCredentialsFile = "/etc/miniflux-credentials";
