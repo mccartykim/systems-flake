@@ -154,19 +154,34 @@
     };
   };
 
-  # Systemd services
-  systemd.services.copyparty-proxy = {
-    description = "Copyparty proxy to rich-evans";
-    after = ["network.target" "nebula@mesh.service"];
-    wantedBy = ["multi-user.target"];
-    serviceConfig = {
-      ExecStart = "${pkgs.socat}/bin/socat TCP4-LISTEN:3923,fork,reuseaddr TCP4:10.100.0.40:3923";
-      Restart = "always";
-      RestartSec = "5";
-      User = "nobody";
-      Group = "nogroup";
+  # Dynamic service proxies for enabled services on remote hosts
+  systemd.services = let
+    cfg = config.kimb;
+    
+    # Create proxy services for enabled remote services
+    mkProxyService = serviceName: service: lib.nameValuePair "${serviceName}-proxy" {
+      description = "${serviceName} proxy to ${service.host}";
+      after = ["network.target" "nebula@mesh.service"];
+      wantedBy = ["multi-user.target"];
+      serviceConfig = {
+        ExecStart = "${pkgs.socat}/bin/socat TCP4-LISTEN:${toString service.port},fork,reuseaddr TCP4:${
+          if service.host == "rich-evans" then "10.100.0.40"
+          else if service.host == "bartleby" then "10.100.0.30"
+          else "127.0.0.1"
+        }:${toString service.port}";
+        Restart = "always";
+        RestartSec = "5";
+        User = "nobody";
+        Group = "nogroup";
+      };
     };
-  };
+    
+    # Generate proxy services for enabled remote services
+    remoteServices = lib.filterAttrs (name: service:
+      service.enable && service.host != "maitred" && !service.container
+    ) cfg.services;
+    
+  in lib.mapAttrs' mkProxyService remoteServices;
 
   # Guacamole proxy service - DISABLED 
   # TODO: Re-enable when Guacamole is working properly
@@ -228,36 +243,32 @@
             "192.168.100.0/24 allow" # Container network
             "127.0.0.0/8 allow"
           ];
-          # Local DNS entries for Nebula hosts and local domains
+          # Local DNS entries for Nebula hosts and enabled services
           local-data = let
             registry = import ../nebula-registry.nix;
+            cfg = config.kimb;
+            
+            # Nebula host entries
             nebula-hosts =
               builtins.map (name: "\"${name}.nebula. A ${registry.nodes.${name}.ip}\"")
               (builtins.attrNames registry.nodes);
-            local-domains = [
-              # Split-brain DNS: LAN clients get container IP for kimb.dev domains
-              "\"kimb.dev. A 192.168.100.2\""
-              "\"auth.kimb.dev. A 192.168.100.2\""
-              "\"blog.kimb.dev. A 192.168.100.2\""
-              "\"home.kimb.dev. A 192.168.100.2\""
-              "\"grafana.kimb.dev. A 192.168.100.2\""
-              "\"prometheus.kimb.dev. A 192.168.100.2\""
-              "\"copyparty.kimb.dev. A 192.168.100.2\""
-              # "\"wiki.kimb.dev. A 192.168.100.2\""  # DISABLED
-              # "\"remote.kimb.dev. A 192.168.100.2\""  # DISABLED - Guacamole not ready
-            ];
+            
+            # Generate DNS entries for enabled public services
+            serviceDomains = lib.mapAttrsToList (name: service:
+              "\"${service.subdomain}.${cfg.domain}. A ${cfg.networks.reverseProxyIP}\""
+            ) (lib.filterAttrs (name: service: 
+              service.enable && service.publicAccess
+            ) cfg.services);
+            
+            # Root domain entry
+            rootDomain = [ "\"${cfg.domain}. A ${cfg.networks.reverseProxyIP}\"" ];
+            
           in
-            nebula-hosts ++ local-domains;
+            nebula-hosts ++ rootDomain ++ serviceDomains;
         };
       };
     };
 
-    # Basic monitoring (restricted to LAN)
-    prometheus.exporters.node = {
-      enable = true;
-      listenAddress = "192.168.69.1"; # LAN only - no public access
-      port = 9100;
-    };
 
     # Network monitoring
     vnstat.enable = true;

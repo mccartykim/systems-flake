@@ -56,6 +56,11 @@ with lib; {
       nil
       nh
       meld
+      emacs
+      ripgrep
+      coreutils
+      fd
+      clang
     ];
   };
 }
