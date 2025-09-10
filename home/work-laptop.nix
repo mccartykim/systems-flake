@@ -23,7 +23,7 @@
       pkgs.watchman
       pkgs.allure
       pkgs.nerd-fonts.symbols-only
-      pkgs.nerd-onts.blex-mono
+      pkgs.nerd-fonts.blex-mono
       pkgs.terminal-notifier
       pkgs.ripgrep
       pkgs.just
@@ -42,6 +42,8 @@
         enable = true;
         icons = "auto";
       };
+
+      ghostty.enable = true;
 
       helix.enable = true;
 
