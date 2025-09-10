@@ -20,7 +20,7 @@ in {
   };
   # For shell only
   environment.variables = {
-    EDITOR = "nvim";
+    EDITOR = "hx";
   };
 
   programs.fish.enable = true;
