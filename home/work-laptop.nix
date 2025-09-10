@@ -43,8 +43,6 @@
         icons = "auto";
       };
 
-      ghostty.enable = true;
-
       helix.enable = true;
 
       fd.enable = true;
