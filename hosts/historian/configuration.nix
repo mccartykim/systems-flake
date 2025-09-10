@@ -107,7 +107,7 @@
   boot = {
     # AMD-specific kernel modules
     kernelModules = ["amdgpu" "kvm-amd"];
-    kernelPackages = pkgs.linuxKernel.packages.linux_6_15;
+    kernelPackages = pkgs.linuxPackages_latest;
 
     # Boot loader customizations
     loader.systemd-boot = {
