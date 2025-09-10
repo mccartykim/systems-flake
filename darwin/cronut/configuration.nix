@@ -1,7 +1,6 @@
 {pkgs, ...}: {
   # For some reason, nix-darwin needs this stated explicitly
   users.users."kim".home = "/Users/kim";
-  system.primaryUser = "kim";
   nixpkgs = {
     config = {
       allowBroken = true;
