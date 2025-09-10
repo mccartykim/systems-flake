@@ -23,12 +23,17 @@
       pkgs.watchman
       pkgs.allure
       pkgs.nerd-fonts.symbols-only
-      pkgs.nerd-fonts.blex-mono
+      pkgs.nerd-onts.blex-mono
       pkgs.terminal-notifier
       pkgs.ripgrep
       pkgs.just
       pkgs.nodejs_22
       pkgs.meld
+      # Doom-Emacs stated deps, maybe should just wrap emacs but effort...
+      pkgs.emacs
+      pkgs.coreutils
+      pkgs.clang
+      pkgs.sqlite
     ];
 
     programs = {
