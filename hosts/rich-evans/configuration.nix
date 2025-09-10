@@ -20,7 +20,6 @@
     # Server-specific modules
     ./guacamole.nix
     ./smarthome.nix
-    # ./wiki.nix  # DISABLED
 
     # Nebula mesh network with agenix
     ./nebula.nix
