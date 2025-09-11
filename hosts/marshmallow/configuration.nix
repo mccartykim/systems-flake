@@ -72,7 +72,7 @@
 
     # Marshmallow-specific services
     yggdrasil = {
-      enable = true;
+      enable = false;
       persistentKeys = true;
       openMulticastPort = true;
       group = "wheel";
@@ -88,6 +88,13 @@
 
     keybase.enable = true;
     kbfs.enable = true;
+
+    syncthing = {
+      enable = true;
+      openDefaultPorts = true;
+      user = "kimb";
+      dataDir = "/home/kimb";
+    };
   };
 
   # Programs configuration
