@@ -42,6 +42,10 @@ with lib; {
         };
       };
 
+      helix = {
+        enable = true;
+      };
+
       zed-editor = {
         enable = true;
         extensions = [
@@ -62,6 +66,20 @@ with lib; {
       coreutils
       fd
       clang
+      graphviz    # For org-roam
+      nixfmt      # For nix-format-buffer
+      shellcheck  # For shell script linting
+      pipenv
+      fontconfig  # For font detection
+      (
+        pkgs.python3.withPackages (ps: with ps; [
+          isort
+          pytest
+        ])
+      )
+      scrot
+      wl-clipboard
+      ispell
     ];
   };
 }
