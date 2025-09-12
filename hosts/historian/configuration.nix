@@ -157,6 +157,13 @@
       rocmOverrideGfx = "11.5.0";
     };
 
+    syncthing = {
+      enable = true;
+      openDefaultPorts = true;
+      user = "kimb";
+      dataDir = "/home/kimb";
+    };
+
     # Enable Sunshine for game streaming
     sunshine.enable = true;
 
