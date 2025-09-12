@@ -141,6 +141,13 @@
   nix.settings.trusted-users = ["kimb" "root"];
 
   # Firewall configuration
+  #
+    networking.nameservers = let
+      registry = import ../nebula-registry.nix;
+    in [
+      registry.nodes.maitred.ip # maitred router via Nebula
+      "1.1.1.1" # Fallback
+    ];
 
     networking.firewall = {
      allowedTCPPorts = [
@@ -167,7 +174,7 @@
        20
      ];
    };
-    networking.firewall.trustedInterfaces = [ "nebula1" ];
+    networking.firewall.trustedInterfaces = [ "nebula1" "lo" ];
 
 
   system.stateVersion = "23.11";

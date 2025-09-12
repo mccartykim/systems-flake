@@ -30,8 +30,6 @@
   # Server networking optimizations
   networking = {
     firewall.enable = true;
-    # Servers should use systemd-networkd, not NetworkManager
-    networkmanager.enable = lib.mkForce false;
   };
 
   # Monitoring and maintenance packages

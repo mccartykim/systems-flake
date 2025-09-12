@@ -20,17 +20,17 @@
     # 2. Or configure a static IP matching the current subnet
   };
 
-  systemd.network.enable = true;
+  # systemd.network.enable = true;
 
   # Configure eno1 interface with DHCP via systemd-networkd
-  systemd.network.networks."10-eno1" = {
-    matchConfig.Name = "eno1";
-    networkConfig = {
-      DHCP = "yes";
-      # Get IP from maitred's DHCP pool (192.168.69.100-199)
-    };
-    linkConfig.RequiredForOnline = "routable";
-  };
+  # systemd.network.networks."10-eno1" = {
+  #   matchConfig.Name = "eno1";
+  #   networkConfig = {
+  #     DHCP = "yes";
+  #     # Get IP from maitred's DHCP pool (192.168.69.100-199)
+  #   };
+  #   linkConfig.RequiredForOnline = "routable";
+  # };
 
   # Access via:
   # - Nebula: 10.100.0.40 (always works)
