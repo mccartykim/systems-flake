@@ -57,6 +57,7 @@ with lib; {
       nh
       meld
       emacs
+      sqlite
       ripgrep
       coreutils
       fd
