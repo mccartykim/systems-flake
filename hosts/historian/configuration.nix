@@ -68,8 +68,9 @@
         47990
         48000
         48010
+        22000
       ];
-      allowedUDPPorts = [4242]; # Nebula
+      allowedUDPPorts = [4242 22000]; # Nebula
       allowedUDPPortRanges = [
         {
           from = 47998;
@@ -82,6 +83,7 @@
       ];
       trustedInterfaces = [
         "virbr0"
+        "nebula1"
       ];
     };
   };
