@@ -140,6 +140,21 @@ in {
           proto = "tcp";
           host = "any";
         }
+        {
+          port = 8384;
+          proto = "tcp";
+          host = "any";
+        }
+        {
+          port = 22000;
+          proto = "tcp";
+          host = "any";
+        }
+        {
+          port = 22000;
+          proto = "udp";
+          host = "any";
+        }
       ];
     };
   };
