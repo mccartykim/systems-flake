@@ -60,6 +60,15 @@
       };
     };
 
+    syncthing = {
+      enable = true;
+      openDefaultPorts = true;
+      user = "kimb";
+      dataDir = "/home/kimb";
+      # TODO - put nebula ips in some kind of constant?
+      guiAddress = "10.100.0.40:8384";
+    };
+
     # Tailscale with server routing
     tailscale.useRoutingFeatures = "server";
 
