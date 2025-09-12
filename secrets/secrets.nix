@@ -10,12 +10,17 @@ let
     (builtins.attrValues registry.nodes);
   allSystems = map (node: node.publicKey) nodesWithKeys;
   
+  # Temporary user key for bootstrap
+  userBootstrapKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIN2bgYbsq7Hp5RoM1Dlt59CdGEjvV6CoCi75pR4JiG5e";
+  
   # Temporary: Only working machines (skip laptops for now)
   workingMachines = [
     registry.nodes.historian.publicKey
     registry.nodes.maitred.publicKey  
     registry.nodes.rich-evans.publicKey
     registry.nodes.total-eclipse.publicKey
+    registry.nodes.marshmallow.publicKey
+    userBootstrapKey  # Added temporarily for re-encryption
   ];
 in
   {
@@ -39,13 +44,13 @@ in
     let
       # Create cert/key entries only for working nodes (temporary)
       workingNodes = {
-        inherit (registry.nodes) historian maitred rich-evans total-eclipse;
+        inherit (registry.nodes) historian maitred rich-evans total-eclipse marshmallow;
       };
       createNodeSecrets = nodeName: node:
         if node.publicKey != null
         then {
-          "nebula-${nodeName}-cert.age".publicKeys = [node.publicKey];
-          "nebula-${nodeName}-key.age".publicKeys = [node.publicKey];
+          "nebula-${nodeName}-cert.age".publicKeys = [node.publicKey userBootstrapKey];
+          "nebula-${nodeName}-key.age".publicKeys = [node.publicKey userBootstrapKey];
         }
         else {};
     in

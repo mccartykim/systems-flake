@@ -123,31 +123,6 @@ in {
     };
   };
 
-  # CUPS printing service
-  services.printing = {
-    enable = true;
-    drivers = with pkgs; [ 
-      gutenprint 
-      gutenprintBin 
-      brlaser 
-      brgenml1lpr 
-      brgenml1cupswrapper 
-    ];
-    browsing = true;
-    defaultShared = true;
-    listenAddresses = [ "*:631" ];
-    allowFrom = [ "all" ];
-    extraConf = ''
-      DefaultEncryption Never
-      <Location />
-        Order allow,deny
-        Allow localhost
-        Allow 192.168.69.*
-        Allow 10.100.0.*
-      </Location>
-    '';
-  };
-
   # Firewall configuration for enabled services
   networking.firewall = {
     allowedTCPPorts = lib.flatten [
