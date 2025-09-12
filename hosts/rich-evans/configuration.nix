@@ -65,7 +65,6 @@
       openDefaultPorts = true;
       user = "kimb";
       dataDir = "/home/kimb";
-      # TODO - put nebula ips in some kind of constant?
       guiAddress = "0.0.0.0:8384";
     };
 
@@ -142,30 +141,34 @@
   nix.settings.trusted-users = ["kimb" "root"];
 
   # Firewall configuration
-  networking.firewall = {
-    allowedTCPPorts = [
-      9001 # Existing service
-      3923 # Copyparty HTTP
-      3921 # Copyparty FTP
-      3945 # Copyparty SMB
-      3990 # Copyparty additional
-      4822 # Guacamole daemon
-      8080 # Guacamole web interface
-    ];
-    allowedTCPPortRanges = [
-      {
-        from = 12000;
-        to = 12099;
-      } # Copyparty dynamic ports
-    ];
-    allowedUDPPorts = [
-      65535 # Existing
-      69 # TFTP
-      1900 # UPnP
-      3969 # Copyparty TFTP
-      5353 # mDNS/Bonjour
-    ];
-  };
+
+    networking.firewall = {
+     allowedTCPPorts = [
+       9001 # Existing service
+       3923 # Copyparty HTTP
+       3921 # Copyparty FTP
+       3945 # Copyparty SMB
+       3990 # Copyparty additional
+       4822 # Guacamole daemon
+       8080 # Guacamole web interface
+     ];
+     allowedTCPPortRanges = [
+       {
+         from = 12000;
+         to = 12099;
+       } # Copyparty dynamic ports
+     ];
+     allowedUDPPorts = [
+       65535 # Existing
+       69 # TFTP
+       1900 # UPnP
+       3969 # Copyparty TFTP
+       5353 # mDNS/Bonjour
+       20
+     ];
+   };
+    networking.firewall.trustedInterfaces = [ "nebula1" ];
+
 
   system.stateVersion = "23.11";
 }

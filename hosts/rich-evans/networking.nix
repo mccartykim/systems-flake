@@ -8,12 +8,12 @@
   # Networking configuration
   networking = {
     # Disable NetworkManager on this server - use systemd-networkd instead
-    networkmanager.enable = lib.mkForce false;
+    # networkmanager.enable = lib.mkForce false;
 
-    # Use systemd-networkd for server networking
-    useNetworkd = true;
+    # # Use systemd-networkd for server networking
+    # useNetworkd = true;
 
-    useDHCP = false; # Managed by systemd-networkd
+    # useDHCP = false; # Managed by systemd-networkd
 
     # Note: If you want a static IP later, you can:
     # 1. Set a DHCP reservation on maitred based on MAC address
