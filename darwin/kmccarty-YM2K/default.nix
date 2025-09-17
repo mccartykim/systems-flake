@@ -20,7 +20,7 @@ in {
   };
   # For shell only
   environment.variables = {
-    EDITOR = "hx";
+    EDITOR = "emacsclient";
   };
 
   programs.fish.enable = true;
