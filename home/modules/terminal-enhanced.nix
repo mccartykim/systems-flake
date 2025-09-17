@@ -34,13 +34,13 @@ with lib; {
 
     zellij = mkOption {
       type = types.bool;
-      default = true;
+      default = false;
       description = "Enable zellij terminal multiplexer";
     };
 
     tmux = mkOption {
       type = types.bool;
-      default = false;
+      default = true;
       description = "Enable tmux terminal multiplexer";
     };
   };

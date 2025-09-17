@@ -37,6 +37,8 @@
 
     mist-blog.url = "git+ssh://git@github.com/mccartykim/mist-blog";
     mist-blog.inputs.nixpkgs.follows = "nixpkgs";
+
+    nixos-facter-modules.url = "github:nix-community/nixos-facter-modules";
   };
 
   outputs = {
@@ -53,6 +55,7 @@
     nixos-generators,
     disko,
     agenix,
+    nixos-facter-modules,
     ...
   } @ inputs: let
     inherit (self) outputs;
@@ -124,6 +127,21 @@
           nix-index-database.nixosModules.nix-index
           {programs.nix-index-database.comma.enable = true;}
         ];
+      };
+
+      cheesecake = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+	modules = [
+	  nixos-facter-modules.nixosModules.facter
+	  { config.facter.reportPath = ./hosts/cheesecake/facter.json; }
+	  ./hosts/cheesecake/configuration.nix
+	  home-manager.nixosModules.home-manager
+	  {
+	    home-manager.useGlobalPkgs = true;
+	    home-manager.useUserPackages = true;
+	    home-manager.users.kimb = import ./home/cheesecake.nix;
+	  }
+	];
       };
 
       marshmallow = nixpkgs.lib.nixosSystem {
