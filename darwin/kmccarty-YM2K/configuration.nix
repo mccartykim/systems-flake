@@ -68,10 +68,10 @@
 
   # fonts.fontDir.enable = true;
   fonts.packages = with pkgs; [
-    recursive
-    # (nerdfonts.override {fonts = ["JetBrainsMono" "Inconsolata"];})
+    nerd-fonts.recursive-mono
     nerd-fonts.jetbrains-mono
     nerd-fonts.inconsolata
+    nerd-fonts.intone-mono
   ];
 
   # Set Git commit hash for darwin-version.
