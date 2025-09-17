@@ -47,7 +47,7 @@ with lib; {
       };
 
       zed-editor = {
-        enable = true;
+        enable = false;
         extensions = [
           "xy-zed"
           "nix"
@@ -80,6 +80,7 @@ with lib; {
       scrot
       wl-clipboard
       ispell
+      texlive.combined.scheme-medium
     ];
   };
 }
