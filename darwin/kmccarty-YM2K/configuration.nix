@@ -19,6 +19,7 @@
     pkgs.scrcpy
     pkgs.lazygit
     pkgs.nix-output-monitor
+    pkgs.emacs
   ];
   nix = {
     nixPath = pkgs.lib.mkForce [
@@ -65,6 +66,7 @@
   security.pam.services.sudo_local.touchIdAuth = true;
 
   programs.nix-index.enable = true;
+  services.emacs.enable = true;
 
   # fonts.fontDir.enable = true;
   fonts.packages = with pkgs; [

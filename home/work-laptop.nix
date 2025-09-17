@@ -30,7 +30,6 @@
       pkgs.nodejs_22
       pkgs.meld
       # Doom-Emacs deps
-      pkgs.emacs
       pkgs.coreutils
       pkgs.clang
       pkgs.sqlite
