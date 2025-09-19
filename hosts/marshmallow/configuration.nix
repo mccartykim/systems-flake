@@ -123,6 +123,12 @@
     intel-compute-runtime # OpenCL support
   ];
 
+  services.printing.drivers = [
+    pkgs.brlaser
+    pkgs.brgenml1lpr
+    pkgs.brgenml1cupswrapper
+  ];
+
   # Hardware acceleration for media
   environment = {
     sessionVariables = {
