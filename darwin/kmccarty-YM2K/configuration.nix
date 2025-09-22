@@ -20,6 +20,7 @@
     pkgs.lazygit
     pkgs.nix-output-monitor
     pkgs.emacs
+    pkgs.gnupg
   ];
   nix = {
     nixPath = pkgs.lib.mkForce [
@@ -52,6 +53,8 @@
       ];
     };
   };
+
+  programs.gnupg.agent.enable = true;
 
   launchd.daemons.nix-darwin-activate = {
     serviceConfig = {
