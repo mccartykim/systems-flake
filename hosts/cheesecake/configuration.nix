@@ -5,14 +5,29 @@
 
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
-  # before trying linux-surface
-  # boot.kernelPackages = pkgs.linuxKernel.packages.linux_6_16;
-  # services.auto-cpufreq.enable = true;
+
+  # Intel microcode updates for better thermal management
+  hardware.cpu.intel.updateMicrocode = true;
+
+  # Consider linux-surface kernel for better Surface Go 3 support
+  # boot.kernelPackages = pkgs.linuxKernel.packages.linux_surface;
+
+  # Kernel parameters for better thermal management
+  boot.kernelParams = [
+    "intel_pstate=passive"        # Let thermal subsystem control frequency
+    "thermal.tzp=1000"           # Poll thermal zones every 1000ms
+    "thermal.off=0"              # Ensure thermal is enabled
+    "processor.max_cstate=2"     # Limit C-states to reduce heat
+  ];
 
   environment.systemPackages = with pkgs; [
     neovim
     firefox
     git
+    lm_sensors  # For temperature monitoring
+    s-tui       # Terminal UI for stress testing and monitoring
+    powertop    # Power usage optimization
+    stress-ng   # CPU stress testing
   ];
 
   environment.sessionVariables = {
@@ -23,7 +38,51 @@
 
   system.stateVersion = "23.11";
 
-  services.thermald.enable = true;
+  # Disable thermald - ACPI zones are broken, use kernel thermal management instead
+  services.thermald.enable = false;
+
+  # Aggressive CPU frequency scaling for thermal management
+  powerManagement.cpuFreqGovernor = "powersave";
+
+
+  # Disable conflicting power management
+  services.power-profiles-daemon.enable = false;
+
+  # TLP for aggressive power/thermal management
+  services.tlp = {
+    enable = true;
+    settings = {
+      # CPU scaling - safe burst performance with thermal limits
+      CPU_SCALING_GOVERNOR_ON_AC = "schedutil";  # Responsive but thermal-aware
+      CPU_SCALING_GOVERNOR_ON_BAT = "powersave";
+      CPU_MIN_PERF_ON_AC = 20;     # Higher minimum for responsiveness
+      CPU_MAX_PERF_ON_AC = 70;     # Conservative max to prevent 100°C spikes
+      CPU_MIN_PERF_ON_BAT = 5;
+      CPU_MAX_PERF_ON_BAT = 30;
+
+      # Enable turbo boost - temps are stable enough
+      CPU_BOOST_ON_AC = 1;
+      CPU_BOOST_ON_BAT = 0;  # Keep disabled on battery for battery life
+
+      # Energy performance preference - balance for safe bursts
+      CPU_ENERGY_PERF_POLICY_ON_AC = "balance_performance";
+      CPU_ENERGY_PERF_POLICY_ON_BAT = "power";
+
+      # Platform profile for thermal management
+      PLATFORM_PROFILE_ON_AC = "balanced";  # Allow bursts but thermally aware
+      PLATFORM_PROFILE_ON_BAT = "low-power";
+
+      # Critical thermal protection - emergency throttling
+      START_CHARGE_THRESH_BAT0 = 40;
+      STOP_CHARGE_THRESH_BAT0 = 80;
+
+      # Intel GPU - limit frequencies to reduce thermal load
+      INTEL_GPU_MIN_FREQ_ON_AC = 100;
+      INTEL_GPU_MAX_FREQ_ON_AC = 400;  # Very conservative
+      INTEL_GPU_MIN_FREQ_ON_BAT = 100;
+      INTEL_GPU_MAX_FREQ_ON_BAT = 300;
+    };
+  };
   services.tailscale.enable = true;
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
   virtualisation.docker.enable = true;
