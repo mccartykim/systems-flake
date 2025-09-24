@@ -7,7 +7,17 @@
       "Read(//sys/class/thermal/**)",
       "Bash(xargs:*)",
       "Bash(cat:*)",
-      "Bash(lscpu:*)"
+      "Bash(lscpu:*)",
+      "Bash(journalctl:*)",
+      "Bash(find:*)",
+      "Bash(for zone in /sys/class/thermal/thermal_zone*/type)",
+      "Bash(done)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "Read(//sys/devices/system/cpu/cpufreq/policy0/**)",
+      "Read(//sys/devices/system/cpu/**)",
+      "Read(//sys/devices/virtual/thermal/thermal_zone7/**)",
+      "Bash(systemctl:*)"
     ],
     "deny": [],
     "ask": []
