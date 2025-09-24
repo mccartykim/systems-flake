@@ -61,6 +61,7 @@ with lib; {
       nh
       meld
       emacs
+      emacsPackages.mu4e
       sqlite
       ripgrep
       coreutils
