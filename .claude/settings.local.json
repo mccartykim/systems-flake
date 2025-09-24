@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//tmp/**)",
+      "Bash(nix flake check:*)",
+      "Bash(systemctl status:*)",
+      "Read(//sys/class/thermal/**)",
+      "Bash(xargs:*)",
+      "Bash(cat:*)",
+      "Bash(lscpu:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
