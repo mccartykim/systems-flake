@@ -53,6 +53,17 @@
     };
   };
 
+  services.printing = {
+    enable = true;
+    defaultShared = true;
+    drivers = [
+      pkgs.brlaser
+      pkgs.brgenml1lpr
+      pkgs.brgenml1cupswrapper
+    ];
+  };
+  services.ipp-usb.enable = true;
+
   # Network configuration using systemd-networkd
   networking = {
     # Host identification

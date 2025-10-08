@@ -41,24 +41,23 @@ in {
     };
   };
 
-  # Home Assistant smart home platform (OCI container)  
+  # Home Assistant smart home platform (OCI container)
   virtualisation.oci-containers.containers.homeassistant = lib.mkIf cfg.services.homeassistant.enable {
     image = "ghcr.io/home-assistant/home-assistant:stable";
     autoStart = true;
-    
-    ports = [
-      "${toString cfg.services.homeassistant.port}:8123"
-    ];
-    
+
+    # No port mapping needed with host networking
+    # ports = [ "${toString cfg.services.homeassistant.port}:8123" ];
+
     volumes = [
       "/var/lib/hass:/config"
       "/etc/localtime:/etc/localtime:ro"
     ];
-    
+
     environment = {
       TZ = "America/New_York";
     };
-    
+
     extraOptions = [
       "--privileged"
       "--network=host"

@@ -17,7 +17,8 @@
       "Read(//sys/devices/system/cpu/cpufreq/policy0/**)",
       "Read(//sys/devices/system/cpu/**)",
       "Read(//sys/devices/virtual/thermal/thermal_zone7/**)",
-      "Bash(systemctl:*)"
+      "Bash(systemctl:*)",
+      "Bash(ssh:*)"
     ],
     "deny": [],
     "ask": []

@@ -15,7 +15,7 @@
   # Kernel parameters for better thermal management
   boot.kernelParams = [
     "intel_pstate=passive" # Let thermal subsystem control frequency
-    "thermal.tzp=1000" # Poll thermal zones every 1000ms
+    "thermal.tzp=100" # Poll thermal zones every 1000ms
     "thermal.off=0" # Ensure thermal is enabled
     "processor.max_cstate=2" # Limit C-states to reduce heat
   ];
@@ -59,8 +59,8 @@
       CPU_SCALING_GOVERNOR_ON_BAT = "powersave";
       CPU_MIN_PERF_ON_AC = 20; # Higher minimum for responsiveness
       CPU_MAX_PERF_ON_AC = 70; # Conservative max to prevent 100°C spikes
-      CPU_MIN_PERF_ON_BAT = 5;
-      CPU_MAX_PERF_ON_BAT = 30;
+      CPU_MIN_PERF_ON_BAT = 20;
+      CPU_MAX_PERF_ON_BAT = 70;
 
       # Enable turbo boost - temps are stable enough
       CPU_BOOST_ON_AC = 1;
@@ -77,12 +77,6 @@
       # Battery charge thresholds for longevity
       START_CHARGE_THRESH_BAT0 = 40;
       STOP_CHARGE_THRESH_BAT0 = 80;
-
-      # Intel GPU - limit frequencies to reduce thermal load
-      INTEL_GPU_MIN_FREQ_ON_AC = 100;
-      INTEL_GPU_MAX_FREQ_ON_AC = 400; # Very conservative
-      INTEL_GPU_MIN_FREQ_ON_BAT = 100;
-      INTEL_GPU_MAX_FREQ_ON_BAT = 300;
     };
   };
   services.tailscale.enable = true;
@@ -147,6 +141,15 @@
 
   # Enable CUPS to print documents.
   services.printing.enable = true;
+  services.printing = {
+    drivers = [
+      pkgs.brlaser
+      pkgs.brgenml1lpr
+      pkgs.brgenml1cupswrapper
+    ];
+  };
+
+  nixpkgs.config.allowUnfree = true;
 
   # Enable sound with pipewire.
   security.rtkit.enable = true;
