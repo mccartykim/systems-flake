@@ -156,6 +156,8 @@
               { config.facter.reportPath = ./hosts/cheesecake/facter.json; }
               ./hosts/cheesecake/configuration.nix
               home-manager.nixosModules.home-manager
+              nix-index-database.nixosModules.nix-index
+              {programs.nix-index-database.comma.enable = true;}
               {
                 home-manager.useGlobalPkgs = true;
                 home-manager.useUserPackages = true;

@@ -11,7 +11,7 @@ let
   allSystems = map (node: node.publicKey) nodesWithKeys;
   
   # Temporary user key for bootstrap
-  userBootstrapKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIN2bgYbsq7Hp5RoM1Dlt59CdGEjvV6CoCi75pR4JiG5e";
+  userBootstrapKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKQgFzMg37QTeFE2ybQRHfVEQwW/Wz7lK6jPPmctFd/U";
   
   # Temporary: Only working machines (skip laptops for now)
   workingMachines = [

@@ -19,7 +19,6 @@
 
     # Server-specific modules
     ./guacamole.nix
-    ./smarthome.nix
 
     # Nebula mesh network with agenix
     ./nebula.nix

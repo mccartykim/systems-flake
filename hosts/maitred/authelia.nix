@@ -5,6 +5,30 @@ let
   cfg = config.kimb;
 
 in {
+  # Agenix secrets for Authelia
+  age.secrets = lib.mkIf cfg.services.authelia.enable {
+    authelia-jwt-secret = {
+      file = ../../secrets/authelia-jwt-secret.age;
+      mode = "0400";
+      owner = "authelia-main";
+      group = "authelia-main";
+    };
+
+    authelia-session-secret = {
+      file = ../../secrets/authelia-session-secret.age;
+      mode = "0400";
+      owner = "authelia-main";
+      group = "authelia-main";
+    };
+
+    authelia-storage-key = {
+      file = ../../secrets/authelia-storage-key.age;
+      mode = "0400";
+      owner = "authelia-main";
+      group = "authelia-main";
+    };
+  };
+
   # Authelia authentication service (host network)
   services.authelia.instances.main = lib.mkIf cfg.services.authelia.enable {
     enable = true;
@@ -100,9 +124,9 @@ in {
     };
 
     secrets = {
-      jwtSecretFile = "/run/secrets/authelia-jwt-secret";
-      sessionSecretFile = "/run/secrets/authelia-session-secret";  
-      storageEncryptionKeyFile = "/run/secrets/authelia-storage-secret";
+      jwtSecretFile = config.age.secrets.authelia-jwt-secret.path;
+      sessionSecretFile = config.age.secrets.authelia-session-secret.path;
+      storageEncryptionKeyFile = config.age.secrets.authelia-storage-key.path;
     };
   };
 

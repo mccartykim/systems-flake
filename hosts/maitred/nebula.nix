@@ -38,6 +38,11 @@ in {
       group = "nebula-mesh";
       mode = "0600";
     };
+
+    cloudflare-api-token = {
+      file = ../../secrets/cloudflare-api-token.age;
+      mode = "0400";
+    };
   };
 
   # Nebula mesh network
