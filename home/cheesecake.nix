@@ -4,6 +4,7 @@
     neovim
     firefox
     btop
+    ghostty
   ];
 
     imports = [ 
