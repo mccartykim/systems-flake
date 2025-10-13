@@ -56,6 +56,9 @@
   services.printing = {
     enable = true;
     defaultShared = true;
+    listenAddresses = ["*:631"];
+    allowFrom = ["all"];
+    browsing = true;
     drivers = [
       pkgs.brlaser
       pkgs.brgenml1lpr
@@ -63,6 +66,45 @@
     ];
   };
   services.ipp-usb.enable = true;
+
+  services.samba = {
+    enable = true;
+    package = pkgs.sambaFull;
+    openFirewall = true;
+    settings = {
+      global = {
+        "workgroup" = "WORKGROUP";
+        "server string" = "Maitred Print Server";
+        "netbios name" = "maitred";
+        "security" = "user";
+        "hosts allow" = "192.168.69. 127.";
+        "guest account" = "nobody";
+        "map to guest" = "bad user";
+        "load printers" = "yes";
+        "printing" = "cups";
+        "printcap name" = "cups";
+      };
+      printers = {
+        "comment" = "All Printers";
+        "path" = "/var/spool/samba";
+        "public" = "yes";
+        "browseable" = "yes";
+        "guest ok" = "yes";
+        "writable" = "no";
+        "printable" = "yes";
+        "create mode" = 0700;
+      };
+    };
+  };
+  
+  services.samba-wsdd = {
+    enable = true;
+    openFirewall = true;
+  };
+
+  systemd.tmpfiles.rules = [
+    "d /var/spool/samba 1777 root root -"
+  ];
 
   # Network configuration using systemd-networkd
   networking = {
@@ -90,6 +132,7 @@
       allowedTCPPorts = [
         80 # HTTP (forwarded to blog container)
         443 # HTTPS (forwarded to blog container)
+        631 # CUPS/IPP printer sharing
       ];
 
       allowedUDPPorts = [
