@@ -31,12 +31,6 @@
     };
 
     libvirtd.enable = true;
-    virtualbox.host = {
-      enable = true;
-      enableKvm = true;
-      enableExtensionPack = true;
-      addNetworkInterface = false;
-    };
   };
 
   # Host identification and networking configuration
@@ -93,7 +87,6 @@
 
   # AMD GPU hardware acceleration
   hardware.graphics.extraPackages = with pkgs; [
-    amdvlk
     rocmPackages.clr.icd
   ];
 
@@ -154,7 +147,7 @@
   services = {
     # AI/ML services with ROCm acceleration
     ollama = {
-      enable = true;
+      enable = false;
       acceleration = "rocm";
       rocmOverrideGfx = "11.5.0";
     };
