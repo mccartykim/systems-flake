@@ -134,6 +134,9 @@
       rebar3
       erlang
       gleam
+      # Email
+      mu
+      isync
     ];
   };
 
