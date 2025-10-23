@@ -20,7 +20,7 @@ in {
         after = [ "network.target" ];
         wantedBy = [ "multi-user.target" ];
         serviceConfig = {
-          ExecStart = "${inputs.mist-blog.packages.x86_64-linux.default}/bin/mist-blog";
+          ExecStart = "${inputs.mist-blog.packages.x86_64-linux.default}/bin/mist_blog";
           Restart = "always";
           User = "nobody";
           WorkingDirectory = "/tmp";
