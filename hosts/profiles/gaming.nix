@@ -32,7 +32,7 @@
   environment.systemPackages = with pkgs; [
     mangohud
     gamemode
-    lutris
+    # lutris  # Disabled - causing issues
     wine
     winetricks
   ];
