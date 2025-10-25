@@ -64,7 +64,9 @@ in {
     hostAddress = cfg.networks.containerBridge;
     localAddress = cfg.networks.reverseProxyIP;
 
-    config = { config, pkgs, ... }: {
+    config = { config, pkgs, lib, ... }: {
+      networking.nameservers = [ cfg.networks.containerBridge ];
+
       services.caddy = {
         enable = true;
         email = cfg.admin.email;

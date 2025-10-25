@@ -18,7 +18,10 @@
       "Read(//sys/devices/system/cpu/**)",
       "Read(//sys/devices/virtual/thermal/thermal_zone7/**)",
       "Bash(systemctl:*)",
-      "Bash(ssh:*)"
+      "Bash(ssh:*)",
+      "Bash(curl -s -m 10 http://kimb.dev)",
+      "Bash(curl -v http://kimb.dev)",
+      "WebFetch(domain:discourse.nixos.org)"
     ],
     "deny": [],
     "ask": []

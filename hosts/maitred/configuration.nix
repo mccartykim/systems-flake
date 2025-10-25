@@ -122,7 +122,7 @@
     nat = {
       enable = true;
       externalInterface = "enp3s0"; # WAN
-      internalInterfaces = ["enp2s0"]; # LAN
+      internalInterfaces = ["enp2s0" "ve-+"]; # LAN + containers
     };
 
     firewall = {
@@ -130,12 +130,14 @@
 
       # Allow essential services (SSH removed from public access)
       allowedTCPPorts = [
+        53 # DNS for containers (TCP fallback)
         80 # HTTP (forwarded to blog container)
         443 # HTTPS (forwarded to blog container)
         631 # CUPS/IPP printer sharing
       ];
 
       allowedUDPPorts = [
+        53 # DNS for containers
         4242 # Nebula
       ];
 
@@ -147,14 +149,27 @@
 
       # Additional rules
       extraCommands = ''
+        # LAN to container port forwarding (split-brain DNS support)
+        iptables -t nat -A PREROUTING -i enp2s0 -d 192.168.69.1 -p tcp --dport 80 -j DNAT --to-destination 192.168.100.2:80
+        iptables -t nat -A PREROUTING -i enp2s0 -d 192.168.69.1 -p tcp --dport 443 -j DNAT --to-destination 192.168.100.2:443
+
         # Drop all forwarding by default
         iptables -P FORWARD DROP
 
         # Allow established connections
         iptables -A FORWARD -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
 
+        # Allow container-to-container traffic
+        iptables -A FORWARD -i ve-+ -o ve-+ -j ACCEPT
+
+        # Allow containers to WAN
+        iptables -A FORWARD -i ve-+ -o enp3s0 -j ACCEPT
+
         # Allow LAN to WAN
         iptables -A FORWARD -i enp2s0 -o enp3s0 -j ACCEPT
+
+        # Allow LAN to containers
+        iptables -A FORWARD -i enp2s0 -o ve-+ -j ACCEPT
 
         # Block WAN to LAN (except established)
         iptables -A FORWARD -i enp3s0 -o enp2s0 -m conntrack --ctstate NEW -j DROP
@@ -167,6 +182,15 @@
   # System daemon configuration
   systemd.network = {
     enable = true;
+
+    # Container networking - point-to-point for each container
+    networks."40-container-ve" = {
+      matchConfig.Name = "ve-*";
+      networkConfig = {
+        IPv4Forwarding = true;
+        IPv6Forwarding = true;
+      };
+    };
 
     # WAN interface - DHCP from ISP
     networks."10-wan" = {
@@ -308,14 +332,15 @@
               (builtins.attrNames registry.nodes);
             
             # Generate DNS entries for enabled public services
+            # Use router's LAN IP for split-brain DNS (192.168.69.1)
             serviceDomains = lib.mapAttrsToList (name: service:
-              "\"${service.subdomain}.${cfg.domain}. A ${cfg.networks.reverseProxyIP}\""
-            ) (lib.filterAttrs (name: service: 
+              "\"${service.subdomain}.${cfg.domain}. A 192.168.69.1\""
+            ) (lib.filterAttrs (name: service:
               service.enable && service.publicAccess
             ) cfg.services);
-            
+
             # Root domain entry
-            rootDomain = [ "\"${cfg.domain}. A ${cfg.networks.reverseProxyIP}\"" ];
+            rootDomain = [ "\"${cfg.domain}. A 192.168.69.1\"" ];
             
           in
             nebula-hosts ++ rootDomain ++ serviceDomains;
