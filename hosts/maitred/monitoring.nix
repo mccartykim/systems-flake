@@ -72,7 +72,7 @@ in {
     settings = {
       server = {
         http_port = cfg.services.grafana.port;
-        http_addr = "127.0.0.1";
+        http_addr = "0.0.0.0";  # Accept connections from reverse-proxy container
         domain = "${cfg.services.grafana.subdomain}.${cfg.domain}";
         root_url = "https://${cfg.services.grafana.subdomain}.${cfg.domain}";
       };

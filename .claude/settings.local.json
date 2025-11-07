@@ -21,7 +21,10 @@
       "Bash(ssh:*)",
       "Bash(curl -s -m 10 http://kimb.dev)",
       "Bash(curl -v http://kimb.dev)",
-      "WebFetch(domain:discourse.nixos.org)"
+      "WebFetch(domain:discourse.nixos.org)",
+      "WebFetch(domain:mynixos.com)",
+      "WebFetch(domain:nixos.wiki)",
+      "Bash(nix log:*)"
     ],
     "deny": [],
     "ask": []

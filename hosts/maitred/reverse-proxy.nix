@@ -3,7 +3,10 @@
 
 let
   cfg = config.kimb;
-  
+
+  # Blog container IP (consistent with blog-service.nix)
+  blogContainerIP = "192.168.100.3";
+
   # Generate Caddy virtual host for a service
   mkServiceVirtualHost = serviceName: service: let
     domain = "${service.subdomain}.${cfg.domain}";
@@ -14,7 +17,7 @@ let
     targetIP = 
       if service.host == "maitred" && service.container then
         # Container service on maitred - use container IP
-        if serviceName == "blog" then "192.168.100.3"
+        if serviceName == "blog" then blogContainerIP
         else if serviceName == "reverse-proxy" then "192.168.100.2"
         else "192.168.100.10"  # Default container IP
       else if service.host == "rich-evans" then
@@ -22,10 +25,10 @@ let
       else if service.host == "bartleby" then
         "10.100.0.30"  # bartleby Nebula IP
       else
-        "127.0.0.1";   # localhost for maitred host services
+        cfg.networks.containerBridge;   # host services accessible via bridge IP
     
     authConfig = lib.optionalString needsAuth ''
-      forward_auth ${cfg.networks.reverseProxyIP}:${toString cfg.services.authelia.port} {
+      forward_auth ${cfg.networks.containerBridge}:${toString cfg.services.authelia.port} {
         uri /api/verify?rd=https://auth.${cfg.domain}
         copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
       }
@@ -75,7 +78,7 @@ in {
           # Root domain points to blog
           ${cfg.domain} = lib.mkIf cfg.services.blog.enable {
             extraConfig = ''
-              reverse_proxy 192.168.100.3:${toString cfg.services.blog.port}
+              reverse_proxy ${blogContainerIP}:${toString cfg.services.blog.port}
             '';
           };
         };

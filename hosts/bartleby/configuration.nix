@@ -24,7 +24,7 @@
   # Intel graphics hardware configuration (older generation)
   hardware.graphics.extraPackages = with pkgs; [
     vaapiIntel # LIBVA_DRIVER_NAME=i965 (older but works better for Firefox/Chromium)
-    vaapiVdpau
+    libva-vdpau-driver
     libvdpau-va-gl
   ];
 
