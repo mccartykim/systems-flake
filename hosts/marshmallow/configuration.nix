@@ -118,7 +118,7 @@
     intel-media-driver # For Broadwell+ iGPUs
     intel-gmmlib # Intel Graphics Memory Management Library
     vaapiIntel # VAAPI driver for Intel graphics
-    vaapiVdpau
+    libva-vdpau-driver
     libvdpau-va-gl
     intel-compute-runtime # OpenCL support
   ];

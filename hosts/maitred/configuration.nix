@@ -141,8 +141,8 @@
         4242 # Nebula
       ];
 
-      # Trust LAN interface
-      trustedInterfaces = ["enp2s0"];
+      # Trust LAN and container interfaces
+      trustedInterfaces = ["enp2s0" "ve-+"];
 
       # Log dropped packets (for debugging)
       logRefusedConnections = false;
