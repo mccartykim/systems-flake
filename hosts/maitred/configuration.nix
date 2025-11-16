@@ -33,6 +33,9 @@
 
     # Authelia authentication
     ./authelia.nix
+
+    # Printer configuration
+    ./printer.nix
   ];
 
   # Boot configuration

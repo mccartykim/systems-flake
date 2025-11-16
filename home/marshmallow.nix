@@ -85,7 +85,7 @@
     nix-index.enable = true;
 
     # Enable zed editor
-    zed-editor.enable = true;
+    zed-editor.enable = lib.mkForce true;
 
     # Fish plugins specific to marshmallow
     fish.plugins = [
