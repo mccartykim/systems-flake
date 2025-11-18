@@ -94,6 +94,42 @@
               ];
               format = "sd-aarch64";
             };
+
+            # ESPHome firmware builds
+            esp32-cam-01-firmware = pkgs.stdenv.mkDerivation {
+              name = "esp32-cam-01-firmware";
+              src = ./esphome-configs;
+
+              nativeBuildInputs = [pkgs.esphome];
+
+              buildPhase = ''
+                # Copy config and secrets
+                mkdir -p build
+                cp esp32-cam-01.yaml build/
+
+                # Check if secrets exist, otherwise create dummy
+                if [ -f secrets.yaml ]; then
+                  cp secrets.yaml build/
+                else
+                  echo "Warning: secrets.yaml not found, using dummy values"
+                  cat > build/secrets.yaml <<EOF
+                wifi_ssid: "dummy"
+                wifi_password: "dummy"
+                api_encryption_key: "dummy=="
+                ota_password: "dummy"
+                ap_password: "dummy"
+                EOF
+                fi
+
+                cd build
+                esphome compile esp32-cam-01.yaml
+              '';
+
+              installPhase = ''
+                mkdir -p $out
+                cp -r esp32-cam-01 $out/
+              '';
+            };
           };
 
         # Formatter
@@ -102,7 +138,42 @@
         # Dev shells
         devShells = lib.optionalAttrs (system == "x86_64-linux") {
           default = pkgs.mkShell {
-            packages = [pkgs.tealdeer pkgs.colmena];
+            packages = [
+              pkgs.tealdeer
+              pkgs.colmena
+              pkgs.esphome # ESP32/ESP8266 firmware builder
+              pkgs.esptool # ESP32/ESP8266 flasher
+            ];
+          };
+        };
+
+        # Apps for common tasks
+        apps = lib.optionalAttrs (system == "x86_64-linux" || system == "aarch64-linux") {
+          flash-esp32-cam-01 = {
+            type = "app";
+            program = toString (pkgs.writeShellScript "flash-esp32-cam-01" ''
+              set -e
+              PORT=''${1:-/dev/ttyUSB0}
+
+              echo "Building ESP32-CAM-01 firmware..."
+              nix build .#esp32-cam-01-firmware
+
+              FIRMWARE="result/esp32-cam-01/.pioenvs/esp32-cam-01/firmware.bin"
+
+              if [ ! -f "$FIRMWARE" ]; then
+                echo "Error: Firmware not found at $FIRMWARE"
+                exit 1
+              fi
+
+              echo "Flashing to $PORT..."
+              ${pkgs.esptool}/bin/esptool.py \
+                --port "$PORT" \
+                --baud 460800 \
+                write_flash \
+                0x10000 "$FIRMWARE"
+
+              echo "Flash complete! Reset the ESP32-CAM to boot."
+            '');
           };
         };
       };
