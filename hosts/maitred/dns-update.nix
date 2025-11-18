@@ -10,8 +10,8 @@ let
     (lib.filterAttrs (name: service: service.enable && service.publicAccess) cfg.services)
   );
   
-  # All domains that need DNS records (root domain + enabled services)
-  allDomains = [ cfg.domain ] ++ enabledServiceDomains;
+  # All domains that need DNS records (root domain + wildcard + enabled services)
+  allDomains = [ cfg.domain "*.${cfg.domain}" ] ++ enabledServiceDomains;
   
   # Generate Cloudflare provider configurations for inadyn
   generateCloudflareProviders = lib.imap0 (i: domain: ''
