@@ -271,10 +271,11 @@
       };
 
     # Generate proxy services for enabled remote services
+    # Proxy ALL remote services regardless of container status
     remoteServices =
       lib.filterAttrs (
         name: service:
-          service.enable && service.host != "maitred" && !service.container
+          service.enable && service.host != "maitred"
       )
       cfg.services;
   in
