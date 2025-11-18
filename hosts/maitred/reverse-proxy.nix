@@ -1,7 +1,10 @@
 # Migrated reverse proxy using kimb-services options
-{ config, lib, pkgs, ... }:
-
-let
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}: let
   cfg = config.kimb;
 
   # Blog container IP (consistent with blog-service.nix)
@@ -12,28 +15,30 @@ let
     domain = "${service.subdomain}.${cfg.domain}";
     needsAuth = service.auth == "authelia";
     needsWebsockets = service.websockets;
-    
+
     # Determine target IP based on host and container settings
-    targetIP = 
-      if service.host == "maitred" && service.container then
+    targetIP =
+      if service.host == "maitred" && service.container
+      then
         # Container service on maitred - use container IP
-        if serviceName == "blog" then blogContainerIP
-        else if serviceName == "reverse-proxy" then "192.168.100.2"
-        else "192.168.100.10"  # Default container IP
-      else if service.host == "rich-evans" then
-        "10.100.0.40"  # rich-evans Nebula IP
-      else if service.host == "bartleby" then
-        "10.100.0.30"  # bartleby Nebula IP
-      else
-        cfg.networks.containerBridge;   # host services accessible via bridge IP
-    
+        if serviceName == "blog"
+        then blogContainerIP
+        else if serviceName == "reverse-proxy"
+        then "192.168.100.2"
+        else "192.168.100.10" # Default container IP
+      else if service.host == "rich-evans"
+      then "10.100.0.40" # rich-evans Nebula IP
+      else if service.host == "bartleby"
+      then "10.100.0.30" # bartleby Nebula IP
+      else cfg.networks.containerBridge; # host services accessible via bridge IP
+
     authConfig = lib.optionalString needsAuth ''
       forward_auth ${cfg.networks.containerBridge}:${toString cfg.services.authelia.port} {
         uri /api/verify?rd=https://auth.${cfg.domain}
         copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
       }
     '';
-    
+
     websocketConfig = lib.optionalString needsWebsockets ''
       @websockets {
         header Connection *Upgrade*
@@ -41,24 +46,25 @@ let
       }
       reverse_proxy @websockets ${targetIP}:${toString service.port}
     '';
-    
-  in lib.nameValuePair domain {
-    extraConfig = ''
-      ${authConfig}
-      ${websocketConfig}
-      reverse_proxy ${targetIP}:${toString service.port}
-    '';
-  };
-  
+  in
+    lib.nameValuePair domain {
+      extraConfig = ''
+        ${authConfig}
+        ${websocketConfig}
+        reverse_proxy ${targetIP}:${toString service.port}
+      '';
+    };
+
   # Generate virtual hosts for all enabled public services (except reverse-proxy itself)
   serviceVirtualHosts = lib.mapAttrs' mkServiceVirtualHost (
-    lib.filterAttrs (name: service: 
-      service.enable && 
-      service.publicAccess && 
-      name != "reverse-proxy"
-    ) cfg.services
+    lib.filterAttrs (
+      name: service:
+        service.enable
+        && service.publicAccess
+        && name != "reverse-proxy"
+    )
+    cfg.services
   );
-
 in {
   # Only create reverse proxy if enabled
   containers.reverse-proxy = lib.mkIf cfg.services.reverse-proxy.enable {
@@ -67,9 +73,14 @@ in {
     hostAddress = cfg.networks.containerBridge;
     localAddress = cfg.networks.reverseProxyIP;
 
-    config = { config, pkgs, lib, ... }: {
+    config = {
+      config,
+      pkgs,
+      lib,
+      ...
+    }: {
       # Use host's DNS server (unbound on router)
-      networking.nameservers = [ cfg.networks.containerBridge ];
+      networking.nameservers = [cfg.networks.containerBridge];
       # Disable nsncd to prevent localhost DNS resolution
       services.nscd.enable = false;
       system.nssModules = lib.mkForce [];
@@ -82,28 +93,30 @@ in {
         enable = true;
         email = cfg.admin.email;
 
-        virtualHosts = serviceVirtualHosts // {
-          # Root domain points to blog
-          ${cfg.domain} = lib.mkIf cfg.services.blog.enable {
-            extraConfig = ''
-              reverse_proxy ${blogContainerIP}:${toString cfg.services.blog.port}
-            '';
-          };
+        virtualHosts =
+          serviceVirtualHosts
+          // {
+            # Root domain points to blog
+            ${cfg.domain} = lib.mkIf cfg.services.blog.enable {
+              extraConfig = ''
+                reverse_proxy ${blogContainerIP}:${toString cfg.services.blog.port}
+              '';
+            };
 
-          # Robot vacuum (Valetudo) - protected by Authelia
-          "vacuum.${cfg.domain}" = {
-            extraConfig = ''
-              forward_auth ${cfg.networks.containerBridge}:${toString cfg.services.authelia.port} {
-                uri /api/verify?rd=https://auth.${cfg.domain}
-                copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
-              }
-              reverse_proxy 192.168.69.177:80
-            '';
+            # Robot vacuum (Valetudo) - protected by Authelia
+            "vacuum.${cfg.domain}" = {
+              extraConfig = ''
+                forward_auth ${cfg.networks.containerBridge}:${toString cfg.services.authelia.port} {
+                  uri /api/verify?rd=https://auth.${cfg.domain}
+                  copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
+                }
+                reverse_proxy 192.168.69.177:80
+              '';
+            };
           };
-        };
       };
 
-      networking.firewall.allowedTCPPorts = [ 80 443 2019 ];
+      networking.firewall.allowedTCPPorts = [80 443 2019];
       system.stateVersion = "24.11";
     };
   };

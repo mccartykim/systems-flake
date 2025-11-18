@@ -1,14 +1,16 @@
 # Rich-Evans services configuration using kimb-services options system
-{ config, lib, pkgs, ... }:
-
-let
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}: let
   cfg = config.kimb;
-
 in {
   # Copyparty file sharing service (host service)
   services.copyparty = lib.mkIf cfg.services.copyparty.enable {
     enable = true;
-    
+
     settings = {
       # Listen on all interfaces for LAN and Nebula access
       i = "0.0.0.0";
@@ -69,10 +71,10 @@ in {
     enable = true;
     openFirewall = false; # LAN access only
     listenPort = cfg.services.homepage.port;
-    
+
     settings = {
       title = "Rich-Evans Services";
-      
+
       services = [
         {
           "File Storage" = lib.mkIf cfg.services.copyparty.enable [
@@ -112,7 +114,7 @@ in {
               "Maitred Homepage" = {
                 href = "https://home.${cfg.domain}";
                 description = "Main services dashboard";
-                server = "10.100.0.50"; # maitred Nebula IP  
+                server = "10.100.0.50"; # maitred Nebula IP
                 container = false;
               };
             }
@@ -127,33 +129,36 @@ in {
     allowedTCPPorts = lib.flatten [
       # Copyparty main port
       (lib.optional cfg.services.copyparty.enable cfg.services.copyparty.port)
-      
-      # Copyparty additional ports  
-      (lib.optionals cfg.services.copyparty.enable [ 3921 3945 3969 3990 ])
-      
+
+      # Copyparty additional ports
+      (lib.optionals cfg.services.copyparty.enable [3921 3945 3969 3990])
+
       # Home Assistant
       (lib.optional cfg.services.homeassistant.enable cfg.services.homeassistant.port)
-      
+
       # Homepage (LAN only)
       (lib.optional cfg.services.homepage.enable cfg.services.homepage.port)
-      
+
       # CUPS printing
-      [ 631 ]
+      [631]
     ];
-    
+
     allowedUDPPorts = lib.optionals cfg.services.copyparty.enable [
-      3969  # TFTP
+      3969 # TFTP
     ];
-    
+
     allowedTCPPortRanges = lib.optionals cfg.services.copyparty.enable [
-      { from = 12000; to = 12099; }  # Dynamic ports for copyparty
+      {
+        from = 12000;
+        to = 12099;
+      } # Dynamic ports for copyparty
     ];
   };
 
   # Enable OCI containers backend for Home Assistant
   virtualisation.oci-containers.backend = lib.mkIf cfg.services.homeassistant.enable "podman";
   virtualisation.podman.enable = lib.mkIf cfg.services.homeassistant.enable true;
-  
+
   # Create necessary directories
   systemd.tmpfiles.rules = lib.flatten [
     (lib.optional cfg.services.homeassistant.enable "d /var/lib/hass 0755 root root -")

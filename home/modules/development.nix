@@ -67,16 +67,17 @@ with lib; {
       coreutils
       fd
       clang
-      graphviz    # For org-roam
-      nixfmt      # For nix-format-buffer
-      shellcheck  # For shell script linting
+      graphviz # For org-roam
+      nixfmt # For nix-format-buffer
+      shellcheck # For shell script linting
       pipenv
-      fontconfig  # For font detection
+      fontconfig # For font detection
       (
-        pkgs.python3.withPackages (ps: with ps; [
-          isort
-          pytest
-        ])
+        pkgs.python3.withPackages (ps:
+          with ps; [
+            isort
+            pytest
+          ])
       )
       scrot
       wl-clipboard

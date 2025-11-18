@@ -1,5 +1,4 @@
-{ pkgs, ... }: {  
-
+{pkgs, ...}: {
   home.packages = with pkgs; [
     neovim
     firefox
@@ -7,10 +6,10 @@
     ghostty
   ];
 
-    imports = [ 
-      ./modules/development.nix 
-      ./modules/shell-essentials.nix
-    ];
+  imports = [
+    ./modules/development.nix
+    ./modules/shell-essentials.nix
+  ];
 
   modules = {
     shell-essentials.enable = true;

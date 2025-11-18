@@ -3,8 +3,7 @@
 # All other files should reference this for IP addresses and SSH keys
 let
   networkIPs = import ./network-ips.nix;
-in
-{
+in {
   # Network configuration
   network = {
     subnet = networkIPs.nebula.subnet;

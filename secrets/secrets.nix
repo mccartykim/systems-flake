@@ -9,18 +9,18 @@ let
     builtins.filter (node: node.publicKey != null)
     (builtins.attrValues registry.nodes);
   allSystems = map (node: node.publicKey) nodesWithKeys;
-  
+
   # Temporary user key for bootstrap
   userBootstrapKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKQgFzMg37QTeFE2ybQRHfVEQwW/Wz7lK6jPPmctFd/U";
-  
+
   # Temporary: Only working machines (skip laptops for now)
   workingMachines = [
     registry.nodes.historian.publicKey
-    registry.nodes.maitred.publicKey  
+    registry.nodes.maitred.publicKey
     registry.nodes.rich-evans.publicKey
     registry.nodes.total-eclipse.publicKey
     registry.nodes.marshmallow.publicKey
-    userBootstrapKey  # Added temporarily for re-encryption
+    userBootstrapKey # Added temporarily for re-encryption
   ];
 in
   {
