@@ -35,8 +35,7 @@ in {
     
     settings = {
       server = {
-        host = "0.0.0.0";
-        port = cfg.services.authelia.port;
+        address = "tcp://0.0.0.0:${toString cfg.services.authelia.port}";
       };
 
       log = {
