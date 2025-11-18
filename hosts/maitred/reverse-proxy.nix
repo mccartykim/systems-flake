@@ -81,6 +81,21 @@ in {
               reverse_proxy ${blogContainerIP}:${toString cfg.services.blog.port}
             '';
           };
+
+          # Robot vacuum (Valetudo) - accessible only from LAN/VPN
+          "vacuum.${cfg.domain}" = {
+            extraConfig = ''
+              @allowed {
+                remote_ip 192.168.69.0/24 10.100.0.0/16 100.64.0.0/10
+              }
+              handle @allowed {
+                reverse_proxy 192.168.69.177:80
+              }
+              handle {
+                respond "Access denied - LAN/VPN only" 403
+              }
+            '';
+          };
         };
       };
 
