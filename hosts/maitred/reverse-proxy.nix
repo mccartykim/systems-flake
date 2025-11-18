@@ -68,7 +68,15 @@ in {
     localAddress = cfg.networks.reverseProxyIP;
 
     config = { config, pkgs, lib, ... }: {
+      # Use host's DNS server (unbound on router)
       networking.nameservers = [ cfg.networks.containerBridge ];
+      # Disable nsncd to prevent localhost DNS resolution
+      services.nscd.enable = false;
+      system.nssModules = lib.mkForce [];
+      # Force resolv.conf to use host DNS
+      environment.etc."resolv.conf".text = ''
+        nameserver ${cfg.networks.containerBridge}
+      '';
 
       services.caddy = {
         enable = true;
