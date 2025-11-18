@@ -28,7 +28,8 @@
       "Bash(jj status:*)",
       "Bash(jj diff:*)",
       "Bash(jj log:*)",
-      "Bash(jj split:*)"
+      "Bash(jj split:*)",
+      "Bash(jj show:*)"
     ],
     "deny": [],
     "ask": []

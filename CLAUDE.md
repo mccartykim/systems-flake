@@ -13,6 +13,136 @@
 - **Workflow**: Working-copy-as-commit model - changes are automatically tracked
 - **Commands**: Use `jj` instead of `git` commands
 
+## Jujutsu (jj) Workflow
+
+### Core Concepts
+- **Working Copy as Commit**: Your working directory is an actual commit that gets automatically amended
+- **Change IDs**: Stable identifiers that persist across rebases and amendments
+- **Automatic Commits**: Every `jj` command automatically commits working copy changes
+
+### Essential Commands
+
+#### Viewing Changes
+```bash
+jj status                      # Show working copy status
+jj log                         # Show commit history
+jj log -n 5                    # Show last 5 commits
+jj show @ --git                # Show current commit with diff
+jj show -r <change-id> --git   # Show specific commit
+jj diff --git                  # Show working copy diff
+jj diff --no-pager --git       # Without pager for scripting
+```
+
+#### Creating Commits
+```bash
+jj describe -m "message"       # Add description to working copy
+jj new                         # Create new empty commit (child of current)
+jj new -m "message"            # Create new commit with message (start new feature)
+jj commit -m "message"         # Describe and create new child commit
+```
+
+**Starting a New Feature**:
+```bash
+# Create a new commit with intent before making changes
+jj new -m "feat(hostname): add new feature"
+# Now make your changes - they'll go into this commit
+```
+
+#### Splitting Commits
+The `jj split` command is crucial for creating atomic commits:
+
+```bash
+# Split specific files into new commit
+jj split file1.nix file2.nix -m "commit message"
+
+# Split interactively (requires terminal)
+jj split -i
+
+# Split with tool
+jj split --tool <editor>
+```
+
+**Pattern for Atomic Commits**:
+1. Make all related changes in working copy
+2. Use `jj split` to separate into logical commits
+3. Verify with `jj show` that each commit contains correct changes
+4. Each commit should have single responsibility
+
+**Example Session**:
+```bash
+# Make multiple changes across files
+vim hosts/maitred/configuration.nix
+vim hosts/maitred/authelia.nix
+
+# Split into separate commits
+jj split hosts/authelia.nix -m "feat(maitred): add Authelia SSO"
+# Working copy now only has configuration.nix changes
+jj describe -m "feat(maitred): add DNS entry for service"
+
+# Verify commits are correct
+jj show @ --git
+jj show @- --git
+```
+
+#### Fixing Commits
+```bash
+# Edit a specific commit (move working copy to that commit)
+jj edit -r <change-id>
+
+# Split or modify, then return to latest
+jj edit -r @     # or the latest change-id
+
+# Squash working copy into parent
+jj squash
+
+# Describe/rename a commit
+jj describe -r <change-id> -m "new message"
+```
+
+#### Useful Flags
+- `--no-pager`: Disable pager for scripting
+- `--git`: Show diffs in git format
+- `-r <revset>`: Specify revision (change-id, @, @-, @--, etc.)
+- `-n <number>`: Limit number of results
+
+### Atomic Commit Guidelines
+
+**What Makes a Good Atomic Commit**:
+1. **Single Logical Change**: One feature, bug fix, or refactor per commit
+2. **Self-Contained**: Commit should build and work independently
+3. **Correct Scope**: Scope matches files changed (e.g., don't mix maitred + historian)
+4. **Clear Message**: Conventional commit format with descriptive body
+
+**Common Splitting Scenarios**:
+- Separate deprecation fixes from new features
+- Split configuration changes by host
+- Separate related but independent changes (DHCP + DNS entries)
+- Split refactoring from new functionality
+- Separate build fixes from feature changes
+
+**Verification Pattern**:
+```bash
+# After splitting, verify each commit
+jj log -n 5                          # See commit structure
+jj show -r <each-change-id> --git    # Verify content of each
+
+# Check commit messages match content
+jj log --no-graph -n 5               # See just the messages
+
+# Build test specific commit
+jj edit -r <change-id>
+nixos-rebuild build --flake .#hostname
+jj edit -r @  # Return to latest
+```
+
+### Best Practices
+1. **Split Early**: It's easier to split as you go than to fix later
+2. **Verify Often**: Use `jj show` to check commits are atomic
+3. **Use Change IDs**: More stable than commit hashes
+4. **Test Builds**: Each commit should build successfully
+5. **Descriptive Messages**: Follow conventional commits format
+6. **Clean History**: Use `jj edit` and `jj split` to fix mistakes
+
 ## Commit Conventions
 Use conventional commits format:
 ```
