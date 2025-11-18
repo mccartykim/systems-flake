@@ -14,6 +14,9 @@
   # Raspberry Pi Gen 1 uses ARMv6
   nixpkgs.hostPlatform = "armv6l-linux";
 
+  # Auto-expand root partition to fill SD card on first boot
+  boot.growPartition = true;
+
   # Enable basic firmware
   hardware.enableRedistributableFirmware = true;
 
