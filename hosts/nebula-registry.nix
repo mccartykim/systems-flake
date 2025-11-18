@@ -6,18 +6,16 @@ let
 in {
   # Network configuration
   network = {
-    subnet = networkIPs.nebula.subnet;
+    inherit (networkIPs.nebula) subnet;
     lighthouse = {
-      ip = networkIPs.nebula.lighthouse.ip;
-      external = networkIPs.nebula.lighthouse.external;
+      inherit (networkIPs.nebula.lighthouse) ip external;
     };
   };
 
   # All nebula nodes with their complete configuration
   nodes = {
     lighthouse = {
-      ip = networkIPs.nebula.lighthouse.ip;
-      external = networkIPs.nebula.lighthouse.external;
+      inherit (networkIPs.nebula.lighthouse) ip external;
       isLighthouse = true;
       role = "lighthouse";
       groups = ["lighthouse"];
