@@ -29,10 +29,15 @@ let
 in {
   services.homepage-dashboard = lib.mkIf cfg.services.homepage.enable {
     enable = true;
-    
+
     openFirewall = false; # Manually control access
-    
+
     listenPort = cfg.services.homepage.port;
+
+    # Allow access through reverse proxy
+    environmentFile = pkgs.writeText "homepage-env" ''
+      HOMEPAGE_ALLOWED_HOSTS=home.${cfg.domain},localhost,127.0.0.1
+    '';
     
     # Homepage configuration - map over enabled services
     settings = 
