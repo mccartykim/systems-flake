@@ -108,7 +108,7 @@ in {
 
       session = {
         name = "authelia_session";
-        domain = cfg.domain;
+        inherit (cfg) domain;
         same_site = "lax";
         expiration = "1h";
         inactivity = "5m";

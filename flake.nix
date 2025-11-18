@@ -73,7 +73,7 @@
         system,
         ...
       }: let
-        lib = nixpkgs.lib;
+        inherit (nixpkgs) lib;
       in {
         # Per-system packages
         packages = lib.optionalAttrs (system == "x86_64-linux") {
@@ -99,7 +99,7 @@
 
       flake = let
         inherit (self) outputs;
-        lib = nixpkgs.lib;
+        inherit (nixpkgs) lib;
       in {
         # Darwin configurations
         darwinConfigurations = {
@@ -166,9 +166,11 @@
               nix-index-database.nixosModules.nix-index
               {programs.nix-index-database.comma.enable = true;}
               {
-                home-manager.useGlobalPkgs = true;
-                home-manager.useUserPackages = true;
-                home-manager.users.kimb = import ./home/cheesecake.nix;
+                home-manager = {
+                  useGlobalPkgs = true;
+                  useUserPackages = true;
+                  users.kimb = import ./home/cheesecake.nix;
+                };
               }
             ];
           };
@@ -498,14 +500,14 @@
             # Full integration test (requires working file paths)
             integrationTest = import ./tests/integration-vm-test.nix {
               pkgs = nixpkgs.legacyPackages.x86_64-linux;
-              lib = nixpkgs.legacyPackages.x86_64-linux.lib;
-              agenix = agenix;
+              inherit (nixpkgs.legacyPackages.x86_64-linux) lib;
+              inherit agenix;
             };
 
             # Simple VM test with inline keys
             simpleVMTest = import ./tests/simple-vm-test.nix {
               pkgs = nixpkgs.legacyPackages.x86_64-linux;
-              lib = nixpkgs.legacyPackages.x86_64-linux.lib;
+              inherit (nixpkgs.legacyPackages.x86_64-linux) lib;
             };
 
             # Minimal test for debugging
@@ -525,8 +527,8 @@
           }
           // (import ./tests/integration-vm-test.nix {
             pkgs = nixpkgs.legacyPackages.x86_64-linux;
-            lib = nixpkgs.legacyPackages.x86_64-linux.lib;
-            agenix = agenix;
+            inherit (nixpkgs.legacyPackages.x86_64-linux) lib;
+            inherit agenix;
           });
       };
     };

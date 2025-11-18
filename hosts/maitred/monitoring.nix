@@ -10,7 +10,7 @@ in {
   # Prometheus monitoring (host service)
   services.prometheus = lib.mkIf cfg.services.prometheus.enable {
     enable = true;
-    port = cfg.services.prometheus.port;
+    inherit (cfg.services.prometheus) port;
 
     # Scrape configurations - map over enabled services
     scrapeConfigs = let
