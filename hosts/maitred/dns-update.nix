@@ -3,15 +3,9 @@
 
 let
   cfg = config.kimb;
-  
-  # Get all enabled service domains that need DNS records
-  enabledServiceDomains = lib.attrValues (
-    lib.mapAttrs (name: service: "${service.subdomain}.${cfg.domain}")
-    (lib.filterAttrs (name: service: service.enable && service.publicAccess) cfg.services)
-  );
-  
-  # All domains that need DNS records (root domain + wildcard + enabled services)
-  allDomains = [ cfg.domain "*.${cfg.domain}" ] ++ enabledServiceDomains;
+
+  # Only update root domain and wildcard - wildcard covers all subdomains
+  allDomains = [ cfg.domain "*.${cfg.domain}" ];
   
   # Generate Cloudflare provider configurations for inadyn
   generateCloudflareProviders = lib.imap0 (i: domain: ''
