@@ -232,6 +232,15 @@
         DNS = ["192.168.69.1"]; # Point clients to router DNS
         EmitRouter = true;
       };
+      dhcpServerStaticLeases = [
+        {
+          # Robot vacuum running Valetudo
+          dhcpServerStaticLeaseConfig = {
+            MACAddress = "70:c9:32:1f:ba:d0";
+            Address = "192.168.69.177";
+          };
+        }
+      ];
     };
   };
 
@@ -344,9 +353,12 @@
 
             # Root domain entry
             rootDomain = [ "\"${cfg.domain}. A 192.168.69.1\"" ];
-            
+
+            # Vacuum entry - point to router for Caddy proxy
+            vacuumEntry = [ "\"vacuum.${cfg.domain}. A 192.168.69.1\"" ];
+
           in
-            nebula-hosts ++ rootDomain ++ serviceDomains;
+            nebula-hosts ++ rootDomain ++ serviceDomains ++ vacuumEntry;
         };
       };
     };
