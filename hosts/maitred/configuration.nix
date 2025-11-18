@@ -235,10 +235,8 @@
       dhcpServerStaticLeases = [
         {
           # Robot vacuum running Valetudo
-          dhcpServerStaticLeaseConfig = {
-            MACAddress = "70:c9:32:1f:ba:d0";
-            Address = "192.168.69.177";
-          };
+          MACAddress = "70:c9:32:1f:ba:d0";
+          Address = "192.168.69.177";
         }
       ];
     };
