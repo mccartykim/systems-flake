@@ -1,10 +1,9 @@
 # Minimal VM test to figure out syntax
-{ pkgs }:
-
+{pkgs}:
 pkgs.nixosTest {
   name = "minimal-test";
-  
-  nodes.machine = { 
+
+  nodes.machine = {
     system.stateVersion = "24.11";
   };
 

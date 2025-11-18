@@ -5,8 +5,7 @@
   pkgs,
   inputs,
   ...
-}: 
-let
+}: let
   registry = import ../nebula-registry.nix;
 in {
   imports = [

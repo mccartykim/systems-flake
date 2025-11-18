@@ -5,8 +5,7 @@
   pkgs,
   inputs,
   ...
-}: 
-let
+}: let
   registry = import ../nebula-registry.nix;
 in {
   imports = [
@@ -14,7 +13,7 @@ in {
   ];
 
   # Configure agenix to use SSH host key
-  age.identityPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
+  age.identityPaths = ["/etc/ssh/ssh_host_ed25519_key"];
 
   # Agenix secrets for Nebula
   age.secrets = {

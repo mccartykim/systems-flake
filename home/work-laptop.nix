@@ -33,17 +33,18 @@
       pkgs.coreutils
       pkgs.clang
       pkgs.sqlite
-      pkgs.gnutar      # For dired (GNU tar, includes gnu ls)
-      pkgs.graphviz    # For org-roam
-      pkgs.nixfmt      # For nix-format-buffer
-      pkgs.shellcheck  # For shell script linting
+      pkgs.gnutar # For dired (GNU tar, includes gnu ls)
+      pkgs.graphviz # For org-roam
+      pkgs.nixfmt # For nix-format-buffer
+      pkgs.shellcheck # For shell script linting
       pkgs.pipenv
-      pkgs.fontconfig  # For font detection
-      (      
-        pkgs.python3.withPackages (ps: with ps; [
-          isort
-          pytest
-        ])
+      pkgs.fontconfig # For font detection
+      (
+        pkgs.python3.withPackages (ps:
+          with ps; [
+            isort
+            pytest
+          ])
       )
     ];
 

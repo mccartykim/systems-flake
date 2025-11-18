@@ -25,7 +25,7 @@
     };
 
     marshmallow = {
-      hostIP = "10.100.0.4";  # Fixed: was incorrect 10.100.0.20
+      hostIP = "10.100.0.4"; # Fixed: was incorrect 10.100.0.20
       groups = ["laptops" "nixos"];
       secrets = [
         "ca.crt"
@@ -35,7 +35,7 @@
     };
 
     bartleby = {
-      hostIP = "10.100.0.3";  # Fixed: was incorrect 10.100.0.30
+      hostIP = "10.100.0.3"; # Fixed: was incorrect 10.100.0.30
       groups = ["laptops" "nixos"];
       secrets = [
         "ca.crt"

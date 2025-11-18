@@ -1,9 +1,11 @@
 # Authelia authentication service using kimb-services options
-{ config, lib, pkgs, ... }:
-
-let
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}: let
   cfg = config.kimb;
-
 in {
   # Agenix secrets for Authelia
   age.secrets = lib.mkIf cfg.services.authelia.enable {
@@ -32,7 +34,7 @@ in {
   # Authelia authentication service (host network)
   services.authelia.instances.main = lib.mkIf cfg.services.authelia.enable {
     enable = true;
-    
+
     settings = {
       server = {
         address = "tcp://0.0.0.0:${toString cfg.services.authelia.port}";
@@ -53,48 +55,55 @@ in {
         };
       };
 
-      access_control = 
-      let
+      access_control = let
         # Helper to create access control rule for a service
         mkAccessRule = policy: services: {
           domain = map (service: "${service.subdomain}.${cfg.domain}") services;
           inherit policy;
         };
-        
+
         # Get enabled services by auth policy
-        authServices = lib.filterAttrs (name: service: 
-          service.enable && 
-          service.publicAccess && 
-          service.auth == "authelia"
-        ) cfg.services;
-        
+        authServices =
+          lib.filterAttrs (
+            name: service:
+              service.enable
+              && service.publicAccess
+              && service.auth == "authelia"
+          )
+          cfg.services;
+
         # Group services by auth requirements
-        oneFactorServices = lib.attrValues (lib.filterAttrs (name: service: 
-          name == "grafana"  # Grafana only needs one factor
-        ) authServices);
-        
-        twoFactorServices = lib.attrValues (lib.filterAttrs (name: service: 
-          name != "grafana"  # All other services need two factor
-        ) authServices);
-        
+        oneFactorServices = lib.attrValues (lib.filterAttrs (
+            name: service:
+              name == "grafana" # Grafana only needs one factor
+          )
+          authServices);
+
+        twoFactorServices = lib.attrValues (lib.filterAttrs (
+            name: service:
+              name != "grafana" # All other services need two factor
+          )
+          authServices);
+
         # Generate rules dynamically
         dynamicRules = lib.flatten [
           (lib.optional (oneFactorServices != []) (mkAccessRule "one_factor" oneFactorServices))
           (lib.optional (twoFactorServices != []) (mkAccessRule "two_factor" twoFactorServices))
         ];
-        
       in {
         default_policy = "deny";
-        rules = [
-          {
-            domain = ["auth.${cfg.domain}"];
-            policy = "bypass";
-          }
-          {
-            domain = ["vacuum.${cfg.domain}"];
-            policy = "one_factor";
-          }
-        ] ++ dynamicRules;
+        rules =
+          [
+            {
+              domain = ["auth.${cfg.domain}"];
+              policy = "bypass";
+            }
+            {
+              domain = ["vacuum.${cfg.domain}"];
+              policy = "one_factor";
+            }
+          ]
+          ++ dynamicRules;
       };
 
       session = {

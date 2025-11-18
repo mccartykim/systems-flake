@@ -1,64 +1,71 @@
 # Migrated monitoring stack using kimb-services options
-{ config, lib, pkgs, ... }:
-
-let
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}: let
   cfg = config.kimb;
-
 in {
   # Prometheus monitoring (host service)
   services.prometheus = lib.mkIf cfg.services.prometheus.enable {
     enable = true;
     port = cfg.services.prometheus.port;
-    
+
     # Scrape configurations - map over enabled services
-    scrapeConfigs = 
-    let
+    scrapeConfigs = let
       # Helper to create scrape config for a service
       mkServiceScrapeConfig = name: service: {
         job_name = name;
-        static_configs = [{
-          targets = [(
-            if service.host == "maitred" && !service.container 
-            then "localhost:${toString service.port}"
-            else if service.host == "maitred" && service.container && name == "reverse-proxy"
-            then "${cfg.networks.reverseProxyIP}:2019"  # Caddy metrics
-            else if service.host == "rich-evans"
-            then "10.100.0.40:${toString service.port}"
-            else "localhost:${toString service.port}"
-          )];
-        }];
+        static_configs = [
+          {
+            targets = [
+              (
+                if service.host == "maitred" && !service.container
+                then "localhost:${toString service.port}"
+                else if service.host == "maitred" && service.container && name == "reverse-proxy"
+                then "${cfg.networks.reverseProxyIP}:2019" # Caddy metrics
+                else if service.host == "rich-evans"
+                then "10.100.0.40:${toString service.port}"
+                else "localhost:${toString service.port}"
+              )
+            ];
+          }
+        ];
       };
-      
+
       # Get scrape configs for enabled services with metrics
       serviceScrapeConfigs = lib.mapAttrsToList mkServiceScrapeConfig (
-        lib.filterAttrs (name: service: 
-          service.enable && 
-          (name == "prometheus" || name == "reverse-proxy")  # Services that expose metrics
-        ) cfg.services
+        lib.filterAttrs (
+          name: service:
+            service.enable
+            && (name == "prometheus" || name == "reverse-proxy") # Services that expose metrics
+        )
+        cfg.services
       );
-      
+
       # Always include node exporter
       nodeExporterConfig = {
         job_name = "node-exporter";
-        static_configs = [{ targets = [ "localhost:9100" ]; }];
+        static_configs = [{targets = ["localhost:9100"];}];
       };
-      
-    in [nodeExporterConfig] ++ serviceScrapeConfigs;
+    in
+      [nodeExporterConfig] ++ serviceScrapeConfigs;
 
     # Rules and alerting can be added here
-    ruleFiles = [ ];
-    
+    ruleFiles = [];
+
     # Retention policy
     extraFlags = [
       "--storage.tsdb.retention.time=90d"
       "--storage.tsdb.retention.size=10GB"
     ];
-    
+
     # Node exporter configuration
     exporters.node = {
       enable = true;
       port = 9100;
-      enabledCollectors = [ "systemd" "processes" ];
+      enabledCollectors = ["systemd" "processes"];
       # Only listen on localhost and Nebula
       listenAddress = "0.0.0.0";
       openFirewall = false; # Manually control access
@@ -68,11 +75,11 @@ in {
   # Grafana visualization (host service)
   services.grafana = lib.mkIf cfg.services.grafana.enable {
     enable = true;
-    
+
     settings = {
       server = {
         http_port = cfg.services.grafana.port;
-        http_addr = "0.0.0.0";  # Accept connections from reverse-proxy container
+        http_addr = "0.0.0.0"; # Accept connections from reverse-proxy container
         domain = "${cfg.services.grafana.subdomain}.${cfg.domain}";
         root_url = "https://${cfg.services.grafana.subdomain}.${cfg.domain}";
       };
@@ -94,7 +101,7 @@ in {
 
     provision = lib.mkIf cfg.services.prometheus.enable {
       enable = true;
-      
+
       datasources.settings.datasources = [
         {
           name = "Prometheus";
@@ -120,7 +127,6 @@ in {
     };
   };
 
-
   # Firewall rules for monitoring services
   networking.firewall = {
     interfaces = {
@@ -128,12 +134,12 @@ in {
       "br-lan".allowedTCPPorts = lib.flatten [
         (lib.optional cfg.services.grafana.enable cfg.services.grafana.port)
         (lib.optional cfg.services.prometheus.enable cfg.services.prometheus.port)
-        [ 9100 ]  # node exporter
+        [9100] # node exporter
       ];
       "nebula-kimb".allowedTCPPorts = lib.flatten [
         (lib.optional cfg.services.grafana.enable cfg.services.grafana.port)
         (lib.optional cfg.services.prometheus.enable cfg.services.prometheus.port)
-        [ 9100 ]  # node exporter
+        [9100] # node exporter
       ];
     };
   };

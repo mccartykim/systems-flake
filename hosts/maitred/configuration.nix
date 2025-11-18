@@ -99,7 +99,7 @@
       };
     };
   };
-  
+
   services.samba-wsdd = {
     enable = true;
     openFirewall = true;
@@ -167,6 +167,9 @@
 
         # Allow containers to WAN
         iptables -A FORWARD -i ve-+ -o enp3s0 -j ACCEPT
+
+        # Allow reverse-proxy container to access vacuum only (by source IP)
+        iptables -A FORWARD -s 192.168.100.2 -o enp2s0 -d 192.168.69.177 -j ACCEPT
 
         # Allow LAN to WAN
         iptables -A FORWARD -i enp2s0 -o enp3s0 -j ACCEPT
@@ -245,33 +248,39 @@
   # Dynamic service proxies for enabled services on remote hosts
   systemd.services = let
     cfg = config.kimb;
-    
-    # Create proxy services for enabled remote services
-    mkProxyService = serviceName: service: lib.nameValuePair "${serviceName}-proxy" {
-      description = "${serviceName} proxy to ${service.host}";
-      after = ["network.target" "nebula@mesh.service"];
-      wantedBy = ["multi-user.target"];
-      serviceConfig = {
-        ExecStart = "${pkgs.socat}/bin/socat TCP4-LISTEN:${toString service.port},fork,reuseaddr TCP4:${
-          if service.host == "rich-evans" then "10.100.0.40"
-          else if service.host == "bartleby" then "10.100.0.30"
-          else "127.0.0.1"
-        }:${toString service.port}";
-        Restart = "always";
-        RestartSec = "5";
-        User = "nobody";
-        Group = "nogroup";
-      };
-    };
-    
-    # Generate proxy services for enabled remote services
-    remoteServices = lib.filterAttrs (name: service:
-      service.enable && service.host != "maitred" && !service.container
-    ) cfg.services;
-    
-  in lib.mapAttrs' mkProxyService remoteServices;
 
-  # Guacamole proxy service - DISABLED 
+    # Create proxy services for enabled remote services
+    mkProxyService = serviceName: service:
+      lib.nameValuePair "${serviceName}-proxy" {
+        description = "${serviceName} proxy to ${service.host}";
+        after = ["network.target" "nebula@mesh.service"];
+        wantedBy = ["multi-user.target"];
+        serviceConfig = {
+          ExecStart = "${pkgs.socat}/bin/socat TCP4-LISTEN:${toString service.port},fork,reuseaddr TCP4:${
+            if service.host == "rich-evans"
+            then "10.100.0.40"
+            else if service.host == "bartleby"
+            then "10.100.0.30"
+            else "127.0.0.1"
+          }:${toString service.port}";
+          Restart = "always";
+          RestartSec = "5";
+          User = "nobody";
+          Group = "nogroup";
+        };
+      };
+
+    # Generate proxy services for enabled remote services
+    remoteServices =
+      lib.filterAttrs (
+        name: service:
+          service.enable && service.host != "maitred" && !service.container
+      )
+      cfg.services;
+  in
+    lib.mapAttrs' mkProxyService remoteServices;
+
+  # Guacamole proxy service - DISABLED
   # TODO: Re-enable when Guacamole is working properly
   # systemd.services.guacamole-proxy = {
   #   description = "Guacamole proxy to rich-evans";
@@ -335,32 +344,33 @@
           local-data = let
             registry = import ../nebula-registry.nix;
             cfg = config.kimb;
-            
+
             # Nebula host entries
             nebula-hosts =
               builtins.map (name: "\"${name}.nebula. A ${registry.nodes.${name}.ip}\"")
               (builtins.attrNames registry.nodes);
-            
+
             # Generate DNS entries for enabled public services
             # Use router's LAN IP for split-brain DNS (192.168.69.1)
-            serviceDomains = lib.mapAttrsToList (name: service:
-              "\"${service.subdomain}.${cfg.domain}. A 192.168.69.1\""
-            ) (lib.filterAttrs (name: service:
-              service.enable && service.publicAccess
-            ) cfg.services);
+            serviceDomains =
+              lib.mapAttrsToList (
+                name: service: "\"${service.subdomain}.${cfg.domain}. A 192.168.69.1\""
+              ) (lib.filterAttrs (
+                  name: service:
+                    service.enable && service.publicAccess
+                )
+                cfg.services);
 
             # Root domain entry
-            rootDomain = [ "\"${cfg.domain}. A 192.168.69.1\"" ];
+            rootDomain = ["\"${cfg.domain}. A 192.168.69.1\""];
 
             # Vacuum entry - point to router for Caddy proxy
-            vacuumEntry = [ "\"vacuum.${cfg.domain}. A 192.168.69.1\"" ];
-
+            vacuumEntry = ["\"vacuum.${cfg.domain}. A 192.168.69.1\""];
           in
             nebula-hosts ++ rootDomain ++ serviceDomains ++ vacuumEntry;
         };
       };
     };
-
 
     # Network monitoring
     vnstat.enable = true;
