@@ -76,15 +76,25 @@
         inherit (nixpkgs) lib;
       in {
         # Per-system packages
-        packages = lib.optionalAttrs (system == "x86_64-linux") {
-          rich-evans-installer = nixos-generators.nixosGenerate {
-            system = "x86_64-linux";
-            modules = [
-              ./installer/installer.nix
-            ];
-            format = "install-iso";
+        packages =
+          lib.optionalAttrs (system == "x86_64-linux") {
+            rich-evans-installer = nixos-generators.nixosGenerate {
+              system = "x86_64-linux";
+              modules = [
+                ./installer/installer.nix
+              ];
+              format = "install-iso";
+            };
+          }
+          // lib.optionalAttrs (system == "x86_64-linux" || system == "aarch64-linux") {
+            arbus-sd-image = nixos-generators.nixosGenerate {
+              system = "armv6l-linux";
+              modules = [
+                ./hosts/arbus/configuration.nix
+              ];
+              format = "sd-aarch64";
+            };
           };
-        };
 
         # Formatter
         formatter = pkgs.alejandra;
@@ -463,6 +473,19 @@
                   users.kimb = ./home/bartleby.nix;
                 };
               }
+              nix-index-database.nixosModules.nix-index
+              {programs.nix-index-database.comma.enable = true;}
+            ];
+          };
+
+          arbus = nixpkgs.lib.nixosSystem {
+            system = "armv6l-linux";
+            specialArgs = {inherit inputs outputs;};
+            modules = [
+              srvos.nixosModules.server
+              srvos.nixosModules.mixins-nix-experimental
+              srvos.nixosModules.mixins-trusted-nix-caches
+              ./hosts/arbus/configuration.nix
               nix-index-database.nixosModules.nix-index
               {programs.nix-index-database.comma.enable = true;}
             ];
