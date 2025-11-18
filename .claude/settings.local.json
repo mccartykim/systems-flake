@@ -24,7 +24,11 @@
       "WebFetch(domain:discourse.nixos.org)",
       "WebFetch(domain:mynixos.com)",
       "WebFetch(domain:nixos.wiki)",
-      "Bash(nix log:*)"
+      "Bash(nix log:*)",
+      "Bash(jj status:*)",
+      "Bash(jj diff:*)",
+      "Bash(jj log:*)",
+      "Bash(jj split:*)"
     ],
     "deny": [],
     "ask": []
