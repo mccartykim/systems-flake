@@ -90,6 +90,13 @@ in {
           proto = "icmp";
           host = "any";
         }
+        # Allow all ports from personal machines (desktops + laptops)
+        {
+          port = "any";
+          proto = "any";
+          groups = ["desktops" "laptops"];
+        }
+        # Allow SSH from any host
         {
           port = 22;
           proto = "tcp";
