@@ -90,6 +90,10 @@ in {
             domain = ["auth.${cfg.domain}"];
             policy = "bypass";
           }
+          {
+            domain = ["vacuum.${cfg.domain}"];
+            policy = "one_factor";
+          }
         ] ++ dynamicRules;
       };
 

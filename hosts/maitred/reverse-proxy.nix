@@ -82,18 +82,14 @@ in {
             '';
           };
 
-          # Robot vacuum (Valetudo) - accessible only from LAN/VPN
+          # Robot vacuum (Valetudo) - protected by Authelia
           "vacuum.${cfg.domain}" = {
             extraConfig = ''
-              @allowed {
-                remote_ip 192.168.69.0/24 10.100.0.0/16 100.64.0.0/10
+              forward_auth ${cfg.networks.containerBridge}:${toString cfg.services.authelia.port} {
+                uri /api/verify?rd=https://auth.${cfg.domain}
+                copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
               }
-              handle @allowed {
-                reverse_proxy 192.168.69.177:80
-              }
-              handle {
-                respond "Access denied - LAN/VPN only" 403
-              }
+              reverse_proxy 192.168.69.177:80
             '';
           };
         };
