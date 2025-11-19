@@ -185,11 +185,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1761371651,
-        "narHash": "sha256-CngUpv9+13Xm4FEqTIm63AUIOMOY/wFEZFJwxLaCDzY=",
+        "lastModified": 1763531911,
+        "narHash": "sha256-iZAW3Qw7SV1LT0hAQrSrqMrkWn91A7XIEpwD4DT2p70=",
         "ref": "refs/heads/main",
-        "rev": "e672ae3e7f07c1b0db49515867066828616adf3f",
-        "revCount": 19,
+        "rev": "f3bac05d6081ddd92873926f6b1fb4cbc75243e4",
+        "revCount": 20,
         "type": "git",
         "url": "ssh://git@github.com/mccartykim/mist-blog"
       },
@@ -223,11 +223,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1763136804,
-        "narHash": "sha256-6p2ljK42s0S8zS0UU59EsEqupz0GVCaBYRylpUadeBM=",
+        "lastModified": 1763505477,
+        "narHash": "sha256-nJRd4LY2kT3OELfHqdgWjvToNZ4w+zKCMzS2R6z4sXE=",
         "owner": "LnL7",
         "repo": "nix-darwin",
-        "rev": "973db96394513fd90270ea5a1211a82a4a0ba47f",
+        "rev": "3bda9f6b14161becbd07b3c56411f1670e19b9b5",
         "type": "github"
       },
       "original": {
@@ -420,11 +420,11 @@
     },
     "nixpkgs_4": {
       "locked": {
-        "lastModified": 1763375004,
-        "narHash": "sha256-e81Xfa7xhRZfqGB4s3xEvrg4p1v+fToM6CIQlXUyaX0=",
+        "lastModified": 1763464769,
+        "narHash": "sha256-AJHrsT7VoeQzErpBRlLJM1SODcaayp0joAoEA35yiwM=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "8b6600824693a9c706ef09bd86711ca393703466",
+        "rev": "6f374686605df381de8541c072038472a5ea2e2d",
         "type": "github"
       },
       "original": {
