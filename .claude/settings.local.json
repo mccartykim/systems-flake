@@ -29,7 +29,10 @@
       "Bash(jj diff:*)",
       "Bash(jj log:*)",
       "Bash(jj split:*)",
-      "Bash(jj show:*)"
+      "Bash(jj show:*)",
+      "Bash(~/projects/flake_keys/nebula-cert print:*)",
+      "Bash(agenix --help:*)",
+      "Bash(dmesg:*)"
     ],
     "deny": [],
     "ask": []

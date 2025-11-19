@@ -102,7 +102,6 @@
   boot = {
     # AMD-specific kernel modules
     kernelModules = ["amdgpu" "kvm-amd"];
-    kernelPackages = pkgs.linuxPackages_latest;
 
     # Boot loader customizations
     loader.systemd-boot = {
@@ -139,9 +138,6 @@
       isync
     ];
   };
-
-  # Memory management - use zram instead of file swap
-  zramSwap.enable = true;
 
   # AMD-specific configuration
   nixpkgs.config.rocmSupport = true;
