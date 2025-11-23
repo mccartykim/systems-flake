@@ -3,10 +3,8 @@
 # Scans the flake for available profiles and suggests appropriate ones
 # Uses configurable paths from flake-config.sh
 
-set -euo pipefail
-
-# Ignore SIGPIPE to prevent "write error: Broken pipe" when piping to grep -q
-trap '' PIPE 2>/dev/null || true
+# Note: Not using pipefail - this script is designed to be piped to grep/head/etc
+set -eu
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FLAKE_ROOT="${FLAKE_ROOT:-$(cd "$SCRIPT_DIR/../.." && pwd)}"

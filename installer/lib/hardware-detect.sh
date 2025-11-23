@@ -2,10 +2,8 @@
 # Hardware detection utilities for NixOS flake installer
 # Provides functions to detect CPU, GPU, battery, and other hardware
 
-set -euo pipefail
-
-# Ignore SIGPIPE to prevent "write error: Broken pipe" when piping to grep -q
-trap '' PIPE 2>/dev/null || true
+# Note: Not using pipefail - this script is designed to be piped to grep/head/etc
+set -eu
 
 # Detect CPU vendor and features
 detect_cpu() {

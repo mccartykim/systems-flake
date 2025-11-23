@@ -3,8 +3,7 @@
 # This file defines the expected directory layout of the target flake
 # Users can customize these paths for their own flake structures
 
-# Ignore SIGPIPE to prevent "write error: Broken pipe" when piping to grep -q
-trap '' PIPE 2>/dev/null || true
+# Note: Not using pipefail - this script may be sourced by scripts piped to grep/head/etc
 
 # Default configuration (matches systems-flake structure)
 # Override by sourcing a custom config before running the installer
