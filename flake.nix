@@ -77,12 +77,23 @@
       in {
         # Per-system packages
         packages = lib.optionalAttrs (system == "x86_64-linux") {
+          # Legacy installer for rich-evans
           rich-evans-installer = nixos-generators.nixosGenerate {
             system = "x86_64-linux";
             modules = [
               ./installer/installer.nix
             ];
             format = "install-iso";
+          };
+
+          # New interactive flake-aware installer
+          flake-installer = nixos-generators.nixosGenerate {
+            system = "x86_64-linux";
+            modules = [
+              "${nixpkgs}/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix"
+              ./installer/installer-iso.nix
+            ];
+            format = "iso";
           };
         };
 

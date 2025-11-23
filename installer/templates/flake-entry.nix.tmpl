@@ -1,0 +1,21 @@
+          {{HOSTNAME}} = nixpkgs.lib.nixosSystem {
+            system = "{{SYSTEM}}";
+            specialArgs = {inherit inputs outputs;};
+            modules = [
+{{SRVOS_MODULES}}
+{{HARDWARE_MODULE}}
+              disko.nixosModules.disko
+              ./hosts/{{HOSTNAME}}/configuration.nix
+              home-manager.nixosModules.home-manager
+              {
+                home-manager = {
+                  backupFileExtension = "backup";
+                  useGlobalPkgs = true;
+                  useUserPackages = true;
+                  users.{{USERNAME}} = ./home/{{HOSTNAME}}.nix;
+                };
+              }
+              nix-index-database.nixosModules.nix-index
+              {programs.nix-index-database.comma.enable = true;}
+            ];
+          };
