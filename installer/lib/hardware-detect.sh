@@ -4,6 +4,9 @@
 
 set -euo pipefail
 
+# Ignore SIGPIPE to prevent "write error: Broken pipe" when piping to grep -q
+trap '' PIPE 2>/dev/null || true
+
 # Detect CPU vendor and features
 detect_cpu() {
     local vendor model cores

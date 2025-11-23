@@ -5,6 +5,9 @@
 
 set -euo pipefail
 
+# Ignore SIGPIPE to prevent "write error: Broken pipe" when piping to grep -q
+trap '' PIPE 2>/dev/null || true
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FLAKE_ROOT="${FLAKE_ROOT:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
 
