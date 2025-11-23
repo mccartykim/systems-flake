@@ -535,7 +535,17 @@
             workingVMTest = import ./tests/working-vm-test.nix {
               pkgs = nixpkgs.legacyPackages.x86_64-linux;
             };
+
+            # Installer tests
+            installerTests = import ./tests/installer-test.nix {
+              pkgs = nixpkgs.legacyPackages.x86_64-linux;
+              inherit (nixpkgs.legacyPackages.x86_64-linux) lib;
+            };
           }
+          // (import ./tests/installer-test.nix {
+            pkgs = nixpkgs.legacyPackages.x86_64-linux;
+            inherit (nixpkgs.legacyPackages.x86_64-linux) lib;
+          })
           // (import ./tests/integration-vm-test.nix {
             pkgs = nixpkgs.legacyPackages.x86_64-linux;
             inherit (nixpkgs.legacyPackages.x86_64-linux) lib;
