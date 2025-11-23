@@ -106,6 +106,24 @@
             packages = [pkgs.tealdeer pkgs.colmena];
           };
         };
+
+        # Checks for CI (Garnix discovers these)
+        checks = lib.optionalAttrs (system == "x86_64-linux") (
+          let
+            installerTests = import ./tests/installer-test.nix {
+              inherit pkgs lib;
+            };
+          in {
+            # Installer library tests
+            installer-library = installerTests.libraryTests;
+            installer-generator = installerTests.generatorTests;
+            installer-vm = installerTests.installerVMTest;
+            installer-alt-structure = installerTests.altStructureTest;
+
+            # Minimal sanity check
+            minimal = import ./tests/minimal-test.nix {inherit pkgs;};
+          }
+        );
       };
 
       flake = let
