@@ -1,6 +1,6 @@
 # Minimal VM test to figure out syntax
 {pkgs}:
-pkgs.nixosTest {
+pkgs.testers.runNixOSTest {
   name = "minimal-test";
 
   nodes.machine = {
@@ -10,6 +10,6 @@ pkgs.nixosTest {
   testScript = ''
     machine.start()
     machine.wait_for_unit("multi-user.target")
-    print("✅ Minimal test passed!")
+    print("Minimal test passed!")
   '';
 }
