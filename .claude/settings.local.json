@@ -32,7 +32,9 @@
       "Bash(jj show:*)",
       "Bash(~/projects/flake_keys/nebula-cert print:*)",
       "Bash(agenix --help:*)",
-      "Bash(dmesg:*)"
+      "Bash(dmesg:*)",
+      "Bash(nix eval:*)",
+      "Bash(nix-shell:*)"
     ],
     "deny": [],
     "ask": []

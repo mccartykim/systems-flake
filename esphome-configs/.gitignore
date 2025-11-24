@@ -1,0 +1,13 @@
+# ESPHome build artifacts
+.esphome/
+*.bin
+*.elf
+*.map
+
+# Secrets - DO NOT COMMIT!
+secrets.yaml
+
+# PlatformIO build directories
+.pio/
+.pioenvs/
+.piolibdeps/
