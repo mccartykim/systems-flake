@@ -144,6 +144,9 @@
 
   # Services configuration
   services = {
+    # Thunderbolt device authorization (for dock enrollment)
+    hardware.bolt.enable = true;
+
     # AI/ML services with ROCm acceleration
     ollama = {
       enable = false;
@@ -184,6 +187,9 @@
       "libvirtd"
     ];
   };
+
+  # Enable cross-compilation for ARM via QEMU emulation
+  boot.binfmt.emulatedSystems = ["armv6l-linux" "aarch64-linux"];
 
   # Programs configuration
   programs = {
