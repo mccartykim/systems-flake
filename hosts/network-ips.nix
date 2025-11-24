@@ -26,6 +26,9 @@
       # Laptops
       marshmallow = "10.100.0.4";
       bartleby = "10.100.0.3";
+
+      # Cameras
+      arbus = "10.100.0.20";
     };
   };
 

@@ -5,7 +5,9 @@
   pkgs,
   inputs,
   ...
-}: {
+}: let
+  sshKeys = import ../ssh-keys.nix;
+in {
   imports = [
     # Hardware configuration will be generated during install
     ./hardware-configuration.nix
@@ -395,9 +397,7 @@
     isNormalUser = true;
     description = "Kimberly";
     extraGroups = ["wheel" "networkmanager"];
-    openssh.authorizedKeys.keys = [
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICZ+5yePKB5vKsm5MJg6SOZSwO0GCV9UBw5cmGx7NmEg mccartykim@zoho.com"
-    ];
+    openssh.authorizedKeys.keys = sshKeys.authorizedKeys;
     initialPassword = "changeme"; # CRITICAL: Change this password immediately after deployment!
   };
 

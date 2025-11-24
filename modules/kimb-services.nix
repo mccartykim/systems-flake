@@ -8,6 +8,7 @@
 }:
 with lib; let
   cfg = config.kimb;
+  sshKeys = import ../hosts/ssh-keys.nix;
 
   # Helper types
   serviceType = types.submodule ({
@@ -95,10 +96,7 @@ in {
 
       sshKeys = mkOption {
         type = types.listOf types.str;
-        default = [
-          "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICZ+5yePKB5vKsm5MJg6SOZSwO0GCV9UBw5cmGx7NmEg mccartykim@zoho.com"
-          "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIN2bgYbsq7Hp5RoM1Dlt59CdGEjvV6CoCi75pR4JiG5e mccartykim@zoho.com"
-        ];
+        default = sshKeys.authorizedKeys;
         description = "SSH public keys for admin user";
       };
     };

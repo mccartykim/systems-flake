@@ -70,5 +70,13 @@ in {
       groups = ["laptops" "nixos"];
       publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGCZ/lfNz+FcRNwbRMeT658YOH0YdCgLRBn/bcegj7pi";
     };
+
+    arbus = {
+      ip = networkIPs.nebula.hosts.arbus;
+      isLighthouse = false;
+      role = "camera";
+      groups = ["cameras" "nixos"];
+      publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBcAHg30CQV01JYsRlyhNbh0Noyo1iPnde9nqDtV5SJY";
+    };
   };
 }

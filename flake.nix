@@ -76,15 +76,56 @@
         inherit (nixpkgs) lib;
       in {
         # Per-system packages
-        packages = lib.optionalAttrs (system == "x86_64-linux") {
-          rich-evans-installer = nixos-generators.nixosGenerate {
-            system = "x86_64-linux";
-            modules = [
-              ./installer/installer.nix
-            ];
-            format = "install-iso";
+        packages =
+          lib.optionalAttrs (system == "x86_64-linux") {
+            rich-evans-installer = nixos-generators.nixosGenerate {
+              system = "x86_64-linux";
+              modules = [
+                ./installer/installer.nix
+              ];
+              format = "install-iso";
+            };
+          }
+          // lib.optionalAttrs (system == "x86_64-linux" || system == "aarch64-linux") {
+            # Build SD image from the nixosConfiguration (handles inputs/specialArgs properly)
+            arbus-sd-image = self.nixosConfigurations.arbus.config.system.build.sdImage;
+
+            # ESPHome firmware builds
+            esp32-cam-01-firmware = pkgs.stdenv.mkDerivation {
+              name = "esp32-cam-01-firmware";
+              src = ./esphome-configs;
+
+              nativeBuildInputs = [pkgs.esphome];
+
+              buildPhase = ''
+                # Copy config and secrets
+                mkdir -p build
+                cp esp32-cam-01.yaml build/
+
+                # Check if secrets exist, otherwise create dummy
+                if [ -f secrets.yaml ]; then
+                  cp secrets.yaml build/
+                else
+                  echo "Warning: secrets.yaml not found, using dummy values"
+                  cat > build/secrets.yaml <<EOF
+                wifi_ssid: "dummy"
+                wifi_password: "dummy"
+                api_encryption_key: "dummy=="
+                ota_password: "dummy"
+                ap_password: "dummy"
+                EOF
+                fi
+
+                cd build
+                esphome compile esp32-cam-01.yaml
+              '';
+
+              installPhase = ''
+                mkdir -p $out
+                cp -r esp32-cam-01 $out/
+              '';
+            };
           };
-        };
 
         # Formatter
         formatter = pkgs.alejandra;
@@ -92,7 +133,42 @@
         # Dev shells
         devShells = lib.optionalAttrs (system == "x86_64-linux") {
           default = pkgs.mkShell {
-            packages = [pkgs.tealdeer pkgs.colmena];
+            packages = [
+              pkgs.tealdeer
+              pkgs.colmena
+              pkgs.esphome # ESP32/ESP8266 firmware builder
+              pkgs.esptool # ESP32/ESP8266 flasher
+            ];
+          };
+        };
+
+        # Apps for common tasks
+        apps = lib.optionalAttrs (system == "x86_64-linux" || system == "aarch64-linux") {
+          flash-esp32-cam-01 = {
+            type = "app";
+            program = toString (pkgs.writeShellScript "flash-esp32-cam-01" ''
+              set -e
+              PORT=''${1:-/dev/ttyUSB0}
+
+              echo "Building ESP32-CAM-01 firmware..."
+              nix build .#esp32-cam-01-firmware
+
+              FIRMWARE="result/esp32-cam-01/.pioenvs/esp32-cam-01/firmware.bin"
+
+              if [ ! -f "$FIRMWARE" ]; then
+                echo "Error: Firmware not found at $FIRMWARE"
+                exit 1
+              fi
+
+              echo "Flashing to $PORT..."
+              ${pkgs.esptool}/bin/esptool.py \
+                --port "$PORT" \
+                --baud 460800 \
+                write_flash \
+                0x10000 "$FIRMWARE"
+
+              echo "Flash complete! Reset the ESP32-CAM to boot."
+            '');
           };
         };
       };
@@ -467,6 +543,22 @@
               {programs.nix-index-database.comma.enable = true;}
             ];
           };
+
+          arbus = nixpkgs.lib.nixosSystem {
+            # Cross-compile from x86_64-linux to armv6l-linux (Raspberry Pi 1/Zero)
+            # Based on working config from NixOS Discourse
+            specialArgs = {inherit inputs outputs;};
+            modules = [
+              # Note: srvos modules not used on Pi 1 (EFI dependencies, resource constraints)
+              # Note: nix-index-database doesn't support armv6l-linux
+              ./hosts/arbus/configuration.nix
+              {
+                # Cross-compilation platform settings
+                nixpkgs.hostPlatform.system = "armv6l-linux";
+                nixpkgs.buildPlatform.system = "x86_64-linux";
+              }
+            ];
+          };
         };
 
         # Colmena deployment configuration
@@ -475,7 +567,9 @@
           # Helper to create colmena node from registry entry
           makeColmenaNode = name: node: {
             deployment = {
-              targetHost = node.ip; # Use Nebula IPs for direct connection to all hosts
+              # Use hostname.nebula for DNS resolution, fallback comment shows IP
+              # ${name}.nebula resolves via maitred DNS, or use node.ip (${node.ip}) directly
+              targetHost = "${name}.nebula";
               targetUser = "kimb";
               buildOnTarget = false;
             };
