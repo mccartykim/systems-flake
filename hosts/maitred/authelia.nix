@@ -29,6 +29,14 @@ in {
       owner = "authelia-main";
       group = "authelia-main";
     };
+
+    authelia-users = {
+      file = ../../secrets/authelia-users.age;
+      path = "/var/lib/authelia-main/users_database.yml";
+      mode = "0400";
+      owner = "authelia-main";
+      group = "authelia-main";
+    };
   };
 
   # Authelia authentication service (host network)
