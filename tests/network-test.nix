@@ -33,7 +33,6 @@ pkgs.testers.nixosTest {
             port = 80;
             subdomain = "www";
             host = "router";
-            container = false; # Simplified for testing
             auth = "none";
             publicAccess = true;
             websockets = false;
@@ -43,7 +42,6 @@ pkgs.testers.nixosTest {
             port = 8080;
             subdomain = "blog";
             host = "server"; # Blog hosted on server, reverse-proxied from router
-            container = false;
             auth = "none";
             publicAccess = true;
             websockets = false;
@@ -119,7 +117,6 @@ pkgs.testers.nixosTest {
             port = 8123;
             subdomain = "hass";
             host = "server";
-            container = false; # Simplified for testing
             auth = "builtin";
             publicAccess = true;
             websockets = true;
@@ -129,7 +126,6 @@ pkgs.testers.nixosTest {
             port = 8080;
             subdomain = "blog";
             host = "server";
-            container = false;
             auth = "none";
             publicAccess = true;
             websockets = false;
