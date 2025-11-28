@@ -1,4 +1,4 @@
-# Migrated reverse proxy using kimb-services options
+# Reverse proxy container - routes to containers or bridge (socat handles nebula)
 {
   config,
   lib,
@@ -7,30 +7,17 @@
 }: let
   cfg = config.kimb;
 
-  # Blog container IP (consistent with blog-service.nix)
-  blogContainerIP = "192.168.100.3";
-
   # Generate Caddy virtual host for a service
   mkServiceVirtualHost = serviceName: service: let
     domain = "${service.subdomain}.${cfg.domain}";
     needsAuth = service.auth == "authelia";
     needsWebsockets = service.websockets;
 
-    # Determine target IP based on host and container settings
+    # Determine target IP: container IP or bridge (socat forwards remote hosts)
     targetIP =
-      if service.host == "maitred" && service.container
-      then
-        # Container service on maitred - use container IP
-        if serviceName == "blog"
-        then blogContainerIP
-        else if serviceName == "reverse-proxy"
-        then "192.168.100.2"
-        else "192.168.100.10" # Default container IP
-      else if service.host == "rich-evans"
-      then "10.100.0.40" # rich-evans Nebula IP
-      else if service.host == "bartleby"
-      then "10.100.0.30" # bartleby Nebula IP
-      else cfg.networks.containerBridge; # host services accessible via bridge IP
+      if service.containerIP != null
+      then service.containerIP
+      else cfg.networks.containerBridge;
 
     authConfig = lib.optionalString needsAuth ''
       forward_auth ${cfg.networks.containerBridge}:${toString cfg.services.authelia.port} {
@@ -71,7 +58,7 @@ in {
     autoStart = true;
     privateNetwork = true;
     hostAddress = cfg.networks.containerBridge;
-    localAddress = cfg.networks.reverseProxyIP;
+    localAddress = cfg.services.reverse-proxy.containerIP;
 
     config = {
       config,
@@ -99,7 +86,7 @@ in {
             # Root domain points to blog
             ${cfg.domain} = lib.mkIf cfg.services.blog.enable {
               extraConfig = ''
-                reverse_proxy ${blogContainerIP}:${toString cfg.services.blog.port}
+                reverse_proxy ${cfg.services.blog.containerIP}:${toString cfg.services.blog.port}
               '';
             };
 
@@ -125,12 +112,12 @@ in {
   networking.nat.forwardPorts = lib.mkIf cfg.services.reverse-proxy.enable [
     {
       sourcePort = 80;
-      destination = "${cfg.networks.reverseProxyIP}:80";
+      destination = "${cfg.services.reverse-proxy.containerIP}:80";
       proto = "tcp";
     }
     {
       sourcePort = 443;
-      destination = "${cfg.networks.reverseProxyIP}:443";
+      destination = "${cfg.services.reverse-proxy.containerIP}:443";
       proto = "tcp";
     }
   ];

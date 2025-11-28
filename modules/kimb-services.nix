@@ -40,10 +40,10 @@ with lib; let
         description = "Which host runs this service";
       };
 
-      container = mkOption {
-        type = types.bool;
-        default = false;
-        description = "Whether this service runs in a container";
+      containerIP = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        description = "IP address if service runs in a NixOS container";
       };
 
       publicAccess = mkOption {
@@ -212,14 +212,6 @@ in {
     servicesByHost =
       groupBy (service: service.host)
       (attrValues cfg.services);
-
-    # Container services
-    containerServices =
-      filterAttrs (
-        name: service:
-          service.enable && service.container
-      )
-      cfg.services;
 
     # Services with resolved host IP addresses
     servicesWithIPs = let
