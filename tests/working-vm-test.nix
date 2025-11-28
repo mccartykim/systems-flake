@@ -1,6 +1,6 @@
 # Working VM test with proper nixosTest syntax
 {pkgs}:
-pkgs.nixosTest {
+pkgs.testers.nixosTest {
   name = "working-network-test";
 
   nodes = {

@@ -1,6 +1,6 @@
 # Real kimb-services integration test - no magic constants!
 {pkgs}:
-pkgs.nixosTest {
+pkgs.testers.nixosTest {
   name = "kimb-services-integration";
 
   nodes = {

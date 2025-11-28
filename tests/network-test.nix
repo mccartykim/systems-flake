@@ -1,7 +1,7 @@
 # Multi-VM Network Test for kimb-services
 # Tests the full network architecture with router + server VMs
 {pkgs}:
-pkgs.nixosTest {
+pkgs.testers.nixosTest {
   name = "kimb-services-network";
 
   nodes = {

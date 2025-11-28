@@ -424,7 +424,7 @@
   };
 in {
   # Main integration test
-  integrationTest = pkgs.nixosTest {
+  integrationTest = pkgs.testers.nixosTest {
     name = "kimb-services-integration";
 
     nodes = {
