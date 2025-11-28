@@ -11,6 +11,18 @@ let
   networks = {
     nebula = {
       subnet = "10.100.0.0/16";
+      # Multiple lighthouses for redundancy
+      lighthouses = {
+        gce = {
+          ip = "10.100.0.1";
+          external = "35.222.40.201:4242";
+        };
+        maitred = {
+          ip = "10.100.0.50";
+          external = "kimb.dev:4242"; # Dynamic IP via DDNS
+        };
+      };
+      # Legacy alias for backward compatibility during migration
       lighthouse = {
         ip = "10.100.0.1";
         external = "35.222.40.201:4242";
@@ -42,14 +54,15 @@ let
       ip = "10.100.0.1";
       external = "35.222.40.201:4242";
       isLighthouse = true;
+      isRelay = true;
       role = "lighthouse";
       groups = ["lighthouse"];
       publicKey = null; # External Google Cloud instance
       meta = {
         hardware = "Google Cloud e2-micro";
-        purpose = "Nebula coordination only";
+        purpose = "Nebula coordination and relay";
         name = "The lighthouse that guides nebula connections";
-        notes = "Manually configured, not NixOS-managed";
+        notes = "Manually configured, not NixOS-managed. Primary lighthouse in GCE.";
       };
     };
 
@@ -108,14 +121,17 @@ let
     maitred = {
       ip = "10.100.0.50";
       lanIp = "192.168.69.1";
+      external = "kimb.dev:4242"; # Dynamic IP via DDNS
+      isLighthouse = true;
+      isRelay = true;
       role = "router";
-      groups = ["routers" "nixos"];
+      groups = ["routers" "nixos" "lighthouse"];
       publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGXJ4JeYtJiV8ltScewAu+N8KYLy+muo+mP07XznOzjX";
       meta = {
         hardware = "Datto 1000 (repurposed MSP appliance)";
-        purpose = "Edge router, reverse proxy, services host";
+        purpose = "Edge router, reverse proxy, services host, nebula lighthouse";
         name = "The maître d' - manages network guests";
-        notes = "Replaced Verizon router; TP-Link mesh runs in AP mode behind it";
+        notes = "Replaced Verizon router; TP-Link mesh runs in AP mode behind it. Also serves as secondary nebula lighthouse and relay.";
       };
     };
 
@@ -138,6 +154,27 @@ let
 
   # Helper: get all NixOS hosts (exclude lighthouse)
   nixosHosts = builtins.removeAttrs hosts ["lighthouse"];
+
+  # Helper: get all lighthouse hosts (hosts with isLighthouse = true)
+  getLighthouses = builtins.filter (name: hosts.${name}.isLighthouse or false) (builtins.attrNames hosts);
+
+  # Helper: get all relay hosts (hosts with isRelay = true)
+  getRelays = builtins.filter (name: hosts.${name}.isRelay or false) (builtins.attrNames hosts);
+
+  # Helper: build static host map for all lighthouses
+  # Returns: { "10.100.0.1" = ["35.222.40.201:4242"]; "10.100.0.50" = ["kimb.dev:4242"]; }
+  lighthouseStaticHostMap = builtins.listToAttrs (
+    map (name: {
+      name = hosts.${name}.ip;
+      value = [hosts.${name}.external];
+    }) getLighthouses
+  );
+
+  # Helper: get list of lighthouse IPs
+  lighthouseIPs = map (name: hosts.${name}.ip) getLighthouses;
+
+  # Helper: get list of relay IPs
+  relayIPs = map (name: hosts.${name}.ip) getRelays;
 
   # Helper: extract public keys from hosts with non-null keys
   getPublicKeys = hostSet:
@@ -162,6 +199,9 @@ in {
   desktops = builtins.filter (n: hosts.${n}.role == "desktop") (builtins.attrNames hosts);
   laptops = builtins.filter (n: hosts.${n}.role == "laptop") (builtins.attrNames hosts);
   servers = builtins.filter (n: hosts.${n}.role == "server") (builtins.attrNames hosts);
+
+  # Nebula lighthouse/relay configuration
+  inherit lighthouseStaticHostMap lighthouseIPs relayIPs;
 
   # SSH host keys (for agenix)
   hostKeys = getPublicKeys nixosHosts;
