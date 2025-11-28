@@ -85,7 +85,14 @@ in {
       };
 
       settings = {
-        punchy.punch = true;
+        punchy = {
+          punch = true;
+          respond = true;
+        };
+
+        # Prefer direct LAN connections over relay/lighthouse routing
+        local_range = registry.network.lan.subnet;
+        preferred_ranges = [registry.network.lan.subnet];
 
         relay = {
           relays = [registry.network.lighthouse.ip];
