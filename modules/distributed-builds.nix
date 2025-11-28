@@ -9,8 +9,12 @@ with lib; let
   cfg = config.kimb.distributedBuilds;
   hostname = config.networking.hostName;
   registry = import ../hosts/nebula-registry.nix;
+  sshKeys = import ../hosts/ssh-keys.nix;
   historianIP = registry.nodes.historian.ip;
   historianKey = registry.nodes.historian.publicKey;
+
+  # Host keys from desktops/laptops that can use distributed builds
+  clientHostKeys = sshKeys.desktopList ++ sshKeys.laptopList;
 in {
   options.kimb.distributedBuilds = {
     enable = mkEnableOption "distributed Nix builds via historian";
@@ -44,6 +48,9 @@ in {
     # Builder configuration (historian)
     (mkIf cfg.isBuilder {
       nix.settings.trusted-users = ["root" "@wheel"];
+
+      # Accept SSH from client host keys for remote builds
+      users.users.root.openssh.authorizedKeys.keys = clientHostKeys;
     })
 
     # Client configuration (all other hosts)
