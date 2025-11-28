@@ -344,6 +344,7 @@ hosts/nebula-registry.nix    # Single source of truth for hosts (IPs, keys, role
 hosts/ssh-keys.nix           # Derives from registry, adds user keys
 secrets/secrets.nix          # Derives from registry, auto-generates nebula secrets
 modules/nebula-node.nix      # Consolidated nebula config module
+modules/distributed-builds.nix # Remote builds via historian
 modules/kimb-services.nix    # Service topology options
 flake.nix                    # Uses mkDesktop/mkServer helpers
 ```
@@ -364,7 +365,7 @@ hosts = {
 ### flake.nix Helper Functions
 - **mkDesktop**: Desktops/laptops with home-manager + srvos.desktop
 - **mkServer**: Servers with srvos.server modules
-- **commonModules**: nix-index-database (applied to all)
+- **commonModules**: nix-index-database, distributed-builds (applied to all)
 - **mkHomeManager**: Home-manager setup helper
 
 Add a new desktop:
@@ -388,6 +389,26 @@ kimb.nebula = {
   ];
 };
 ```
+
+**LAN Discovery**: Nebula is configured to prefer direct LAN connections (192.168.69.0/24) over relay routing for lower latency between local hosts.
+
+### Distributed Builds
+Hosts use `modules/distributed-builds.nix` to offload builds to historian:
+```nix
+# Enabled by default in commonModules
+kimb.distributedBuilds = {
+  enable = true;       # Use historian as remote builder
+  connectTimeout = 10; # Seconds before fallback to local build
+  maxJobs = 8;         # Parallel jobs on historian
+  speedFactor = 2;     # Prefer historian when available
+};
+```
+
+**How it works**:
+- Clients automatically try historian first for builds
+- Falls back to local build after 10s timeout if historian unreachable
+- Uses host SSH keys for authentication (no extra key management)
+- Historian must be deployed first to accept client connections
 
 ### Testing
 ```bash
