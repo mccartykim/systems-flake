@@ -91,8 +91,8 @@ in {
         };
 
         # Prefer direct LAN connections over relay/lighthouse routing
-        local_range = registry.network.lan.subnet;
-        preferred_ranges = [registry.network.lan.subnet];
+        local_range = registry.networks.lan.subnet;
+        preferred_ranges = [registry.networks.lan.subnet];
 
         relay = {
           relays = [registry.network.lighthouse.ip];
