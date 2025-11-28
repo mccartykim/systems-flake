@@ -15,8 +15,8 @@ in {
     # Base profile for all hosts
     ../profiles/base.nix
 
-    # Nebula mesh network with agenix
-    ./nebula.nix
+    # Nebula mesh network (consolidated module)
+    ../../modules/nebula-node.nix
 
     # Reverse proxy container
     ./reverse-proxy.nix
@@ -24,7 +24,7 @@ in {
     # Blog service container
     ./blog-service.nix
 
-    # Dynamic DNS
+    # Dynamic DNS (includes cloudflare secret)
     ./dns-update.nix
 
     # Monitoring (Prometheus & Grafana)
@@ -39,6 +39,9 @@ in {
     # Printer configuration
     ./printer.nix
   ];
+
+  # Nebula configuration (router - basic SSH only)
+  kimb.nebula.enable = true;
 
   # Boot configuration
   boot = {

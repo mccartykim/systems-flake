@@ -171,30 +171,122 @@
             '');
           };
         };
+
+        # Flake checks - runs via `nix flake check`
+        checks = lib.optionalAttrs (system == "x86_64-linux") {
+          # VM tests
+          minimal-test = import ./tests/minimal-test.nix {inherit pkgs;};
+          network-test = import ./tests/network-test.nix {inherit pkgs;};
+          working-vm-test = import ./tests/working-vm-test.nix {inherit pkgs;};
+
+          # Configuration evaluation tests (fast - no VM)
+          eval-historian = self.nixosConfigurations.historian.config.system.build.toplevel;
+          eval-marshmallow = self.nixosConfigurations.marshmallow.config.system.build.toplevel;
+          eval-bartleby = self.nixosConfigurations.bartleby.config.system.build.toplevel;
+          eval-total-eclipse = self.nixosConfigurations.total-eclipse.config.system.build.toplevel;
+          eval-maitred = self.nixosConfigurations.maitred.config.system.build.toplevel;
+          eval-rich-evans = self.nixosConfigurations.rich-evans.config.system.build.toplevel;
+        };
       };
 
       flake = let
         inherit (self) outputs;
         inherit (nixpkgs) lib;
+
+        # Common modules applied to all NixOS configurations
+        commonModules = [
+          nix-index-database.nixosModules.nix-index
+          {programs.nix-index-database.comma.enable = true;}
+        ];
+
+        # Desktop-specific modules (srvos desktop + common mixins)
+        desktopModules = [
+          srvos.nixosModules.desktop
+          srvos.nixosModules.mixins-nix-experimental
+          srvos.nixosModules.mixins-trusted-nix-caches
+        ];
+
+        # Server-specific modules
+        serverModules = [
+          srvos.nixosModules.server
+          srvos.nixosModules.mixins-nix-experimental
+          srvos.nixosModules.mixins-trusted-nix-caches
+          srvos.nixosModules.mixins-systemd-boot
+        ];
+
+        # Home-manager configuration helper
+        mkHomeManager = {
+          user ? "kimb",
+          homeConfig,
+          useGlobalPkgs ? false,
+        }: [
+          home-manager.nixosModules.home-manager
+          {
+            home-manager = {
+              backupFileExtension = "backup";
+              inherit useGlobalPkgs;
+              useUserPackages = true;
+              users.${user} = homeConfig;
+            };
+          }
+        ];
+
+        # Helper to create a desktop NixOS configuration
+        mkDesktop = {
+          hostname,
+          system ? "x86_64-linux",
+          extraModules ? [],
+          hardwareModules ? [],
+          homeConfig ? ./home/${hostname}.nix,
+          useGlobalPkgs ? false,
+        }:
+          nixpkgs.lib.nixosSystem {
+            inherit system;
+            specialArgs = {inherit inputs outputs;};
+            modules =
+              desktopModules
+              ++ commonModules
+              ++ hardwareModules
+              ++ [./hosts/${hostname}/configuration.nix]
+              ++ mkHomeManager {inherit homeConfig useGlobalPkgs;}
+              ++ extraModules;
+          };
+
+        # Helper to create a server NixOS configuration
+        mkServer = {
+          hostname,
+          system ? "x86_64-linux",
+          extraModules ? [],
+          extraSpecialArgs ? {},
+        }:
+          nixpkgs.lib.nixosSystem {
+            inherit system;
+            specialArgs = {inherit inputs outputs;} // extraSpecialArgs;
+            modules =
+              serverModules
+              ++ commonModules
+              ++ [./hosts/${hostname}/configuration.nix]
+              ++ extraModules;
+          };
       in {
         # Darwin configurations
-        darwinConfigurations = {
+        darwinConfigurations = let
+          darwinCommon = [
+            home-manager.darwinModules.home-manager
+            nix-index-database.darwinModules.nix-index
+            {programs.nix-index-database.comma.enable = true;}
+          ];
+        in {
           "kmccarty-YM2K" = nix-darwin.lib.darwinSystem {
-            modules = [
-              home-manager.darwinModules.home-manager
+            modules = darwinCommon ++ [
               ./darwin/kmccarty-YM2K/configuration.nix
               ./home/work-laptop.nix
-              nix-index-database.darwinModules.nix-index
-              {programs.nix-index-database.comma.enable = true;}
             ];
           };
           "cronut" = nix-darwin.lib.darwinSystem {
-            modules = [
-              home-manager.darwinModules.home-manager
+            modules = darwinCommon ++ [
               ./darwin/cronut/configuration.nix
               ./home/cronut.nix
-              nix-index-database.darwinModules.nix-index
-              {programs.nix-index-database.comma.enable = true;}
             ];
           };
         };
@@ -202,7 +294,8 @@
         # NixOS configuration entrypoint
         # Available through 'nixos-rebuild --flake .#your-hostname'
         nixosConfigurations = {
-          rich-evans-installer = inputs.nixpkgs.lib.nixosSystem {
+          # Installer ISO
+          rich-evans-installer = nixpkgs.lib.nixosSystem {
             system = "x86_64-linux";
             modules = [
               "${nixpkgs}/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix"
@@ -210,350 +303,224 @@
             ];
           };
 
-          bonbon = inputs.nixpkgs.lib.nixosSystem {
-            # system to build for
+          # Android Virtual Device
+          bonbon = nixpkgs.lib.nixosSystem {
             system = "aarch64-linux";
-            # modules to use
-            modules = [
-              ./avd/bonbon/configuration.nix # our previous config file
-              home-manager.nixosModules.home-manager # make home manager available to configuration.nix
-              {
-                # use system-level nixpkgs rather than the HM private ones
-                # "This saves an extra Nixpkgs evaluation, adds consistency, and removes the dependency on NIX_PATH, which is otherwise used for importing Nixpkgs."
-                home-manager = {
-                  useGlobalPkgs = true;
-                  users.droid = ./home/bonbon.nix;
-                  backupFileExtension = "backup";
-                };
+            modules =
+              commonModules
+              ++ mkHomeManager {
+                user = "droid";
+                homeConfig = ./home/bonbon.nix;
+                useGlobalPkgs = true;
               }
-              nixos-avf.nixosModules.avf
-              nix-index-database.nixosModules.nix-index
-              {programs.nix-index-database.comma.enable = true;}
-            ];
+              ++ [
+                ./avd/bonbon/configuration.nix
+                nixos-avf.nixosModules.avf
+              ];
           };
 
+          # Surface 3 Go tablet
           cheesecake = nixpkgs.lib.nixosSystem {
             system = "x86_64-linux";
-            modules = [
-              nixos-facter-modules.nixosModules.facter
-              {config.facter.reportPath = ./hosts/cheesecake/facter.json;}
-              ./hosts/cheesecake/configuration.nix
-              home-manager.nixosModules.home-manager
-              nix-index-database.nixosModules.nix-index
-              {programs.nix-index-database.comma.enable = true;}
-              {
-                home-manager = {
-                  useGlobalPkgs = true;
-                  useUserPackages = true;
-                  users.kimb = import ./home/cheesecake.nix;
-                };
+            modules =
+              commonModules
+              ++ mkHomeManager {
+                homeConfig = ./home/cheesecake.nix;
+                useGlobalPkgs = true;
               }
-            ];
+              ++ [
+                nixos-facter-modules.nixosModules.facter
+                {config.facter.reportPath = ./hosts/cheesecake/facter.json;}
+                ./hosts/cheesecake/configuration.nix
+              ];
           };
 
-          marshmallow = nixpkgs.lib.nixosSystem {
-            specialArgs = {inherit inputs outputs;};
-            # > our main nixos configuration file <
-            modules = [
-              srvos.nixosModules.desktop
-              srvos.nixosModules.mixins-trusted-nix-caches
+          # Desktops using mkDesktop helper
+          historian = mkDesktop {hostname = "historian";};
+          total-eclipse = mkDesktop {hostname = "total-eclipse";};
+
+          marshmallow = mkDesktop {
+            hostname = "marshmallow";
+            hardwareModules = [
+              nixos-hardware.nixosModules.lenovo-thinkpad-t490
               srvos.nixosModules.mixins-terminfo
               srvos.nixosModules.mixins-systemd-boot
-              srvos.nixosModules.mixins-nix-experimental
-              srvos.nixosModules.mixins-trusted-nix-caches
-              nixos-hardware.nixosModules.lenovo-thinkpad-t490
-              ./hosts/marshmallow/configuration.nix
-              home-manager.nixosModules.home-manager
-              {
-                home-manager = {
-                  backupFileExtension = "backup";
-                  # useGlobalPkgs = true;
-                  useUserPackages = true;
-                  users.kimb = ./home/marshmallow.nix;
-                };
-              }
-              nix-index-database.nixosModules.nix-index
-              {programs.nix-index-database.comma.enable = true;}
             ];
           };
 
-          total-eclipse = nixpkgs.lib.nixosSystem {
-            specialArgs = {inherit inputs outputs;};
-            # > our main nixos configuration file <
-            modules = [
-              ./hosts/total-eclipse/configuration.nix
-              nix-index-database.nixosModules.nix-index
-              srvos.nixosModules.desktop
-              srvos.nixosModules.mixins-nix-experimental
-              srvos.nixosModules.mixins-trusted-nix-caches
-              {programs.nix-index-database.comma.enable = true;}
-              home-manager.nixosModules.home-manager
-              {
-                home-manager = {
-                  backupFileExtension = "backup";
-                  # useGlobalPkgs = true;
-                  useUserPackages = true;
-                  users.kimb = ./home/total-eclipse.nix;
-                };
-              }
-            ];
-          };
-
-          historian = nixpkgs.lib.nixosSystem {
-            specialArgs = {inherit inputs outputs;};
-            # > our main nixos configuration file <
-            modules = [
-              ./hosts/historian/configuration.nix
-              nix-index-database.nixosModules.nix-index
-              srvos.nixosModules.desktop
-              srvos.nixosModules.mixins-nix-experimental
-              srvos.nixosModules.mixins-trusted-nix-caches
-              {programs.nix-index-database.comma.enable = true;}
-              home-manager.nixosModules.home-manager
-              {
-                home-manager = {
-                  backupFileExtension = "backup";
-                  # useGlobalPkgs = true;
-                  useUserPackages = true;
-                  users.kimb = ./home/historian.nix;
-                };
-              }
-            ];
-          };
-
-          rich-evans = nixpkgs.lib.nixosSystem {
-            system = "x86_64-linux";
-            specialArgs = {inherit inputs outputs copyparty;};
-            modules = [
-              copyparty.nixosModules.default
-              srvos.nixosModules.server
-              srvos.nixosModules.mixins-trusted-nix-caches
+          bartleby = mkDesktop {
+            hostname = "bartleby";
+            useGlobalPkgs = true;
+            hardwareModules = [
+              nixos-hardware.nixosModules.lenovo-thinkpad
               srvos.nixosModules.mixins-systemd-boot
-              srvos.nixosModules.mixins-nix-experimental
+            ];
+            extraModules = [
               ./modules/kimb-services.nix
+              {
+                nixpkgs.overlays = [nil-flake.overlays.nil];
+                kimb.services.fractal-art = {
+                  enable = false;
+                  port = 8000;
+                  subdomain = "art";
+                  host = "bartleby";
+                  container = false;
+                  auth = "none";
+                  publicAccess = false;
+                  websockets = false;
+                };
+              }
+            ];
+          };
 
-              # Service configuration for rich-evans
+          # Servers using mkServer helper
+          rich-evans = mkServer {
+            hostname = "rich-evans";
+            extraSpecialArgs = {inherit copyparty;};
+            extraModules = [
+              copyparty.nixosModules.default
+              ./modules/kimb-services.nix
               {
                 kimb.services = {
-                  # File sharing service
                   copyparty = {
                     enable = true;
                     port = 3923;
-                    subdomain = "files"; # files.kimb.dev
+                    subdomain = "files";
                     host = "rich-evans";
                     container = false;
-                    auth = "authelia"; # Requires two-factor auth
+                    auth = "authelia";
                     publicAccess = true;
                     websockets = false;
                   };
-
-                  # Homepage on rich-evans
                   homepage = {
                     enable = true;
                     port = 8082;
-                    subdomain = "home-rich"; # Different from maitred
+                    subdomain = "home-rich";
                     host = "rich-evans";
-                    container = false;
-                    auth = "none"; # Local access only
-                    publicAccess = false; # Not exposed publicly
-                    websockets = false;
-                  };
-
-                  # Home Assistant (smart home)
-                  homeassistant = {
-                    enable = true;
-                    port = 8123;
-                    subdomain = "hass";
-                    host = "rich-evans";
-                    container = true; # OCI container
-                    auth = "builtin"; # Has its own auth
-                    publicAccess = true;
-                    websockets = true; # Needs WebSocket support
-                  };
-                };
-              }
-
-              nix-index-database.nixosModules.nix-index
-              {programs.nix-index-database.comma.enable = true;}
-              ./hosts/rich-evans/configuration.nix
-            ];
-          };
-
-          maitred = nixpkgs.lib.nixosSystem {
-            system = "x86_64-linux";
-            specialArgs = {inherit inputs outputs;};
-            modules = [
-              ./modules/kimb-services.nix
-
-              # Service configuration using options system
-              {
-                kimb = {
-                  domain = "kimb.dev";
-                  admin = {
-                    name = "kimb";
-                    email = "mccartykim@zoho.com";
-                    displayName = "Kimberly";
-                  };
-
-                  services = {
-                    # Authentication service (container)
-                    authelia = {
-                      enable = true;
-                      port = 9091;
-                      subdomain = "auth";
-                      host = "maitred";
-                      container = false; # Uses host network
-                      auth = "none"; # No auth required for auth service
-                      publicAccess = true;
-                      websockets = false;
-                    };
-
-                    # Monitoring stack (host services)
-                    grafana = {
-                      enable = true;
-                      port = 3000;
-                      subdomain = "grafana";
-                      host = "maitred";
-                      container = false;
-                      auth = "authelia";
-                      publicAccess = true;
-                      websockets = false;
-                    };
-
-                    prometheus = {
-                      enable = true;
-                      port = 9090;
-                      subdomain = "prometheus";
-                      host = "maitred";
-                      container = false;
-                      auth = "authelia";
-                      publicAccess = true;
-                      websockets = false;
-                    };
-
-                    # Homepage dashboard (host service)
-                    homepage = {
-                      enable = true;
-                      port = 8082;
-                      subdomain = "home";
-                      host = "maitred";
-                      container = false;
-                      auth = "authelia";
-                      publicAccess = true;
-                      websockets = false;
-                    };
-
-                    # Blog service (container)
-                    blog = {
-                      enable = true;
-                      port = 8080;
-                      subdomain = "blog"; # Creates blog.kimb.dev
-                      host = "maitred";
-                      container = true;
-                      auth = "none"; # Public blog
-                      publicAccess = true;
-                      websockets = false;
-                    };
-
-                    # Reverse proxy (container) - always enabled on maitred
-                    reverse-proxy = {
-                      enable = true;
-                      port = 80;
-                      subdomain = "www"; # Not used - handles all domains
-                      host = "maitred";
-                      container = true;
-                      auth = "none";
-                      publicAccess = true;
-                      websockets = false;
-                    };
-                  };
-
-                  networks = {
-                    containerBridge = "192.168.100.1";
-                    reverseProxyIP = "192.168.100.2";
-                    trustedNetworks = [
-                      "192.168.0.0/16" # LAN (192.168.69.0/24)
-                      "10.100.0.0/16" # Nebula mesh
-                      "100.64.0.0/10" # Tailscale
-                    ];
-                  };
-
-                  dns = {
-                    provider = "cloudflare";
-                    ttl = 1;
-                    updatePeriod = 300;
-                    servers = {
-                      primary = "192.168.69.1"; # maitred
-                      fallback = ["8.8.8.8" "8.8.4.4"];
-                    };
-                  };
-                };
-              }
-
-              ./hosts/maitred/configuration.nix
-              nix-index-database.nixosModules.nix-index
-              {programs.nix-index-database.comma.enable = true;}
-            ];
-          };
-
-          bartleby = nixpkgs.lib.nixosSystem {
-            system = "x86_64-linux";
-            specialArgs = {inherit inputs outputs;};
-            modules = [
-              srvos.nixosModules.desktop
-              srvos.nixosModules.mixins-systemd-boot
-              srvos.nixosModules.mixins-nix-experimental
-              srvos.nixosModules.mixins-trusted-nix-caches
-              nixos-hardware.nixosModules.lenovo-thinkpad
-              ./modules/kimb-services.nix
-
-              # Service configuration for bartleby (desktop - no services by default)
-              {
-                kimb.services = {
-                  # Fractal art service (available but disabled)
-                  fractal-art = {
-                    enable = false; # Set to true to enable
-                    port = 8000;
-                    subdomain = "art";
-                    host = "bartleby";
                     container = false;
                     auth = "none";
                     publicAccess = false;
                     websockets = false;
                   };
+                  homeassistant = {
+                    enable = true;
+                    port = 8123;
+                    subdomain = "hass";
+                    host = "rich-evans";
+                    container = true;
+                    auth = "builtin";
+                    publicAccess = true;
+                    websockets = true;
+                  };
                 };
               }
-
-              {
-                nixpkgs.overlays = [
-                  nil-flake.overlays.nil
-                ];
-              }
-              ./hosts/bartleby/configuration.nix
-              home-manager.nixosModules.home-manager
-              {
-                home-manager = {
-                  backupFileExtension = "backup";
-                  useGlobalPkgs = true;
-                  useUserPackages = true;
-                  users.kimb = ./home/bartleby.nix;
-                };
-              }
-              nix-index-database.nixosModules.nix-index
-              {programs.nix-index-database.comma.enable = true;}
             ];
           };
 
+          # Router (custom - no srvos server, has specific networking needs)
+          maitred = nixpkgs.lib.nixosSystem {
+            system = "x86_64-linux";
+            specialArgs = {inherit inputs outputs;};
+            modules =
+              commonModules
+              ++ [
+                ./modules/kimb-services.nix
+                {
+                  kimb = {
+                    domain = "kimb.dev";
+                    admin = {
+                      name = "kimb";
+                      email = "mccartykim@zoho.com";
+                      displayName = "Kimberly";
+                    };
+                    services = {
+                      authelia = {
+                        enable = true;
+                        port = 9091;
+                        subdomain = "auth";
+                        host = "maitred";
+                        container = false;
+                        auth = "none";
+                        publicAccess = true;
+                        websockets = false;
+                      };
+                      grafana = {
+                        enable = true;
+                        port = 3000;
+                        subdomain = "grafana";
+                        host = "maitred";
+                        container = false;
+                        auth = "authelia";
+                        publicAccess = true;
+                        websockets = false;
+                      };
+                      prometheus = {
+                        enable = true;
+                        port = 9090;
+                        subdomain = "prometheus";
+                        host = "maitred";
+                        container = false;
+                        auth = "authelia";
+                        publicAccess = true;
+                        websockets = false;
+                      };
+                      homepage = {
+                        enable = true;
+                        port = 8082;
+                        subdomain = "home";
+                        host = "maitred";
+                        container = false;
+                        auth = "authelia";
+                        publicAccess = true;
+                        websockets = false;
+                      };
+                      blog = {
+                        enable = true;
+                        port = 8080;
+                        subdomain = "blog";
+                        host = "maitred";
+                        container = true;
+                        auth = "none";
+                        publicAccess = true;
+                        websockets = false;
+                      };
+                      reverse-proxy = {
+                        enable = true;
+                        port = 80;
+                        subdomain = "www";
+                        host = "maitred";
+                        container = true;
+                        auth = "none";
+                        publicAccess = true;
+                        websockets = false;
+                      };
+                    };
+                    networks = {
+                      containerBridge = "192.168.100.1";
+                      reverseProxyIP = "192.168.100.2";
+                      trustedNetworks = ["192.168.0.0/16" "10.100.0.0/16" "100.64.0.0/10"];
+                    };
+                    dns = {
+                      provider = "cloudflare";
+                      ttl = 1;
+                      updatePeriod = 300;
+                      servers = {
+                        primary = "192.168.69.1";
+                        fallback = ["8.8.8.8" "8.8.4.4"];
+                      };
+                    };
+                  };
+                }
+                ./hosts/maitred/configuration.nix
+              ];
+          };
+
+          # Raspberry Pi 1 webcam (cross-compiled, no srvos/nix-index)
           arbus = nixpkgs.lib.nixosSystem {
-            # Cross-compile from x86_64-linux to armv6l-linux (Raspberry Pi 1/Zero)
-            # Based on working config from NixOS Discourse
             specialArgs = {inherit inputs outputs;};
             modules = [
-              # Note: srvos modules not used on Pi 1 (EFI dependencies, resource constraints)
-              # Note: nix-index-database doesn't support armv6l-linux
               ./hosts/arbus/configuration.nix
               {
-                # Cross-compilation platform settings
                 nixpkgs.hostPlatform.system = "armv6l-linux";
                 nixpkgs.buildPlatform.system = "x86_64-linux";
               }
@@ -588,42 +555,8 @@
           // (builtins.mapAttrs makeColmenaNode
             (builtins.removeAttrs registry.nodes ["lighthouse"])); # Skip non-NixOS lighthouse
 
-        # Test suite
-        tests =
-          {
-            # Full integration test (requires working file paths)
-            integrationTest = import ./tests/integration-vm-test.nix {
-              pkgs = nixpkgs.legacyPackages.x86_64-linux;
-              inherit (nixpkgs.legacyPackages.x86_64-linux) lib;
-              inherit agenix;
-            };
-
-            # Simple VM test with inline keys
-            simpleVMTest = import ./tests/simple-vm-test.nix {
-              pkgs = nixpkgs.legacyPackages.x86_64-linux;
-              inherit (nixpkgs.legacyPackages.x86_64-linux) lib;
-            };
-
-            # Minimal test for debugging
-            minimalTest = import ./tests/minimal-test.nix {
-              pkgs = nixpkgs.legacyPackages.x86_64-linux;
-            };
-
-            # Multi-VM network test with kimb-services
-            networkTest = import ./tests/network-test.nix {
-              pkgs = nixpkgs.legacyPackages.x86_64-linux;
-            };
-
-            # Working VM test for debugging
-            workingVMTest = import ./tests/working-vm-test.nix {
-              pkgs = nixpkgs.legacyPackages.x86_64-linux;
-            };
-          }
-          // (import ./tests/integration-vm-test.nix {
-            pkgs = nixpkgs.legacyPackages.x86_64-linux;
-            inherit (nixpkgs.legacyPackages.x86_64-linux) lib;
-            inherit agenix;
-          });
+        # Tests are now in checks output (run via `nix flake check`)
+        # Individual tests can be built with: nix build .#checks.x86_64-linux.minimal-test
       };
     };
 }

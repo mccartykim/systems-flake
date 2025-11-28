@@ -1,7 +1,8 @@
-# Migrated DNS configuration using kimb-services options
+# Dynamic DNS configuration using kimb-services options
 {
   config,
   lib,
+  inputs,
   ...
 }: let
   cfg = config.kimb;
@@ -22,6 +23,16 @@
     '')
     allDomains;
 in {
+  imports = [
+    inputs.agenix.nixosModules.default
+  ];
+
+  # Cloudflare API token for DNS updates (moved from nebula.nix)
+  age.secrets.cloudflare-api-token = {
+    file = ../../secrets/cloudflare-api-token.age;
+    mode = "0400";
+  };
+
   # Dynamic DNS updates (only if we have enabled services)
   services.inadyn = lib.mkIf (cfg.computed.enabledServices != {}) {
     enable = true;

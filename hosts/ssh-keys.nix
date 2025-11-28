@@ -1,7 +1,9 @@
-# Centralized SSH public keys registry
-# Named attributes that can be converted to lists as needed
+# SSH Keys Registry
+# Derives host keys from nebula-registry.nix, adds user keys
 let
-  # User keys (personal devices) - for SSH access to hosts
+  registry = import ./nebula-registry.nix;
+
+  # User keys (personal SSH keys for authorized_keys)
   userKeys = {
     main = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICZ+5yePKB5vKsm5MJg6SOZSwO0GCV9UBw5cmGx7NmEg mccartykim@zoho.com";
     historian = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIN2bgYbsq7Hp5RoM1Dlt59CdGEjvV6CoCi75pR4JiG5e mccartykim@zoho.com";
@@ -10,43 +12,56 @@ let
     marshmallow = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICwE1JLDrS+C2GcUcFb8ZvDRJX0lF+e0CLhJhFK8DpTO mccartykim@zoho.com";
   };
 
-  # Host keys (SSH host keys for machine identity / agenix)
-  # Desktops & laptops - user-facing machines
-  desktopHostKeys = {
-    historian = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBXpuMSA1RXsYs6cEhvNqzhWpbIe2NB0ya1MUte87SD+";
-    total-eclipse = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAII25uGB19xLNzpzOFKUHp93EtNPxHXgeKotRDsdqdWa7";
-    marshmallow = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILlKSgkr7eXGq9Lcg/5TfH9eudHLEP1q4zAvA8zhq9wh";
-    bartleby = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGCZ/lfNz+FcRNwbRMeT658YOH0YdCgLRBn/bcegj7pi";
-  };
+  # Desktop host keys (derived from registry)
+  desktopHostKeys = builtins.listToAttrs (
+    map (name: {
+      inherit name;
+      value = registry.nodes.${name}.publicKey;
+    })
+    registry.desktops
+  );
 
-  # Servers & appliances - network infrastructure
-  applianceHostKeys = {
-    maitred = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGXJ4JeYtJiV8ltScewAu+N8KYLy+muo+mP07XznOzjX";
-    rich-evans = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOCXEs7zN0NNdWyZ9MJ4pI0R8RAPH6EFj3E2Qp2Xzc1k";
-    arbus = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBcAHg30CQV01JYsRlyhNbh0Noyo1iPnde9nqDtV5SJY";
-  };
+  # Laptop host keys (derived from registry)
+  laptopHostKeys = builtins.listToAttrs (
+    map (name: {
+      inherit name;
+      value = registry.nodes.${name}.publicKey;
+    })
+    registry.laptops
+  );
 
-  # Bootstrap key for agenix re-encryption
-  bootstrap = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKQgFzMg37QTeFE2ybQRHfVEQwW/Wz7lK6jPPmctFd/U";
+  # Server/appliance host keys (derived from registry)
+  applianceHostKeys = builtins.listToAttrs (
+    builtins.filter (x: x.value != null) (
+      map (name: {
+        inherit name;
+        value = registry.nodes.${name}.publicKey or null;
+      })
+        (builtins.attrNames (builtins.removeAttrs registry.nodes (registry.desktops ++ registry.laptops ++ ["lighthouse"])))
+    )
+  );
 in {
   # Named attributes for selective access
   user = userKeys;
   desktop = desktopHostKeys;
+  laptop = laptopHostKeys;
   appliance = applianceHostKeys;
-  inherit bootstrap;
+
+  # Bootstrap key for agenix re-encryption
+  inherit (registry) bootstrap;
 
   # All host keys combined (for agenix)
-  host = desktopHostKeys // applianceHostKeys;
+  host = registry.hostKeys;
 
   # Lists
   userList = builtins.attrValues userKeys;
   desktopList = builtins.attrValues desktopHostKeys;
+  laptopList = builtins.attrValues laptopHostKeys;
   applianceList = builtins.attrValues applianceHostKeys;
 
-  # For SSH authorized_keys - only user keys from desktops/laptops
-  # (appliances like arbus don't need to SSH into other machines)
+  # For SSH authorized_keys - user keys from personal devices
   authorizedKeys = builtins.attrValues userKeys;
 
-  # For agenix
-  agenixHosts = desktopHostKeys // applianceHostKeys;
+  # For agenix - all host keys
+  agenixHosts = registry.hostKeys;
 }
