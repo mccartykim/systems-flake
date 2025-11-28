@@ -194,6 +194,8 @@
         commonModules = [
           nix-index-database.nixosModules.nix-index
           {programs.nix-index-database.comma.enable = true;}
+          ./modules/distributed-builds.nix
+          {kimb.distributedBuilds.enable = true;}
         ];
 
         # Desktop-specific modules (srvos desktop + common mixins)
