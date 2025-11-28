@@ -1,6 +1,12 @@
 # Authoritative Host Registry
 # Single source of truth for all host configuration
 # All other files should reference this for IPs, SSH keys, roles, and groups
+#
+# Naming conventions:
+#   - Portables: sweets (marshmallow, cheesecake, cronut) *bartleby predates this
+#   - Desktops/servers: references/puns (historian, total-eclipse, rich-evans)
+#   - Infrastructure: roles (maitred, lighthouse)
+#   - Appliances: named for their job (arbus = Diane Arbus, photographer → camera host)
 let
   # Network infrastructure (not hosts)
   networks = {
@@ -40,6 +46,12 @@ let
       role = "lighthouse";
       groups = ["lighthouse"];
       publicKey = null; # External Google Cloud instance
+      meta = {
+        hardware = "Google Cloud e2-micro";
+        purpose = "Nebula coordination only";
+        name = "The lighthouse that guides nebula connections";
+        notes = "Manually configured, not NixOS-managed";
+      };
     };
 
     historian = {
@@ -47,6 +59,12 @@ let
       role = "desktop";
       groups = ["desktops" "nixos"];
       publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBXpuMSA1RXsYs6cEhvNqzhWpbIe2NB0ya1MUte87SD+";
+      meta = {
+        hardware = "Beelink SER5 Max (Ryzen 7 5800H APU)";
+        purpose = "Daily driver desktop, future local AI inference";
+        name = "Records and preserves - will run local AI models";
+        notes = "Low-power gaming for now; waiting for ROCm support in NixOS";
+      };
     };
 
     total-eclipse = {
@@ -54,6 +72,12 @@ let
       role = "desktop";
       groups = ["desktops" "nixos"];
       publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAII25uGB19xLNzpzOFKUHp93EtNPxHXgeKotRDsdqdWa7";
+      meta = {
+        hardware = "Costco gaming PC (Nvidia RTX 4060 6GB)";
+        purpose = "Gaming rig, GPU compute";
+        name = "2024 total solar eclipse + Bonnie Tyler";
+        notes = "Impulse Costco purchase; primary gaming machine";
+      };
     };
 
     marshmallow = {
@@ -61,6 +85,12 @@ let
       role = "laptop";
       groups = ["laptops" "nixos"];
       publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILlKSgkr7eXGq9Lcg/5TfH9eudHLEP1q4zAvA8zhq9wh";
+      meta = {
+        hardware = "ThinkPad T490";
+        purpose = "Favorite daily driver laptop";
+        name = "Sweets naming theme for portables";
+        notes = "Most-used laptop; reliable workhorse";
+      };
     };
 
     bartleby = {
@@ -68,6 +98,12 @@ let
       role = "laptop";
       groups = ["laptops" "nixos"];
       publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGCZ/lfNz+FcRNwbRMeT658YOH0YdCgLRBn/bcegj7pi";
+      meta = {
+        hardware = "ThinkPad E131";
+        purpose = "Beloved college laptop, light tasks";
+        name = "Predates sweets theme; Melville's scrivener";
+        notes = "Missouri school surplus; ancient but cherished";
+      };
     };
 
     maitred = {
@@ -76,6 +112,12 @@ let
       role = "router";
       groups = ["routers" "nixos"];
       publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGXJ4JeYtJiV8ltScewAu+N8KYLy+muo+mP07XznOzjX";
+      meta = {
+        hardware = "Datto 1000 (repurposed MSP appliance)";
+        purpose = "Edge router, reverse proxy, services host";
+        name = "The maître d' - manages network guests";
+        notes = "Replaced Verizon router; TP-Link mesh runs in AP mode behind it";
+      };
     };
 
     rich-evans = {
@@ -83,6 +125,12 @@ let
       role = "server";
       groups = ["servers" "nixos"];
       publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOCXEs7zN0NNdWyZ9MJ4pI0R8RAPH6EFj3E2Qp2Xzc1k";
+      meta = {
+        hardware = "HP Mini PC";
+        purpose = "General server, formerly multimedia/Kodi";
+        name = "RedLetterMedia's Rich Evans";
+        notes = "Retired from HTPC duty; now general-purpose server";
+      };
     };
 
     arbus = {
@@ -90,6 +138,12 @@ let
       role = "camera";
       groups = ["cameras" "nixos"];
       publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBcAHg30CQV01JYsRlyhNbh0Noyo1iPnde9nqDtV5SJY";
+      meta = {
+        hardware = "Raspberry Pi 1 Model B";
+        purpose = "USB webcams as IP cameras";
+        name = "Diane Arbus - photographer, like its job";
+        notes = "WIP; bedroom monitoring for AI routine analysis";
+      };
     };
   };
 

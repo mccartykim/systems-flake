@@ -336,25 +336,91 @@ provider cloudflare.com {
 }
 ```
 
-## Architecture Insights
+## Architecture
+
+### Key Files
+```
+hosts/nebula-registry.nix    # Single source of truth for hosts (IPs, keys, roles)
+hosts/ssh-keys.nix           # Derives from registry, adds user keys
+secrets/secrets.nix          # Derives from registry, auto-generates nebula secrets
+modules/nebula-node.nix      # Consolidated nebula config module
+modules/kimb-services.nix    # Service topology options
+flake.nix                    # Uses mkDesktop/mkServer helpers
+```
+
+### Host Registry (nebula-registry.nix)
+All host data lives here. To add a new host:
+```nix
+hosts = {
+  new-host = {
+    ip = "10.100.0.XX";
+    role = "desktop";  # desktop, laptop, server, router, camera
+    groups = ["desktops" "nixos"];
+    publicKey = "ssh-ed25519 AAAA...";  # from /etc/ssh/ssh_host_ed25519_key.pub
+  };
+};
+```
+
+### flake.nix Helper Functions
+- **mkDesktop**: Desktops/laptops with home-manager + srvos.desktop
+- **mkServer**: Servers with srvos.server modules
+- **commonModules**: nix-index-database (applied to all)
+- **mkHomeManager**: Home-manager setup helper
+
+Add a new desktop:
+```nix
+new-host = mkDesktop {
+  hostname = "new-host";
+  hardwareModules = [ nixos-hardware.nixosModules.some-hardware ];
+  extraModules = [ ./modules/something.nix ];
+};
+```
+
+### Nebula Configuration
+Hosts use `modules/nebula-node.nix`:
+```nix
+imports = [ ../../modules/nebula-node.nix ];
+kimb.nebula = {
+  enable = true;
+  openToPersonalDevices = true;  # Allow all ports from desktops/laptops
+  extraInboundRules = [          # Host-specific firewall rules
+    { port = 8080; proto = "tcp"; host = "any"; }
+  ];
+};
+```
+
+### Testing
+```bash
+nix flake check                              # Run all checks
+nix build .#checks.x86_64-linux.minimal-test # Run specific test
+nix build .#checks.x86_64-linux.eval-historian # Eval check (fast)
+```
 
 ### Host Roles
-- **Servers**: Use srvos modules for hardening and optimization
-- **Desktops**: Include home-manager for user environments
-- **Routers**: Minimal base profile with networking focus
-- **Darwin**: Separate configs for macOS systems
+- **Desktops**: srvos.desktop, home-manager, gaming/development profiles
+- **Laptops**: Same as desktops + power management
+- **Servers**: srvos.server, kimb-services for service topology
+- **Routers**: Minimal, custom networking (maitred)
+- **Cameras**: Cross-compiled, minimal (arbus - armv6l)
 
-### Modular Design
-- **Profiles**: Shared configurations in `hosts/profiles/`
-- **Modules**: Reusable components in `modules/`
-- **Secrets**: Centralized agenix secrets in `secrets/`
-- **Home**: User environments in `home/`
+### Directory Structure
+```
+hosts/
+  <hostname>/configuration.nix  # Host config
+  profiles/                     # Shared profiles (base, desktop, server, etc.)
+  nebula-registry.nix          # Host data registry
+home/<hostname>.nix            # Home-manager per host
+modules/                       # Custom NixOS modules
+secrets/                       # Agenix secrets
+darwin/                        # macOS configs
+tests/                         # NixOS VM tests
+```
 
-### Network Architecture
-- **Nebula Mesh**: All hosts connected via overlay network
-- **Router Gateway**: maitred as internet gateway with containers
-- **Service Exposure**: Public services via reverse proxy, private via access control
-- **Backup Access**: Tailscale for redundant connectivity
+### Network Topology
+- **Nebula Mesh**: 10.100.0.0/16 - overlay network
+- **LAN**: 192.168.69.0/24 - local network
+- **Containers**: 192.168.100.0/24 - maitred containers
+- **Tailscale**: 100.64.0.0/10 - backup connectivity
 
 # important-instruction-reminders
 Do what has been asked; nothing more, nothing less.
