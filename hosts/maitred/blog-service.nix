@@ -7,14 +7,14 @@
   ...
 }: let
   cfg = config.kimb;
-  blogPort = cfg.services.blog.port;
+  blogService = cfg.services.blog;
 in {
   # Blog service container (uses mist-blog flake input)
-  containers.blog-service = lib.mkIf cfg.services.blog.enable {
+  containers.blog-service = lib.mkIf blogService.enable {
     autoStart = true;
     privateNetwork = true;
     hostAddress = cfg.networks.containerBridge;
-    localAddress = "192.168.100.3";
+    localAddress = blogService.containerIP;
 
     config = {
       config,
@@ -38,7 +38,7 @@ in {
         };
       };
 
-      networking.firewall.allowedTCPPorts = [blogPort];
+      networking.firewall.allowedTCPPorts = [blogService.port];
       system.stateVersion = "24.11";
     };
   };

@@ -479,7 +479,7 @@
                         port = 8080;
                         subdomain = "blog";
                         host = "maitred";
-                        container = true;
+                        containerIP = "192.168.100.3";
                         auth = "none";
                         publicAccess = true;
                         websockets = false;
@@ -489,7 +489,7 @@
                         port = 80;
                         subdomain = "www";
                         host = "maitred";
-                        container = true;
+                        containerIP = "192.168.100.2";
                         auth = "none";
                         publicAccess = true;
                         websockets = false;

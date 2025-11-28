@@ -155,10 +155,12 @@ in {
       logRefusedConnections = false;
 
       # Additional rules
-      extraCommands = ''
+      extraCommands = let
+        proxyIP = config.kimb.services.reverse-proxy.containerIP;
+      in ''
         # LAN to container port forwarding (split-brain DNS support)
-        iptables -t nat -A PREROUTING -i enp2s0 -d 192.168.69.1 -p tcp --dport 80 -j DNAT --to-destination 192.168.100.2:80
-        iptables -t nat -A PREROUTING -i enp2s0 -d 192.168.69.1 -p tcp --dport 443 -j DNAT --to-destination 192.168.100.2:443
+        iptables -t nat -A PREROUTING -i enp2s0 -d 192.168.69.1 -p tcp --dport 80 -j DNAT --to-destination ${proxyIP}:80
+        iptables -t nat -A PREROUTING -i enp2s0 -d 192.168.69.1 -p tcp --dport 443 -j DNAT --to-destination ${proxyIP}:443
 
         # Drop all forwarding by default
         iptables -P FORWARD DROP
@@ -173,7 +175,7 @@ in {
         iptables -A FORWARD -i ve-+ -o enp3s0 -j ACCEPT
 
         # Allow reverse-proxy container to access vacuum only (by source IP)
-        iptables -A FORWARD -s 192.168.100.2 -o enp2s0 -d 192.168.69.177 -j ACCEPT
+        iptables -A FORWARD -s ${proxyIP} -o enp2s0 -d 192.168.69.177 -j ACCEPT
 
         # Allow LAN to WAN
         iptables -A FORWARD -i enp2s0 -o enp3s0 -j ACCEPT
@@ -252,21 +254,18 @@ in {
   # Dynamic service proxies for enabled services on remote hosts
   systemd.services = let
     cfg = config.kimb;
+    registry = import ../nebula-registry.nix;
 
     # Create proxy services for enabled remote services
-    mkProxyService = serviceName: service:
+    mkProxyService = serviceName: service: let
+      hostIP = registry.nodes.${service.host}.ip or "127.0.0.1";
+    in
       lib.nameValuePair "${serviceName}-proxy" {
         description = "${serviceName} proxy to ${service.host}";
         after = ["network.target" "nebula@mesh.service"];
         wantedBy = ["multi-user.target"];
         serviceConfig = {
-          ExecStart = "${pkgs.socat}/bin/socat TCP4-LISTEN:${toString service.port},fork,reuseaddr TCP4:${
-            if service.host == "rich-evans"
-            then "10.100.0.40"
-            else if service.host == "bartleby"
-            then "10.100.0.30"
-            else "127.0.0.1"
-          }:${toString service.port}";
+          ExecStart = "${pkgs.socat}/bin/socat TCP4-LISTEN:${toString service.port},fork,reuseaddr TCP4:${hostIP}:${toString service.port}";
           Restart = "always";
           RestartSec = "5";
           User = "nobody";
