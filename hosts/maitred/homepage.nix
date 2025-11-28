@@ -21,7 +21,7 @@
       else if service.host == "bartleby"
       then "10.100.0.30"
       else "localhost";
-    container = service.container;
+    container = service.containerIP != null;
   };
 
   # Filter enabled public services for homepage display
@@ -108,7 +108,7 @@ in {
           href = "https://${service.subdomain}.${cfg.domain}";
           description = info.description;
           inherit server;
-          container = service.container;
+          container = service.containerIP != null;
 
           # Add widgets for specific services
           widget =
