@@ -7,23 +7,6 @@
 }: let
   cfg = config.kimb;
 
-  # Generate service entries for enabled services
-  generateServiceEntry = serviceName: service: {
-    name = serviceName;
-    group = "Services";
-    href = "https://${service.subdomain}.${cfg.domain}";
-    description = "Service running on ${service.host}:${toString service.port}";
-    server =
-      if service.host == "maitred"
-      then "localhost"
-      else if service.host == "rich-evans"
-      then "10.100.0.40"
-      else if service.host == "bartleby"
-      then "10.100.0.30"
-      else "localhost";
-    container = service.containerIP != null;
-  };
-
   # Filter enabled public services for homepage display
   enabledServices =
     lib.filterAttrs (
@@ -94,8 +77,8 @@ in {
 
         # Determine server for homepage display
         server =
-          if service.host == "maitred" && service.container
-          then "192.168.100.3" # blog container
+          if service.host == "maitred" && service.containerIP != null
+          then service.containerIP
           else if service.host == "maitred"
           then "localhost"
           else if service.host == "rich-evans"
