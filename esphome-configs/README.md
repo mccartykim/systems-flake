@@ -62,7 +62,7 @@ nix run nixpkgs#esphome -- \
 
 ## Integration with go2rtc
 
-After flashing, add to arbus go2rtc configuration:
+After flashing, add to rich-evans go2rtc configuration:
 
 ```nix
 services.go2rtc.settings.streams = {
@@ -75,7 +75,7 @@ services.go2rtc.settings.streams = {
 ## Accessing Camera
 
 - **Direct stream:** http://esp32-cam-01.local
-- **Via go2rtc:** http://10.100.0.20:1984 (once configured)
+- **Via rich-evans:** http://10.100.0.40:8554 (webcam server)
 - **Home Assistant:** Auto-discovered via mDNS
 
 ## Hardware Notes

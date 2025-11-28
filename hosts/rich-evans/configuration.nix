@@ -22,6 +22,9 @@ in {
     # Server-specific modules
     ./guacamole.nix
 
+    # Camera/webcam server
+    ./camera.nix
+
     # Nebula mesh network (consolidated module)
     ../../modules/nebula-node.nix
 
@@ -51,6 +54,8 @@ in {
       {port = 8384; proto = "tcp"; host = "any";}
       {port = 22000; proto = "tcp"; host = "any";}
       {port = 22000; proto = "udp"; host = "any";}
+      # Camera streaming - only from personal devices
+      {port = 8554; proto = "tcp"; groups = ["desktops" "laptops"];}
     ];
   };
 

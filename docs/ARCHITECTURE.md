@@ -236,8 +236,7 @@ Colmena uses Nebula IPs from the registry via `${hostname}.nebula` DNS.
 │       │         ├── blog-service (.3)                       │
 │       │         └── authelia (.4)                           │
 │       │                                                      │
-│       ├── rich-evans (10.100.0.40) [server]                 │
-│       └── arbus (10.100.0.20) [camera]                      │
+│       └── rich-evans (10.100.0.40) [server, cameras]        │
 └─────────────────────────────────────────────────────────────┘
 ```
 
