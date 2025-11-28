@@ -89,7 +89,7 @@ in {
       in
         lib.nameValuePair info.title {
           href = "https://${service.subdomain}.${cfg.domain}";
-          description = info.description;
+          inherit (info) description;
           inherit server;
           container = service.containerIP != null;
 
