@@ -10,6 +10,7 @@ with lib; let
   hostname = config.networking.hostName;
   registry = import ../hosts/nebula-registry.nix;
   historianIP = registry.nodes.historian.ip;
+  historianKey = registry.nodes.historian.publicKey;
 in {
   options.kimb.distributedBuilds = {
     enable = mkEnableOption "distributed Nix builds via historian";
@@ -58,6 +59,12 @@ in {
 
       nix.distributedBuilds = true;
       nix.settings.connect-timeout = cfg.connectTimeout;
+
+      # Add historian's host key to known_hosts for root
+      programs.ssh.knownHosts.historian = {
+        hostNames = [historianIP "historian"];
+        publicKey = historianKey;
+      };
     })
   ]);
 }
