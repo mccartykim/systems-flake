@@ -15,9 +15,21 @@ in {
     # SD image module for Raspberry Pi 1/Zero
     (modulesPath + "/installer/sd-card/sd-image-raspberrypi.nix")
 
-    # Nebula mesh network
-    ./nebula.nix
+    # Nebula mesh network (consolidated module)
+    ../../modules/nebula-node.nix
   ];
+
+  # Nebula configuration with camera-specific firewall rules
+  kimb.nebula = {
+    enable = true;
+    extraInboundRules = [
+      # Camera streaming ports - only accessible from desktops and laptops
+      {port = 1984; proto = "tcp"; groups = ["desktops" "laptops"];}
+      {port = 8554; proto = "tcp"; groups = ["desktops" "laptops"];}
+      {port = 8555; proto = "tcp"; groups = ["desktops" "laptops"];}
+      {port = 8555; proto = "udp"; groups = ["desktops" "laptops"];}
+    ];
+  };
 
   # Disable heavy default modules for minimal armv6l image
   disabledModules = [

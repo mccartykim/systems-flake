@@ -14,9 +14,15 @@
     ../profiles/laptop.nix
     ../profiles/i3-desktop.nix
 
-    # Nebula mesh network with agenix
-    ./nebula.nix
+    # Nebula mesh network (consolidated module)
+    ../../modules/nebula-node.nix
   ];
+
+  # Nebula configuration
+  kimb.nebula = {
+    enable = true;
+    openToPersonalDevices = true;
+  };
 
   # Host identification
   networking.hostName = "bartleby";

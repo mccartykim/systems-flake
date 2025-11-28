@@ -22,8 +22,8 @@ in {
     # Server-specific modules
     ./guacamole.nix
 
-    # Nebula mesh network with agenix
-    ./nebula.nix
+    # Nebula mesh network (consolidated module)
+    ../../modules/nebula-node.nix
 
     # DNS server - DISABLED: moved to maitred router
     # ./dns.nix
@@ -31,6 +31,28 @@ in {
     # Static networking
     ./networking.nix
   ];
+
+  # Nebula configuration with server-specific firewall rules
+  kimb.nebula = {
+    enable = true;
+    extraInboundRules = [
+      # Copyparty ports
+      {port = 3923; proto = "tcp"; host = "any";}
+      {port = 3921; proto = "tcp"; host = "any";}
+      {port = 3945; proto = "tcp"; host = "any";}
+      {port = 3990; proto = "tcp"; host = "any";}
+      {port = "12000-12099"; proto = "tcp"; host = "any";}
+      {port = 69; proto = "udp"; host = "any";}
+      {port = 3969; proto = "udp"; host = "any";}
+      # Guacamole
+      {port = 4822; proto = "tcp"; host = "any";}
+      {port = 8080; proto = "tcp"; host = "any";}
+      # Syncthing
+      {port = 8384; proto = "tcp"; host = "any";}
+      {port = 22000; proto = "tcp"; host = "any";}
+      {port = 22000; proto = "udp"; host = "any";}
+    ];
+  };
 
   # Host identification
   networking.hostName = "rich-evans";

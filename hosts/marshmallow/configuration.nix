@@ -15,9 +15,15 @@
     ../profiles/laptop.nix
     ../profiles/gaming.nix
 
-    # Nebula mesh network with agenix
-    ./nebula.nix
+    # Nebula mesh network (consolidated module)
+    ../../modules/nebula-node.nix
   ];
+
+  # Nebula configuration
+  kimb.nebula = {
+    enable = true;
+    openToPersonalDevices = true;
+  };
 
   # Boot configuration
   boot = {

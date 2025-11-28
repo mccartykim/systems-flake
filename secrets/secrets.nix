@@ -1,48 +1,34 @@
 # Agenix secrets configuration
-# This file defines which systems can decrypt which secrets
+# Defines which systems can decrypt which secrets
 let
-  # Import centralized SSH keys registry
-  sshKeys = import ../hosts/ssh-keys.nix;
-  host = sshKeys.host;
-  bootstrap = sshKeys.bootstrap;
+  registry = import ../hosts/nebula-registry.nix;
+  inherit (registry) hostKeys bootstrap;
 
   # All working machines that can decrypt shared secrets
-  workingMachines = [
-    host.historian
-    host.maitred
-    host.rich-evans
-    host.total-eclipse
-    host.marshmallow
-    host.arbus
-    host.bartleby
-    bootstrap # For re-encryption from workstation
-  ];
+  workingMachines = (builtins.attrValues hostKeys) ++ [bootstrap];
 
-  # Helper to create node cert/key secrets
-  createNodeSecrets = name: key: {
-    "nebula-${name}-cert.age".publicKeys = [key bootstrap];
-    "nebula-${name}-key.age".publicKeys = [key bootstrap];
+  # Helper to create node cert/key secrets for a host
+  createNodeSecrets = name: {
+    "nebula-${name}-cert.age".publicKeys = [hostKeys.${name} bootstrap];
+    "nebula-${name}-key.age".publicKeys = [hostKeys.${name} bootstrap];
   };
+
+  # Generate nebula secrets for all NixOS hosts
+  allNebulaSecrets = builtins.foldl' (acc: name: acc // createNodeSecrets name) {}
+    (builtins.attrNames hostKeys);
 in
   {
     # Shared CA certificate - all working systems
     "nebula-ca.age".publicKeys = workingMachines;
 
     # Cloudflare API token - only maitred needs this
-    "cloudflare-api-token.age".publicKeys = [host.maitred];
+    "cloudflare-api-token.age".publicKeys = [hostKeys.maitred bootstrap];
 
     # Authelia secrets - maitred and historian
-    "authelia-jwt-secret.age".publicKeys = [host.maitred host.historian];
-    "authelia-session-secret.age".publicKeys = [host.maitred host.historian];
-    "authelia-storage-key.age".publicKeys = [host.maitred host.historian];
-    "authelia-users.age".publicKeys = [host.maitred host.historian];
-    "authelia-smtp-password.age".publicKeys = [host.maitred host.historian];
+    "authelia-jwt-secret.age".publicKeys = [hostKeys.maitred hostKeys.historian bootstrap];
+    "authelia-session-secret.age".publicKeys = [hostKeys.maitred hostKeys.historian bootstrap];
+    "authelia-storage-key.age".publicKeys = [hostKeys.maitred hostKeys.historian bootstrap];
+    "authelia-users.age".publicKeys = [hostKeys.maitred hostKeys.historian bootstrap];
+    "authelia-smtp-password.age".publicKeys = [hostKeys.maitred hostKeys.historian bootstrap];
   }
-  # Individual nebula certificates - each node can only decrypt its own
-  // createNodeSecrets "historian" host.historian
-  // createNodeSecrets "maitred" host.maitred
-  // createNodeSecrets "rich-evans" host.rich-evans
-  // createNodeSecrets "total-eclipse" host.total-eclipse
-  // createNodeSecrets "marshmallow" host.marshmallow
-  // createNodeSecrets "arbus" host.arbus
-  // createNodeSecrets "bartleby" host.bartleby
+  // allNebulaSecrets
