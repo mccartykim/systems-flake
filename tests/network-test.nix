@@ -66,7 +66,10 @@ pkgs.testers.nixosTest {
         };
       };
 
-      services.openssh.enable = true;
+      services.openssh = {
+        enable = true;
+        settings.PasswordAuthentication = true;
+      };
       users.users.test = {
         isNormalUser = true;
         password = "test";
@@ -150,7 +153,10 @@ pkgs.testers.nixosTest {
         };
       };
 
-      services.openssh.enable = true;
+      services.openssh = {
+        enable = true;
+        settings.PasswordAuthentication = true;
+      };
       users.users.test = {
         isNormalUser = true;
         password = "test";
