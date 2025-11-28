@@ -87,9 +87,6 @@
             };
           }
           // lib.optionalAttrs (system == "x86_64-linux" || system == "aarch64-linux") {
-            # Build SD image from the nixosConfiguration (handles inputs/specialArgs properly)
-            arbus-sd-image = self.nixosConfigurations.arbus.config.system.build.sdImage;
-
             # ESPHome firmware builds
             esp32-cam-01-firmware = pkgs.stdenv.mkDerivation {
               name = "esp32-cam-01-firmware";
@@ -515,17 +512,6 @@
               ];
           };
 
-          # Raspberry Pi 1 webcam (cross-compiled, no srvos/nix-index)
-          arbus = nixpkgs.lib.nixosSystem {
-            specialArgs = {inherit inputs outputs;};
-            modules = [
-              ./hosts/arbus/configuration.nix
-              {
-                nixpkgs.hostPlatform.system = "armv6l-linux";
-                nixpkgs.buildPlatform.system = "x86_64-linux";
-              }
-            ];
-          };
         };
 
         # Colmena deployment configuration

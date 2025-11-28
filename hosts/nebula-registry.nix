@@ -6,7 +6,6 @@
 #   - Portables: sweets (marshmallow, cheesecake, cronut) *bartleby predates this
 #   - Desktops/servers: references/puns (historian, total-eclipse, rich-evans)
 #   - Infrastructure: roles (maitred, lighthouse)
-#   - Appliances: named for their job (arbus = Diane Arbus, photographer → camera host)
 let
   # Network infrastructure (not hosts)
   networks = {
@@ -123,26 +122,13 @@ let
     rich-evans = {
       ip = "10.100.0.40";
       role = "server";
-      groups = ["servers" "nixos"];
+      groups = ["servers" "cameras" "nixos"];
       publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOCXEs7zN0NNdWyZ9MJ4pI0R8RAPH6EFj3E2Qp2Xzc1k";
       meta = {
         hardware = "HP Mini PC";
-        purpose = "General server, formerly multimedia/Kodi";
+        purpose = "General server, camera host";
         name = "RedLetterMedia's Rich Evans";
-        notes = "Retired from HTPC duty; now general-purpose server";
-      };
-    };
-
-    arbus = {
-      ip = "10.100.0.20";
-      role = "camera";
-      groups = ["cameras" "nixos"];
-      publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBcAHg30CQV01JYsRlyhNbh0Noyo1iPnde9nqDtV5SJY";
-      meta = {
-        hardware = "Raspberry Pi 1 Model B";
-        purpose = "USB webcams as IP cameras";
-        name = "Diane Arbus - photographer, like its job";
-        notes = "WIP; bedroom monitoring for AI routine analysis";
+        notes = "Retired from HTPC duty; now handles cameras and general services";
       };
     };
   };

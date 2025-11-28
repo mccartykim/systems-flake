@@ -399,9 +399,8 @@ nix build .#checks.x86_64-linux.eval-historian # Eval check (fast)
 ### Host Roles
 - **Desktops**: srvos.desktop, home-manager, gaming/development profiles
 - **Laptops**: Same as desktops + power management
-- **Servers**: srvos.server, kimb-services for service topology
+- **Servers**: srvos.server, kimb-services for service topology (rich-evans also handles cameras)
 - **Routers**: Minimal, custom networking (maitred)
-- **Cameras**: Cross-compiled, minimal (arbus - armv6l)
 
 ### Directory Structure
 ```
