@@ -21,9 +21,9 @@ in {
           {
             targets = [
               (
-                if service.host == "maitred" && !service.container
+                if service.host == "maitred" && service.containerIP == null
                 then "localhost:${toString service.port}"
-                else if service.host == "maitred" && service.container && name == "reverse-proxy"
+                else if service.host == "maitred" && service.containerIP != null && name == "reverse-proxy"
                 then "${cfg.networks.reverseProxyIP}:2019" # Caddy metrics
                 else if service.host == "rich-evans"
                 then "10.100.0.40:${toString service.port}"
