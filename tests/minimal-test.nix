@@ -1,6 +1,6 @@
 # Minimal VM test to figure out syntax
 {pkgs}:
-pkgs.nixosTest {
+pkgs.testers.nixosTest {
   name = "minimal-test";
 
   nodes.machine = {
