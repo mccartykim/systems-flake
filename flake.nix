@@ -361,7 +361,6 @@
                   port = 8000;
                   subdomain = "art";
                   host = "bartleby";
-                  container = false;
                   auth = "none";
                   publicAccess = false;
                   websockets = false;
@@ -384,7 +383,6 @@
                     port = 3923;
                     subdomain = "files";
                     host = "rich-evans";
-                    container = false;
                     auth = "authelia";
                     publicAccess = true;
                     websockets = false;
@@ -394,7 +392,6 @@
                     port = 8082;
                     subdomain = "home-rich";
                     host = "rich-evans";
-                    container = false;
                     auth = "none";
                     publicAccess = false;
                     websockets = false;
@@ -404,7 +401,6 @@
                     port = 8123;
                     subdomain = "hass";
                     host = "rich-evans";
-                    container = true;
                     auth = "builtin";
                     publicAccess = true;
                     websockets = true;
@@ -436,7 +432,6 @@
                         port = 9091;
                         subdomain = "auth";
                         host = "maitred";
-                        container = false;
                         auth = "none";
                         publicAccess = true;
                         websockets = false;
@@ -446,7 +441,6 @@
                         port = 3000;
                         subdomain = "grafana";
                         host = "maitred";
-                        container = false;
                         auth = "authelia";
                         publicAccess = true;
                         websockets = false;
@@ -456,7 +450,6 @@
                         port = 9090;
                         subdomain = "prometheus";
                         host = "maitred";
-                        container = false;
                         auth = "authelia";
                         publicAccess = true;
                         websockets = false;
@@ -466,7 +459,6 @@
                         port = 8082;
                         subdomain = "home";
                         host = "maitred";
-                        container = false;
                         auth = "authelia";
                         publicAccess = true;
                         websockets = false;

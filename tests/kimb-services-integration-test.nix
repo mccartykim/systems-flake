@@ -19,7 +19,6 @@ pkgs.testers.nixosTest {
             port = 80;
             subdomain = "www";
             host = "router";
-            container = false;
             auth = "none";
             publicAccess = true;
             websockets = false;
@@ -29,7 +28,6 @@ pkgs.testers.nixosTest {
             port = 9090;
             subdomain = "metrics";
             host = "router";
-            container = false;
             auth = "none";
             publicAccess = false;
             websockets = false;
@@ -58,7 +56,6 @@ pkgs.testers.nixosTest {
             port = 8080;
             subdomain = "blog";
             host = "server";
-            container = false;
             auth = "none";
             publicAccess = true;
             websockets = false;
@@ -68,7 +65,6 @@ pkgs.testers.nixosTest {
             port = 8123;
             subdomain = "hass";
             host = "server";
-            container = false;
             auth = "builtin";
             publicAccess = true;
             websockets = true;

@@ -106,10 +106,10 @@
             type = types.str;
             description = "Host where the service runs";
           };
-          container = mkOption {
-            type = types.bool;
-            default = false;
-            description = "Whether service runs in a container";
+          containerIP = mkOption {
+            type = types.nullOr types.str;
+            default = null;
+            description = "IP address if service runs in a NixOS container";
           };
           auth = mkOption {
             type = types.enum ["none" "authelia" "builtin"];
@@ -190,7 +190,6 @@
           port = 80;
           subdomain = "www";
           host = "test-router";
-          container = true;
           auth = "none";
           publicAccess = true;
           websockets = false;
@@ -201,7 +200,6 @@
           port = 8080;
           subdomain = "blog";
           host = "test-router";
-          container = true;
           auth = "none";
           publicAccess = true;
           websockets = false;
@@ -280,7 +278,6 @@
           port = 8123;
           subdomain = "hass";
           host = "test-server";
-          container = true;
           auth = "builtin";
           publicAccess = true;
           websockets = true;
@@ -291,7 +288,6 @@
           port = 3923;
           subdomain = "files";
           host = "test-server";
-          container = false;
           auth = "authelia";
           publicAccess = true;
           websockets = false;
@@ -368,7 +364,6 @@
           port = 8000;
           subdomain = "dev";
           host = "test-desktop";
-          container = false;
           auth = "none";
           publicAccess = false;
           websockets = false;
@@ -512,7 +507,6 @@ in {
                 port = 8080;
                 subdomain = "test";
                 host = "test-server";
-                container = false;
                 auth = "none";
                 publicAccess = true;
                 websockets = false;
