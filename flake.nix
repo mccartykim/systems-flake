@@ -465,6 +465,15 @@
                         publicAccess = true;
                         websockets = false;
                       };
+                      homeassistant = {
+                        enable = true;
+                        port = 8123;
+                        subdomain = "hass";
+                        host = "rich-evans";
+                        auth = "builtin";
+                        publicAccess = true;
+                        websockets = true;
+                      };
                       blog = {
                         enable = true;
                         port = 8080;
