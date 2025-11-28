@@ -78,7 +78,7 @@ in {
 
       services.caddy = {
         enable = true;
-        email = cfg.admin.email;
+        inherit (cfg.admin) email;
 
         virtualHosts =
           serviceVirtualHosts

@@ -30,14 +30,12 @@
   # Test registry (mirrors structure of real nebula-registry.nix)
   testRegistry = {
     network = {
-      subnet = testNetwork.subnet;
-      lighthouse = testNetwork.lighthouse;
+      inherit (testNetwork) subnet lighthouse;
     };
 
     nodes = {
       lighthouse = {
-        ip = testNetwork.lighthouse.ip;
-        external = testNetwork.lighthouse.external;
+        inherit (testNetwork.lighthouse) ip external;
         isLighthouse = true;
         role = "lighthouse";
         groups = ["lighthouse"];
