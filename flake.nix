@@ -470,7 +470,7 @@
                         port = 8123;
                         subdomain = "hass";
                         host = "rich-evans";
-                        auth = "builtin";
+                        auth = "authelia";
                         publicAccess = true;
                         websockets = true;
                       };
