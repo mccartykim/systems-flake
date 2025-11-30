@@ -29,6 +29,13 @@ in {
       owner = "authelia-main";
       group = "authelia-main";
     };
+
+    authelia-smtp-password = {
+      file = ../../secrets/authelia-smtp-password.age;
+      mode = "0400";
+      owner = "authelia-main";
+      group = "authelia-main";
+    };
   };
 
   # Authelia authentication service (host network)
@@ -129,8 +136,14 @@ in {
 
       notifier = {
         disable_startup_check = false;
-        filesystem = {
-          filename = "/var/lib/authelia-main/notification.txt";
+        smtp = {
+          address = "submissions://smtp.fastmail.com:465";
+          username = "kimb@kimb.dev";
+          sender = "Authelia <kimb@kimb.dev>";
+          identifier = "kimb.dev";
+          subject = "[Authelia] {title}";
+          timeout = "5s";
+          disable_require_tls = false;
         };
       };
     };
@@ -139,6 +152,11 @@ in {
       jwtSecretFile = config.age.secrets.authelia-jwt-secret.path;
       sessionSecretFile = config.age.secrets.authelia-session-secret.path;
       storageEncryptionKeyFile = config.age.secrets.authelia-storage-key.path;
+    };
+
+    # SMTP password via environment variable (Authelia reads *_FILE vars)
+    environmentVariables = {
+      AUTHELIA_NOTIFIER_SMTP_PASSWORD_FILE = config.age.secrets.authelia-smtp-password.path;
     };
   };
 
