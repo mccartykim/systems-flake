@@ -77,6 +77,10 @@ in {
 
   services.samba = {
     enable = true;
+    package = pkgs.samba.override {
+      enablePrinting = true;
+      cups = pkgs.cups;
+    };
     openFirewall = true;
     settings = {
       global = {
@@ -84,7 +88,7 @@ in {
         "server string" = "Maitred Print Server";
         "netbios name" = "maitred";
         "security" = "user";
-        "hosts allow" = "192.168.69. 127.";
+        "hosts allow" = "192.168.69. 10.100. 127."; # LAN + Nebula, not WAN
         "guest account" = "nobody";
         "map to guest" = "bad user";
         "load printers" = "yes";
