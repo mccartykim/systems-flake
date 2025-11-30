@@ -57,7 +57,7 @@ let
     historian = {
       ip = "10.100.0.10";
       role = "desktop";
-      groups = ["desktops" "nixos"];
+      groups = ["desktops" "nixos" "printing"];
       publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBXpuMSA1RXsYs6cEhvNqzhWpbIe2NB0ya1MUte87SD+";
       meta = {
         hardware = "Beelink SER5 Max (Ryzen 7 5800H APU)";
@@ -70,7 +70,7 @@ let
     total-eclipse = {
       ip = "10.100.0.6";
       role = "desktop";
-      groups = ["desktops" "nixos"];
+      groups = ["desktops" "nixos" "printing"];
       publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAII25uGB19xLNzpzOFKUHp93EtNPxHXgeKotRDsdqdWa7";
       meta = {
         hardware = "Costco gaming PC (Nvidia RTX 4060 6GB)";
@@ -83,7 +83,7 @@ let
     marshmallow = {
       ip = "10.100.0.4";
       role = "laptop";
-      groups = ["laptops" "nixos"];
+      groups = ["laptops" "nixos" "printing"];
       publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILlKSgkr7eXGq9Lcg/5TfH9eudHLEP1q4zAvA8zhq9wh";
       meta = {
         hardware = "ThinkPad T490";
@@ -96,7 +96,7 @@ let
     bartleby = {
       ip = "10.100.0.3";
       role = "laptop";
-      groups = ["laptops" "nixos"];
+      groups = ["laptops" "nixos" "printing"];
       publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGCZ/lfNz+FcRNwbRMeT658YOH0YdCgLRBn/bcegj7pi";
       meta = {
         hardware = "ThinkPad E131";
