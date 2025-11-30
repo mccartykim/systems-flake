@@ -40,8 +40,17 @@ in {
     ./printer.nix
   ];
 
-  # Nebula configuration (router - basic SSH only)
-  kimb.nebula.enable = true;
+  # Nebula configuration (router + SMB printer sharing)
+  kimb.nebula = {
+    enable = true;
+    extraInboundRules = [
+      # SMB for printing group only
+      { port = 139; proto = "tcp"; groups = ["printing"]; }
+      { port = 445; proto = "tcp"; groups = ["printing"]; }
+      { port = 137; proto = "udp"; groups = ["printing"]; }
+      { port = 138; proto = "udp"; groups = ["printing"]; }
+    ];
+  };
 
   # Boot configuration
   boot = {
