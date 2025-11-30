@@ -42,6 +42,7 @@ let
       ip = "10.100.0.1";
       external = "35.222.40.201:4242";
       isLighthouse = true;
+      # isRelay = false; GCE lighthouse is not configured as relay
       role = "lighthouse";
       groups = ["lighthouse"];
       publicKey = null; # External Google Cloud instance
@@ -108,6 +109,9 @@ let
     maitred = {
       ip = "10.100.0.50";
       lanIp = "192.168.69.1";
+      isLighthouse = true;
+      isRelay = true;
+      external = "kimb.dev:4242";
       role = "router";
       groups = ["routers" "nixos"];
       publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGXJ4JeYtJiV8ltScewAu+N8KYLy+muo+mP07XznOzjX";

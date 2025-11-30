@@ -11,6 +11,25 @@ with lib; let
   cfg = config.kimb.nebula;
   hostname = config.networking.hostName;
   registry = import ../hosts/nebula-registry.nix;
+
+  # This host's config from registry
+  hostConfig = registry.nodes.${hostname} or {};
+  isLighthouse = hostConfig.isLighthouse or false;
+  isRelay = hostConfig.isRelay or false;
+  myIp = hostConfig.ip or "";
+
+  # Helper: get IPs from node list, excluding our own
+  getOtherIps = nodes: filter (ip: ip != myIp) (map (n: n.ip) nodes);
+
+  # Lighthouses and relays from registry
+  allLighthouses = filter (n: (n.isLighthouse or false) && n ? external)
+    (attrValues registry.nodes);
+  allRelays = filter (n: n.isRelay or false) (attrValues registry.nodes);
+
+  # Derived config: exclude self from lighthouse/relay lists
+  lighthouseIps = if isLighthouse then [] else map (n: n.ip) allLighthouses;
+  staticHosts = listToAttrs (map (n: nameValuePair n.ip [n.external]) allLighthouses);
+  relayIps = getOtherIps allRelays;
 in {
   options.kimb.nebula = {
     enable = mkEnableOption "Nebula mesh network with agenix secrets";
@@ -73,16 +92,14 @@ in {
     # Nebula mesh network
     services.nebula.networks.mesh = {
       enable = true;
-      isLighthouse = false;
+      inherit isLighthouse;
 
       ca = config.age.secrets.nebula-ca.path;
       cert = config.age.secrets.nebula-cert.path;
       key = config.age.secrets.nebula-key.path;
 
-      lighthouses = [registry.network.lighthouse.ip];
-      staticHostMap = {
-        "${registry.network.lighthouse.ip}" = [registry.network.lighthouse.external];
-      };
+      lighthouses = lighthouseIps;
+      staticHostMap = staticHosts;
 
       settings = {
         punchy = {
@@ -95,9 +112,14 @@ in {
         preferred_ranges = [registry.networks.lan.subnet];
 
         relay = {
-          relays = [registry.network.lighthouse.ip];
-          am_relay = false;
+          relays = relayIps;
+          am_relay = isRelay; # Independent of lighthouse status
           use_relays = true;
+        };
+
+        # Periodic LAN route checking (helps mobile devices rediscover LAN)
+        routines = {
+          local_range_check_interval = 30; # Check every 30 seconds (0 = disabled)
         };
 
         tun = {
