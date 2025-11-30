@@ -40,7 +40,7 @@
 
     # Bartleby-specific kitty config
     kitty = {
-      themeFile = "Grass.conf";
+      themeFile = "Grass";
       font = {
         package = pkgs.ibm-plex;
         name = "IBM Plex Mono";
