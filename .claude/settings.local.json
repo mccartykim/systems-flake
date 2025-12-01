@@ -34,7 +34,9 @@
       "Bash(agenix --help:*)",
       "Bash(dmesg:*)",
       "Bash(nix eval:*)",
-      "Bash(nix-shell:*)"
+      "Bash(nix-shell:*)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(ping:*)"
     ],
     "deny": [],
     "ask": []

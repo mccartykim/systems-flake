@@ -173,10 +173,59 @@ Use conventional commits format:
 
 ## Deployment
 - **Tool**: Use Colmena for multi-host deployments
-- **Commands**: 
+- **Commands**:
   - Deploy single host: `nix develop -c colmena apply --on <hostname>`
   - Deploy all: `nix develop -c colmena apply`
 - **Network**: Colmena uses Nebula mesh network IPs for direct deployment (except maitred)
+
+## System-Manager for Non-NixOS Hosts
+
+For non-NixOS hosts (e.g., Ubuntu VMs), use [numtide/system-manager](https://github.com/numtide/system-manager) to manage systemd services and /etc files declaratively.
+
+### Building and Deploying
+```bash
+# Build the system-manager config
+nix build .#systemConfigs.oracle
+
+# Copy closure to remote host
+nix copy --to ssh://user@host ./result
+
+# Activate on remote host
+ssh user@host "sudo /nix/store/...-system-manager/bin/activate"
+```
+
+### Agenix-Compatible Secrets Pattern
+System-manager lacks `system.activationScripts`, so use a systemd oneshot service to decrypt secrets:
+
+```nix
+# Place encrypted secrets in /etc (from Nix store - safe, they're encrypted)
+environment.etc."service/encrypted/secret.age".source = ../../secrets/secret.age;
+
+# Oneshot service decrypts before main service starts
+systemd.services.decrypt-secrets = {
+  description = "Decrypt secrets";
+  wantedBy = ["multi-user.target"];
+  before = ["main.service"];
+  serviceConfig = {
+    Type = "oneshot";
+    RemainAfterExit = true;
+    ExecStart = pkgs.writeShellScript "decrypt" ''
+      ${pkgs.age}/bin/age -d -i /etc/ssh/ssh_host_ed25519_key \
+        -o /run/secrets/decrypted \
+        /etc/service/encrypted/secret.age
+    '';
+  };
+};
+
+systemd.services.main = {
+  requires = ["decrypt-secrets.service"];
+  after = ["decrypt-secrets.service"];
+  # ...
+};
+```
+
+### Current System-Manager Hosts
+- **oracle**: Nebula lighthouse at 10.100.0.2 (Oracle Cloud Ubuntu VM)
 
 ## Container Architecture Patterns
 
@@ -340,13 +389,14 @@ provider cloudflare.com {
 
 ### Key Files
 ```
-hosts/nebula-registry.nix    # Single source of truth for hosts (IPs, keys, roles)
-hosts/ssh-keys.nix           # Derives from registry, adds user keys
-secrets/secrets.nix          # Derives from registry, auto-generates nebula secrets
-modules/nebula-node.nix      # Consolidated nebula config module
+hosts/nebula-registry.nix      # Single source of truth for hosts (IPs, keys, roles)
+hosts/ssh-keys.nix             # Derives from registry, adds user keys
+hosts/oracle/configuration.nix # System-manager config for non-NixOS lighthouse
+secrets/secrets.nix            # Derives from registry, auto-generates nebula secrets
+modules/nebula-node.nix        # Consolidated nebula config module
 modules/distributed-builds.nix # Remote builds via historian
-modules/kimb-services.nix    # Service topology options
-flake.nix                    # Uses mkDesktop/mkServer helpers
+modules/kimb-services.nix      # Service topology options
+flake.nix                      # Uses mkDesktop/mkServer helpers + systemConfigs
 ```
 
 ### Host Registry (nebula-registry.nix)
@@ -422,6 +472,7 @@ nix build .#checks.x86_64-linux.eval-historian # Eval check (fast)
 - **Laptops**: Same as desktops + power management
 - **Servers**: srvos.server, kimb-services for service topology (rich-evans also handles cameras)
 - **Routers**: Minimal, custom networking (maitred)
+- **Lighthouses**: Nebula lighthouses/relays, may be non-NixOS (oracle via system-manager)
 
 ### Directory Structure
 ```

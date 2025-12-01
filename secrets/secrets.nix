@@ -4,8 +4,11 @@ let
   registry = import ../hosts/nebula-registry.nix;
   inherit (registry) hostKeys bootstrap;
 
+  # Non-NixOS hosts managed via system-manager (not in registry.hostKeys)
+  oracleKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHmEv+X3EL+6PswZN3yPAz+eUkRGAqcxfeJl+UY9Fsxy";
+
   # All working machines that can decrypt shared secrets
-  workingMachines = (builtins.attrValues hostKeys) ++ [bootstrap];
+  workingMachines = (builtins.attrValues hostKeys) ++ [bootstrap oracleKey];
 
   # Helper to create node cert/key secrets for a host
   createNodeSecrets = name: {
@@ -30,5 +33,8 @@ in
     "authelia-storage-key.age".publicKeys = [hostKeys.maitred hostKeys.historian bootstrap];
     "authelia-users.age".publicKeys = [hostKeys.maitred hostKeys.historian bootstrap];
     "authelia-smtp-password.age".publicKeys = [hostKeys.maitred hostKeys.historian bootstrap];
+    # Oracle (system-manager host) nebula secrets
+    "nebula-oracle-cert.age".publicKeys = [oracleKey bootstrap];
+    "nebula-oracle-key.age".publicKeys = [oracleKey bootstrap];
   }
   // allNebulaSecrets
