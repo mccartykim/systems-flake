@@ -54,6 +54,22 @@ let
       };
     };
 
+    oracle = {
+      ip = "10.100.0.2";
+      external = "150.136.155.204:4242";
+      isLighthouse = true;
+      isRelay = true;
+      role = "lighthouse";
+      groups = ["lighthouse" "system-manager"];
+      publicKey = null; # Managed via system-manager, not NixOS
+      meta = {
+        hardware = "Oracle Cloud VM (x86_64)";
+        purpose = "External Nebula lighthouse + relay for redundancy";
+        name = "Oracle cloud lighthouse";
+        notes = "Managed via system-manager with agenix-compatible secrets";
+      };
+    };
+
     historian = {
       ip = "10.100.0.10";
       role = "desktop";

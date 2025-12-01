@@ -450,7 +450,8 @@
         "nixos-generators": "nixos-generators",
         "nixos-hardware": "nixos-hardware",
         "nixpkgs": "nixpkgs_4",
-        "srvos": "srvos"
+        "srvos": "srvos",
+        "system-manager": "system-manager"
       }
     },
     "srvos": {
@@ -470,6 +471,26 @@
       "original": {
         "owner": "nix-community",
         "repo": "srvos",
+        "type": "github"
+      }
+    },
+    "system-manager": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1764233885,
+        "narHash": "sha256-m6etiBLSMajunnbUvEI1Pc/jNu4naImalgQnctVJ1/k=",
+        "owner": "numtide",
+        "repo": "system-manager",
+        "rev": "a0343ab10763fbbfcf8d3b69c8341c18b1b1f215",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "system-manager",
         "type": "github"
       }
     },

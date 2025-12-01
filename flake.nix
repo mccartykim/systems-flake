@@ -38,6 +38,10 @@
     agenix.url = "github:ryantm/agenix";
     agenix.inputs.nixpkgs.follows = "nixpkgs";
 
+    # System-manager for non-NixOS hosts (e.g., Oracle VM lighthouse)
+    system-manager.url = "github:numtide/system-manager";
+    system-manager.inputs.nixpkgs.follows = "nixpkgs";
+
     mist-blog.url = "git+ssh://git@github.com/mccartykim/mist-blog";
     mist-blog.inputs.nixpkgs.follows = "nixpkgs";
 
@@ -60,6 +64,7 @@
     disko,
     agenix,
     nixos-facter-modules,
+    system-manager,
     ...
   } @ inputs:
     flake-parts.lib.mkFlake {inherit inputs;} {
@@ -533,10 +538,17 @@
             };
           }
           // (builtins.mapAttrs makeColmenaNode
-            (builtins.removeAttrs registry.nodes ["lighthouse"])); # Skip non-NixOS lighthouse
+            (builtins.removeAttrs registry.nodes ["lighthouse" "oracle"])); # Skip non-NixOS hosts
 
         # Tests are now in checks output (run via `nix flake check`)
         # Individual tests can be built with: nix build .#checks.x86_64-linux.minimal-test
+
+        # System-manager configurations for non-NixOS hosts
+        systemConfigs = {
+          oracle = system-manager.lib.makeSystemConfig {
+            modules = [./hosts/oracle/configuration.nix];
+          };
+        };
       };
     };
 }
