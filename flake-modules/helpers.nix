@@ -14,7 +14,7 @@ in {
       {programs.nix-index-database.comma.enable = true;}
       (self + "/modules/distributed-builds.nix")
       {kimb.distributedBuilds.enable = true;}
-      (self + "/modules/agenix-rekey.nix")
+      (self + "/modules/agenix.nix")
     ];
 
     # Desktop-specific modules (srvos desktop + common mixins)
