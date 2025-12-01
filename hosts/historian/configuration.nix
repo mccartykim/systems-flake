@@ -157,6 +157,9 @@
 
   # Services configuration
   services = {
+    # Smart card daemon for YubiKey support
+    pcscd.enable = true;
+
     # Thunderbolt device authorization (for dock enrollment)
     hardware.bolt.enable = true;
 

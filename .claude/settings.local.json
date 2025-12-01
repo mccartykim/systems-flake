@@ -36,7 +36,8 @@
       "Bash(nix eval:*)",
       "Bash(nix-shell:*)",
       "WebFetch(domain:raw.githubusercontent.com)",
-      "Bash(ping:*)"
+      "Bash(ping:*)",
+      "WebFetch(domain:flake.parts)"
     ],
     "deny": [],
     "ask": []
