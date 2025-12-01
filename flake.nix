@@ -38,6 +38,10 @@
     agenix.url = "github:ryantm/agenix";
     agenix.inputs.nixpkgs.follows = "nixpkgs";
 
+    # agenix-rekey for YubiKey master identity + declarative cert generation
+    agenix-rekey.url = "github:oddlama/agenix-rekey";
+    agenix-rekey.inputs.nixpkgs.follows = "nixpkgs";
+
     # System-manager for non-NixOS hosts (e.g., Oracle VM lighthouse)
     system-manager.url = "github:numtide/system-manager";
     system-manager.inputs.nixpkgs.follows = "nixpkgs";
@@ -63,11 +67,17 @@
     nixos-generators,
     disko,
     agenix,
+    agenix-rekey,
     nixos-facter-modules,
     system-manager,
     ...
   } @ inputs:
     flake-parts.lib.mkFlake {inherit inputs;} {
+      imports = [
+        agenix-rekey.flakeModules.default
+        ./flake-modules  # Modularized flake configuration
+      ];
+
       systems = ["x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin"];
 
       perSystem = {
@@ -140,6 +150,8 @@
               pkgs.colmena
               pkgs.esphome # ESP32/ESP8266 firmware builder
               pkgs.esptool # ESP32/ESP8266 flasher
+              pkgs.age # age encryption tool
+              pkgs.age-plugin-yubikey # YubiKey support for age encryption
             ];
           };
         };
@@ -191,364 +203,7 @@
         };
       };
 
-      flake = let
-        inherit (self) outputs;
-        inherit (nixpkgs) lib;
-
-        # Common modules applied to all NixOS configurations
-        commonModules = [
-          nix-index-database.nixosModules.nix-index
-          {programs.nix-index-database.comma.enable = true;}
-          ./modules/distributed-builds.nix
-          {kimb.distributedBuilds.enable = true;}
-        ];
-
-        # Desktop-specific modules (srvos desktop + common mixins)
-        desktopModules = [
-          srvos.nixosModules.desktop
-          srvos.nixosModules.mixins-nix-experimental
-          srvos.nixosModules.mixins-trusted-nix-caches
-        ];
-
-        # Server-specific modules
-        serverModules = [
-          srvos.nixosModules.server
-          srvos.nixosModules.mixins-nix-experimental
-          srvos.nixosModules.mixins-trusted-nix-caches
-          srvos.nixosModules.mixins-systemd-boot
-        ];
-
-        # Home-manager configuration helper
-        mkHomeManager = {
-          user ? "kimb",
-          homeConfig,
-          useGlobalPkgs ? false,
-        }: [
-          home-manager.nixosModules.home-manager
-          {
-            home-manager = {
-              backupFileExtension = "backup";
-              inherit useGlobalPkgs;
-              useUserPackages = true;
-              users.${user} = homeConfig;
-            };
-          }
-        ];
-
-        # Helper to create a desktop NixOS configuration
-        mkDesktop = {
-          hostname,
-          system ? "x86_64-linux",
-          extraModules ? [],
-          hardwareModules ? [],
-          homeConfig ? ./home/${hostname}.nix,
-          useGlobalPkgs ? false,
-        }:
-          nixpkgs.lib.nixosSystem {
-            inherit system;
-            specialArgs = {inherit inputs outputs;};
-            modules =
-              desktopModules
-              ++ commonModules
-              ++ hardwareModules
-              ++ [./hosts/${hostname}/configuration.nix]
-              ++ mkHomeManager {inherit homeConfig useGlobalPkgs;}
-              ++ extraModules;
-          };
-
-        # Helper to create a server NixOS configuration
-        mkServer = {
-          hostname,
-          system ? "x86_64-linux",
-          extraModules ? [],
-          extraSpecialArgs ? {},
-        }:
-          nixpkgs.lib.nixosSystem {
-            inherit system;
-            specialArgs = {inherit inputs outputs;} // extraSpecialArgs;
-            modules =
-              serverModules
-              ++ commonModules
-              ++ [./hosts/${hostname}/configuration.nix]
-              ++ extraModules;
-          };
-      in {
-        # Darwin configurations
-        darwinConfigurations = let
-          darwinCommon = [
-            home-manager.darwinModules.home-manager
-            nix-index-database.darwinModules.nix-index
-            {programs.nix-index-database.comma.enable = true;}
-          ];
-        in {
-          "kmccarty-YM2K" = nix-darwin.lib.darwinSystem {
-            modules = darwinCommon ++ [
-              ./darwin/kmccarty-YM2K/configuration.nix
-              ./home/work-laptop.nix
-            ];
-          };
-          "cronut" = nix-darwin.lib.darwinSystem {
-            modules = darwinCommon ++ [
-              ./darwin/cronut/configuration.nix
-              ./home/cronut.nix
-            ];
-          };
-        };
-
-        # NixOS configuration entrypoint
-        # Available through 'nixos-rebuild --flake .#your-hostname'
-        nixosConfigurations = {
-          # Installer ISO
-          rich-evans-installer = nixpkgs.lib.nixosSystem {
-            system = "x86_64-linux";
-            modules = [
-              "${nixpkgs}/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix"
-              ./installer/installer.nix
-            ];
-          };
-
-          # Android Virtual Device
-          bonbon = nixpkgs.lib.nixosSystem {
-            system = "aarch64-linux";
-            modules =
-              commonModules
-              ++ mkHomeManager {
-                user = "droid";
-                homeConfig = ./home/bonbon.nix;
-                useGlobalPkgs = true;
-              }
-              ++ [
-                ./avd/bonbon/configuration.nix
-                nixos-avf.nixosModules.avf
-              ];
-          };
-
-          # Surface 3 Go tablet
-          cheesecake = nixpkgs.lib.nixosSystem {
-            system = "x86_64-linux";
-            modules =
-              commonModules
-              ++ mkHomeManager {
-                homeConfig = ./home/cheesecake.nix;
-                useGlobalPkgs = true;
-              }
-              ++ [
-                nixos-facter-modules.nixosModules.facter
-                {config.facter.reportPath = ./hosts/cheesecake/facter.json;}
-                ./hosts/cheesecake/configuration.nix
-              ];
-          };
-
-          # Desktops using mkDesktop helper
-          historian = mkDesktop {hostname = "historian";};
-          total-eclipse = mkDesktop {hostname = "total-eclipse";};
-
-          marshmallow = mkDesktop {
-            hostname = "marshmallow";
-            hardwareModules = [
-              nixos-hardware.nixosModules.lenovo-thinkpad-t490
-              srvos.nixosModules.mixins-terminfo
-              srvos.nixosModules.mixins-systemd-boot
-            ];
-          };
-
-          bartleby = mkDesktop {
-            hostname = "bartleby";
-            useGlobalPkgs = true;
-            hardwareModules = [
-              nixos-hardware.nixosModules.lenovo-thinkpad
-              srvos.nixosModules.mixins-systemd-boot
-            ];
-            extraModules = [
-              ./modules/kimb-services.nix
-              {
-                nixpkgs.overlays = [nil-flake.overlays.nil];
-                kimb.services.fractal-art = {
-                  enable = false;
-                  port = 8000;
-                  subdomain = "art";
-                  host = "bartleby";
-                  auth = "none";
-                  publicAccess = false;
-                  websockets = false;
-                };
-              }
-            ];
-          };
-
-          # Servers using mkServer helper
-          rich-evans = mkServer {
-            hostname = "rich-evans";
-            extraSpecialArgs = {inherit copyparty;};
-            extraModules = [
-              copyparty.nixosModules.default
-              ./modules/kimb-services.nix
-              {
-                kimb.services = {
-                  copyparty = {
-                    enable = true;
-                    port = 3923;
-                    subdomain = "files";
-                    host = "rich-evans";
-                    auth = "authelia";
-                    publicAccess = true;
-                    websockets = false;
-                  };
-                  homepage = {
-                    enable = true;
-                    port = 8082;
-                    subdomain = "home-rich";
-                    host = "rich-evans";
-                    auth = "none";
-                    publicAccess = false;
-                    websockets = false;
-                  };
-                  homeassistant = {
-                    enable = true;
-                    port = 8123;
-                    subdomain = "hass";
-                    host = "rich-evans";
-                    auth = "builtin";
-                    publicAccess = true;
-                    websockets = true;
-                  };
-                };
-              }
-            ];
-          };
-
-          # Router (custom - no srvos server, has specific networking needs)
-          maitred = nixpkgs.lib.nixosSystem {
-            system = "x86_64-linux";
-            specialArgs = {inherit inputs outputs;};
-            modules =
-              commonModules
-              ++ [
-                ./modules/kimb-services.nix
-                {
-                  kimb = {
-                    domain = "kimb.dev";
-                    admin = {
-                      name = "kimb";
-                      email = "mccartykim@zoho.com";
-                      displayName = "Kimberly";
-                    };
-                    services = {
-                      authelia = {
-                        enable = true;
-                        port = 9091;
-                        subdomain = "auth";
-                        host = "maitred";
-                        auth = "none";
-                        publicAccess = true;
-                        websockets = false;
-                      };
-                      grafana = {
-                        enable = true;
-                        port = 3000;
-                        subdomain = "grafana";
-                        host = "maitred";
-                        auth = "authelia";
-                        publicAccess = true;
-                        websockets = false;
-                      };
-                      prometheus = {
-                        enable = true;
-                        port = 9090;
-                        subdomain = "prometheus";
-                        host = "maitred";
-                        auth = "authelia";
-                        publicAccess = true;
-                        websockets = false;
-                      };
-                      homepage = {
-                        enable = true;
-                        port = 8082;
-                        subdomain = "home";
-                        host = "maitred";
-                        auth = "authelia";
-                        publicAccess = true;
-                        websockets = false;
-                      };
-                      blog = {
-                        enable = true;
-                        port = 8080;
-                        subdomain = "blog";
-                        host = "maitred";
-                        containerIP = "192.168.100.3";
-                        auth = "none";
-                        publicAccess = true;
-                        websockets = false;
-                      };
-                      reverse-proxy = {
-                        enable = true;
-                        port = 80;
-                        subdomain = "www";
-                        host = "maitred";
-                        containerIP = "192.168.100.2";
-                        auth = "none";
-                        publicAccess = true;
-                        websockets = false;
-                      };
-                    };
-                    networks = {
-                      containerBridge = "192.168.100.1";
-                      reverseProxyIP = "192.168.100.2";
-                      trustedNetworks = ["192.168.0.0/16" "10.100.0.0/16" "100.64.0.0/10"];
-                    };
-                    dns = {
-                      provider = "cloudflare";
-                      ttl = 1;
-                      updatePeriod = 300;
-                      servers = {
-                        primary = "192.168.69.1";
-                        fallback = ["8.8.8.8" "8.8.4.4"];
-                      };
-                    };
-                  };
-                }
-                ./hosts/maitred/configuration.nix
-              ];
-          };
-
-        };
-
-        # Colmena deployment configuration
-        colmena = let
-          registry = import ./hosts/nebula-registry.nix;
-          # Helper to create colmena node from registry entry
-          makeColmenaNode = name: node: {
-            deployment = {
-              # Use hostname.nebula for DNS resolution, fallback comment shows IP
-              # ${name}.nebula resolves via maitred DNS, or use node.ip (${node.ip}) directly
-              targetHost = "${name}.nebula";
-              targetUser = "kimb";
-              buildOnTarget = false;
-            };
-            imports = self.nixosConfigurations.${name}._module.args.modules;
-          };
-        in
-          {
-            meta = {
-              nixpkgs = import nixpkgs {
-                system = "x86_64-linux";
-                overlays = [];
-              };
-              specialArgs = {inherit inputs outputs copyparty;};
-            };
-          }
-          // (builtins.mapAttrs makeColmenaNode
-            (builtins.removeAttrs registry.nodes ["lighthouse" "oracle"])); # Skip non-NixOS hosts
-
-        # Tests are now in checks output (run via `nix flake check`)
-        # Individual tests can be built with: nix build .#checks.x86_64-linux.minimal-test
-
-        # System-manager configurations for non-NixOS hosts
-        systemConfigs = {
-          oracle = system-manager.lib.makeSystemConfig {
-            modules = [./hosts/oracle/configuration.nix];
-          };
-        };
-      };
+      # All flake outputs (nixosConfigurations, darwinConfigurations, colmena, systemConfigs)
+      # are now defined in ./flake-modules/
     };
 }
