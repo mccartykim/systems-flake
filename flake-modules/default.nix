@@ -7,6 +7,5 @@
     ./darwin-configurations.nix
     ./colmena.nix
     ./system-manager.nix
-    ./agenix-rekey.nix
   ];
 }

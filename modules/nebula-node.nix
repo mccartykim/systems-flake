@@ -1,10 +1,9 @@
-# Consolidated Nebula mesh configuration with agenix
-# Replaces per-host nebula.nix files
+# Consolidated Nebula mesh configuration with agenix secrets
+# Certificates are generated via `nix run .#generate-nebula-certs` (requires YubiKey)
 {
   config,
   lib,
   pkgs,
-  inputs,
   ...
 }:
 with lib; let
@@ -54,15 +53,8 @@ in {
     };
   };
 
-  imports = [
-    inputs.agenix.nixosModules.default
-  ];
-
   config = mkIf cfg.enable {
-    # Configure agenix to use SSH host key
-    age.identityPaths = ["/etc/ssh/ssh_host_ed25519_key"];
-
-    # Agenix secrets for Nebula
+    # Agenix secrets for Nebula (file-based, generated via standalone script)
     age.secrets = {
       nebula-ca = {
         file = ../secrets/nebula-ca.age;

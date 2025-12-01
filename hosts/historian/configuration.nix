@@ -18,7 +18,7 @@
     ../../modules/nebula-node.nix
   ];
 
-  # Nebula configuration
+  # Nebula configuration (certs generated via `nix run .#generate-nebula-certs`)
   kimb.nebula = {
     enable = true;
     openToPersonalDevices = true;
