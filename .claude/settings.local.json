@@ -37,7 +37,8 @@
       "Bash(nix-shell:*)",
       "WebFetch(domain:raw.githubusercontent.com)",
       "Bash(ping:*)",
-      "WebFetch(domain:flake.parts)"
+      "WebFetch(domain:flake.parts)",
+      "Bash(nc:*)"
     ],
     "deny": [],
     "ask": []

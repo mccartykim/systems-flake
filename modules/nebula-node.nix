@@ -147,11 +147,17 @@ in {
             }
           ]
           # Optional: open all ports to personal devices
+          # Note: separate rules for OR logic (groups = AND, multiple rules = OR)
           ++ optionals cfg.openToPersonalDevices [
             {
               port = "any";
               proto = "any";
-              groups = ["desktops" "laptops"];
+              group = "desktops";
+            }
+            {
+              port = "any";
+              proto = "any";
+              group = "laptops";
             }
           ]
           # Host-specific rules

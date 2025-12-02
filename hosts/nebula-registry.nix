@@ -11,10 +11,7 @@ let
   networks = {
     nebula = {
       subnet = "10.100.0.0/16";
-      lighthouse = {
-        ip = "10.100.0.1";
-        external = "35.222.40.201:4242";
-      };
+      # Lighthouses are now oracle + maitred (defined in hosts below)
     };
     lan = {
       subnet = "192.168.69.0/24";
@@ -38,21 +35,7 @@ let
 
   # All managed hosts with complete configuration
   hosts = {
-    lighthouse = {
-      ip = "10.100.0.1";
-      external = "35.222.40.201:4242";
-      isLighthouse = true;
-      # isRelay = false; GCE lighthouse is not configured as relay
-      role = "lighthouse";
-      groups = ["lighthouse"];
-      publicKey = null; # External Google Cloud instance
-      meta = {
-        hardware = "Google Cloud e2-micro";
-        purpose = "Nebula coordination only";
-        name = "The lighthouse that guides nebula connections";
-        notes = "Manually configured, not NixOS-managed";
-      };
-    };
+    # GCE lighthouse (10.100.0.1) retired due to egress costs
 
     oracle = {
       ip = "10.100.0.2";
