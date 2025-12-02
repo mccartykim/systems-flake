@@ -58,6 +58,7 @@
           to = 8010;
         }
       ];
+      trustedInterfaces = ["nebula1"];
     };
   };
 
