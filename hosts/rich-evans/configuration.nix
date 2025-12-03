@@ -38,6 +38,7 @@ in {
   # Nebula configuration with server-specific firewall rules
   kimb.nebula = {
     enable = true;
+    openToPersonalDevices = true;
     extraInboundRules = [
       # Copyparty ports
       {port = 3923; proto = "tcp"; host = "any";}
