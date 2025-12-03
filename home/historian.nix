@@ -49,6 +49,11 @@
   home = {
     username = "kimb";
     homeDirectory = "/home/kimb";
+
+    
+    packages = with pkgs; [
+      android-studio
+    ];
   };
 
   # Enable modules

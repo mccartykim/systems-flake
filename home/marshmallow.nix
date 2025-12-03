@@ -58,6 +58,7 @@
       elixir
       gleam
       rebar3
+      android-studio
     ];
   };
 
