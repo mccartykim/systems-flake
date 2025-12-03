@@ -33,7 +33,7 @@
     # Network interface configuration
     interfaces.eno2.wakeOnLan = {
       enable = true;
-      policy = ["unicast"];
+      policy = ["magic" "unicast"];
     };
 
     # Use maitred router for DNS
