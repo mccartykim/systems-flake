@@ -47,9 +47,9 @@
     networkmanager.wifi.backend = "iwd";
 
     # Network interface configuration
-    interfaces.eno2.wakeOnLan = {
+    interfaces.eno1.wakeOnLan = {
       enable = true;
-      policy = ["unicast"];
+      policy = ["magic" "unicast"];
     };
 
     # Use maitred router for DNS
