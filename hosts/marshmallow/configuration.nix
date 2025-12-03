@@ -69,6 +69,9 @@
 
   # Services configuration
   services = {
+    # Thunderbolt dock support
+    hardware.bolt.enable = true;
+
     # Touchpad configuration
     libinput.mouse.naturalScrolling = true;
 
