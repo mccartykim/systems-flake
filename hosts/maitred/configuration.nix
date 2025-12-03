@@ -43,6 +43,7 @@ in {
   # Nebula configuration (router + SMB printer sharing)
   kimb.nebula = {
     enable = true;
+    openToPersonalDevices = true;
     extraInboundRules = [
       # SMB for printing group only
       { port = 139; proto = "tcp"; groups = ["printing"]; }
