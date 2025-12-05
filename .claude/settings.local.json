@@ -38,7 +38,8 @@
       "WebFetch(domain:raw.githubusercontent.com)",
       "Bash(ping:*)",
       "WebFetch(domain:flake.parts)",
-      "Bash(nc:*)"
+      "Bash(nc:*)",
+      "WebFetch(domain:wiki.archlinux.org)"
     ],
     "deny": [],
     "ask": []

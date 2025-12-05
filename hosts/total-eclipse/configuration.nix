@@ -62,6 +62,11 @@
     };
   };
 
+  services.displayManager.autoLogin = {
+    enable = true;
+    user = "kimb";
+  };
+
   # NVIDIA graphics hardware configuration
   services.xserver.videoDrivers = ["nvidia"];
 
