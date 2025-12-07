@@ -47,17 +47,13 @@
 
   # Hardware configuration
   hardware = {
-    # AMD GPU (Van Gogh APU)
+    # AMD GPU (Van Gogh APU) - RADV is default, add ROCm for compute
     graphics = {
       enable = true;
       enable32Bit = true;
       extraPackages = with pkgs; [
-        amdvlk
         rocmPackages.clr
         rocmPackages.clr.icd
-      ];
-      extraPackages32 = with pkgs.pkgsi686Linux; [
-        amdvlk
       ];
     };
 
