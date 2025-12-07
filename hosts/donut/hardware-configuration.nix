@@ -1,10 +1,12 @@
 # Steam Deck hardware configuration
-# This is a template - actual hardware config should be regenerated on first boot
-# with: nixos-generate-config --show-hardware-config
+# Jovian NixOS handles all Steam Deck-specific hardware:
+#   - Graphics (AMD Van Gogh APU, RADV, 32-bit)
+#   - Kernel (neptune kernel with Steam Deck patches)
+#   - Firmware, fan control, gyro, sound, etc.
+#
+# This file only defines filesystem layout and basic boot modules.
 {
-  config,
   lib,
-  pkgs,
   modulesPath,
   ...
 }: {
@@ -12,28 +14,17 @@
     (modulesPath + "/installer/scan/not-detected.nix")
   ];
 
-  # Steam Deck uses AMD Van Gogh APU
-  boot = {
-    initrd = {
-      availableKernelModules = [
-        "nvme"
-        "xhci_pci"
-        "usbhid"
-        "usb_storage"
-        "sd_mod"
-        "sdhci_pci" # SD card support
-      ];
-      kernelModules = ["amdgpu"];
-    };
+  # Basic initrd modules for mounting disks
+  boot.initrd.availableKernelModules = [
+    "nvme" # Internal NVMe
+    "xhci_pci" # USB
+    "usbhid"
+    "usb_storage"
+    "sd_mod"
+    "sdhci_pci" # SD card
+  ];
 
-    kernelModules = ["kvm-amd"];
-
-    # Jovian handles kernel selection for Steam Deck
-    # loader configured in base.nix (systemd-boot)
-  };
-
-  # Steam Deck internal NVMe - single partition layout
-  # The installer will set this up, but define expected layout
+  # Filesystem layout (created by installer)
   fileSystems."/" = {
     device = "/dev/disk/by-label/nixos";
     fsType = "ext4";
@@ -45,26 +36,5 @@
     options = ["fmask=0022" "dmask=0022"];
   };
 
-  # Hardware configuration
-  hardware = {
-    # AMD GPU (Van Gogh APU) - RADV is default, add ROCm for compute
-    graphics = {
-      enable = true;
-      enable32Bit = true;
-      extraPackages = with pkgs; [
-        rocmPackages.clr
-        rocmPackages.clr.icd
-      ];
-    };
-
-    # CPU microcode
-    cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
-
-    # Enable all firmware
-    enableRedistributableFirmware = true;
-    enableAllFirmware = true;
-  };
-
-  # Steam Deck has a fixed platform
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
 }
