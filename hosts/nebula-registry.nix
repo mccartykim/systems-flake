@@ -134,6 +134,19 @@ let
         notes = "Retired from HTPC duty; now handles cameras and general services";
       };
     };
+
+    donut = {
+      ip = "10.100.0.7";
+      role = "laptop";
+      groups = ["laptops" "nixos" "gaming"];
+      publicKey = null; # Set after first boot - run: cat /etc/ssh/ssh_host_ed25519_key.pub
+      meta = {
+        hardware = "Steam Deck (Valve handheld)";
+        purpose = "Portable gaming device with NixOS";
+        name = "Sweets naming theme - donut";
+        notes = "Jovian NixOS for SteamOS-compatible experience; managed via Colmena";
+      };
+    };
   };
 
   # Helper: filter hosts by role
