@@ -50,6 +50,10 @@
     mist-blog.inputs.nixpkgs.follows = "nixpkgs";
 
     nixos-facter-modules.url = "github:nix-community/nixos-facter-modules";
+
+    # Jovian NixOS for Steam Deck
+    jovian-nixos.url = "github:Jovian-Experiments/Jovian-NixOS";
+    jovian-nixos.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs = {
@@ -70,6 +74,7 @@
     agenix-rekey,
     nixos-facter-modules,
     system-manager,
+    jovian-nixos,
     ...
   } @ inputs:
     flake-parts.lib.mkFlake {inherit inputs;} {
@@ -96,6 +101,17 @@
               system = "x86_64-linux";
               modules = [
                 ./installer/installer.nix
+              ];
+              format = "install-iso";
+            };
+
+            # Steam Deck (donut) installer ISO
+            donut-installer = nixos-generators.nixosGenerate {
+              system = "x86_64-linux";
+              specialArgs = {inherit inputs;};
+              modules = [
+                ./installer/donut-installer.nix
+                {nixpkgs.overlays = [jovian-nixos.overlays.default];}
               ];
               format = "install-iso";
             };
