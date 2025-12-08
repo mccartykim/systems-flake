@@ -49,6 +49,9 @@
     mist-blog.url = "git+ssh://git@github.com/mccartykim/mist-blog";
     mist-blog.inputs.nixpkgs.follows = "nixpkgs";
 
+    claude_yapper.url = "path:/home/kimb/projects/claude_yapper";
+    claude_yapper.inputs.nixpkgs.follows = "nixpkgs";
+
     nixos-facter-modules.url = "github:nix-community/nixos-facter-modules";
 
     # Jovian NixOS for Steam Deck
@@ -110,8 +113,19 @@
               system = "x86_64-linux";
               specialArgs = {inherit inputs;};
               modules = [
+                "${nixpkgs}/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix"
                 ./installer/donut-installer.nix
                 {nixpkgs.overlays = [jovian-nixos.overlays.default];}
+              ];
+              format = "install-iso";
+            };
+
+            # Generic installer with flake source + network build support
+            generic-installer = nixos-generators.nixosGenerate {
+              system = "x86_64-linux";
+              modules = [
+                "${nixpkgs}/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix"
+                ./installer/generic-installer.nix
               ];
               format = "install-iso";
             };

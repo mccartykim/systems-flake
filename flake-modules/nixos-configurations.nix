@@ -5,29 +5,17 @@
   self,
   ...
 }: let
-  inherit (inputs) nixpkgs nixos-hardware nixos-facter-modules nixos-avf copyparty nil-flake jovian-nixos;
+  inherit (inputs) nixpkgs nixos-hardware nixos-facter-modules nixos-avf copyparty nil-flake claude_yapper;
   inherit (config.flake.lib) mkDesktop mkServer mkHomeManager commonModules;
 in {
   flake.nixosConfigurations = {
-    # Installer ISOs
+    # Installer ISO
     rich-evans-installer = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
       specialArgs = {inherit inputs; outputs = self;};
       modules = [
         "${nixpkgs}/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix"
         (self + "/installer/installer.nix")
-      ];
-    };
-
-    # Steam Deck (donut) installer with Jovian NixOS
-    donut-installer = nixpkgs.lib.nixosSystem {
-      system = "x86_64-linux";
-      specialArgs = {inherit inputs; outputs = self;};
-      modules = [
-        "${nixpkgs}/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix"
-        (self + "/installer/donut-installer.nix")
-        # Include Jovian overlay for any Jovian packages needed during install
-        {nixpkgs.overlays = [jovian-nixos.overlays.default];}
       ];
     };
 
@@ -102,23 +90,15 @@ in {
       ];
     };
 
-    # Steam Deck with Jovian NixOS
-    donut = mkDesktop {
-      hostname = "donut";
-      useGlobalPkgs = true;
-      extraModules = [
-        # Jovian NixOS overlay for Steam Deck packages
-        {nixpkgs.overlays = [jovian-nixos.overlays.default];}
-      ];
-    };
-
     # Servers using mkServer helper
     rich-evans = mkServer {
       hostname = "rich-evans";
-      extraSpecialArgs = {inherit copyparty;};
+      extraSpecialArgs = {inherit copyparty claude_yapper;};
       extraModules = [
         copyparty.nixosModules.default
+        claude_yapper.nixosModules.default
         (self + "/modules/kimb-services.nix")
+        (self + "/hosts/rich-evans/life-coach.nix")
         {
           kimb.services = {
             copyparty = {
