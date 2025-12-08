@@ -47,9 +47,27 @@
         "type": "github"
       }
     },
-    "copyparty": {
+    "claude_yapper": {
       "inputs": {
         "flake-utils": "flake-utils",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1765221071,
+        "narHash": "sha256-6dHFaqEwDhmtLskWh5AYH7tFtGBF1uTOqk84+B05+aE=",
+        "path": "/home/kimb/projects/claude_yapper",
+        "type": "path"
+      },
+      "original": {
+        "path": "/home/kimb/projects/claude_yapper",
+        "type": "path"
+      }
+    },
+    "copyparty": {
+      "inputs": {
+        "flake-utils": "flake-utils_2",
         "nixpkgs": "nixpkgs"
       },
       "locked": {
@@ -185,6 +203,24 @@
       }
     },
     "flake-utils": {
+      "inputs": {
+        "systems": "systems_2"
+      },
+      "locked": {
+        "lastModified": 1731533236,
+        "narHash": "sha256-l0KFg5HjrsfsO/JpG+r7fRrqm12kzFHyUHqHCVpMMbI=",
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "rev": "11707dc2f618dd54ca8739b309ec4fc024de578b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "type": "github"
+      }
+    },
+    "flake-utils_2": {
       "locked": {
         "lastModified": 1678901627,
         "narHash": "sha256-U02riOqrKKzwjsxc/400XnElV+UtPUQWpANPlyazjH0=",
@@ -199,9 +235,9 @@
         "type": "github"
       }
     },
-    "flake-utils_2": {
+    "flake-utils_3": {
       "inputs": {
-        "systems": "systems_2"
+        "systems": "systems_3"
       },
       "locked": {
         "lastModified": 1731533236,
@@ -280,9 +316,30 @@
         "type": "github"
       }
     },
+    "jovian-nixos": {
+      "inputs": {
+        "nix-github-actions": "nix-github-actions",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1764922999,
+        "narHash": "sha256-LSvUxKm6S6ZAd/otQSkAHd3+8KJhi8OwGJGSe0K//B8=",
+        "owner": "Jovian-Experiments",
+        "repo": "Jovian-NixOS",
+        "rev": "9b9ead1b5591b68f4048e7205ba1397bc85ce6c4",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Jovian-Experiments",
+        "repo": "Jovian-NixOS",
+        "type": "github"
+      }
+    },
     "mist-blog": {
       "inputs": {
-        "flake-utils": "flake-utils_2",
+        "flake-utils": "flake-utils_3",
         "nix-gleam": "nix-gleam",
         "nixpkgs": [
           "nixpkgs"
@@ -337,6 +394,28 @@
       "original": {
         "owner": "LnL7",
         "repo": "nix-darwin",
+        "type": "github"
+      }
+    },
+    "nix-github-actions": {
+      "inputs": {
+        "nixpkgs": [
+          "jovian-nixos",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1729697500,
+        "narHash": "sha256-VFTWrbzDlZyFHHb1AlKRiD/qqCJIripXKiCSFS8fAOY=",
+        "owner": "zhaofengli",
+        "repo": "nix-github-actions",
+        "rev": "e418aeb728b6aa5ca8c5c71974e7159c2df1d8cf",
+        "type": "github"
+      },
+      "original": {
+        "owner": "zhaofengli",
+        "ref": "matrix-name",
+        "repo": "nix-github-actions",
         "type": "github"
       }
     },
@@ -565,10 +644,12 @@
       "inputs": {
         "agenix": "agenix",
         "agenix-rekey": "agenix-rekey",
+        "claude_yapper": "claude_yapper",
         "copyparty": "copyparty",
         "disko": "disko",
         "flake-parts": "flake-parts_2",
         "home-manager": "home-manager_2",
+        "jovian-nixos": "jovian-nixos",
         "mist-blog": "mist-blog",
         "nil-flake": "nil-flake",
         "nix-darwin": "nix-darwin",
@@ -638,6 +719,21 @@
       }
     },
     "systems_2": {
+      "locked": {
+        "lastModified": 1681028828,
+        "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
+        "owner": "nix-systems",
+        "repo": "default",
+        "rev": "da67096a3b9bf56a91d16901293e51ba5b49a27e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-systems",
+        "repo": "default",
+        "type": "github"
+      }
+    },
+    "systems_3": {
       "locked": {
         "lastModified": 1681028828,
         "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",

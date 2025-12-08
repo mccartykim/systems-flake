@@ -4,7 +4,7 @@
   self,
   ...
 }: let
-  inherit (inputs) nixpkgs copyparty;
+  inherit (inputs) nixpkgs copyparty claude_yapper;
   registry = import (self + "/hosts/nebula-registry.nix");
 
   # Helper to create colmena node from registry entry
@@ -26,7 +26,7 @@ in {
           system = "x86_64-linux";
           overlays = [];
         };
-        specialArgs = {inherit inputs copyparty; outputs = self;};
+        specialArgs = {inherit inputs copyparty claude_yapper; outputs = self;};
       };
     }
     // (builtins.mapAttrs makeColmenaNode
