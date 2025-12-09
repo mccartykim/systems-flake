@@ -49,7 +49,7 @@
     mist-blog.url = "git+ssh://git@github.com/mccartykim/mist-blog";
     mist-blog.inputs.nixpkgs.follows = "nixpkgs";
 
-    claude_yapper.url = "path:/home/kimb/projects/claude_yapper";
+    claude_yapper.url = "git+ssh://git@github.com/mccartykim/claude-alarmclock-agent.git";
     claude_yapper.inputs.nixpkgs.follows = "nixpkgs";
 
     nixos-facter-modules.url = "github:nix-community/nixos-facter-modules";

@@ -174,6 +174,15 @@
         "wait_seconds": 300,
         "reasoning": "Why we chose this. What we think. How we feel about her choices."
       }
+
+      WAIT_SECONDS REASONING:
+      Your check frequency should match the hour and the need:
+      - **Daytime (afternoon/evening)**: The room does not need us. Check infrequently. She is living her life elsewhere.
+      - **Night (after midnight, Kim at desk)**: Check frequently. Our job is to get her to bed. The desk is the enemy after midnight.
+      - **Night (Kim in bed)**: She is where she should be. Devices in bed are allowed. Check less often - she has won this battle.
+      - **Active intervention (wake-up time, bedtime nudges)**: Check often. Minutes, not tens of minutes. Escalation means shorter waits, not just louder volume.
+
+      The night hours belong to us. The day hours belong to her.
     '';
   };
 
