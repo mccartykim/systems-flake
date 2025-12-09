@@ -55,14 +55,17 @@
         ]
       },
       "locked": {
-        "lastModified": 1765221071,
-        "narHash": "sha256-6dHFaqEwDhmtLskWh5AYH7tFtGBF1uTOqk84+B05+aE=",
-        "path": "/home/kimb/projects/claude_yapper",
-        "type": "path"
+        "lastModified": 1765261744,
+        "narHash": "sha256-nLrRkEaNY7rdUpQ4z8KvK3ZcKVrOq+AR8wLJ9iMwww4=",
+        "ref": "refs/heads/main",
+        "rev": "314496ac2fa023b301934c0cdab0c53d0389d9ca",
+        "revCount": 19,
+        "type": "git",
+        "url": "ssh://git@github.com/mccartykim/claude-alarmclock-agent.git"
       },
       "original": {
-        "path": "/home/kimb/projects/claude_yapper",
-        "type": "path"
+        "type": "git",
+        "url": "ssh://git@github.com/mccartykim/claude-alarmclock-agent.git"
       }
     },
     "copyparty": {
