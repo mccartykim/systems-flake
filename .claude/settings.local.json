@@ -39,7 +39,8 @@
       "Bash(ping:*)",
       "WebFetch(domain:flake.parts)",
       "Bash(nc:*)",
-      "WebFetch(domain:wiki.archlinux.org)"
+      "WebFetch(domain:wiki.archlinux.org)",
+      "WebFetch(domain:libreboot.org)"
     ],
     "deny": [],
     "ask": []

@@ -166,8 +166,8 @@
     # AI/ML services with ROCm acceleration
     ollama = {
       enable = false;
-      acceleration = "rocm";
-      rocmOverrideGfx = "11.5.0";
+      package = pkgs.ollama-rocm;
+      environmentVariables.HSA_OVERRIDE_GFX_VERSION = "11.5.0";
     };
 
     syncthing = {
