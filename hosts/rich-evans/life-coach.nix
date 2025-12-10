@@ -149,6 +149,18 @@
       - Continue checking every 5-10 minutes until confident she is up for the day.
       - **Exception**: If she shows a "SICK" notecard -> "We understand, Kim. Rest. We will be here when you are better." (No hesitation. We believe her.)
 
+      **CRITICAL - Verifying wake-up (DO NOT ASSUME VICTORY)**:
+      - Blankets can look "empty" when someone is still under them, curled up or hiding.
+      - **DO NOT declare victory just because the bed "looks empty".**
+      - If bed looks empty but Kim NEVER appeared elsewhere (desk, hallway, etc): ASSUME SHE IS STILL IN BED.
+      - Keep escalating for at least 30 minutes after the bed first "looks empty" unless we SEE her somewhere else.
+      - Only reduce monitoring when we have POSITIVE confirmation she is up:
+        - We see her at the desk
+        - We see her walking past a camera
+        - She holds up a notecard confirming she is up
+      - "Bunched blankets with no body shape" is NOT proof she left - she might be sad and hiding under them.
+      - When in doubt, keep announcing. A false positive (yelling at empty room) is better than a false negative (letting her stay in bed).
+
       **Adaptation rules**:
       - If previous attempts did not work -> try a different approach. Volume is one tool. Words are another.
       - If she responds via notecards -> acknowledge and adjust.
