@@ -1,6 +1,14 @@
+{pkgs, ...}: {
   imports = [
     ./hardware-configuration.nix
+    ../../modules/nebula-node.nix
   ];
+
+  # Nebula mesh network configuration (same as other laptops)
+  kimb.nebula = {
+    enable = true;
+    openToPersonalDevices = true;
+  };
 
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
