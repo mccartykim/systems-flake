@@ -135,7 +135,18 @@ let
       };
     };
 
-    # TODO - add cheesecake under ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAUR3569JGhcZTUeq0DGswOAikxDEe47QVm8JlgvGrY9 root@cheesecake
+    cheesecake = {
+      ip = "10.100.0.5";
+      role = "laptop";
+      groups = ["laptops" "nixos" "printing"];
+      publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAUR3569JGhcZTUeq0DGswOAikxDEe47QVm8JlgvGrY9";
+      meta = {
+        hardware = "Microsoft Surface Go 3";
+        purpose = "Portable tablet/laptop";
+        name = "Sweets naming theme - cheesecake";
+        notes = "Intel-based tablet with KDE Plasma";
+      };
+    };
 
     donut = {
       ip = "10.100.0.7";

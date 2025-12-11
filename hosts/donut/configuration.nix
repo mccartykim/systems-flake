@@ -55,6 +55,8 @@
     decky-loader.enable = true; # Plugin framework for Gaming Mode
   };
 
+  services.openssh.enable = true;
+
   # Network configuration
   networking = {
     hostName = "donut";
