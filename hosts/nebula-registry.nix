@@ -135,6 +135,8 @@ let
       };
     };
 
+    # TODO - add cheesecake under ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAUR3569JGhcZTUeq0DGswOAikxDEe47QVm8JlgvGrY9 root@cheesecake
+
     donut = {
       ip = "10.100.0.7";
       role = "laptop";
