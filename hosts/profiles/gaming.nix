@@ -8,6 +8,7 @@
   # Steam configuration
   programs.steam = {
     enable = true;
+    gamescopeSession.enable = true;
     remotePlay.openFirewall = true;
     dedicatedServer.openFirewall = true;
     extraCompatPackages = with pkgs; [
@@ -15,7 +16,10 @@
     ];
   };
 
-  programs.gamescope.enable = true;
+  programs.gamescope = {
+    enable = true;
+    capSysNice = true;
+  };
 
   # Virtualization for gaming
   virtualisation = {
