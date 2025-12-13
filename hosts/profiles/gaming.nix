@@ -15,6 +15,8 @@
     ];
   };
 
+  programs.gamescope.enable = true;
+
   # Virtualization for gaming
   virtualisation = {
     waydroid.enable = true;
