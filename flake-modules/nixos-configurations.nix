@@ -53,6 +53,23 @@ in {
         ];
     };
 
+    # Steam Deck (Jovian NixOS)
+    donut = nixpkgs.lib.nixosSystem {
+      system = "x86_64-linux";
+      specialArgs = {inherit inputs; outputs = self;};
+      modules =
+        commonModules
+        ++ mkHomeManager {
+          homeConfig = self + "/home/donut.nix";
+          useGlobalPkgs = true;
+        }
+        ++ [
+          inputs.jovian-nixos.nixosModules.jovian
+          {nixpkgs.overlays = [inputs.jovian-nixos.overlays.default];}
+          (self + "/hosts/donut/configuration.nix")
+        ];
+    };
+
     # Desktops using mkDesktop helper
     historian = mkDesktop {hostname = "historian";};
     total-eclipse = mkDesktop {hostname = "total-eclipse";};

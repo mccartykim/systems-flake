@@ -30,5 +30,5 @@ in {
       };
     }
     // (builtins.mapAttrs makeColmenaNode
-      (builtins.removeAttrs registry.nodes ["lighthouse" "oracle" "donut"])); # Skip non-NixOS hosts + donut (no SSH keys yet)
+      (builtins.removeAttrs registry.nodes ["lighthouse" "oracle"])); # Skip non-NixOS hosts
 }

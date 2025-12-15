@@ -152,7 +152,7 @@ let
       ip = "10.100.0.7";
       role = "laptop";
       groups = ["laptops" "nixos" "gaming"];
-      publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPlaceholderKeyReplaceAfterFirstBoot000000000000"; # TODO: replace after first boot - run: cat /etc/ssh/ssh_host_ed25519_key.pub
+      publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIACE7zBUEKURYTBMlod/8LMnfZ2xkq0x/iSnLGXQlFTP";
       meta = {
         hardware = "Steam Deck (Valve handheld)";
         purpose = "Portable gaming device with NixOS";
