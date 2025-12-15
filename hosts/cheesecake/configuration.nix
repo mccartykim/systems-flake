@@ -1,6 +1,7 @@
 {pkgs, ...}: {
   imports = [
     ./hardware-configuration.nix
+    ../profiles/base.nix
     ../../modules/nebula-node.nix
   ];
 
@@ -178,17 +179,11 @@
 
   programs.fish.enable = true;
   # Define a user account. Don't forget to set a password with ‘passwd’.
-  users.users.kimb = {
-    isNormalUser = true;
-    description = "Kimb";
-    shell = pkgs.fish;
-    extraGroups = ["networkmanager" "wheel"];
-    packages = with pkgs; [
-      firefox
-      krita
-      #  thunderbird
-    ];
-  };
+  # Additional packages for kimb (user defined in base.nix)
+  users.users.kimb.packages = with pkgs; [
+    firefox
+    krita
+  ];
 
   # List packages installed in system profile. To search, run:
   # $ nix search wget
