@@ -114,6 +114,14 @@
       netbootxyz.enable = true;
       memtest86.enable = true;
     };
+
+    plymouth = {
+      enable = true;
+      themePackages = [
+        pkgs.adi1090x-plymouth-themes
+      ];
+      theme = "dna";
+    };
   };
 
   # Environment configuration
