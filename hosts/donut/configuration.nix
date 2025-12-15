@@ -33,7 +33,7 @@
   #   4. Set enable = true below
   #   5. Deploy: nix develop -c colmena apply --on donut
   kimb.nebula = {
-    enable = false; # Enable after generating nebula certs (see above)
+    enable = true;
     openToPersonalDevices = true;
   };
 
