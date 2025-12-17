@@ -87,7 +87,7 @@ in {
           then "10.100.0.30"
           else "localhost";
       in
-        lib.nameValuePair info.title {
+        { ${info.title} = {
           href = "https://${service.subdomain}.${cfg.domain}";
           inherit (info) description;
           inherit server;
@@ -110,7 +110,7 @@ in {
               url = "http://10.100.0.40:${toString service.port}";
               # key = "your_api_key"; # TODO: Add API key via secrets
             };
-        };
+        }; }
 
       # Group services by category
       servicesByCategory = {
