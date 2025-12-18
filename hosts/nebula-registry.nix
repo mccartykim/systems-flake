@@ -52,6 +52,11 @@ let
         start = "10.102.0.100";
         end = "10.102.0.254";
       };
+      # Static IPs for infrastructure (outside pool range)
+      # These require manually generated certs via nebula-cert sign
+      staticHosts = {
+        reverse-proxy = "10.102.0.10"; # Caddy bridge for container→containernet routing
+      };
     };
   };
 

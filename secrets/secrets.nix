@@ -63,6 +63,10 @@ in
     "containernet-oracle-cert.age".publicKeys = [oracleKey bootstrap];
     "containernet-oracle-key.age".publicKeys = [oracleKey bootstrap];
 
+    # Containernet reverse-proxy cert (static IP 10.102.0.10 for Caddy bridge)
+    "containernet-reverse-proxy-cert.age".publicKeys = [hostKeys.maitred bootstrap];
+    "containernet-reverse-proxy-key.age".publicKeys = [hostKeys.maitred bootstrap];
+
     # ===== CERT SERVICE =====
     # API token for cert allocation service
     "cert-service-token.age".publicKeys = [hostKeys.maitred bootstrap];
