@@ -223,6 +223,15 @@ in {
                   publicAccess = true;
                   websockets = false;
                 };
+                cert-service = {
+                  enable = true;
+                  port = 8444;
+                  subdomain = "certs";
+                  host = "maitred";
+                  auth = "builtin"; # Bearer token handled by service, not Authelia
+                  publicAccess = true;
+                  websockets = false;
+                };
               };
               networks = {
                 containerBridge = "192.168.100.1";
