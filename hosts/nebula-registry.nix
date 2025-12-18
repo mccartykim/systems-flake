@@ -31,6 +31,28 @@ let
       };
     };
     tailscale.subnet = "100.64.0.0/10";
+
+    # Buildnet: Hot CA network for untrusted builders (Claude Code sandboxes)
+    buildnet = {
+      subnet = "10.101.0.0/16";
+      port = 4243;
+      lighthouses = ["10.101.0.1" "10.101.0.2"]; # maitred + oracle
+      pool = {
+        start = "10.101.0.100";
+        end = "10.101.0.254";
+      };
+    };
+
+    # Containernet: Hot CA network for container service mesh
+    containernet = {
+      subnet = "10.102.0.0/16";
+      port = 4244;
+      lighthouses = ["10.102.0.1" "10.102.0.2"]; # maitred + oracle
+      pool = {
+        start = "10.102.0.100";
+        end = "10.102.0.254";
+      };
+    };
   };
 
   # All managed hosts with complete configuration
@@ -39,6 +61,8 @@ let
 
     oracle = {
       ip = "10.100.0.2";
+      buildnetIp = "10.101.0.2"; # Second lighthouse for buildnet
+      containernetIp = "10.102.0.2"; # Second lighthouse for containernet
       external = "150.136.155.204:4242";
       isLighthouse = true;
       isRelay = true;
@@ -55,6 +79,7 @@ let
 
     historian = {
       ip = "10.100.0.10";
+      buildnetIp = "10.101.0.10"; # Dual-homed for builds from untrusted sources
       role = "desktop";
       groups = ["desktops" "nixos" "printing"];
       publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBXpuMSA1RXsYs6cEhvNqzhWpbIe2NB0ya1MUte87SD+";
@@ -107,6 +132,8 @@ let
 
     maitred = {
       ip = "10.100.0.50";
+      buildnetIp = "10.101.0.1"; # Lighthouse for buildnet
+      containernetIp = "10.102.0.1"; # Lighthouse for containernet
       lanIp = "192.168.69.1";
       isLighthouse = true;
       isRelay = true;
@@ -158,6 +185,19 @@ let
         purpose = "Portable gaming device with NixOS";
         name = "Sweets naming theme - donut";
         notes = "Jovian NixOS for SteamOS-compatible experience; managed via Colmena";
+      };
+    };
+
+    tachikoma = {
+      ip = "10.100.0.60";
+      role = "iot";
+      groups = ["iot" "cameras"];
+      publicKey = null; # Not NixOS, managed manually
+      meta = {
+        hardware = "Dreame vacuum with Valetudo";
+        purpose = "Robot vacuum with camera";
+        name = "Ghost in the Shell think-tank";
+        notes = "Runs nebula via postboot script; certs in /data/nebula_cfg";
       };
     };
   };
