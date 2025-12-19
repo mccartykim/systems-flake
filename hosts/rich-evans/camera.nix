@@ -59,7 +59,7 @@
   # Socket-activated webcam server
   systemd.sockets.webcam = {
     wantedBy = ["sockets.target"];
-    listenStreams = ["8554"];  # Different port than arbus to avoid conflict with existing 8080
+    listenStreams = ["8554"]; # Different port than arbus to avoid conflict with existing 8080
     socketConfig = {
       Accept = true;
       MaxConnections = 4;

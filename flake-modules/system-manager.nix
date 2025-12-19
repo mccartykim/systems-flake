@@ -1,5 +1,9 @@
 # System-manager configurations for non-NixOS hosts
-{inputs, self, ...}: let
+{
+  inputs,
+  self,
+  ...
+}: let
   inherit (inputs) system-manager;
 in {
   flake.systemConfigs = {

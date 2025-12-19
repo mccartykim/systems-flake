@@ -50,7 +50,6 @@
     username = "kimb";
     homeDirectory = "/home/kimb";
 
-    
     packages = with pkgs; [
       android-studio
     ];

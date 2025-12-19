@@ -106,10 +106,12 @@ pkgs.testers.nixosTest {
       networking = {
         hostName = "builder";
         firewall.enable = false;
-        interfaces.eth1.ipv4.addresses = [{
-          address = "10.200.0.10";
-          prefixLength = 16;
-        }];
+        interfaces.eth1.ipv4.addresses = [
+          {
+            address = "10.200.0.10";
+            prefixLength = 16;
+          }
+        ];
       };
 
       system.stateVersion = "24.11";
@@ -153,10 +155,12 @@ pkgs.testers.nixosTest {
       networking = {
         hostName = "client";
         firewall.enable = false;
-        interfaces.eth1.ipv4.addresses = [{
-          address = "10.200.0.100";
-          prefixLength = 16;
-        }];
+        interfaces.eth1.ipv4.addresses = [
+          {
+            address = "10.200.0.100";
+            prefixLength = 16;
+          }
+        ];
       };
 
       system.stateVersion = "24.11";

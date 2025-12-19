@@ -21,7 +21,10 @@ in {
 
     # Allow tun device for nebula containernet
     allowedDevices = [
-      {node = "/dev/net/tun"; modifier = "rw";}
+      {
+        node = "/dev/net/tun";
+        modifier = "rw";
+      }
     ];
 
     # Bind-mount cert-service token for containernet integration

@@ -36,9 +36,11 @@ pkgs.testers.nixosTest {
       };
 
       # Enable services based on kimb-services config
-      services.nginx.enable = config.kimb.services.reverse-proxy.enable;
-      services.prometheus.enable = config.kimb.services.prometheus.enable;
-      services.openssh.enable = true;
+      services = {
+        nginx.enable = config.kimb.services.reverse-proxy.enable;
+        prometheus.enable = config.kimb.services.prometheus.enable;
+        openssh.enable = true;
+      };
     };
 
     server = {config, ...}: {
@@ -73,22 +75,24 @@ pkgs.testers.nixosTest {
       };
 
       # Enable a simple HTTP server to simulate blog
-      services.nginx = {
-        enable = config.kimb.services.blog.enable;
-        virtualHosts."${config.kimb.domain}" = {
-          listen = [
-            {
-              addr = "0.0.0.0";
-              port = config.kimb.services.blog.port;
-            }
-          ];
-          locations."/" = {
-            return = "200 'Blog service running on ${config.networking.hostName}'";
-            extraConfig = "add_header Content-Type text/plain;";
+      services = {
+        nginx = {
+          enable = config.kimb.services.blog.enable;
+          virtualHosts."${config.kimb.domain}" = {
+            listen = [
+              {
+                addr = "0.0.0.0";
+                port = config.kimb.services.blog.port;
+              }
+            ];
+            locations."/" = {
+              return = "200 'Blog service running on ${config.networking.hostName}'";
+              extraConfig = "add_header Content-Type text/plain;";
+            };
           };
         };
+        openssh.enable = true;
       };
-      services.openssh.enable = true;
     };
   };
 

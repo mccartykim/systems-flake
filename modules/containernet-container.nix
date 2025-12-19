@@ -8,8 +8,7 @@
   ...
 }:
 with lib;
-with builtins;
-let
+with builtins; let
   cfg = config.kimb.containernet;
   registry = import ../hosts/nebula-registry.nix;
   containernetConfig = registry.networks.containernet;
@@ -48,14 +47,26 @@ in {
 
     # Build static_host_map from registry
     staticHostMap = listToAttrs (map (ip: {
-      name = ip;
-      value = lighthouseEndpoints.${ip} or [];
-    }) lighthouseIps);
+        name = ip;
+        value = lighthouseEndpoints.${ip} or [];
+      })
+      lighthouseIps);
 
     # Build inbound firewall rules
-    inboundRules = [
-      { port = "any"; proto = "icmp"; host = "any"; }
-    ] ++ (map (p: { port = p; proto = "tcp"; host = "any"; }) cfg.servicePorts);
+    inboundRules =
+      [
+        {
+          port = "any";
+          proto = "icmp";
+          host = "any";
+        }
+      ]
+      ++ (map (p: {
+          port = p;
+          proto = "tcp";
+          host = "any";
+        })
+        cfg.servicePorts);
 
     nebulaConfig = {
       pki = {
@@ -67,15 +78,25 @@ in {
       lighthouse.hosts = lighthouseIps;
       listen.port = 0;
       tun.dev = "nebula-cnt";
-      punchy = { punch = true; respond = true; };
+      punchy = {
+        punch = true;
+        respond = true;
+      };
       relay.use_relays = true;
       firewall = {
-        outbound = [{ port = "any"; proto = "any"; host = "any"; }];
+        outbound = [
+          {
+            port = "any";
+            proto = "any";
+            host = "any";
+          }
+        ];
         inbound = inboundRules;
       };
     };
 
-    configFile = pkgs.writeText "nebula-containernet-config.yml"
+    configFile =
+      pkgs.writeText "nebula-containernet-config.yml"
       (builtins.toJSON nebulaConfig);
 
     # Convert endpoints list to bash array string
@@ -130,7 +151,11 @@ in {
               if resp=$(${pkgs.curl}/bin/curl -sf --max-time 10 -X POST \
                 -H "Authorization: Bearer $TOKEN" \
                 -H "Content-Type: application/json" \
-                -d '${builtins.toJSON (if cfg.groups != [] then { groups = cfg.groups; } else {})}' \
+                -d '${builtins.toJSON (
+            if cfg.groups != []
+            then {groups = cfg.groups;}
+            else {}
+          )}' \
                 "$endpoint/containernet/allocate" 2>/dev/null); then
 
                 if echo "$resp" | ${pkgs.jq}/bin/jq -e '.ca and .cert and .key and .ip' > /dev/null 2>&1; then

@@ -56,8 +56,8 @@ let
       };
       # Cert service endpoints (tried in order: local first, then WAN)
       certServiceEndpoints = [
-        "http://192.168.100.1:8444"  # Local container bridge (fast, maitred only)
-        "https://net.kimb.dev"       # WAN fallback (works from anywhere)
+        "http://192.168.100.1:8444" # Local container bridge (fast, maitred only)
+        "https://net.kimb.dev" # WAN fallback (works from anywhere)
       ];
       pool = {
         start = "10.102.0.100";
@@ -84,7 +84,8 @@ let
       isRelay = true;
       role = "lighthouse";
       groups = ["lighthouse" "system-manager"];
-      publicKey = null; # Managed via system-manager, not NixOS
+      # SSH key for agenix secrets (system-manager uses host SSH key, not NixOS)
+      publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHmEv+X3EL+6PswZN3yPAz+eUkRGAqcxfeJl+UY9Fsxy";
       meta = {
         hardware = "Oracle Cloud VM (x86_64)";
         purpose = "External Nebula lighthouse + relay for redundancy";

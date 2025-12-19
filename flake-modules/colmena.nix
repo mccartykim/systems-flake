@@ -7,6 +7,9 @@
   inherit (inputs) nixpkgs copyparty claude_yapper;
   registry = import (self + "/hosts/nebula-registry.nix");
 
+  # Only include hosts that have a nixosConfiguration (auto-filters non-NixOS hosts)
+  nixosHosts = builtins.intersectAttrs self.nixosConfigurations registry.nodes;
+
   # Helper to create colmena node from registry entry
   makeColmenaNode = name: node: {
     deployment = {
@@ -26,9 +29,11 @@ in {
           system = "x86_64-linux";
           overlays = [];
         };
-        specialArgs = {inherit inputs copyparty claude_yapper; outputs = self;};
+        specialArgs = {
+          inherit inputs copyparty claude_yapper;
+          outputs = self;
+        };
       };
     }
-    // (builtins.mapAttrs makeColmenaNode
-      (builtins.removeAttrs registry.nodes ["lighthouse" "oracle"])); # Skip non-NixOS hosts
+    // (builtins.mapAttrs makeColmenaNode nixosHosts);
 }

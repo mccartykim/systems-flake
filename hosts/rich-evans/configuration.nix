@@ -41,22 +41,74 @@ in {
     openToPersonalDevices = true;
     extraInboundRules = [
       # Copyparty ports
-      {port = 3923; proto = "tcp"; host = "any";}
-      {port = 3921; proto = "tcp"; host = "any";}
-      {port = 3945; proto = "tcp"; host = "any";}
-      {port = 3990; proto = "tcp"; host = "any";}
-      {port = "12000-12099"; proto = "tcp"; host = "any";}
-      {port = 69; proto = "udp"; host = "any";}
-      {port = 3969; proto = "udp"; host = "any";}
+      {
+        port = 3923;
+        proto = "tcp";
+        host = "any";
+      }
+      {
+        port = 3921;
+        proto = "tcp";
+        host = "any";
+      }
+      {
+        port = 3945;
+        proto = "tcp";
+        host = "any";
+      }
+      {
+        port = 3990;
+        proto = "tcp";
+        host = "any";
+      }
+      {
+        port = "12000-12099";
+        proto = "tcp";
+        host = "any";
+      }
+      {
+        port = 69;
+        proto = "udp";
+        host = "any";
+      }
+      {
+        port = 3969;
+        proto = "udp";
+        host = "any";
+      }
       # Guacamole
-      {port = 4822; proto = "tcp"; host = "any";}
-      {port = 8080; proto = "tcp"; host = "any";}
+      {
+        port = 4822;
+        proto = "tcp";
+        host = "any";
+      }
+      {
+        port = 8080;
+        proto = "tcp";
+        host = "any";
+      }
       # Syncthing
-      {port = 8384; proto = "tcp"; host = "any";}
-      {port = 22000; proto = "tcp"; host = "any";}
-      {port = 22000; proto = "udp"; host = "any";}
+      {
+        port = 8384;
+        proto = "tcp";
+        host = "any";
+      }
+      {
+        port = 22000;
+        proto = "tcp";
+        host = "any";
+      }
+      {
+        port = 22000;
+        proto = "udp";
+        host = "any";
+      }
       # Camera streaming - only from personal devices
-      {port = 8554; proto = "tcp"; groups = ["desktops" "laptops"];}
+      {
+        port = 8554;
+        proto = "tcp";
+        groups = ["desktops" "laptops"];
+      }
     ];
   };
 

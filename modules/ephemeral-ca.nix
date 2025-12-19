@@ -104,62 +104,81 @@ in {
     networking.firewall.allowedUDPPorts = mapAttrsToList (name: net: net.port) cfg.networks;
 
     # Configure nebula lighthouse for each network
-    services.nebula.networks = mapAttrs (name: net: {
-      enable = true;
-      isLighthouse = true;
-      ca = config.age.secrets."${name}-ca-cert".path;
-      cert = config.age.secrets."${name}-lighthouse-cert".path;
-      key = config.age.secrets."${name}-lighthouse-key".path;
-      listen.port = net.port;
-      listen.host = if net.listenHost != null then net.listenHost else "0.0.0.0";
-      # Peer with other lighthouses for redundancy
-      lighthouses = map (peer: peer.ip) net.peerLighthouses;
-      staticHostMap = builtins.listToAttrs (map (peer: {
-        name = peer.ip;
-        value = [peer.external];
-      }) net.peerLighthouses);
-      settings = {
-        tun.dev = net.tunDevice;
-        firewall = {
-          inbound = [
-            {port = "any"; proto = "icmp"; host = "any";}
-            # Allow cert service access from all hosts on this network
-            {port = cfg.certService.port; proto = "tcp"; host = "any";}
-          ];
-          outbound = [
-            {port = "any"; proto = "any"; host = "any";}
-          ];
+    services.nebula.networks =
+      mapAttrs (name: net: {
+        enable = true;
+        isLighthouse = true;
+        ca = config.age.secrets."${name}-ca-cert".path;
+        cert = config.age.secrets."${name}-lighthouse-cert".path;
+        key = config.age.secrets."${name}-lighthouse-key".path;
+        listen.port = net.port;
+        listen.host =
+          if net.listenHost != null
+          then net.listenHost
+          else "0.0.0.0";
+        # Peer with other lighthouses for redundancy
+        lighthouses = map (peer: peer.ip) net.peerLighthouses;
+        staticHostMap = builtins.listToAttrs (map (peer: {
+            name = peer.ip;
+            value = [peer.external];
+          })
+          net.peerLighthouses);
+        settings = {
+          tun.dev = net.tunDevice;
+          firewall = {
+            inbound = [
+              {
+                port = "any";
+                proto = "icmp";
+                host = "any";
+              }
+              # Allow cert service access from all hosts on this network
+              {
+                port = cfg.certService.port;
+                proto = "tcp";
+                host = "any";
+              }
+            ];
+            outbound = [
+              {
+                port = "any";
+                proto = "any";
+                host = "any";
+              }
+            ];
+          };
         };
-      };
-    }) cfg.networks;
+      })
+      cfg.networks;
 
     # Agenix secrets for each network's CA and lighthouse certs + cert service token
     age.secrets = mkMerge (
       # Network secrets
       (mapAttrsToList (name: net: {
-        "${name}-ca-cert" = {
-          file = ../secrets/${name}-ca-cert.age;
-          path = "/etc/ephemeral-ca/${name}/ca.crt";
-          mode = "0644";
-        };
-        "${name}-ca-key" = {
-          file = ../secrets/${name}-ca-key.age;
-          path = "/etc/ephemeral-ca/${name}/ca.key";
-          mode = "0600";
-        };
-        "${name}-lighthouse-cert" = {
-          file = ../secrets/${name}-lighthouse-cert.age;
-          path = "/etc/ephemeral-ca/${name}/lighthouse.crt";
-          mode = "0644";
-        };
-        "${name}-lighthouse-key" = {
-          file = ../secrets/${name}-lighthouse-key.age;
-          path = "/etc/ephemeral-ca/${name}/lighthouse.key";
-          mode = "0400";
-          owner = "nebula-${name}";
-          group = "nebula-${name}";
-        };
-      }) cfg.networks)
+          "${name}-ca-cert" = {
+            file = ../secrets/${name}-ca-cert.age;
+            path = "/etc/ephemeral-ca/${name}/ca.crt";
+            mode = "0644";
+          };
+          "${name}-ca-key" = {
+            file = ../secrets/${name}-ca-key.age;
+            path = "/etc/ephemeral-ca/${name}/ca.key";
+            mode = "0600";
+          };
+          "${name}-lighthouse-cert" = {
+            file = ../secrets/${name}-lighthouse-cert.age;
+            path = "/etc/ephemeral-ca/${name}/lighthouse.crt";
+            mode = "0644";
+          };
+          "${name}-lighthouse-key" = {
+            file = ../secrets/${name}-lighthouse-key.age;
+            path = "/etc/ephemeral-ca/${name}/lighthouse.key";
+            mode = "0400";
+            owner = "nebula-${name}";
+            group = "nebula-${name}";
+          };
+        })
+        cfg.networks)
       # Cert service token
       ++ (optional cfg.certService.enable {
         cert-service-token = {
@@ -176,18 +195,19 @@ in {
       after = ["network.target" "agenix.service"];
       wantedBy = ["multi-user.target"];
 
-      path = [ pkgs.nebula ];
+      path = [pkgs.nebula];
 
       environment = {
         NETWORKS_CONFIG = builtins.toJSON (mapAttrs (name: net: {
-          ca_cert = "/etc/ephemeral-ca/${name}/ca.crt";
-          ca_key = "/etc/ephemeral-ca/${name}/ca.key";
-          subnet = builtins.head (builtins.match "([0-9]+\\.[0-9]+\\.[0-9]+).*" net.lighthouseIp);
-          pool_start = net.poolStart;
-          pool_end = net.poolEnd;
-          default_duration = net.defaultDuration;
-          default_groups = net.defaultGroups;
-        }) cfg.networks);
+            ca_cert = "/etc/ephemeral-ca/${name}/ca.crt";
+            ca_key = "/etc/ephemeral-ca/${name}/ca.key";
+            subnet = builtins.head (builtins.match "([0-9]+\\.[0-9]+\\.[0-9]+).*" net.lighthouseIp);
+            pool_start = net.poolStart;
+            pool_end = net.poolEnd;
+            default_duration = net.defaultDuration;
+            default_groups = net.defaultGroups;
+          })
+          cfg.networks);
         PORT = toString cfg.certService.port;
         STATE_DIR = "/var/lib/ephemeral-certs";
       };

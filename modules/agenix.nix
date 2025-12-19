@@ -1,10 +1,7 @@
 # Agenix common configuration for all hosts
 # Secrets are generated via `nix run .#generate-nebula-certs` (requires YubiKey)
 # and encrypted to host SSH keys for decryption at boot
-{
-  inputs,
-  ...
-}: {
+{inputs, ...}: {
   imports = [
     inputs.agenix.nixosModules.default
   ];
