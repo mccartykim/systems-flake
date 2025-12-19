@@ -10,5 +10,8 @@ in {
     oracle = system-manager.lib.makeSystemConfig {
       modules = [(self + "/hosts/oracle/configuration.nix")];
     };
+    mochi = system-manager.lib.makeSystemConfig {
+      modules = [(self + "/hosts/mochi/configuration.nix")];
+    };
   };
 }

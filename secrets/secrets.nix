@@ -7,8 +7,11 @@ let
   # Oracle key from registry (system-manager host, not in hostKeys)
   oracleKey = registry.nodes.oracle.publicKey;
 
+  # Mochi key from registry (system-manager host, not in hostKeys)
+  mochiKey = registry.nodes.mochi.publicKey;
+
   # All working machines that can decrypt shared secrets
-  workingMachines = (builtins.attrValues hostKeys) ++ [bootstrap oracleKey];
+  workingMachines = (builtins.attrValues hostKeys) ++ [bootstrap oracleKey mochiKey];
 
   # Helper to create node cert/key secrets for a host
   createNodeSecrets = name: {
@@ -37,6 +40,10 @@ in
     # Oracle (system-manager host) nebula secrets
     "nebula-oracle-cert.age".publicKeys = [oracleKey bootstrap];
     "nebula-oracle-key.age".publicKeys = [oracleKey bootstrap];
+
+    # Mochi (system-manager host) nebula secrets
+    "nebula-mochi-cert.age".publicKeys = [mochiKey bootstrap];
+    "nebula-mochi-key.age".publicKeys = [mochiKey bootstrap];
 
     # ===== BUILDNET (hot CA for untrusted builders like Claude Code) =====
     # Buildnet CA (maitred manages, historian + oracle need ca.crt for verification)

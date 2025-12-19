@@ -9,26 +9,6 @@
   inherit (config.flake.lib) mkDesktop mkServer mkHomeManager commonModules;
 in {
   flake.nixosConfigurations = {
-    # Android Virtual Device
-    bonbon = nixpkgs.lib.nixosSystem {
-      system = "aarch64-linux";
-      specialArgs = {
-        inherit inputs;
-        outputs = self;
-      };
-      modules =
-        commonModules
-        ++ mkHomeManager {
-          user = "droid";
-          homeConfig = self + "/home/bonbon.nix";
-          useGlobalPkgs = true;
-        }
-        ++ [
-          (self + "/avd/bonbon/configuration.nix")
-          nixos-avf.nixosModules.avf
-        ];
-    };
-
     # Surface 3 Go tablet
     cheesecake = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
