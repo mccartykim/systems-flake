@@ -217,6 +217,19 @@ let
         notes = "Runs nebula via postboot script; certs in /data/nebula_cfg";
       };
     };
+
+    mochi = {
+      ip = "10.100.0.8";
+      role = "mobile";
+      groups = ["mobile" "system-manager"];
+      publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHBSIfvPHC+UmMq6pghmdsjCTje/lOeiTVo2vDmyoNbf";
+      meta = {
+        hardware = "Google Pixel 9 Pro (AVF/Debian)";
+        purpose = "Mobile phone with AVF Linux terminal";
+        name = "Sweets naming theme - mochi";
+        notes = "Managed via system-manager; nebula for mesh access";
+      };
+    };
   };
 
   # Helper: filter hosts by role
