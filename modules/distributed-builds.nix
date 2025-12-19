@@ -27,7 +27,7 @@ with lib; let
 
   # External endpoints for lighthouses (maitred + oracle)
   lighthouseEndpoints = {
-    "10.101.0.1" = "kimb.dev:${toString buildnetPort}";      # maitred
+    "10.101.0.1" = "kimb.dev:${toString buildnetPort}"; # maitred
     "10.101.0.2" = "150.136.155.204:${toString buildnetPort}"; # oracle
   };
 in {
@@ -94,9 +94,11 @@ in {
 
     # === BUILDER-ONLY KEYS (command-restricted, no shell) ===
     (mkIf (cfg.isBuilder && cfg.builderOnlyKeys != []) {
-      users.users.root.openssh.authorizedKeys.keys = map (key:
-        ''command="${pkgs.nix}/bin/nix-daemon --stdio",no-port-forwarding,no-agent-forwarding,no-X11-forwarding,no-pty ${key}''
-      ) cfg.builderOnlyKeys;
+      users.users.root.openssh.authorizedKeys.keys =
+        map (
+          key: ''command="${pkgs.nix}/bin/nix-daemon --stdio",no-port-forwarding,no-agent-forwarding,no-X11-forwarding,no-pty ${key}''
+        )
+        cfg.builderOnlyKeys;
     })
 
     # === BUILDER BUILDNET CONFIG (historian joins buildnet) ===
@@ -110,20 +112,33 @@ in {
         key = config.age.secrets.buildnet-historian-key.path;
         lighthouses = cfg.buildnet.lighthouses;
         staticHostMap = builtins.listToAttrs (map (lh: {
-          name = lh;
-          value = [lighthouseEndpoints.${lh}];
-        }) cfg.buildnet.lighthouses);
+            name = lh;
+            value = [lighthouseEndpoints.${lh}];
+          })
+          cfg.buildnet.lighthouses);
         listen.port = buildnetPort;
         settings = {
           tun.dev = "nebula-build";
           firewall = {
             inbound = [
-              {port = "any"; proto = "icmp"; host = "any";}
+              {
+                port = "any";
+                proto = "icmp";
+                host = "any";
+              }
               # Only SSH from builders group
-              {port = 22; proto = "tcp"; group = "builders";}
+              {
+                port = 22;
+                proto = "tcp";
+                group = "builders";
+              }
             ];
             outbound = [
-              {port = "any"; proto = "any"; host = "any";}
+              {
+                port = "any";
+                proto = "any";
+                host = "any";
+              }
             ];
           };
         };
@@ -157,14 +172,16 @@ in {
 
     # === CLIENT CONFIG (all other hosts - unchanged) ===
     (mkIf (!cfg.isBuilder) {
-      nix.buildMachines = [{
-        hostName = historianIP; # Main mesh IP
-        system = "x86_64-linux";
-        sshUser = "root";
-        sshKey = "/etc/ssh/ssh_host_ed25519_key";
-        inherit (cfg) maxJobs speedFactor;
-        supportedFeatures = ["nixos-test" "big-parallel" "kvm"];
-      }];
+      nix.buildMachines = [
+        {
+          hostName = historianIP; # Main mesh IP
+          system = "x86_64-linux";
+          sshUser = "root";
+          sshKey = "/etc/ssh/ssh_host_ed25519_key";
+          inherit (cfg) maxJobs speedFactor;
+          supportedFeatures = ["nixos-test" "big-parallel" "kvm"];
+        }
+      ];
 
       nix.distributedBuilds = true;
       nix.settings.connect-timeout = cfg.connectTimeout;

@@ -37,7 +37,7 @@ let
         inherit name;
         value = registry.nodes.${name}.publicKey or null;
       })
-        (builtins.attrNames (builtins.removeAttrs registry.nodes (registry.desktops ++ registry.laptops ++ ["lighthouse"])))
+      (builtins.attrNames (builtins.removeAttrs registry.nodes (registry.desktops ++ registry.laptops ++ ["lighthouse"])))
     )
   );
 in {

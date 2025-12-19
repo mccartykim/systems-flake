@@ -4,8 +4,8 @@ let
   registry = import ../hosts/nebula-registry.nix;
   inherit (registry) hostKeys bootstrap;
 
-  # Non-NixOS hosts managed via system-manager (not in registry.hostKeys)
-  oracleKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHmEv+X3EL+6PswZN3yPAz+eUkRGAqcxfeJl+UY9Fsxy";
+  # Oracle key from registry (system-manager host, not in hostKeys)
+  oracleKey = registry.nodes.oracle.publicKey;
 
   # All working machines that can decrypt shared secrets
   workingMachines = (builtins.attrValues hostKeys) ++ [bootstrap oracleKey];
@@ -17,7 +17,8 @@ let
   };
 
   # Generate nebula secrets for all NixOS hosts
-  allNebulaSecrets = builtins.foldl' (acc: name: acc // createNodeSecrets name) {}
+  allNebulaSecrets =
+    builtins.foldl' (acc: name: acc // createNodeSecrets name) {}
     (builtins.attrNames hostKeys);
 in
   {

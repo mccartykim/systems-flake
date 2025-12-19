@@ -21,10 +21,12 @@ in {
         port = registry.networks.buildnet.port;
         lighthouseIp = registry.nodes.maitred.buildnetIp;
         # Peer with oracle for redundancy
-        peerLighthouses = [{
-          ip = registry.nodes.oracle.buildnetIp;
-          external = "150.136.155.204:${toString registry.networks.buildnet.port}";
-        }];
+        peerLighthouses = [
+          {
+            ip = registry.nodes.oracle.buildnetIp;
+            external = "150.136.155.204:${toString registry.networks.buildnet.port}";
+          }
+        ];
         poolStart = 100;
         poolEnd = 254;
         defaultDuration = "24h";
@@ -37,10 +39,12 @@ in {
         port = registry.networks.containernet.port;
         lighthouseIp = registry.nodes.maitred.containernetIp;
         # Peer with oracle for redundancy
-        peerLighthouses = [{
-          ip = registry.nodes.oracle.containernetIp;
-          external = "150.136.155.204:${toString registry.networks.containernet.port}";
-        }];
+        peerLighthouses = [
+          {
+            ip = registry.nodes.oracle.containernetIp;
+            external = "150.136.155.204:${toString registry.networks.containernet.port}";
+          }
+        ];
         poolStart = 100;
         poolEnd = 254;
         defaultDuration = "168h"; # 1 week

@@ -45,7 +45,7 @@
     stateDir = "/var/lib/life-coach-agent";
 
     # Package from claude_yapper flake
-    package = claude_yapper.packages.${pkgs.system}.life-coach-agent;
+    package = claude_yapper.packages.${pkgs.stdenv.hostPlatform.system}.life-coach-agent;
 
     # Custom system prompt with 11AM/1AM schedule
     systemPrompt = ''
@@ -214,7 +214,7 @@
   };
 
   # Add claude-code to system so life-coach user can run `claude login`
-  environment.systemPackages = [ pkgs.claude-code ];
+  environment.systemPackages = [pkgs.claude-code];
 
   # kimb is in wheel group, so can already sudo. No extra rules needed.
   # To manage the service:

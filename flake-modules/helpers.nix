@@ -67,7 +67,10 @@ in {
     }:
       nixpkgs.lib.nixosSystem {
         inherit system;
-        specialArgs = {inherit inputs; outputs = self;};
+        specialArgs = {
+          inherit inputs;
+          outputs = self;
+        };
         modules =
           desktopModules
           ++ commonModules
@@ -86,7 +89,12 @@ in {
     }:
       nixpkgs.lib.nixosSystem {
         inherit system;
-        specialArgs = {inherit inputs; outputs = self;} // extraSpecialArgs;
+        specialArgs =
+          {
+            inherit inputs;
+            outputs = self;
+          }
+          // extraSpecialArgs;
         modules =
           serverModules
           ++ commonModules

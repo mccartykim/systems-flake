@@ -21,12 +21,16 @@ with lib; let
   getOtherIps = nodes: filter (ip: ip != myIp) (map (n: n.ip) nodes);
 
   # Lighthouses and relays from registry
-  allLighthouses = filter (n: (n.isLighthouse or false) && n ? external)
+  allLighthouses =
+    filter (n: (n.isLighthouse or false) && n ? external)
     (attrValues registry.nodes);
   allRelays = filter (n: n.isRelay or false) (attrValues registry.nodes);
 
   # Derived config: exclude self from lighthouse/relay lists
-  lighthouseIps = if isLighthouse then [] else map (n: n.ip) allLighthouses;
+  lighthouseIps =
+    if isLighthouse
+    then []
+    else map (n: n.ip) allLighthouses;
   staticHosts = listToAttrs (map (n: nameValuePair n.ip [n.external]) allLighthouses);
   relayIps = getOtherIps allRelays;
 in {

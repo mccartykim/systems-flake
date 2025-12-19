@@ -12,7 +12,10 @@ in {
     # Android Virtual Device
     bonbon = nixpkgs.lib.nixosSystem {
       system = "aarch64-linux";
-      specialArgs = {inherit inputs; outputs = self;};
+      specialArgs = {
+        inherit inputs;
+        outputs = self;
+      };
       modules =
         commonModules
         ++ mkHomeManager {
@@ -29,7 +32,10 @@ in {
     # Surface 3 Go tablet
     cheesecake = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
-      specialArgs = {inherit inputs; outputs = self;};
+      specialArgs = {
+        inherit inputs;
+        outputs = self;
+      };
       modules =
         commonModules
         ++ mkHomeManager {
@@ -46,7 +52,10 @@ in {
     # Steam Deck (Jovian NixOS)
     donut = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
-      specialArgs = {inherit inputs; outputs = self;};
+      specialArgs = {
+        inherit inputs;
+        outputs = self;
+      };
       modules =
         commonModules
         ++ mkHomeManager {
@@ -143,7 +152,10 @@ in {
     # Router (custom - no srvos server, has specific networking needs)
     maitred = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
-      specialArgs = {inherit inputs; outputs = self;};
+      specialArgs = {
+        inherit inputs;
+        outputs = self;
+      };
       modules =
         commonModules
         ++ [

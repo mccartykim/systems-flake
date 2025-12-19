@@ -82,7 +82,7 @@
   } @ inputs:
     flake-parts.lib.mkFlake {inherit inputs;} {
       imports = [
-        ./flake-modules  # Modularized flake configuration
+        ./flake-modules # Modularized flake configuration
       ];
 
       systems = ["x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin"];
@@ -98,44 +98,43 @@
         inherit (nixpkgs) lib;
       in {
         # Per-system packages
-        packages =
-          lib.optionalAttrs (system == "x86_64-linux" || system == "aarch64-linux") {
-            # ESPHome firmware builds
-            esp32-cam-01-firmware = pkgs.stdenv.mkDerivation {
-              name = "esp32-cam-01-firmware";
-              src = ./esphome-configs;
+        packages = lib.optionalAttrs (system == "x86_64-linux" || system == "aarch64-linux") {
+          # ESPHome firmware builds
+          esp32-cam-01-firmware = pkgs.stdenv.mkDerivation {
+            name = "esp32-cam-01-firmware";
+            src = ./esphome-configs;
 
-              nativeBuildInputs = [pkgs.esphome];
+            nativeBuildInputs = [pkgs.esphome];
 
-              buildPhase = ''
-                # Copy config and secrets
-                mkdir -p build
-                cp esp32-cam-01.yaml build/
+            buildPhase = ''
+              # Copy config and secrets
+              mkdir -p build
+              cp esp32-cam-01.yaml build/
 
-                # Check if secrets exist, otherwise create dummy
-                if [ -f secrets.yaml ]; then
-                  cp secrets.yaml build/
-                else
-                  echo "Warning: secrets.yaml not found, using dummy values"
-                  cat > build/secrets.yaml <<EOF
-                wifi_ssid: "dummy"
-                wifi_password: "dummy"
-                api_encryption_key: "dummy=="
-                ota_password: "dummy"
-                ap_password: "dummy"
-                EOF
-                fi
+              # Check if secrets exist, otherwise create dummy
+              if [ -f secrets.yaml ]; then
+                cp secrets.yaml build/
+              else
+                echo "Warning: secrets.yaml not found, using dummy values"
+                cat > build/secrets.yaml <<EOF
+              wifi_ssid: "dummy"
+              wifi_password: "dummy"
+              api_encryption_key: "dummy=="
+              ota_password: "dummy"
+              ap_password: "dummy"
+              EOF
+              fi
 
-                cd build
-                esphome compile esp32-cam-01.yaml
-              '';
+              cd build
+              esphome compile esp32-cam-01.yaml
+            '';
 
-              installPhase = ''
-                mkdir -p $out
-                cp -r esp32-cam-01 $out/
-              '';
-            };
+            installPhase = ''
+              mkdir -p $out
+              cp -r esp32-cam-01 $out/
+            '';
           };
+        };
 
         # Formatter
         formatter = pkgs.alejandra;
@@ -188,20 +187,22 @@
           generate-nebula-certs = let
             registry = import ./hosts/nebula-registry.nix;
             # Hosts with both IP and publicKey can have certs generated
-            nebulaHosts = lib.filterAttrs
+            # (includes oracle now that its key is in the registry)
+            nebulaHosts =
+              lib.filterAttrs
               (name: cfg: cfg ? ip && cfg.ip != null && cfg ? publicKey && cfg.publicKey != null)
               registry.nodes;
-            # Oracle is special - managed via system-manager, key defined separately
-            oracleKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHmEv+X3EL+6PswZN3yPAz+eUkRGAqcxfeJl+UY9Fsxy";
             bootstrapKey = registry.bootstrap;
 
             # Build host info as shell-parseable data
-            hostData = lib.mapAttrsToList (name: cfg: {
-              inherit name;
-              ip = cfg.ip;
-              groups = cfg.groups or [];
-              publicKey = cfg.publicKey;
-            }) nebulaHosts;
+            hostData =
+              lib.mapAttrsToList (name: cfg: {
+                inherit name;
+                ip = cfg.ip;
+                groups = cfg.groups or [];
+                publicKey = cfg.publicKey;
+              })
+              nebulaHosts;
           in {
             type = "app";
             program = toString (pkgs.writeShellScript "generate-nebula-certs" ''
@@ -241,18 +242,17 @@
               # Show hosts that will be processed
               echo "Hosts from registry (with IP + publicKey):"
               ${lib.concatMapStringsSep "\n" (host: ''
-                echo "  - ${host.name}: ${host.ip}/16, groups=[${lib.concatStringsSep "," host.groups}]"
-              '') hostData}
-              echo "  - oracle: 10.100.0.2/16, groups=[lighthouse,system-manager] (special case)"
+                  echo "  - ${host.name}: ${host.ip}/16, groups=[${lib.concatStringsSep "," host.groups}]"
+                '')
+                hostData}
               echo ""
 
               echo "Files that will be created/updated:"
               ${lib.concatMapStringsSep "\n" (host: ''
-                echo "  - secrets/nebula-${host.name}-cert.age (encrypted to ${host.name} + bootstrap)"
-                echo "  - secrets/nebula-${host.name}-key.age (encrypted to ${host.name} + bootstrap)"
-              '') hostData}
-              echo "  - secrets/nebula-oracle-cert.age (encrypted to oracle + bootstrap)"
-              echo "  - secrets/nebula-oracle-key.age (encrypted to oracle + bootstrap)"
+                  echo "  - secrets/nebula-${host.name}-cert.age (encrypted to ${host.name} + bootstrap)"
+                  echo "  - secrets/nebula-${host.name}-key.age (encrypted to ${host.name} + bootstrap)"
+                '')
+                hostData}
               echo "  - secrets/nebula-ca.age (CA cert only, encrypted to all hosts)"
               echo ""
 
@@ -307,66 +307,42 @@
 
               # Generate certs for each host
               ${lib.concatMapStringsSep "\n" (host: ''
-                echo "Generating certificate for ${host.name}..."
-                HOST_NAME="${host.name}"
-                HOST_IP="${host.ip}"
-                HOST_GROUPS="${lib.concatStringsSep "," host.groups}"
-                HOST_PUBKEY="${host.publicKey}"
+                  echo "Generating certificate for ${host.name}..."
+                  HOST_NAME="${host.name}"
+                  HOST_IP="${host.ip}"
+                  HOST_GROUPS="${lib.concatStringsSep "," host.groups}"
+                  HOST_PUBKEY="${host.publicKey}"
 
-                # Generate cert and key
-                ${pkgs.nebula}/bin/nebula-cert sign \
-                  -ca-crt "$TMPDIR/ca.crt" \
-                  -ca-key "$TMPDIR/ca.key" \
-                  -name "$HOST_NAME" \
-                  -ip "$HOST_IP/16" \
-                  -groups "$HOST_GROUPS" \
-                  -out-crt "$TMPDIR/$HOST_NAME.crt" \
-                  -out-key "$TMPDIR/$HOST_NAME.key"
+                  # Generate cert and key
+                  ${pkgs.nebula}/bin/nebula-cert sign \
+                    -ca-crt "$TMPDIR/ca.crt" \
+                    -ca-key "$TMPDIR/ca.key" \
+                    -name "$HOST_NAME" \
+                    -ip "$HOST_IP/16" \
+                    -groups "$HOST_GROUPS" \
+                    -out-crt "$TMPDIR/$HOST_NAME.crt" \
+                    -out-key "$TMPDIR/$HOST_NAME.key"
 
-                # Re-encrypt cert with agenix (to host key + bootstrap)
-                ${pkgs.age}/bin/age -r "$HOST_PUBKEY" -r "$BOOTSTRAP_KEY" \
-                  -o "secrets/nebula-$HOST_NAME-cert.age" \
-                  "$TMPDIR/$HOST_NAME.crt"
+                  # Re-encrypt cert with agenix (to host key + bootstrap)
+                  ${pkgs.age}/bin/age -r "$HOST_PUBKEY" -r "$BOOTSTRAP_KEY" \
+                    -o "secrets/nebula-$HOST_NAME-cert.age" \
+                    "$TMPDIR/$HOST_NAME.crt"
 
-                # Re-encrypt key with agenix (to host key + bootstrap)
-                ${pkgs.age}/bin/age -r "$HOST_PUBKEY" -r "$BOOTSTRAP_KEY" \
-                  -o "secrets/nebula-$HOST_NAME-key.age" \
-                  "$TMPDIR/$HOST_NAME.key"
+                  # Re-encrypt key with agenix (to host key + bootstrap)
+                  ${pkgs.age}/bin/age -r "$HOST_PUBKEY" -r "$BOOTSTRAP_KEY" \
+                    -o "secrets/nebula-$HOST_NAME-key.age" \
+                    "$TMPDIR/$HOST_NAME.key"
 
-                echo "  ✓ secrets/nebula-$HOST_NAME-cert.age"
-                echo "  ✓ secrets/nebula-$HOST_NAME-key.age"
-                echo ""
-              '') hostData}
+                  echo "  ✓ secrets/nebula-$HOST_NAME-cert.age"
+                  echo "  ✓ secrets/nebula-$HOST_NAME-key.age"
+                  echo ""
+                '')
+                hostData}
 
-              # Handle Oracle separately (special case - different key source)
-              echo "Generating certificate for oracle..."
-              ${pkgs.nebula}/bin/nebula-cert sign \
-                -ca-crt "$TMPDIR/ca.crt" \
-                -ca-key "$TMPDIR/ca.key" \
-                -name "oracle" \
-                -ip "10.100.0.2/16" \
-                -groups "lighthouse,system-manager" \
-                -out-crt "$TMPDIR/oracle.crt" \
-                -out-key "$TMPDIR/oracle.key"
-
-              ${pkgs.age}/bin/age -r "${oracleKey}" -r "$BOOTSTRAP_KEY" \
-                -o "secrets/nebula-oracle-cert.age" \
-                "$TMPDIR/oracle.crt"
-
-              ${pkgs.age}/bin/age -r "${oracleKey}" -r "$BOOTSTRAP_KEY" \
-                -o "secrets/nebula-oracle-key.age" \
-                "$TMPDIR/oracle.key"
-
-              echo "  ✓ secrets/nebula-oracle-cert.age"
-              echo "  ✓ secrets/nebula-oracle-key.age"
-              echo ""
-
-              # Also update the shared CA cert (public part only, for all hosts)
+              # Update the shared CA cert (public part only, for all hosts)
               echo "Updating shared CA certificate..."
-              # All hosts that can decrypt secrets
               ${pkgs.age}/bin/age \
                 ${lib.concatMapStringsSep " " (host: "-r \"${host.publicKey}\"") hostData} \
-                -r "${oracleKey}" \
                 -r "$BOOTSTRAP_KEY" \
                 -o "secrets/nebula-ca.age" \
                 "$TMPDIR/ca.crt"

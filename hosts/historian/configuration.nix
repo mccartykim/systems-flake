@@ -172,8 +172,8 @@
   # Wait for Thunderbolt dock before starting display manager
   # (CalDigit TS3 Plus needs time to establish DP tunnel over USB4)
   systemd.services.display-manager = {
-    after = [ "bolt.service" ];
-    wants = [ "bolt.service" ];
+    after = ["bolt.service"];
+    wants = ["bolt.service"];
   };
 
   # Services configuration
