@@ -137,6 +137,13 @@ in {
                 reverse_proxy 192.168.69.177:80
               '';
             };
+
+            # Containernet cert service (token-protected, used by containers anywhere)
+            "net.${cfg.domain}" = {
+              extraConfig = ''
+                reverse_proxy ${cfg.networks.containerBridge}:8444
+              '';
+            };
           };
       };
 

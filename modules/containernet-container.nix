@@ -1,5 +1,6 @@
 # Fire-and-forget containernet integration for NixOS containers
 # Use inside container config: imports = [ ../../modules/containernet-container.nix ];
+# Works on any host - auto-detects local vs WAN paths to cert-service
 {
   config,
   lib,
@@ -10,44 +11,16 @@ with lib;
 with builtins;
 let
   cfg = config.kimb.containernet;
+  registry = import ../hosts/nebula-registry.nix;
+  containernetConfig = registry.networks.containernet;
 in {
   options.kimb.containernet = {
     enable = mkEnableOption "Containernet mesh integration";
-
-    hostAddress = mkOption {
-      type = types.str;
-      description = "The container's hostAddress (veth peer IP on host side)";
-      example = "192.168.100.11";
-    };
 
     tokenPath = mkOption {
       type = types.str;
       default = "/run/containernet/token";
       description = "Path to the bearer token file";
-    };
-
-    certServicePort = mkOption {
-      type = types.int;
-      default = 8444;
-      description = "Port for cert service on host";
-    };
-
-    lighthousePort = mkOption {
-      type = types.int;
-      default = 4244;
-      description = "Port for containernet lighthouse on host";
-    };
-
-    publicLighthouseHosts = mkOption {
-      type = types.listOf types.str;
-      default = ["kimb.dev:4244" "150.136.155.204:4244"];
-      description = "Public lighthouse endpoints for failover";
-    };
-
-    lighthouseIps = mkOption {
-      type = types.listOf types.str;
-      default = ["10.102.0.1" "10.102.0.2"];
-      description = "Nebula IPs of lighthouses (maitred + oracle)";
     };
 
     servicePorts = mkOption {
@@ -64,12 +37,60 @@ in {
   };
 
   config = mkIf cfg.enable (let
-    # Derive URLs from hostAddress
-    certServiceUrl = "http://${cfg.hostAddress}:${toString cfg.certServicePort}";
-    localLighthouse = "${cfg.hostAddress}:${toString cfg.lighthousePort}";
-    lighthouseHosts = [localLighthouse] ++ cfg.publicLighthouseHosts;
+    # Get endpoints from registry
+    certServiceEndpoints = containernetConfig.certServiceEndpoints;
+    lighthouseIps = containernetConfig.lighthouses;
+    lighthouseEndpoints = containernetConfig.lighthouseEndpoints;
+
+    # DNS server IP - use dummy-cnt which is reachable from all containers
+    # (192.168.100.1 only works for reverse-proxy, not other containers)
+    dnsServer = "192.168.100.254";
+
+    # Build static_host_map from registry
+    staticHostMap = listToAttrs (map (ip: {
+      name = ip;
+      value = lighthouseEndpoints.${ip} or [];
+    }) lighthouseIps);
+
+    # Build inbound firewall rules
+    inboundRules = [
+      { port = "any"; proto = "icmp"; host = "any"; }
+    ] ++ (map (p: { port = p; proto = "tcp"; host = "any"; }) cfg.servicePorts);
+
+    nebulaConfig = {
+      pki = {
+        ca = "/run/containernet/ca.crt";
+        cert = "/run/containernet/host.crt";
+        key = "/run/containernet/host.key";
+      };
+      static_host_map = staticHostMap;
+      lighthouse.hosts = lighthouseIps;
+      listen.port = 0;
+      tun.dev = "nebula-cnt";
+      punchy = { punch = true; respond = true; };
+      relay.use_relays = true;
+      firewall = {
+        outbound = [{ port = "any"; proto = "any"; host = "any"; }];
+        inbound = inboundRules;
+      };
+    };
+
+    configFile = pkgs.writeText "nebula-containernet-config.yml"
+      (builtins.toJSON nebulaConfig);
+
+    # Convert endpoints list to bash array string
+    endpointsArray = concatStringsSep " " (map (e: ''"${e}"'') certServiceEndpoints);
   in {
     environment.systemPackages = [pkgs.nebula pkgs.curl pkgs.jq];
+
+    # DNS resolution via dummy-cnt interface (host runs unbound bound to 192.168.100.254)
+    # Disable nscd to prevent localhost DNS resolution override
+    services.nscd.enable = false;
+    system.nssModules = mkForce [];
+    # Force resolv.conf to use dummy-cnt IP for DNS
+    environment.etc."resolv.conf".text = ''
+      nameserver ${dnsServer}
+    '';
 
     # Request cert at boot (not in wantedBy to avoid blocking container startup)
     # nebula-containernet.service pulls this in via Requires
@@ -93,7 +114,10 @@ in {
           # Token file is in env format (API_TOKEN=value), extract just the value
           TOKEN=$(grep -oP 'API_TOKEN=\K.*' ${cfg.tokenPath} || cat ${cfg.tokenPath})
 
-          # Retry with exponential backoff: 2s, 4s, 8s, 16s, 32s, 64s
+          # Endpoints to try in order (local first, then WAN)
+          ENDPOINTS=(${endpointsArray})
+
+          # Retry with exponential backoff
           max_attempts=6
           attempt=1
           delay=2
@@ -101,29 +125,28 @@ in {
           while [ $attempt -le $max_attempts ]; do
             echo "Cert allocation attempt $attempt/$max_attempts..."
 
-            if resp=$(${pkgs.curl}/bin/curl -sf --max-time 30 -X POST \
-              -H "Authorization: Bearer $TOKEN" \
-              -H "Content-Type: application/json" \
-              -d '${builtins.toJSON (if cfg.groups != [] then { groups = cfg.groups; } else {})}' \
-              "${certServiceUrl}/containernet/allocate"); then
+            for endpoint in "''${ENDPOINTS[@]}"; do
+              echo "  Trying: $endpoint"
+              if resp=$(${pkgs.curl}/bin/curl -sf --max-time 10 -X POST \
+                -H "Authorization: Bearer $TOKEN" \
+                -H "Content-Type: application/json" \
+                -d '${builtins.toJSON (if cfg.groups != [] then { groups = cfg.groups; } else {})}' \
+                "$endpoint/containernet/allocate" 2>/dev/null); then
 
-              if echo "$resp" | ${pkgs.jq}/bin/jq -e '.ca and .cert and .key and .ip' > /dev/null 2>&1; then
-                echo "$resp" | ${pkgs.jq}/bin/jq -r '.ca' > "$CERT_DIR/ca.crt"
-                echo "$resp" | ${pkgs.jq}/bin/jq -r '.cert' > "$CERT_DIR/host.crt"
-                echo "$resp" | ${pkgs.jq}/bin/jq -r '.key' > "$CERT_DIR/host.key"
-                echo "$resp" | ${pkgs.jq}/bin/jq -r '.ip' > "$CERT_DIR/ip"
-                chmod 600 "$CERT_DIR/host.key"
-                echo "Got containernet cert: $(cat $CERT_DIR/ip)"
-                exit 0
-              else
-                echo "Invalid response from cert service"
+                if echo "$resp" | ${pkgs.jq}/bin/jq -e '.ca and .cert and .key and .ip' > /dev/null 2>&1; then
+                  echo "$resp" | ${pkgs.jq}/bin/jq -r '.ca' > "$CERT_DIR/ca.crt"
+                  echo "$resp" | ${pkgs.jq}/bin/jq -r '.cert' > "$CERT_DIR/host.crt"
+                  echo "$resp" | ${pkgs.jq}/bin/jq -r '.key' > "$CERT_DIR/host.key"
+                  echo "$resp" | ${pkgs.jq}/bin/jq -r '.ip' > "$CERT_DIR/ip"
+                  chmod 600 "$CERT_DIR/host.key"
+                  echo "Got containernet cert: $(cat $CERT_DIR/ip) via $endpoint"
+                  exit 0
+                fi
               fi
-            else
-              echo "Request failed (attempt $attempt)"
-            fi
+            done
 
             if [ $attempt -lt $max_attempts ]; then
-              echo "Retrying in ''${delay}s..."
+              echo "All endpoints failed, retrying in ''${delay}s..."
               sleep $delay
               delay=$((delay * 2))
             fi
@@ -137,39 +160,7 @@ in {
     };
 
     # Start nebula with obtained cert (started by timer, not blocking boot)
-    systemd.services.nebula-containernet = let
-      # Build static_host_map as proper attrset
-      staticHostMap = listToAttrs (map (ip: {
-        name = ip;
-        value = lighthouseHosts;
-      }) cfg.lighthouseIps);
-
-      # Build inbound firewall rules
-      inboundRules = [
-        { port = "any"; proto = "icmp"; host = "any"; }
-      ] ++ (map (p: { port = p; proto = "tcp"; host = "any"; }) cfg.servicePorts);
-
-      nebulaConfig = {
-        pki = {
-          ca = "/run/containernet/ca.crt";
-          cert = "/run/containernet/host.crt";
-          key = "/run/containernet/host.key";
-        };
-        static_host_map = staticHostMap;
-        lighthouse.hosts = cfg.lighthouseIps;
-        listen.port = 0;
-        tun.dev = "nebula-cnt";
-        punchy = { punch = true; respond = true; };
-        relay.use_relays = true;
-        firewall = {
-          outbound = [{ port = "any"; proto = "any"; host = "any"; }];
-          inbound = inboundRules;
-        };
-      };
-
-      configFile = pkgs.writeText "nebula-containernet-config.yml"
-        (builtins.toJSON nebulaConfig);
-    in {
+    systemd.services.nebula-containernet = {
       description = "Nebula containernet";
       # NOT in wantedBy - started by timer after container is fully up
       after = ["containernet-cert.service"];
@@ -215,7 +206,10 @@ in {
           # Token file is in env format (API_TOKEN=value), extract just the value
           TOKEN=$(grep -oP 'API_TOKEN=\K.*' ${cfg.tokenPath} || cat ${cfg.tokenPath})
 
-          # Retry with exponential backoff: 5s, 10s, 20s, 40s, 80s
+          # Endpoints to try in order
+          ENDPOINTS=(${endpointsArray})
+
+          # Retry with exponential backoff
           max_attempts=5
           attempt=1
           delay=5
@@ -223,33 +217,31 @@ in {
           while [ $attempt -le $max_attempts ]; do
             echo "Renewal attempt $attempt/$max_attempts..."
 
-            if resp=$(${pkgs.curl}/bin/curl -sf --max-time 30 -X POST \
-              -H "Authorization: Bearer $TOKEN" \
-              -H "Content-Type: application/json" \
-              -d "{\"current_ip\": \"$current_ip\"}" \
-              "${certServiceUrl}/containernet/renew"); then
+            for endpoint in "''${ENDPOINTS[@]}"; do
+              echo "  Trying: $endpoint"
+              if resp=$(${pkgs.curl}/bin/curl -sf --max-time 10 -X POST \
+                -H "Authorization: Bearer $TOKEN" \
+                -H "Content-Type: application/json" \
+                -d "{\"current_ip\": \"$current_ip\"}" \
+                "$endpoint/containernet/renew" 2>/dev/null); then
 
-              # Validate response has required fields
-              if echo "$resp" | ${pkgs.jq}/bin/jq -e '.cert and .key' > /dev/null 2>&1; then
-                echo "$resp" | ${pkgs.jq}/bin/jq -r '.cert' > "$CERT_DIR/host.crt.new"
-                echo "$resp" | ${pkgs.jq}/bin/jq -r '.key' > "$CERT_DIR/host.key.new"
+                if echo "$resp" | ${pkgs.jq}/bin/jq -e '.cert and .key' > /dev/null 2>&1; then
+                  echo "$resp" | ${pkgs.jq}/bin/jq -r '.cert' > "$CERT_DIR/host.crt.new"
+                  echo "$resp" | ${pkgs.jq}/bin/jq -r '.key' > "$CERT_DIR/host.key.new"
 
-                mv "$CERT_DIR/host.crt.new" "$CERT_DIR/host.crt"
-                mv "$CERT_DIR/host.key.new" "$CERT_DIR/host.key"
-                chmod 600 "$CERT_DIR/host.key"
+                  mv "$CERT_DIR/host.crt.new" "$CERT_DIR/host.crt"
+                  mv "$CERT_DIR/host.key.new" "$CERT_DIR/host.key"
+                  chmod 600 "$CERT_DIR/host.key"
 
-                echo "Renewed cert, reloading nebula..."
-                systemctl restart nebula-containernet.service
-                exit 0
-              else
-                echo "Invalid response from cert service"
+                  echo "Renewed cert via $endpoint, reloading nebula..."
+                  systemctl restart nebula-containernet.service
+                  exit 0
+                fi
               fi
-            else
-              echo "Request failed (attempt $attempt)"
-            fi
+            done
 
             if [ $attempt -lt $max_attempts ]; then
-              echo "Retrying in ''${delay}s..."
+              echo "All endpoints failed, retrying in ''${delay}s..."
               sleep $delay
               delay=$((delay * 2))
             fi

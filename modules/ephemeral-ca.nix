@@ -76,6 +76,12 @@ in {
             type = types.str;
             description = "Name of the tun device for this network";
           };
+
+          listenHost = mkOption {
+            type = types.nullOr types.str;
+            default = null;
+            description = "Specific IP to bind to (default: all interfaces)";
+          };
         };
       });
       default = {};
@@ -105,6 +111,7 @@ in {
       cert = config.age.secrets."${name}-lighthouse-cert".path;
       key = config.age.secrets."${name}-lighthouse-key".path;
       listen.port = net.port;
+      listen.host = if net.listenHost != null then net.listenHost else "0.0.0.0";
       # Peer with other lighthouses for redundancy
       lighthouses = map (peer: peer.ip) net.peerLighthouses;
       staticHostMap = builtins.listToAttrs (map (peer: {
