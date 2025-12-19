@@ -9,16 +9,6 @@
   inherit (config.flake.lib) mkDesktop mkServer mkHomeManager commonModules;
 in {
   flake.nixosConfigurations = {
-    # Installer ISO
-    rich-evans-installer = nixpkgs.lib.nixosSystem {
-      system = "x86_64-linux";
-      specialArgs = {inherit inputs; outputs = self;};
-      modules = [
-        "${nixpkgs}/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix"
-        (self + "/installer/installer.nix")
-      ];
-    };
-
     # Android Virtual Device
     bonbon = nixpkgs.lib.nixosSystem {
       system = "aarch64-linux";
