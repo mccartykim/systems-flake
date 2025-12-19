@@ -48,6 +48,17 @@ let
       subnet = "10.102.0.0/16";
       port = 4244;
       lighthouses = ["10.102.0.1" "10.102.0.2"]; # maitred + oracle
+      # External endpoints for each lighthouse (used by containers to bootstrap)
+      # Maitred binds to .254 to avoid conflict with reverse-proxy container (.1)
+      lighthouseEndpoints = {
+        "10.102.0.1" = ["192.168.100.254:4244" "kimb.dev:4244"];
+        "10.102.0.2" = ["150.136.155.204:4244"];
+      };
+      # Cert service endpoints (tried in order: local first, then WAN)
+      certServiceEndpoints = [
+        "http://192.168.100.1:8444"  # Local container bridge (fast, maitred only)
+        "https://net.kimb.dev"       # WAN fallback (works from anywhere)
+      ];
       pool = {
         start = "10.102.0.100";
         end = "10.102.0.254";

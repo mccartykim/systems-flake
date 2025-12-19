@@ -42,12 +42,8 @@ in {
       # Enable containernet with blog port exposed
       kimb.containernet = {
         enable = true;
-        hostAddress = "192.168.100.11";  # Must match container's hostAddress
         servicePorts = [blogService.port];
       };
-
-      # DNS via containerBridge (host runs DNS forwarder)
-      networking.nameservers = ["192.168.100.1"];
 
       environment.systemPackages = [inputs.mist-blog.packages.x86_64-linux.default];
 
