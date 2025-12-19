@@ -99,38 +99,7 @@
       in {
         # Per-system packages
         packages =
-          lib.optionalAttrs (system == "x86_64-linux") {
-            rich-evans-installer = nixos-generators.nixosGenerate {
-              system = "x86_64-linux";
-              modules = [
-                ./installer/installer.nix
-              ];
-              format = "install-iso";
-            };
-
-            # Steam Deck (donut) installer ISO
-            donut-installer = nixos-generators.nixosGenerate {
-              system = "x86_64-linux";
-              specialArgs = {inherit inputs;};
-              modules = [
-                "${nixpkgs}/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix"
-                ./installer/donut-installer.nix
-                {nixpkgs.overlays = [jovian-nixos.overlays.default];}
-              ];
-              format = "install-iso";
-            };
-
-            # Generic installer with flake source + network build support
-            generic-installer = nixos-generators.nixosGenerate {
-              system = "x86_64-linux";
-              modules = [
-                "${nixpkgs}/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix"
-                ./installer/generic-installer.nix
-              ];
-              format = "install-iso";
-            };
-          }
-          // lib.optionalAttrs (system == "x86_64-linux" || system == "aarch64-linux") {
+          lib.optionalAttrs (system == "x86_64-linux" || system == "aarch64-linux") {
             # ESPHome firmware builds
             esp32-cam-01-firmware = pkgs.stdenv.mkDerivation {
               name = "esp32-cam-01-firmware";
