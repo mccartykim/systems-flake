@@ -163,6 +163,11 @@ in {
               proto = "any";
               group = "laptops";
             }
+            {
+              port = "any";
+              proto = "any";
+              group = "mobile";
+            }
           ]
           # Host-specific rules
           ++ cfg.extraInboundRules;
