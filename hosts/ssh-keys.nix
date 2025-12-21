@@ -10,6 +10,7 @@ let
     total-eclipse = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJY8TB1PRV5e8e8QgdwFRPbuRIzjeS1oFY1WOUKTYnrj mccartykim@zoho.com";
     cheesecake = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKQgFzMg37QTeFE2ybQRHfVEQwW/Wz7lK6jPPmctFd/U kimb@surface3go";
     marshmallow = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICwE1JLDrS+C2GcUcFb8ZvDRJX0lF+e0CLhJhFK8DpTO mccartykim@zoho.com";
+    mochi = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHBSIfvPHC+UmMq6pghmdsjCTje/lOeiTVo2vDmyoNbf root@mochi";
   };
 
   # Desktop host keys (derived from registry)
