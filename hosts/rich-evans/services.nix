@@ -43,27 +43,46 @@ in {
     };
   };
 
-  # Home Assistant smart home platform (OCI container)
-  virtualisation.oci-containers.containers.homeassistant = lib.mkIf cfg.services.homeassistant.enable {
-    image = "ghcr.io/home-assistant/home-assistant:stable";
-    autoStart = true;
+  # Home Assistant smart home platform (native NixOS service)
+  services.home-assistant = lib.mkIf cfg.services.homeassistant.enable {
+    enable = true;
+    openFirewall = true;
 
-    # No port mapping needed with host networking
-    # ports = [ "${toString cfg.services.homeassistant.port}:8123" ];
-
-    volumes = [
-      "/var/lib/hass:/config"
-      "/etc/localtime:/etc/localtime:ro"
+    extraComponents = [
+      "default_config"
+      "met"
+      "radio_browser"
+      "esphome" # ESP32 integration
+      "zeroconf" # Device discovery
+      "ssdp"
+      "api" # REST API for Claude skills
+      "mobile_app"
+      "androidtv_remote" # Android TV control
+      "cast" # Chromecast/Google Cast
+      "thread" # Thread mesh networking
+      "otbr" # OpenThread Border Router
+      "vacuum" # Vacuum base
+      "mqtt" # MQTT for Valetudo
     ];
 
-    environment = {
-      TZ = "America/New_York";
+    config = {
+      default_config = {};
+      http = {
+        server_host = "0.0.0.0";
+        server_port = cfg.services.homeassistant.port;
+        use_x_forwarded_for = true;
+        trusted_proxies = [
+          "10.100.0.50" # maitred Nebula
+          "192.168.69.1" # maitred LAN
+          "192.168.100.0/24" # Container network
+          "127.0.0.1"
+        ];
+      };
+      api = {};
+      automation = "!include automations.yaml";
+      script = "!include scripts.yaml";
+      scene = "!include scenes.yaml";
     };
-
-    extraOptions = [
-      "--privileged"
-      "--network=host"
-    ];
   };
 
   # Homepage dashboard (host service) - local only
@@ -136,6 +155,9 @@ in {
       # Home Assistant
       (lib.optional cfg.services.homeassistant.enable cfg.services.homeassistant.port)
 
+      # ESPHome native API (for ESP32 device discovery)
+      (lib.optional cfg.services.homeassistant.enable 6053)
+
       # Homepage (LAN only)
       (lib.optional cfg.services.homepage.enable cfg.services.homepage.port)
 
@@ -155,13 +177,14 @@ in {
     ];
   };
 
-  # Enable OCI containers backend for Home Assistant
-  virtualisation.oci-containers.backend = lib.mkIf cfg.services.homeassistant.enable "podman";
-  virtualisation.podman.enable = lib.mkIf cfg.services.homeassistant.enable true;
-
   # Create necessary directories
   systemd.tmpfiles.rules = lib.flatten [
-    (lib.optional cfg.services.homeassistant.enable "d /var/lib/hass 0755 root root -")
+    # Home Assistant needs hass user ownership (created by native service)
+    (lib.optional cfg.services.homeassistant.enable "d /var/lib/hass 0750 hass hass -")
+    (lib.optional cfg.services.homeassistant.enable "f /var/lib/hass/automations.yaml 0644 hass hass -")
+    (lib.optional cfg.services.homeassistant.enable "f /var/lib/hass/scripts.yaml 0644 hass hass -")
+    (lib.optional cfg.services.homeassistant.enable "f /var/lib/hass/scenes.yaml 0644 hass hass -")
+    # Copyparty storage
     (lib.optional cfg.services.copyparty.enable "d /mnt/storage 0755 root root -")
     (lib.optional cfg.services.copyparty.enable "d /mnt/storage/public 0755 root root -")
   ];

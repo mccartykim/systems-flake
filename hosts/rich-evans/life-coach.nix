@@ -7,6 +7,9 @@
 # The service will use your Max subscription credits.
 #
 # When auth expires, the service will fail. Re-run `claude login` to fix.
+#
+# HOME ASSISTANT TOKEN: Create a long-lived access token in Home Assistant,
+# then encrypt it: echo "TOKEN" | agenix -e secrets/ha-life-coach-token.age
 {
   config,
   lib,
@@ -14,6 +17,12 @@
   claude_yapper,
   ...
 }: {
+  # Agenix secret for HA token
+  age.secrets.ha-life-coach-token = {
+    file = ../../secrets/ha-life-coach-token.age;
+    owner = "life-coach";
+    mode = "0400";
+  };
   # NOTE: claude_yapper.nixosModules.default is imported at the flake level
   # (in flake-modules/nixos-configurations.nix) to avoid infinite recursion
 
@@ -40,6 +49,10 @@
 
     # Smart lamp on LAN
     lampIP = "192.168.69.152";
+
+    # Home Assistant for presence sensor (same host)
+    homeAssistantUrl = "http://127.0.0.1:8123";
+    homeAssistantTokenFile = config.age.secrets.ha-life-coach-token.path;
 
     # State directory for context persistence
     stateDir = "/var/lib/life-coach-agent";

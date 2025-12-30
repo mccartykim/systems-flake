@@ -103,6 +103,17 @@ in {
         proto = "udp";
         host = "any";
       }
+      # Home Assistant / ESPHome
+      {
+        port = 8123;
+        proto = "tcp";
+        host = "any";
+      }
+      {
+        port = 6053;
+        proto = "tcp";
+        host = "any";
+      }
       # Camera streaming - only from personal devices
       {
         port = 8554;
@@ -187,6 +198,7 @@ in {
   users.users.kimb = {
     openssh.authorizedKeys.keys = sshKeys.authorizedKeys;
     initialPassword = "changeme";
+    extraGroups = ["dialout"]; # USB serial access for ESPHome flashing
   };
 
   # Programs configuration
@@ -205,6 +217,7 @@ in {
       rclone
       nh
       zoxide
+      esphome # ESP32 flashing and management
     ];
 
     # Override default shell setup for server

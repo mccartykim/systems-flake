@@ -55,11 +55,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1765827309,
-        "narHash": "sha256-ve58rXKQu1p6xPDbgde3UjS/2VsZkd7NioOCAkS+fxw=",
+        "lastModified": 1767070664,
+        "narHash": "sha256-xI6sKFaIcAvArmDEy5SV+/qtOrM8WKRVVdVX2wGm770=",
         "ref": "refs/heads/main",
-        "rev": "37e94f4b7d70a1cbc45b3be2f9ac663050b04b92",
-        "revCount": 21,
+        "rev": "03891bf0bf2f387f24c5bc12d71b8fbb8970a1e6",
+        "revCount": 23,
         "type": "git",
         "url": "ssh://git@github.com/mccartykim/claude-alarmclock-agent.git"
       },
