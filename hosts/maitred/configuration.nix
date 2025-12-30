@@ -41,6 +41,9 @@ in {
 
     # Printer configuration
     ./printer.nix
+
+    # Tor middle relay
+    ./tor-relay.nix
   ];
 
   # Nebula configuration (router + SMB printer sharing)
