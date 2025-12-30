@@ -4,6 +4,12 @@
 # GPIO35: 4x WS2812 RGB LEDs (beneath button)
 # GPIO41: Built-in button (active low)
 # GPIO4: IR transmitter (unused)
+#
+# Color states:
+#   YELLOW slow pulse = task pending (not priority)
+#   RED fast pulse = priority task (do this one!)
+#   YELLOW solid = button pressed, processing
+#   GREEN flash = acknowledged by agent
 
 esphome:
   name: desk-button
@@ -49,9 +55,13 @@ light:
     rgb_order: GRB
     effects:
       - pulse:
-          name: "Pulse"
-          transition_length: 1s
-          update_interval: 1s
+          name: "Slow Pulse"
+          transition_length: 2s
+          update_interval: 2s
+      - pulse:
+          name: "Fast Pulse"
+          transition_length: 0.5s
+          update_interval: 0.5s
       - strobe:
           name: "Confirm Flash"
           colors:
@@ -79,12 +89,14 @@ binary_sensor:
       - delayed_off: 10ms
     on_press:
       then:
-        # If task was pending, show yellow (processing)
+        # If any task was assigned (pending or priority), show yellow solid (processing)
         - if:
             condition:
-              switch.is_on: task_pending
+              or:
+                - switch.is_on: task_pending
+                - switch.is_on: task_priority
             then:
-              # Yellow = button pushed, waiting for agent to process
+              # Yellow solid = button pushed, waiting for agent to process
               - light.turn_on:
                   id: led
                   brightness: 100%
@@ -93,6 +105,7 @@ binary_sensor:
                   blue: 0%
                   effect: none
               - switch.turn_off: task_pending
+              - switch.turn_off: task_priority
 
 # Text sensor for current task (set by Home Assistant)
 text_sensor:
@@ -100,25 +113,57 @@ text_sensor:
     id: current_task
     name: "Current Task"
 
-# Task pending switch - RED pulsing = please address
+# Task pending switch - YELLOW slow pulse = task waiting (not priority)
 switch:
   - platform: template
     id: task_pending
     name: "Task Pending"
     optimistic: true
     on_turn_on:
-      # RED pulsing when task assigned - please address!
+      # Only show yellow if not already priority (priority takes precedence)
+      - if:
+          condition:
+            switch.is_off: task_priority
+          then:
+            - light.turn_on:
+                id: led
+                brightness: 50%
+                red: 100%
+                green: 70%
+                blue: 0%
+                effect: "Slow Pulse"
+    on_turn_off:
+      # LED stays yellow solid (set by button press) until acknowledged
+      - lambda: |-
+          // Do nothing - let acknowledged switch or priority handle LED
+
+  # Task priority switch - RED fast pulse = do this one next!
+  - platform: template
+    id: task_priority
+    name: "Task Priority"
+    optimistic: true
+    on_turn_on:
+      # RED fast pulse - this is the priority task
       - light.turn_on:
           id: led
-          brightness: 70%
+          brightness: 80%
           red: 100%
           green: 0%
           blue: 0%
-          effect: "Pulse"
+          effect: "Fast Pulse"
     on_turn_off:
-      # Don't turn off LED - let acknowledged switch handle final color
-      - lambda: |-
-          // LED stays yellow (set by button press) until acknowledged
+      # If still pending, go back to yellow slow pulse
+      - if:
+          condition:
+            switch.is_on: task_pending
+          then:
+            - light.turn_on:
+                id: led
+                brightness: 50%
+                red: 100%
+                green: 70%
+                blue: 0%
+                effect: "Slow Pulse"
 
   # Acknowledged switch - GREEN flash = agent received it
   - platform: template
