@@ -1,0 +1,155 @@
+# M5Stack Atom S3 Lite - Kitchen Button
+# Kitchen tasks
+
+esphome:
+  name: kitchen-button
+  friendly_name: Kitchen Button
+
+esp32:
+  board: esp32-s3-devkitc-1
+  variant: esp32s3
+  framework:
+    type: esp-idf
+
+logger:
+  baud_rate: 0
+
+api:
+  encryption:
+    key: !secret api_encryption_key
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+    ssid: "Kitchen-Button"
+    password: !secret ap_password
+
+captive_portal:
+
+light:
+  - platform: esp32_rmt_led_strip
+    id: led
+    name: "LED"
+    pin: GPIO35
+    num_leds: 4
+    chipset: ws2812
+    rgb_order: GRB
+    effects:
+      - pulse:
+          name: "Slow Pulse"
+          transition_length: 2s
+          update_interval: 2s
+      - pulse:
+          name: "Fast Pulse"
+          transition_length: 0.5s
+          update_interval: 0.5s
+      - strobe:
+          name: "Confirm Flash"
+          colors:
+            - state: true
+              brightness: 100%
+              red: 0%
+              green: 100%
+              blue: 0%
+              duration: 200ms
+            - state: false
+              duration: 200ms
+
+binary_sensor:
+  - platform: gpio
+    id: button
+    name: "Button"
+    pin:
+      number: GPIO41
+      inverted: true
+      mode:
+        input: true
+        pullup: true
+    filters:
+      - delayed_off: 10ms
+    on_press:
+      then:
+        - if:
+            condition:
+              or:
+                - switch.is_on: task_pending
+                - switch.is_on: task_priority
+            then:
+              - light.turn_on:
+                  id: led
+                  brightness: 100%
+                  red: 100%
+                  green: 70%
+                  blue: 0%
+                  effect: none
+              - switch.turn_off: task_pending
+              - switch.turn_off: task_priority
+
+text_sensor:
+  - platform: template
+    id: current_task
+    name: "Current Task"
+
+switch:
+  - platform: template
+    id: task_pending
+    name: "Task Pending"
+    optimistic: true
+    on_turn_on:
+      - if:
+          condition:
+            switch.is_off: task_priority
+          then:
+            - light.turn_on:
+                id: led
+                brightness: 50%
+                red: 100%
+                green: 70%
+                blue: 0%
+                effect: "Slow Pulse"
+
+  - platform: template
+    id: task_priority
+    name: "Task Priority"
+    optimistic: true
+    on_turn_on:
+      - light.turn_on:
+          id: led
+          brightness: 80%
+          red: 100%
+          green: 0%
+          blue: 0%
+          effect: "Fast Pulse"
+    on_turn_off:
+      - if:
+          condition:
+            switch.is_on: task_pending
+          then:
+            - light.turn_on:
+                id: led
+                brightness: 50%
+                red: 100%
+                green: 70%
+                blue: 0%
+                effect: "Slow Pulse"
+
+  - platform: template
+    id: task_acknowledged
+    name: "Task Acknowledged"
+    optimistic: true
+    on_turn_on:
+      - light.turn_on:
+          id: led
+          brightness: 100%
+          red: 0%
+          green: 100%
+          blue: 0%
+          effect: "Confirm Flash"
+      - delay: 2s
+      - light.turn_off: led
+      - switch.turn_off: task_acknowledged

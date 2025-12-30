@@ -18,7 +18,7 @@
     settings = {
       # Relay identification
       Nickname = "maitredrelay";
-      ContactInfo = "tor@kimb.dev";
+      ContactInfo = "kimb@kimb.dev";
 
       # Ports - ORPort is required, DirPort optional
       ORPort = 9001;
