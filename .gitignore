@@ -8,3 +8,4 @@ secrets/age-key.txt
 secrets/.age-recipients.backup
 *.key
 *.crt
+.esphome/
