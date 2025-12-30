@@ -78,5 +78,9 @@ in
     # ===== CERT SERVICE =====
     # API token for cert allocation service
     "cert-service-token.age".publicKeys = [hostKeys.maitred bootstrap];
+
+    # ===== LIFE COACH AGENT =====
+    # Home Assistant long-lived access token for presence sensor queries
+    "ha-life-coach-token.age".publicKeys = [hostKeys.rich-evans bootstrap];
   }
   // allNebulaSecrets
