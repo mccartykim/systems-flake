@@ -1,0 +1,139 @@
+# M5Stack Atom S3 Lite - Desk Task Button
+# Used by life-coach agent to assign tasks and confirm completion
+#
+# GPIO35: 4x WS2812 RGB LEDs (beneath button)
+# GPIO41: Built-in button (active low)
+# GPIO4: IR transmitter (unused)
+
+esphome:
+  name: desk-button
+  friendly_name: Desk Button
+
+esp32:
+  board: esp32-s3-devkitc-1
+  variant: esp32s3
+  framework:
+    type: esp-idf
+
+# Disable serial logging (S3 uses USB CDC)
+logger:
+  baud_rate: 0
+
+# Home Assistant API
+api:
+  encryption:
+    key: !secret api_encryption_key
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  ap:
+    ssid: "Desk-Button"
+    password: !secret ap_password
+
+captive_portal:
+
+# RGB LED strip (4 LEDs under button)
+light:
+  - platform: esp32_rmt_led_strip
+    id: led
+    name: "LED"
+    pin: GPIO35
+    num_leds: 4
+    chipset: ws2812
+    rgb_order: GRB
+    effects:
+      - pulse:
+          name: "Pulse"
+          transition_length: 1s
+          update_interval: 1s
+      - strobe:
+          name: "Confirm Flash"
+          colors:
+            - state: true
+              brightness: 100%
+              red: 0%
+              green: 100%
+              blue: 0%
+              duration: 200ms
+            - state: false
+              duration: 200ms
+
+# Button with press event
+binary_sensor:
+  - platform: gpio
+    id: button
+    name: "Button"
+    pin:
+      number: GPIO41
+      inverted: true
+      mode:
+        input: true
+        pullup: true
+    filters:
+      - delayed_off: 10ms
+    on_press:
+      then:
+        # If task was pending, show yellow (processing)
+        - if:
+            condition:
+              switch.is_on: task_pending
+            then:
+              # Yellow = button pushed, waiting for agent to process
+              - light.turn_on:
+                  id: led
+                  brightness: 100%
+                  red: 100%
+                  green: 70%
+                  blue: 0%
+                  effect: none
+              - switch.turn_off: task_pending
+
+# Text sensor for current task (set by Home Assistant)
+text_sensor:
+  - platform: template
+    id: current_task
+    name: "Current Task"
+
+# Task pending switch - RED pulsing = please address
+switch:
+  - platform: template
+    id: task_pending
+    name: "Task Pending"
+    optimistic: true
+    on_turn_on:
+      # RED pulsing when task assigned - please address!
+      - light.turn_on:
+          id: led
+          brightness: 70%
+          red: 100%
+          green: 0%
+          blue: 0%
+          effect: "Pulse"
+    on_turn_off:
+      # Don't turn off LED - let acknowledged switch handle final color
+      - lambda: |-
+          // LED stays yellow (set by button press) until acknowledged
+
+  # Acknowledged switch - GREEN flash = agent received it
+  - platform: template
+    id: task_acknowledged
+    name: "Task Acknowledged"
+    optimistic: true
+    on_turn_on:
+      # GREEN flash = acknowledged by agent
+      - light.turn_on:
+          id: led
+          brightness: 100%
+          red: 0%
+          green: 100%
+          blue: 0%
+          effect: "Confirm Flash"
+      - delay: 2s
+      - light.turn_off: led
+      - switch.turn_off: task_acknowledged
