@@ -177,6 +177,7 @@ in {
         80 # HTTP (forwarded to blog container)
         443 # HTTPS (forwarded to blog container)
         631 # CUPS/IPP printer sharing
+        24608 # Tor bridge obfs4
       ];
 
       allowedUDPPorts = [

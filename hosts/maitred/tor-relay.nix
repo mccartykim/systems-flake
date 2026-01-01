@@ -9,6 +9,7 @@
   services.tor = {
     enable = true;
     openFirewall = true;
+    controlSocket.enable = true;
 
     relay = {
       enable = true;
@@ -17,10 +18,9 @@
 
     settings = {
       # Relay identification
-      Nickname = "maitredrelay";
       ContactInfo = "kimb@kimb.dev";
 
-      ExtORPort = 48396;
+      ServerTransportListenAddr = "obfs4 0.0.0.0:24608";
 
       # Ports - IPv4 only since we don't have IPv6 on this network
       ORPort = [
@@ -31,7 +31,6 @@
       ];
       # DirPort = 9030;  # Uncomment to also serve directory info
 
-      controlSocket.enable = true;
       # Bandwidth limiting - generous but won't impact streaming/zoom
       # 5 MB/s = 40 Mbps sustained, plenty of headroom on gigabit
       RelayBandwidthRate = "10 MBytes";
