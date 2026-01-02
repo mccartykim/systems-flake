@@ -48,7 +48,19 @@
       "Bash(jj new:*)",
       "Bash(python tests/test_hard_deadline_escalation.py:*)",
       "Bash(jj bookmark:*)",
-      "Bash(jj git push:*)"
+      "Bash(jj git push:*)",
+      "WebFetch(domain:jj-vcs.github.io)",
+      "WebFetch(domain:docs.jj-vcs.dev)",
+      "Bash(jj describe:*)",
+      "Bash(tree:*)",
+      "Bash(grep:*)",
+      "Bash(head:*)",
+      "Bash(for f in tests/test_*.py)",
+      "Bash(do echo \"=== $f ===\")",
+      "Bash(python task_scheduler.py:*)",
+      "Bash(chmod:*)",
+      "Bash(python -m pytest:*)",
+      "Bash(python:*)"
     ],
     "deny": [],
     "ask": []
