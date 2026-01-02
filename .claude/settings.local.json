@@ -46,7 +46,9 @@
       "Bash(nix develop:*)",
       "Bash(python3:*)",
       "Bash(jj new:*)",
-      "Bash(python tests/test_hard_deadline_escalation.py:*)"
+      "Bash(python tests/test_hard_deadline_escalation.py:*)",
+      "Bash(jj bookmark:*)",
+      "Bash(jj git push:*)"
     ],
     "deny": [],
     "ask": []
