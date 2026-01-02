@@ -41,7 +41,12 @@
       "Bash(nc:*)",
       "WebFetch(domain:wiki.archlinux.org)",
       "WebFetch(domain:libreboot.org)",
-      "Bash(nix flake update:*)"
+      "Bash(nix flake update:*)",
+      "Bash(ls:*)",
+      "Bash(nix develop:*)",
+      "Bash(python3:*)",
+      "Bash(jj new:*)",
+      "Bash(python tests/test_hard_deadline_escalation.py:*)"
     ],
     "deny": [],
     "ask": []
