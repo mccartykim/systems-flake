@@ -55,11 +55,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1767331150,
-        "narHash": "sha256-Q1F0Vr7uebjPkV7vD8PkJhhbz0B+bsicHLm8gtIBPRA=",
+        "lastModified": 1767360366,
+        "narHash": "sha256-6W+E02P3f5xsWNhCMQrcUbQ+UqgaPuP+XEq8nROCWOU=",
         "ref": "refs/heads/main",
-        "rev": "0df81f42b783cbfa8ca70f30f6f08a488d64a927",
-        "revCount": 41,
+        "rev": "5e314908390918d22083120ac5d711e9a676c038",
+        "revCount": 42,
         "type": "git",
         "url": "ssh://git@github.com/mccartykim/claude-alarmclock-agent.git"
       },
@@ -74,11 +74,11 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1767145519,
-        "narHash": "sha256-x9D+6X2jAfap0MgYri6oLWoJ8LXU7r+pIRifGn9YHK0=",
+        "lastModified": 1767317991,
+        "narHash": "sha256-NUqvf0IUEUaRvzw/v3E9qQ4247x1IlroWLh7iH/JjB4=",
         "owner": "9001",
         "repo": "copyparty",
-        "rev": "39c3ccc2eb66c886cc65ef676d5ee9de34479073",
+        "rev": "5b89a2e3b20fb14e09e8ebfb583c1ed4c42ec385",
         "type": "github"
       },
       "original": {
@@ -528,11 +528,11 @@
     },
     "nixos-hardware": {
       "locked": {
-        "lastModified": 1767070591,
-        "narHash": "sha256-b0aM3221Pw6vbACFqZrVzZjMNqXVPi1dvgLr8QTbajc=",
+        "lastModified": 1767185284,
+        "narHash": "sha256-ljDBUDpD1Cg5n3mJI81Hz5qeZAwCGxon4kQW3Ho3+6Q=",
         "owner": "NixOS",
         "repo": "nixos-hardware",
-        "rev": "9b3c38bf6c260d0e88154ef07fa833fa845bfd14",
+        "rev": "40b1a28dce561bea34858287fbb23052c3ee63fe",
         "type": "github"
       },
       "original": {
@@ -606,11 +606,11 @@
     },
     "nixpkgs_4": {
       "locked": {
-        "lastModified": 1767026758,
-        "narHash": "sha256-7fsac/f7nh/VaKJ/qm3I338+wAJa/3J57cOGpXi0Sbg=",
+        "lastModified": 1767242400,
+        "narHash": "sha256-knFaYjeg7swqG1dljj1hOxfg39zrIy8pfGuicjm9s+o=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "346dd96ad74dc4457a9db9de4f4f57dab2e5731d",
+        "rev": "c04833a1e584401bb63c1a63ddc51a71e6aa457a",
         "type": "github"
       },
       "original": {
@@ -673,11 +673,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1767067175,
-        "narHash": "sha256-pmnvcklSTYPAQJvAy1QsGK4Tr/7WZ1J2fF88NRQsSUw=",
+        "lastModified": 1767233186,
+        "narHash": "sha256-YhRnL6DpWcGyWeQPAWKMtVkVgbmtWy9IJgXq93iI4Lk=",
         "owner": "nix-community",
         "repo": "srvos",
-        "rev": "de0050496c97708afa2b32b68885fae640b65ca8",
+        "rev": "5c68cc6911c702e08a6da6f3bddfc76c1a75ec70",
         "type": "github"
       },
       "original": {
