@@ -60,6 +60,7 @@
     # Package from claude_yapper flake
     # The prompt is defined in claude_yapper/life_coach_prompt.txt
     package = claude_yapper.packages.${pkgs.stdenv.hostPlatform.system}.life-coach-agent;
+    skillsPackage = claude_yapper.packages.${pkgs.stdenv.hostPlatform.system}.claude-skills;
   };
 
   # Override systemd service for better failure handling
