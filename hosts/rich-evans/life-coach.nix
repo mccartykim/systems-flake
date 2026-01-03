@@ -31,11 +31,28 @@
     isNormalUser = true;
     group = "life-coach";
     home = "/var/lib/life-coach-agent";
+    homeMode = "0750"; # Allow life-coach group (hass) to access for interrupt signals
     createHome = true;
     # Allow kimb to sudo as this user for login
     extraGroups = [];
   };
-  users.groups.life-coach = {};
+  users.groups.life-coach = {
+    members = ["hass"]; # Allow HA to write interrupt events
+  };
+
+  # Make state directory accessible to life-coach group (for HA interrupt signals)
+  # Use 'z' (not 'd') to fix permissions on existing directory
+  systemd.tmpfiles.rules = [
+    "z /var/lib/life-coach-agent 0750 life-coach life-coach -"
+    "z /var/lib/life-coach-agent/state.db 0660 life-coach life-coach -"
+    "z /var/lib/life-coach-agent/state.db-wal 0660 life-coach life-coach -"
+    "z /var/lib/life-coach-agent/state.db-shm 0660 life-coach life-coach -"
+  ];
+
+  # Belt-and-suspenders: ensure directory permissions on every activation
+  system.activationScripts.life-coach-agent-perms = lib.stringAfter ["users"] ''
+    chmod 0750 /var/lib/life-coach-agent 2>/dev/null || true
+  '';
 
   # Life Coach Agent service configuration
   services.life-coach-agent = {
@@ -90,4 +107,26 @@
 
   # Open port for TTS audio serving to Chromecast devices
   networking.firewall.allowedTCPPorts = [8555];
+
+  # Stable wrapper script for HA to signal button presses
+  # Path: /etc/life-coach-agent/signal_button_press.sh
+  # Usage: signal_button_press.sh <button_id>
+  environment.etc."life-coach-agent/signal_button_press.sh" = {
+    mode = "0755";
+    text = ''
+      #!${pkgs.bash}/bin/bash
+      # Signal a button press interrupt to the life coach agent
+      # Called by Home Assistant automation when button state changes
+      set -euo pipefail
+      BUTTON_ID="''${1:-}"
+      if [ -z "$BUTTON_ID" ]; then
+        echo "Usage: signal_button_press.sh <button_id>" >&2
+        exit 1
+      fi
+      DB_PATH="/var/lib/life-coach-agent/state.db"
+      ${pkgs.sqlite}/bin/sqlite3 "$DB_PATH" \
+        "INSERT INTO interrupt_events (event_type, payload) VALUES ('button_press', '{\"button\": \"$BUTTON_ID\"}');"
+      echo "Signaled button press: $BUTTON_ID"
+    '';
+  };
 }
