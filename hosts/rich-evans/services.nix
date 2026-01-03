@@ -79,11 +79,28 @@ in {
         ];
       };
       api = {};
+      # Shell commands for life-coach agent button press interrupts
+      # One per button since shell_command doesn't support templating
+      shell_command = {
+        signal_desk_button = "/etc/life-coach-agent/signal_button_press.sh desk_button";
+        signal_bathroom = "/etc/life-coach-agent/signal_button_press.sh bathroom";
+        signal_litterbox = "/etc/life-coach-agent/signal_button_press.sh litterbox";
+        signal_shower_button = "/etc/life-coach-agent/signal_button_press.sh shower_button";
+        signal_bass_guitar = "/etc/life-coach-agent/signal_button_press.sh bass_guitar";
+        signal_garage_button = "/etc/life-coach-agent/signal_button_press.sh garage_button";
+        signal_kitchen_front_door = "/etc/life-coach-agent/signal_button_press.sh kitchen_front_door";
+      };
       automation = "!include automations.yaml";
       script = "!include scripts.yaml";
       scene = "!include scenes.yaml";
     };
   };
+
+  # Allow HA to write to life-coach-agent state directory for button interrupts
+  # (HA uses ProtectSystem=strict by default, limiting writes to /var/lib/hass)
+  systemd.services.home-assistant.serviceConfig.ReadWritePaths = [
+    "/var/lib/life-coach-agent"
+  ];
 
   # Homepage dashboard (host service) - local only
   services.homepage-dashboard = lib.mkIf cfg.services.homepage.enable {
