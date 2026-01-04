@@ -60,7 +60,8 @@
       "Bash(python task_scheduler.py:*)",
       "Bash(chmod:*)",
       "Bash(python -m pytest:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(nix flake metadata:*)"
     ],
     "deny": [],
     "ask": []
