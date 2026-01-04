@@ -83,16 +83,29 @@ in {
       # One per button since shell_command doesn't support templating
       shell_command = {
         signal_desk_button = "/etc/life-coach-agent/signal_button_press.sh desk_button";
+        signal_desk_task_1 = "/etc/life-coach-agent/signal_button_press.sh desk_task_1";
+        signal_desk_task_2 = "/etc/life-coach-agent/signal_button_press.sh desk_task_2";
+        signal_desk_task_3 = "/etc/life-coach-agent/signal_button_press.sh desk_task_3";
         signal_bathroom = "/etc/life-coach-agent/signal_button_press.sh bathroom";
         signal_litterbox = "/etc/life-coach-agent/signal_button_press.sh litterbox";
         signal_shower_button = "/etc/life-coach-agent/signal_button_press.sh shower_button";
         signal_bass_guitar = "/etc/life-coach-agent/signal_button_press.sh bass_guitar";
         signal_garage_button = "/etc/life-coach-agent/signal_button_press.sh garage_button";
         signal_kitchen_front_door = "/etc/life-coach-agent/signal_button_press.sh kitchen_front_door";
+        signal_user_input = "/etc/life-coach-agent/signal_user_input.sh";
       };
+      # All automations are in /var/lib/hass/automations.yaml
       automation = "!include automations.yaml";
       script = "!include scripts.yaml";
       scene = "!include scenes.yaml";
+      # Text input for life-coach agent user prompts
+      input_text = {
+        life_coach_input = {
+          name = "Life Coach Input";
+          max = 255;
+          icon = "mdi:message-text";
+        };
+      };
     };
   };
 
