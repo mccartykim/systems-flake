@@ -25,6 +25,9 @@ in {
     # Camera/webcam server
     ./camera.nix
 
+    # Kokoro TTS server
+    ./kokoro-tts.nix
+
     # Nebula mesh network (consolidated module)
     ../../modules/nebula-node.nix
 
