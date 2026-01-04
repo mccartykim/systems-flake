@@ -27,6 +27,7 @@
   # Note: --model, --data, --style are global options and must come before the subcommand
   kokoWrapper = pkgs.writeShellScriptBin "koko-server" ''
     export LD_LIBRARY_PATH="${pkgs.onnxruntime}/lib:${pkgs.espeak-ng}/lib:${pkgs.libopus}/lib:${pkgs.sonic}/lib:$LD_LIBRARY_PATH"
+    export ESPEAK_DATA_PATH="${pkgs.espeak-ng}/share/espeak-ng-data"
     exec ${kokoPackage}/bin/koko \
       --model ${kokoroModel} \
       --data ${kokoroVoices} \
