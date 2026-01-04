@@ -129,4 +129,20 @@
       echo "Signaled button press: $BUTTON_ID"
     '';
   };
+
+  # Signal script for user input from HA text box
+  # Path: /etc/life-coach-agent/signal_user_input.sh
+  environment.etc."life-coach-agent/signal_user_input.sh" = {
+    mode = "0755";
+    text = ''
+      #!${pkgs.bash}/bin/bash
+      # Signal that user input was submitted via Home Assistant
+      # Called by Home Assistant automation when input_text.life_coach_input changes
+      set -euo pipefail
+      DB_PATH="/var/lib/life-coach-agent/state.db"
+      ${pkgs.sqlite}/bin/sqlite3 "$DB_PATH" \
+        "INSERT INTO interrupt_events (event_type, payload) VALUES ('user_input', '{}');"
+      echo "Signaled user input received"
+    '';
+  };
 }
