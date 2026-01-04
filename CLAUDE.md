@@ -493,6 +493,37 @@ tests/                         # NixOS VM tests
 - **Containers**: 192.168.100.0/24 - maitred containers
 - **Tailscale**: 100.64.0.0/10 - backup connectivity
 
+## Remote Shell Gotchas (NixOS)
+
+Common pitfalls when running commands on remote NixOS hosts via SSH:
+
+### Agenix Secrets Require Correct User
+- Secrets in `/run/agenix/` are owned by specific users with mode 0400
+- Use `sudo -u <owner>` to read them, NOT regular sudo
+- Example: `sudo -u life-coach cat /run/agenix/ha-life-coach-token`
+
+### Tools Not in PATH
+- NixOS doesn't have sqlite3, jq, etc. in system PATH by default
+- Use `nix-shell -p <pkg>` for one-off commands
+- Example: `sudo nix-shell -p sqlite --run 'sqlite3 /path/to/db "SELECT * FROM table"'`
+- Or find the store path from a service that uses it
+
+### Running as Service Users
+- Service users often have limited shells/environments
+- Use `sudo -u <user> bash -c '...'` to run as them with proper shell
+- Set required env vars inside the bash -c string
+- Example: `sudo -u life-coach bash -c 'export FOO=bar && command'`
+
+### Fish Shell on Some Hosts
+- rich-evans uses fish as default shell
+- Heredocs and bash-isms fail in fish
+- Use `sudo bash -c '...'` instead of relying on default shell
+
+### Permission for State Directories
+- Service state dirs (e.g., `/var/lib/service`) are often 0700 or 0750
+- Check group membership if another service needs access
+- Remember systemd's ProtectSystem=strict limits writes to ReadWritePaths only
+
 # important-instruction-reminders
 Do what has been asked; nothing more, nothing less.
 NEVER create files unless they're absolutely necessary for achieving your goal.
