@@ -55,11 +55,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1767557885,
-        "narHash": "sha256-toaxNNifVW+6D6T+d3C7aSSHtPfievcHr/FMZAL0x6s=",
+        "lastModified": 1767564591,
+        "narHash": "sha256-OTFfsE6eFxx1FyCS24z55nFZnTHl6OqKDY3YFptMV+8=",
         "ref": "refs/heads/main",
-        "rev": "ad6bb4691846848709545027c79aae313ed34f93",
-        "revCount": 65,
+        "rev": "944572c0a874cfd0a568fbfe3cef5e89af974fb2",
+        "revCount": 66,
         "type": "git",
         "url": "ssh://git@github.com/mccartykim/claude-alarmclock-agent.git"
       },
@@ -256,6 +256,24 @@
         "type": "github"
       }
     },
+    "flake-utils_4": {
+      "inputs": {
+        "systems": "systems_4"
+      },
+      "locked": {
+        "lastModified": 1731533236,
+        "narHash": "sha256-l0KFg5HjrsfsO/JpG+r7fRrqm12kzFHyUHqHCVpMMbI=",
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "rev": "11707dc2f618dd54ca8739b309ec4fc024de578b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "type": "github"
+      }
+    },
     "gitignore": {
       "inputs": {
         "nixpkgs": [
@@ -340,9 +358,45 @@
         "type": "github"
       }
     },
-    "mist-blog": {
+    "kokoro": {
       "inputs": {
         "flake-utils": "flake-utils_3",
+        "kokoros-src": "kokoros-src",
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "rust-overlay": "rust-overlay"
+      },
+      "locked": {
+        "lastModified": 1767564113,
+        "narHash": "sha256-EbFCN6Qe7NYndmjGttwiqaWQy7ktR5bQte32uLo3qg0=",
+        "path": "/home/kimb/shared_projects/kokoro",
+        "type": "path"
+      },
+      "original": {
+        "path": "/home/kimb/shared_projects/kokoro",
+        "type": "path"
+      }
+    },
+    "kokoros-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1766978283,
+        "narHash": "sha256-1d0+RttcqYKe0vgIORaG3niE7ZMoMfGprccW4wq/dz4=",
+        "owner": "lucasjinreal",
+        "repo": "Kokoros",
+        "rev": "113565a744acd8cdfc47062f718e376e806e87e7",
+        "type": "github"
+      },
+      "original": {
+        "owner": "lucasjinreal",
+        "repo": "Kokoros",
+        "type": "github"
+      }
+    },
+    "mist-blog": {
+      "inputs": {
+        "flake-utils": "flake-utils_4",
         "nix-gleam": "nix-gleam",
         "nixpkgs": [
           "nixpkgs"
@@ -653,6 +707,7 @@
         "flake-parts": "flake-parts_2",
         "home-manager": "home-manager_2",
         "jovian-nixos": "jovian-nixos",
+        "kokoro": "kokoro",
         "mist-blog": "mist-blog",
         "nil-flake": "nil-flake",
         "nix-darwin": "nix-darwin",
@@ -664,6 +719,27 @@
         "nixpkgs": "nixpkgs_4",
         "srvos": "srvos",
         "system-manager": "system-manager"
+      }
+    },
+    "rust-overlay": {
+      "inputs": {
+        "nixpkgs": [
+          "kokoro",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1767495280,
+        "narHash": "sha256-hEEgtE/RSRigw8xscchGymf/t1nluZwTfru4QF6O1CQ=",
+        "owner": "oxalica",
+        "repo": "rust-overlay",
+        "rev": "cb24c5cc207ba8e9a4ce245eedd2d37c3a988bc1",
+        "type": "github"
+      },
+      "original": {
+        "owner": "oxalica",
+        "repo": "rust-overlay",
+        "type": "github"
       }
     },
     "srvos": {
@@ -737,6 +813,21 @@
       }
     },
     "systems_3": {
+      "locked": {
+        "lastModified": 1681028828,
+        "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
+        "owner": "nix-systems",
+        "repo": "default",
+        "rev": "da67096a3b9bf56a91d16901293e51ba5b49a27e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-systems",
+        "repo": "default",
+        "type": "github"
+      }
+    },
+    "systems_4": {
       "locked": {
         "lastModified": 1681028828,
         "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
