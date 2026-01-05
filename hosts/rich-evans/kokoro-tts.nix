@@ -32,7 +32,7 @@
       --model ${kokoroModel} \
       --data ${kokoroVoices} \
       --style bf_emma \
-      --speed 0.8 \
+      --speed 0.7 \
       openai \
       --port 3000 \
       --ip 127.0.0.1 \
