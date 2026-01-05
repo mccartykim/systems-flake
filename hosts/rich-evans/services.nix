@@ -103,7 +103,15 @@ in {
         life_coach_input = {
           name = "Life Coach Input";
           max = 255;
+          mode = "text";
           icon = "mdi:message-text";
+        };
+      };
+      # Submit button for life-coach input (pressing Enter or this button submits)
+      input_button = {
+        life_coach_submit = {
+          name = "Send to Life Coach";
+          icon = "mdi:send";
         };
       };
     };
