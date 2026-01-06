@@ -8,12 +8,12 @@
   inherit (config.flake.lib) darwinCommon;
 in {
   flake.darwinConfigurations = {
-    "kmccarty-YM2K" = nix-darwin.lib.darwinSystem {
+    "kmccarty-27YM2K" = nix-darwin.lib.darwinSystem {
       modules =
         darwinCommon
         ++ [
-          ../../darwin/kmccarty-YM2K/configuration.nix
-          ../../home/work-laptop.nix
+          ../darwin/kmccarty-YM2K/configuration.nix
+          ../home/work-laptop.nix
         ];
     };
 
@@ -21,8 +21,8 @@ in {
       modules =
         darwinCommon
         ++ [
-          ../../darwin/cronut/configuration.nix
-          ../../home/cronut.nix
+          ../darwin/cronut/configuration.nix
+          ../home/cronut.nix
         ];
     };
   };
