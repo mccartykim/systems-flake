@@ -145,4 +145,26 @@
       echo "Signaled user input received"
     '';
   };
+
+  # Signal script for location changes from HA geofencing
+  # Path: /etc/life-coach-agent/signal_location_change.sh
+  # Usage: signal_location_change.sh <home|at_office|wfh>
+  environment.etc."life-coach-agent/signal_location_change.sh" = {
+    mode = "0755";
+    text = ''
+      #!${pkgs.bash}/bin/bash
+      # Signal a location change to the life coach agent
+      # Called by Home Assistant automation when phone enters/leaves zones
+      set -euo pipefail
+      LOCATION="''${1:-}"
+      if [[ ! "$LOCATION" =~ ^(home|at_office|wfh)$ ]]; then
+        echo "Usage: signal_location_change.sh <home|at_office|wfh>" >&2
+        exit 1
+      fi
+      DB_PATH="/var/lib/life-coach-agent/state.db"
+      ${pkgs.sqlite}/bin/sqlite3 "$DB_PATH" \
+        "INSERT INTO interrupt_events (event_type, payload) VALUES ('location_change', '{\"location\": \"$LOCATION\"}');"
+      echo "Signaled location: $LOCATION"
+    '';
+  };
 }
