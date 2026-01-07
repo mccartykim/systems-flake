@@ -53,7 +53,7 @@
     claude_yapper.inputs.nixpkgs.follows = "nixpkgs";
 
     # Kokoro TTS - local flake for now (has working build)
-    kokoro.url = "path:/home/kimb/shared_projects/kokoro";
+    kokoro.url = "git+ssh://git@github.com/mccartykim/kokoro-flake.git";
     kokoro.inputs.nixpkgs.follows = "nixpkgs";
 
     nixos-facter-modules.url = "github:nix-community/nixos-facter-modules";
