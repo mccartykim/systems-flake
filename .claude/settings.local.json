@@ -61,7 +61,8 @@
       "Bash(chmod:*)",
       "Bash(python -m pytest:*)",
       "Bash(python:*)",
-      "Bash(nix flake metadata:*)"
+      "Bash(nix flake metadata:*)",
+      "Bash(time nix develop --command python:*)"
     ],
     "deny": [],
     "ask": []

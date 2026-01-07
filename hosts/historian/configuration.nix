@@ -22,6 +22,10 @@
   kimb.nebula = {
     enable = true;
     openToPersonalDevices = true;
+    # Allow servers (like rich-evans) to access Ollama API
+    extraInboundRules = [
+      { port = 11434; proto = "tcp"; group = "servers"; }
+    ];
   };
 
   # Distributed builds - enable buildnet for untrusted builders
@@ -193,7 +197,7 @@
       host = "0.0.0.0";
     };
     open-webui = {
-      enable = true;
+      enable = false;
       host = "0.0.0.0";
       openFirewall = true;
       environment = {

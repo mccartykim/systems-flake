@@ -22,7 +22,19 @@
   kimb.nebula = {
     enable = true;
     openToPersonalDevices = true;
+    extraInboundRules = [
+      {port = 11434; proto = "tcp"; host = "any";} # Ollama API
+      {port = 8880; proto = "tcp"; host = "any";} # Kokoro-FastAPI TTS
+    ];
   };
+
+  # Disable sleep/suspend (keeps waking immediately anyway)
+  systemd.sleep.extraConfig = ''
+    AllowSuspend=no
+    AllowHibernation=no
+    AllowHybridSleep=no
+    AllowSuspendThenHibernate=no
+  '';
 
   # Host identification and networking configuration
   networking = {
@@ -138,8 +150,12 @@
     # Enable Sunshine for game streaming
     sunshine.enable = true;
 
-    # Additional services
-    ollama.enable = true;
+    # Ollama LLM server - exposed over Nebula
+    ollama = {
+      enable = true;
+      host = "0.0.0.0"; # Bind to all interfaces
+      openFirewall = true; # Open port 11434
+    };
     xrdp = {
       enable = true;
       openFirewall = true;
@@ -156,6 +172,20 @@
   users.users.kimb = {
     description = "Kimberly";
     extraGroups = ["input"];
+  };
+
+  # Kokoro-FastAPI TTS with GPU acceleration
+  virtualisation.oci-containers = {
+    backend = "podman";
+    containers.kokoro-fastapi = {
+      image = "ghcr.io/remsky/kokoro-fastapi-gpu:latest";
+      autoStart = true;
+      ports = ["8880:8880"];
+      extraOptions = [
+        "--device=nvidia.com/gpu=all"
+        "--security-opt=label=disable"
+      ];
+    };
   };
 
   system.stateVersion = "23.11";
