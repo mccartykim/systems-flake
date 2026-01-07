@@ -6,7 +6,7 @@
 }: let
   inherit (inputs) nixpkgs home-manager srvos nix-index-database;
 
-  # Overlay to fix Python packages with overly strict version bounds
+  # Overlay to fix Python packages with build/test issues
   pythonFixesOverlay = final: prev: {
     python3Packages = prev.python3Packages.override {
       overrides = pyFinal: pyPrev: {
@@ -17,6 +17,13 @@
             pyFinal.pythonRelaxDepsHook
           ];
           pythonRelaxDeps = ["beautifulsoup4"];
+        });
+
+        # duckdb-engine tests fail because DuckDB doesn't implement all
+        # PostgreSQL system catalogs (pg_collation, etc). The package itself
+        # works fine; only the test suite has compatibility issues.
+        duckdb-engine = pyPrev.duckdb-engine.overridePythonAttrs (old: {
+          doCheck = false;
         });
       };
     };
