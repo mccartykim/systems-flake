@@ -186,9 +186,19 @@
 
     # AI/ML services with ROCm acceleration
     ollama = {
-      enable = false;
+      enable = true;
       package = pkgs.ollama-rocm;
-      environmentVariables.HSA_OVERRIDE_GFX_VERSION = "11.5.0";
+      rocmOverrideGfx = "11.5.0";
+      openFirewall = true;
+      host = "0.0.0.0";
+    };
+    open-webui = {
+      enable = true;
+      host = "0.0.0.0";
+      openFirewall = true;
+      environment = {
+        OLLAMA_BASE_URL = "http://127.0.0.1:11434";
+      };
     };
 
     syncthing = {
