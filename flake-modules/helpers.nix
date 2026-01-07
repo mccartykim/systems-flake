@@ -5,6 +5,22 @@
   ...
 }: let
   inherit (inputs) nixpkgs home-manager srvos nix-index-database;
+
+  # Overlay to fix Python packages with overly strict version bounds
+  pythonFixesOverlay = final: prev: {
+    python3Packages = prev.python3Packages.override {
+      overrides = pyFinal: pyPrev: {
+        # extract_msg requires beautifulsoup4<4.14 but nixpkgs has 4.14.x
+        # The package works fine with newer versions, just has strict bounds
+        extract-msg = pyPrev.extract-msg.overridePythonAttrs (old: {
+          nativeBuildInputs = (old.nativeBuildInputs or []) ++ [
+            pyFinal.pythonRelaxDepsHook
+          ];
+          pythonRelaxDeps = ["beautifulsoup4"];
+        });
+      };
+    };
+  };
 in {
   # Export helpers via flake.lib for use by other modules
   flake.lib = rec {
@@ -15,6 +31,8 @@ in {
       (self + "/modules/distributed-builds.nix")
       {kimb.distributedBuilds.enable = true;}
       (self + "/modules/agenix.nix")
+      # Fix Python packages with strict version bounds
+      {nixpkgs.overlays = [pythonFixesOverlay];}
     ];
 
     # Desktop-specific modules (srvos desktop + common mixins)
