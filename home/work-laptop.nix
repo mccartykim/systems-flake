@@ -82,8 +82,9 @@
         delta.enable = true;
       };
 
-      zellij = {
+      tmux = {
         enable = true;
+        mouse = true;
       };
 
       nix-index.enable = true;
