@@ -214,6 +214,15 @@ in {
                   publicAccess = true;
                   websockets = false;
                 };
+                homeassistant = {
+                  enable = true;
+                  port = 8123;
+                  subdomain = "hass";
+                  host = "rich-evans";
+                  auth = "builtin"; # HA handles its own auth
+                  publicAccess = true;
+                  websockets = true; # Required for HA frontend
+                };
               };
               networks = {
                 containerBridge = "192.168.100.1";
