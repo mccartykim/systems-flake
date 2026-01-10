@@ -66,6 +66,10 @@ in {
     ];
 
     config = {
+      homeassistant = {
+        external_url = "https://hass.${cfg.domain}";
+        internal_url = "http://10.100.0.40:${toString cfg.services.homeassistant.port}";
+      };
       default_config = {};
       http = {
         server_host = "0.0.0.0";
