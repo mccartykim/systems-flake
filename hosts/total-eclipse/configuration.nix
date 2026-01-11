@@ -24,8 +24,7 @@
     openToPersonalDevices = true;
     extraInboundRules = [
       {port = 11434; proto = "tcp"; host = "any";} # Ollama API
-      {port = 8880; proto = "tcp"; host = "any";} # Kokoro-FastAPI TTS
-      {port = 8080; proto = "tcp"; host = "any";} # Fish-Speech TTS
+      {port = 8765; proto = "tcp"; host = "any";} # VibeVoice TTS
     ];
   };
 
@@ -175,43 +174,20 @@
     extraGroups = ["input"];
   };
 
-  # TTS container with GPU acceleration
-  # Note: Kokoro disabled to free GPU memory for Fish-Speech voice cloning
-  # Piper is the fallback TTS engine
+  # VibeVoice TTS container with GPU acceleration
+  # Lightweight 0.5B model - fits alongside Ollama VLM
   virtualisation.oci-containers = {
     backend = "podman";
-    containers.fish-speech = {
-      image = "fishaudio/fish-speech:server-cuda";
+    containers.vibevoice = {
+      image = "neosun/vibevoice-allinone:latest";
       autoStart = true;
-      ports = ["8080:8080"];
-      volumes = [
-        "/home/kimb/fish-speech/checkpoints:/app/checkpoints"
-        "/var/lib/fish-speech/references:/app/references"
-      ];
-      environment = {
-        # Reduce CUDA memory fragmentation when running alongside Ollama VLM
-        PYTORCH_CUDA_ALLOC_CONF = "expandable_segments:True";
-      };
+      ports = ["8765:8765"];
       extraOptions = [
         "--device=nvidia.com/gpu=all"
         "--security-opt=label=disable"
       ];
     };
   };
-
-  # Deploy voice references for Fish-Speech
-  # Container runs as UID 1000 and needs write access to references directory
-  system.activationScripts.fish-speech-references = let
-    voiceRefs = inputs.claude_yapper.packages.${pkgs.stdenv.hostPlatform.system}.voice-references;
-  in ''
-    mkdir -p /var/lib/fish-speech/references/soup-short
-    chown -R 1000:1000 /var/lib/fish-speech/references
-    # Copy files from Nix store (they're read-only there)
-    cp -f ${voiceRefs}/soup-short/sample.wav /var/lib/fish-speech/references/soup-short/
-    cp -f ${voiceRefs}/soup-short/sample.lab /var/lib/fish-speech/references/soup-short/
-    chown 1000:1000 /var/lib/fish-speech/references/soup-short/*
-    chmod 644 /var/lib/fish-speech/references/soup-short/*
-  '';
 
   system.stateVersion = "23.11";
 }
