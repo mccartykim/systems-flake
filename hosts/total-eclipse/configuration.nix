@@ -188,6 +188,10 @@
         "/home/kimb/fish-speech/checkpoints:/app/checkpoints"
         "/var/lib/fish-speech/references:/app/references"
       ];
+      environment = {
+        # Reduce CUDA memory fragmentation when running alongside Ollama VLM
+        PYTORCH_CUDA_ALLOC_CONF = "expandable_segments:True";
+      };
       extraOptions = [
         "--device=nvidia.com/gpu=all"
         "--security-opt=label=disable"
