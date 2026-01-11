@@ -85,10 +85,12 @@
     # Set HOME so claude can find its credentials
     # Set SHELL so Claude Code can use Bash tool
     # Set PYTHONUNBUFFERED so logs appear immediately in journald
+    # Set FISH_SPEECH_REFERENCE for voice cloning
     environment = {
       HOME = "/var/lib/life-coach-agent";
       SHELL = "${pkgs.bash}/bin/bash";
       PYTHONUNBUFFERED = "1";
+      FISH_SPEECH_REFERENCE = "soup-short";
     };
 
     serviceConfig = {

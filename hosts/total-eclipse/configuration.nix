@@ -25,6 +25,7 @@
     extraInboundRules = [
       {port = 11434; proto = "tcp"; host = "any";} # Ollama API
       {port = 8880; proto = "tcp"; host = "any";} # Kokoro-FastAPI TTS
+      {port = 8080; proto = "tcp"; host = "any";} # Fish-Speech TTS
     ];
   };
 
@@ -174,13 +175,19 @@
     extraGroups = ["input"];
   };
 
-  # Kokoro-FastAPI TTS with GPU acceleration
+  # TTS container with GPU acceleration
+  # Note: Kokoro disabled to free GPU memory for Fish-Speech voice cloning
+  # Piper is the fallback TTS engine
   virtualisation.oci-containers = {
     backend = "podman";
-    containers.kokoro-fastapi = {
-      image = "ghcr.io/remsky/kokoro-fastapi-gpu:latest";
+    containers.fish-speech = {
+      image = "fishaudio/fish-speech:server-cuda";
       autoStart = true;
-      ports = ["8880:8880"];
+      ports = ["8080:8080"];
+      volumes = [
+        "/home/kimb/fish-speech/checkpoints:/app/checkpoints"
+        "/home/kimb/fish-speech/references:/app/references"
+      ];
       extraOptions = [
         "--device=nvidia.com/gpu=all"
         "--security-opt=label=disable"
