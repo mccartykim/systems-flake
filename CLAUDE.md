@@ -515,9 +515,10 @@ Common pitfalls when running commands on remote NixOS hosts via SSH:
 - Example: `sudo -u life-coach bash -c 'export FOO=bar && command'`
 
 ### Fish Shell on Some Hosts
-- rich-evans uses fish as default shell
-- Heredocs and bash-isms fail in fish
-- Use `sudo bash -c '...'` instead of relying on default shell
+- rich-evans and total-eclipse use fish as default shell
+- Heredocs, for loops, and bash-isms fail in fish
+- ALWAYS wrap complex commands in `bash -c '...'` when SSHing to these hosts
+- Example: `ssh total-eclipse.nebula 'bash -c "for x in a b c; do echo \$x; done"'`
 
 ### Permission for State Directories
 - Service state dirs (e.g., `/var/lib/service`) are often 0700 or 0750
