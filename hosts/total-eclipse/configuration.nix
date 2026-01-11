@@ -186,7 +186,7 @@
       ports = ["8080:8080"];
       volumes = [
         "/home/kimb/fish-speech/checkpoints:/app/checkpoints"
-        "/home/kimb/fish-speech/references:/app/references"
+        "/var/lib/fish-speech/references:/app/references"
       ];
       extraOptions = [
         "--device=nvidia.com/gpu=all"
@@ -194,6 +194,14 @@
       ];
     };
   };
+
+  # Deploy voice references for Fish-Speech
+  systemd.tmpfiles.rules = let
+    voiceRefs = inputs.claude_yapper.packages.${pkgs.stdenv.hostPlatform.system}.voice-references;
+  in [
+    "d /var/lib/fish-speech/references 0755 root root -"
+    "C /var/lib/fish-speech/references/soup-short - - - - ${voiceRefs}/soup-short"
+  ];
 
   system.stateVersion = "23.11";
 }
