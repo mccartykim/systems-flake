@@ -196,12 +196,18 @@
   };
 
   # Deploy voice references for Fish-Speech
-  systemd.tmpfiles.rules = let
+  # Container runs as UID 1000 and needs write access to references directory
+  system.activationScripts.fish-speech-references = let
     voiceRefs = inputs.claude_yapper.packages.${pkgs.stdenv.hostPlatform.system}.voice-references;
-  in [
-    "d /var/lib/fish-speech/references 0755 root root -"
-    "C /var/lib/fish-speech/references/soup-short - - - - ${voiceRefs}/soup-short"
-  ];
+  in ''
+    mkdir -p /var/lib/fish-speech/references/soup-short
+    chown -R 1000:1000 /var/lib/fish-speech/references
+    # Copy files from Nix store (they're read-only there)
+    cp -f ${voiceRefs}/soup-short/sample.wav /var/lib/fish-speech/references/soup-short/
+    cp -f ${voiceRefs}/soup-short/sample.lab /var/lib/fish-speech/references/soup-short/
+    chown 1000:1000 /var/lib/fish-speech/references/soup-short/*
+    chmod 644 /var/lib/fish-speech/references/soup-short/*
+  '';
 
   system.stateVersion = "23.11";
 }
