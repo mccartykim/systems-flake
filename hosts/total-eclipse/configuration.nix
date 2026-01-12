@@ -24,7 +24,6 @@
     openToPersonalDevices = true;
     extraInboundRules = [
       {port = 11434; proto = "tcp"; host = "any";} # Ollama API
-      {port = 8765; proto = "tcp"; host = "any";} # VibeVoice TTS
     ];
   };
 
@@ -172,21 +171,6 @@
   users.users.kimb = {
     description = "Kimberly";
     extraGroups = ["input"];
-  };
-
-  # VibeVoice TTS container with GPU acceleration
-  # Lightweight 0.5B model - fits alongside Ollama VLM
-  virtualisation.oci-containers = {
-    backend = "podman";
-    containers.vibevoice = {
-      image = "neosun/vibevoice-allinone:latest";
-      autoStart = true;
-      ports = ["8765:8765"];
-      extraOptions = [
-        "--device=nvidia.com/gpu=all"
-        "--security-opt=label=disable"
-      ];
-    };
   };
 
   system.stateVersion = "23.11";

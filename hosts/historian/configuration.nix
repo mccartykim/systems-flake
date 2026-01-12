@@ -180,6 +180,21 @@
     wants = ["bolt.service"];
   };
 
+  # Auto-login for TV use (using kimb for now, tv account available for later)
+  services.displayManager.autoLogin = {
+    enable = true;
+    user = "kimb";
+  };
+
+  # TV user for living room - Steam Big Picture, Firefox, Flatpak
+  users.users.tv = {
+    isNormalUser = true;
+    description = "Living Room TV";
+    extraGroups = ["video" "audio" "input"];
+    # No password - auto-login only
+    hashedPassword = "";
+  };
+
   # Services configuration
   services = {
     # Smart card daemon for YubiKey support
