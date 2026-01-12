@@ -225,7 +225,7 @@ in {
 
     # Override default shell setup for server
     shells = [pkgs.fish];
-    variables.EDITOR = "nvim";
+    variables.EDITOR = lib.mkForce "nvim";
     sessionVariables.FLAKE = "/home/kimb/systems-flake";
   };
 
