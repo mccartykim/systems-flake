@@ -108,6 +108,23 @@
   # Open port for TTS audio serving to Chromecast devices
   networking.firewall.allowedTCPPorts = [8555];
 
+  # Life Coach Dashboard - web UI showing agent sessions
+  # Note: System prompt is read from the source directory (dashboard.py does cd to source)
+  systemd.services.life-coach-dashboard = {
+    description = "Life Coach Agent Dashboard";
+    wantedBy = ["multi-user.target"];
+    after = ["network.target"];
+    environment = {
+      LIFE_COACH_DB = "/var/lib/life-coach-agent/state.db";
+    };
+    serviceConfig = {
+      ExecStart = "${claude_yapper.packages.${pkgs.stdenv.hostPlatform.system}.life-coach-dashboard}/bin/life-coach-dashboard";
+      User = "life-coach";
+      Restart = "always";
+      RestartSec = "5s";
+    };
+  };
+
   # Stable wrapper script for HA to signal button presses
   # Path: /etc/life-coach-agent/signal_button_press.sh
   # Usage: signal_button_press.sh <button_id>

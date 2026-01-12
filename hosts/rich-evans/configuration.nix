@@ -123,6 +123,12 @@ in {
         proto = "tcp";
         groups = ["desktops" "laptops"];
       }
+      # Life Coach Dashboard - web UI for monitoring agent sessions
+      {
+        port = 8585;
+        proto = "tcp";
+        groups = ["desktops" "laptops"];
+      }
     ];
   };
 
