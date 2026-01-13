@@ -180,19 +180,42 @@
     wants = ["bolt.service"];
   };
 
-  # Auto-login for TV use (using kimb for now, tv account available for later)
+  # Auto-login for TV use
   services.displayManager.autoLogin = {
     enable = true;
-    user = "kimb";
+    user = "tv";
   };
+
+  # Disable screen lock and blanking for TV
+  services.xserver.displayManager.sessionCommands = ''
+    ${pkgs.xset}/bin/xset s off
+    ${pkgs.xset}/bin/xset dpms 0 0 0
+  '';
 
   # TV user for living room - Steam Big Picture, Firefox, Flatpak
   users.users.tv = {
     isNormalUser = true;
     description = "Living Room TV";
-    extraGroups = ["video" "audio" "input"];
+    extraGroups = ["video" "audio" "input" "users"];
     # No password - auto-login only
     hashedPassword = "";
+    shell = pkgs.bash;
+  };
+
+  # Firefox auto-launch for TV user
+  systemd.user.services.firefox-tv = {
+    description = "Firefox for TV";
+    wantedBy = ["graphical-session.target"];
+    after = ["graphical-session-started.target"];
+    serviceConfig = {
+      Type = "simple";
+      ExecStart = "${pkgs.firefox}/bin/firefox --new-window about:blank";
+      Restart = "on-failure";
+      RestartSec = "5s";
+    };
+    environment = {
+      DISPLAY = ":0";
+    };
   };
 
   # Services configuration
@@ -262,6 +285,17 @@
     nix-ld.enable = true;
     virt-manager.enable = true;
     appimage.enable = true;
+    # Flatpak support for TV user and general app distribution
+    flatpak.enable = true;
+  };
+
+  # XDG portals for Flatpak integration
+  xdg.portal = {
+    enable = true;
+    extraPortals = with pkgs; [
+      xdg-desktop-portal-kde
+      xdg-desktop-portal-gtk
+    ];
   };
 
   system.stateVersion = "23.11";

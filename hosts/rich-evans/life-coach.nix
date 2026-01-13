@@ -91,6 +91,9 @@
       PYTHONUNBUFFERED = "1";
     };
 
+    # Add sqlite and jq to PATH for logging scripts
+    path = [pkgs.sqlite pkgs.jq];
+
     serviceConfig = {
       # On failure, wait longer before restart to avoid spam
       RestartSec = lib.mkForce "5min";
