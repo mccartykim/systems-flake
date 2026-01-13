@@ -285,17 +285,6 @@
     nix-ld.enable = true;
     virt-manager.enable = true;
     appimage.enable = true;
-    # Flatpak support for TV user and general app distribution
-    flatpak.enable = true;
-  };
-
-  # XDG portals for Flatpak integration
-  xdg.portal = {
-    enable = true;
-    extraPortals = with pkgs; [
-      xdg-desktop-portal-kde
-      xdg-desktop-portal-gtk
-    ];
   };
 
   system.stateVersion = "23.11";
