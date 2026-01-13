@@ -164,6 +164,8 @@
       rebar3
       erlang
       gleam
+      # Media
+      vlc
       # Email
       mu
       isync
