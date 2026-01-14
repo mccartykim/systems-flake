@@ -127,6 +127,8 @@
       sunshine
       toolbox
       tealdeer
+      # Coqui TTS for voice cloning
+      tts
     ];
   };
 
