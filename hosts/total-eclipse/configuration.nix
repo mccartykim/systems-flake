@@ -16,6 +16,9 @@
 
     # Nebula mesh network (consolidated module)
     ../../modules/nebula-node.nix
+
+    # Coqui TTS for voice cloning
+    ./coqui-tts.nix
   ];
 
   # Nebula configuration
