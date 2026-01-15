@@ -82,5 +82,10 @@ in
     # ===== LIFE COACH AGENT =====
     # Home Assistant long-lived access token for presence sensor queries
     "ha-life-coach-token.age".publicKeys = [hostKeys.rich-evans bootstrap];
+
+    # ===== RESTIC BACKUPS (Backblaze B2) =====
+    # All hosts can decrypt for deduplication across syncthing-replicated data
+    "restic-password.age".publicKeys = workingMachines;
+    "restic-b2-env.age".publicKeys = workingMachines;
   }
   // allNebulaSecrets
