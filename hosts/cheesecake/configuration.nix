@@ -3,7 +3,11 @@
     ./hardware-configuration.nix
     ../profiles/base.nix
     ../../modules/nebula-node.nix
+    ../../modules/restic-backup.nix
   ];
+
+  # Restic backups
+  kimb.restic.enable = true;
 
   # Nebula mesh network configuration (same as other laptops)
   kimb.nebula = {

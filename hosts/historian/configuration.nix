@@ -16,7 +16,13 @@
 
     # Nebula mesh network (consolidated module)
     ../../modules/nebula-node.nix
+
+    # Restic backups to Backblaze B2
+    ../../modules/restic-backup.nix
   ];
+
+  # Restic backups
+  kimb.restic.enable = true;
 
   # Nebula configuration (certs generated via `nix run .#generate-nebula-certs`)
   kimb.nebula = {
@@ -28,12 +34,12 @@
     ];
   };
 
-  # Distributed builds - enable buildnet for untrusted builders
+  # Distributed builds
   kimb.distributedBuilds = {
     # enable = true; # Already enabled via commonModules
 
-    # Enable buildnet nebula network for untrusted builders
-    buildnet.enable = true;
+    # Buildnet disabled - CA cert needs regeneration
+    # buildnet.enable = true;
 
     # Claude Code SSH key - can only run nix-daemon, no shell access
     builderOnlyKeys = [

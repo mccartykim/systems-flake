@@ -17,9 +17,15 @@
     # Nebula mesh network (consolidated module)
     ../../modules/nebula-node.nix
 
+    # Restic backups to Backblaze B2
+    ../../modules/restic-backup.nix
+
     # Coqui TTS for voice cloning
     ./coqui-tts.nix
   ];
+
+  # Restic backups
+  kimb.restic.enable = true;
 
   # Nebula configuration
   kimb.nebula = {
