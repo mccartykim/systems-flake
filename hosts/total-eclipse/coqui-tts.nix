@@ -43,14 +43,14 @@ let
     export TTS_HOME="''${TTS_HOME:-.cache/TTS}"
 
     # Create a temp script to avoid argument quoting issues with nix-shell
-    TEMP_SCRIPT="$(mktemp)"
+    TEMP_SCRIPT="$(mktemp --suffix=.py)"
     cat > "$TEMP_SCRIPT" << 'SCRIPT_EOF'
 #!/usr/bin/env python3
 # /// script
 # requires-python = ">=3.10"
 # dependencies = [
 #   "coqui-tts>=0.26",
-#   "transformers>=4.35,<4.45",
+#   "torchcodec",
 # ]
 # ///
 import sys
@@ -66,7 +66,10 @@ speaker_wav = sys.argv[2]
 output_path = sys.argv[3]
 
 try:
-    tts = TTS(model_name="tts_models/multilingual/multi-dataset/xtts_v2", gpu=True)
+    import torch
+    use_gpu = torch.cuda.is_available()
+    print(f"Using GPU: {use_gpu}", file=sys.stderr)
+    tts = TTS(model_name="tts_models/multilingual/multi-dataset/xtts_v2", gpu=use_gpu)
     tts.tts_to_file(text=text, speaker_wav=speaker_wav, language="en", file_path=output_path)
     print(f"Audio generated: {output_path}", file=sys.stderr)
     sys.exit(0)
@@ -76,9 +79,18 @@ except Exception as e:
     traceback.print_exc(file=sys.stderr)
     sys.exit(1)
 SCRIPT_EOF
+    chmod +x "$TEMP_SCRIPT"
 
-    # Run uv with build tools via nix-shell
-    nix-shell -p uv cargo rustc gcc pkg-config --run "uv run --python 3.13 $TEMP_SCRIPT" "$@"
+    # Run uv with build tools via nix-shell (pass args inside --run string)
+    # Set LD_LIBRARY_PATH for libstdc++.so.6 needed by PyTorch
+    # Set COQUI_TOS_AGREED to auto-accept license for non-interactive use
+    ARGS=$(printf '%q ' "$@")
+    export LD_LIBRARY_PATH="${pkgs.stdenv.cc.cc.lib}/lib:${pkgs.cudaPackages.cudatoolkit}/lib:${pkgs.ffmpeg-full.lib}/lib:$LD_LIBRARY_PATH"
+    export COQUI_TOS_AGREED=1
+    # Pre-create TOS agreement file for the XTTS model
+    mkdir -p "$HOME/.local/share/tts/tts_models--multilingual--multi-dataset--xtts_v2"
+    touch "$HOME/.local/share/tts/tts_models--multilingual--multi-dataset--xtts_v2/.agreement.txt"
+    NIXPKGS_ALLOW_UNFREE=1 nix-shell --impure -p uv cargo rustc gcc pkg-config cudaPackages.cudatoolkit ffmpeg-full --run "uv run --python 3.13 $TEMP_SCRIPT $ARGS"
     EXIT_CODE=$?
 
     rm -f "$TEMP_SCRIPT"
