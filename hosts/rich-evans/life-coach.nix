@@ -78,6 +78,14 @@
     # The prompt is defined in claude_yapper/life_coach_prompt.txt
     package = claude_yapper.packages.${pkgs.stdenv.hostPlatform.system}.life-coach-agent;
     skillsPackage = claude_yapper.packages.${pkgs.stdenv.hostPlatform.system}.claude-skills;
+
+    # Hybrid mode: use Haiku for speed/cost, with Sonnet oversight every 30 min
+    hybridMode = {
+      enable = true;
+      fastModel = "haiku";
+      oversightModel = "sonnet";
+      interval = 1800;  # 30 minutes
+    };
   };
 
   # Override systemd service for better failure handling
