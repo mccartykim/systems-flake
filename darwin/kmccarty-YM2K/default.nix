@@ -23,7 +23,7 @@ in
   launchd.user.envVariables = sharedEnv;
   # For shell only
   environment.variables = {
-    EDITOR = "emacsclient";
+    EDITOR = "hx";
   };
 
   programs.fish.enable = true;
