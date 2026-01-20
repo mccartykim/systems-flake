@@ -34,7 +34,7 @@ DEVICES=(
     # Legacy devices - remove or update these IPs if still in use
     # "bonbon:10.100.0.30:mobile,nixos:false"
     # "cronut:10.100.0.X:laptops,macos:false"  # Update IP if still used
-    # "kmccarty-YM2K:10.100.0.X:laptops,macos,work:false"  # Update IP if still used
+    # "kmccarty-27YM2K:10.100.0.X:laptops,macos,work:false"  # Update IP if still used
 )
 
 # Download nebula-cert if not present

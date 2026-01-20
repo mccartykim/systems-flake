@@ -3,7 +3,8 @@
   config,
   lib,
   ...
-}: let
+}:
+let
   home-config = {
     home.stateVersion = "23.05";
     home.packages = [
@@ -39,13 +40,12 @@
       pkgs.shellcheck # For shell script linting
       pkgs.pipenv
       pkgs.fontconfig # For font detection
-      (
-        pkgs.python3.withPackages (ps:
-          with ps; [
-            isort
-            pytest
-          ])
-      )
+      (pkgs.python3.withPackages (
+        ps: with ps; [
+          isort
+          pytest
+        ]
+      ))
     ];
 
     programs = {
@@ -79,7 +79,11 @@
       git = {
         enable = true;
         lfs.enable = true;
-        delta.enable = true;
+      };
+
+      delta = {
+        enable = true;
+        enableGitIntegration = true;
       };
 
       tmux = {
@@ -158,17 +162,21 @@
           '';
         };
         # Fish path bug workaround
-        shellInit = let
-          # This naive quoting is good enough in this case. There shouldn't be any
-          # double quotes in the input string, and it needs to be double quoted in case
-          # it contains a space (which is unlikely!)
-          dquote = str: "\"" + str + "\"";
+        shellInit =
+          let
+            # This naive quoting is good enough in this case. There shouldn't be any
+            # double quotes in the input string, and it needs to be double quoted in case
+            # it contains a space (which is unlikely!)
+            dquote = str: "\"" + str + "\"";
 
-          makeBinPathList = map (path: path + "/bin");
-        in ''
-          fish_add_path --move --prepend --path ${lib.concatMapStringsSep " " dquote (makeBinPathList config.environment.profiles)}
-          set fish_user_paths $fish_user_paths
-        '';
+            makeBinPathList = map (path: path + "/bin");
+          in
+          ''
+            fish_add_path --move --prepend --path ${
+              lib.concatMapStringsSep " " dquote (makeBinPathList config.environment.profiles)
+            }
+            set fish_user_paths $fish_user_paths
+          '';
       };
 
       neovim = {
@@ -244,8 +252,11 @@
             "languageserver" = {
               "nix" = {
                 command = "nil";
-                filetypes = ["nix"];
-                rootPatterns = ["flake.nix" ".git"];
+                filetypes = [ "nix" ];
+                rootPatterns = [
+                  "flake.nix"
+                  ".git"
+                ];
               };
             };
           };
@@ -277,6 +288,7 @@
       uv.enable = true;
     };
   };
-in {
+in
+{
   home-manager.users."kimberly.mccarty" = home-config;
 }
