@@ -1,5 +1,11 @@
 # Tor client with bridge support for bypassing network restrictions
 # Useful when behind restrictive firewalls that block direct Tor connections
+#
+# For environments with HTTP proxies, use the meek transport with:
+#   transport = "meek_lite";
+#   upstreamSocksProxy = "127.0.0.1:1080"; # gost SOCKS5 proxy
+# And run gost to convert HTTP proxy to SOCKS5:
+#   gost -L socks5://:1080 -F "http://user:pass@proxy:port"
 {
   config,
   lib,
@@ -12,6 +18,28 @@ in {
   options.kimb.torClient = {
     enable = mkEnableOption "Tor client with bridge support";
 
+    transport = mkOption {
+      type = types.enum ["obfs4" "meek_lite" "snowflake"];
+      default = "obfs4";
+      description = ''
+        Pluggable transport to use:
+        - obfs4: Obfuscated traffic, works on most networks
+        - meek_lite: Domain fronting through CDN, works through HTTP proxies
+        - snowflake: WebRTC-based, good for highly censored networks
+      '';
+    };
+
+    upstreamSocksProxy = mkOption {
+      type = types.nullOr types.str;
+      default = null;
+      description = ''
+        Upstream SOCKS5 proxy for Tor to use (e.g., "127.0.0.1:1080").
+        Useful when behind an HTTP proxy - run gost to convert:
+        gost -L socks5://:1080 -F "http://user:pass@proxy:port"
+      '';
+      example = "127.0.0.1:1080";
+    };
+
     useBridges = mkOption {
       type = types.bool;
       default = true;
@@ -22,9 +50,8 @@ in {
       type = types.listOf types.str;
       default = [];
       description = ''
-        List of bridge lines. If empty and useBridges is true, will use built-in obfs4 bridges.
+        List of bridge lines. If empty and useBridges is true, will use built-in bridges.
         Get bridges from https://bridges.torproject.org/ or email bridges@torproject.org
-        Format: "obfs4 IP:PORT FINGERPRINT cert=CERT iat-mode=0"
       '';
       example = [
         "obfs4 192.0.2.1:443 FINGERPRINT cert=CERT iat-mode=0"
@@ -82,24 +109,42 @@ in {
         # Client-specific settings
         ClientOnly = true;
 
-        # Use pluggable transports
-        ClientTransportPlugin = "obfs4 exec ${pkgs.obfs4}/bin/lyrebird";
+        # Pluggable transport configuration based on selected transport
+        ClientTransportPlugin =
+          if cfg.transport == "meek_lite" then
+            "meek_lite exec ${pkgs.obfs4}/bin/lyrebird"
+          else if cfg.transport == "snowflake" then
+            "snowflake exec ${pkgs.obfs4}/bin/lyrebird"
+          else
+            "obfs4 exec ${pkgs.obfs4}/bin/lyrebird";
+      }
+      # Upstream SOCKS proxy (for HTTP proxy environments)
+      // optionalAttrs (cfg.upstreamSocksProxy != null) {
+        Socks5Proxy = cfg.upstreamSocksProxy;
       }
       // optionalAttrs (cfg.useBridges && cfg.bridges != []) {
         # Use provided bridges
         Bridge = cfg.bridges;
       }
-      // optionalAttrs (cfg.useBridges && cfg.bridges == []) {
+      // optionalAttrs (cfg.useBridges && cfg.bridges == [] && cfg.transport == "obfs4") {
         # Built-in obfs4 bridges on common ports (80, 443)
-        # These are public bridges from Tor Project, may become stale
-        # Get fresh ones from https://bridges.torproject.org/
         Bridge = [
-          # obfs4 bridges on port 443 (HTTPS port - usually allowed)
-          "obfs4 193.11.166.194:443 2D82C2E354D531A68469ADA8F3F5B3B1B6E5FE21 cert=XHo3i3V+U0BG7S8hqzw+UQB7RwU5E1RD0i7nGlwfkLR6K8R7lNGRDTBG3gJgPO4HXG3h+w iat-mode=0"
-          "obfs4 85.31.186.98:443 011F2599C0E9B27EE74B353155E244813763C3E5 cert=ayq0XzCwhpdysn5o0EyDUbmSOx3b17+dBdpXqNqVezA8EPiBAXBYJqHWmkhPxKJe5YxE2A iat-mode=0"
-          # obfs4 bridges on port 80 (HTTP port - usually allowed)
-          "obfs4 209.148.46.65:80 D54D12D25DCECE5C7FC3E07A0583E17D78F70F48 cert=gIIjL5JTHNA8M8Rj8S+R9d8snNaUGP5iBKq5H1w+0V7nLb2B3PYGx5F8Bvx8cVLnDqNhfw iat-mode=0"
-          "obfs4 146.57.248.225:80 7A6A6B98BE0EAE24D6A73927AE3FEF0A32D8C685 cert=d6I3BZTGkBTu97TjVB8FGY3R+Y5xF7FKhTU8zp1G8fVULCc5bN5PEu+pMvQBVj9z7T2p7w iat-mode=0"
+          "obfs4 51.222.13.177:80 5EDAC3B810E12B01F6FD8050D2FD3E277B289A08 cert=2uplIpLQ0q9+0qMFrK5pkaYRDOe460LL9WHBvatgkuRr/SL31wBOEupaMMJ6koRE6Ld0ew iat-mode=0"
+          "obfs4 212.83.43.95:443 BFE712113A72899AD685764B211FACD30FF52C31 cert=ayq0XzCwhpdysn5o0EyDUbmSOx3X/oTEbzDMvczHOdBJKlvIdHHLJGkZARtT4dcBFArPPg iat-mode=1"
+          "obfs4 212.83.43.74:443 39562501228A4D5E27FCA4C0C81A01EE23AE3EE4 cert=PBwr+S8JTVZo6MPdHnkTwXJPILWADLqfMGoVvhZClMq/Urndyd42BwX9YFJHZnBB3H0XCw iat-mode=1"
+          "obfs4 209.148.46.65:443 74FAD13168806246602538555B5521A0383A1875 cert=ssH+9rP8dG2NLDN2XuFw63hIO/9MNNinLmxQDpVa+7kTOa9/m+tGWT1SmSYpQ9uTBGa6Hw iat-mode=0"
+        ];
+      }
+      // optionalAttrs (cfg.useBridges && cfg.bridges == [] && cfg.transport == "meek_lite") {
+        # Built-in meek bridge with domain fronting (works through HTTP proxies)
+        Bridge = [
+          "meek_lite 192.0.2.20:80 url=https://1603026938.rsc.cdn77.org front=www.phpmyadmin.net utls=HelloRandomizedALPN"
+        ];
+      }
+      // optionalAttrs (cfg.useBridges && cfg.bridges == [] && cfg.transport == "snowflake") {
+        # Built-in snowflake bridges
+        Bridge = [
+          "snowflake 192.0.2.3:80 2B280B23E1107BB62ABFC40DDCC8824814F80A72 fingerprint=2B280B23E1107BB62ABFC40DDCC8824814F80A72 url=https://1098762253.rsc.cdn77.org/ fronts=www.cdn77.com ice=stun:stun.l.google.com:19302 utls-imitate=hellorandomizedalpn"
         ];
       }
       // optionalAttrs cfg.transparentProxy {
@@ -112,12 +157,14 @@ in {
       };
     };
 
-    # Install torsocks for wrapping commands
+    # Install torsocks and related tools
     environment.systemPackages = with pkgs; [
       torsocks
-      obfs4 # Pluggable transport
+      obfs4 # Pluggable transport (lyrebird)
       tor # CLI tools
-    ];
+    ]
+    # Add gost for HTTP proxy environments
+    ++ optional (cfg.upstreamSocksProxy != null) pkgs.gost;
 
     # Environment variables for torsocks
     environment.sessionVariables = {
