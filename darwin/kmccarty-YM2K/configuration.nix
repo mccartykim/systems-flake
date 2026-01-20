@@ -1,8 +1,10 @@
-{pkgs, ...}: {
-  imports = [./default.nix];
+{ pkgs, ... }:
+{
+  imports = [ ./default.nix ];
 
   # For some reason, nix-darwin needs this stated explicitly
   users.users."kimberly.mccarty".home = "/Users/kimberly.mccarty";
+  users.users."kimberly.mccarty".shell = pkgs.fish;
   system.primaryUser = "kimberly.mccarty";
   nixpkgs = {
     config = {
@@ -32,14 +34,17 @@
       }
     ];
     settings = {
-      experimental-features = ["nix-command" "flakes"];
+      experimental-features = [
+        "nix-command"
+        "flakes"
+      ];
       substituters = [
         "https://cache.garnix.io"
       ];
       trusted-public-keys = [
         "cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g="
       ];
-      trusted-users = ["@admin"];
+      trusted-users = [ "@admin" ];
     };
     optimise.automatic = true;
     gc = {
@@ -58,7 +63,7 @@
 
   launchd.daemons.nix-darwin-activate = {
     serviceConfig = {
-      ProgramArguments = ["/var/run/current-system/activate"];
+      ProgramArguments = [ "/var/run/current-system/activate" ];
       RunAtLoad = true;
       KeepAlive = false;
       UserName = "root";
