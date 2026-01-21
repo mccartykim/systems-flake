@@ -78,13 +78,21 @@
     # The prompt is defined in claude_yapper/life_coach_prompt.txt
     package = claude_yapper.packages.${pkgs.stdenv.hostPlatform.system}.life-coach-agent;
     skillsPackage = claude_yapper.packages.${pkgs.stdenv.hostPlatform.system}.claude-skills;
+    s3ManagerPackage = claude_yapper.packages.${pkgs.stdenv.hostPlatform.system}.life-coach-s3-manager;
 
     # Hybrid mode: use Haiku for speed/cost, with Sonnet oversight every 30 min
     hybridMode = {
       enable = true;
       fastModel = "haiku";
       oversightModel = "sonnet";
-      interval = 1800;  # 30 minutes
+      interval = 1800; # 30 minutes
+    };
+
+    # S3 Manager (Skinner) - daily oversight reviews at 4 AM
+    s3Manager = {
+      enable = true;
+      schedule = "04:00";
+      reportDir = "/var/lib/life-coach-agent/reports";
     };
   };
 
@@ -176,7 +184,7 @@
 
   # Signal script for location changes from HA geofencing
   # Path: /etc/life-coach-agent/signal_location_change.sh
-  # Usage: signal_location_change.sh <home|at_office|wfh>
+  # Usage: signal_location_change.sh <home|at_office|away>
   environment.etc."life-coach-agent/signal_location_change.sh" = {
     mode = "0755";
     text = ''
@@ -185,8 +193,8 @@
       # Called by Home Assistant automation when phone enters/leaves zones
       set -euo pipefail
       LOCATION="''${1:-}"
-      if [[ ! "$LOCATION" =~ ^(home|at_office|wfh)$ ]]; then
-        echo "Usage: signal_location_change.sh <home|at_office|wfh>" >&2
+      if [[ ! "$LOCATION" =~ ^(home|at_office|away)$ ]]; then
+        echo "Usage: signal_location_change.sh <home|at_office|away>" >&2
         exit 1
       fi
       DB_PATH="/var/lib/life-coach-agent/state.db"

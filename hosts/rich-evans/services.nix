@@ -97,9 +97,52 @@ in {
         signal_garage_button = "/etc/life-coach-agent/signal_button_press.sh garage_button";
         signal_kitchen_front_door = "/etc/life-coach-agent/signal_button_press.sh kitchen_front_door";
         signal_user_input = "/etc/life-coach-agent/signal_user_input.sh";
+        # Location change signals for geofencing automation
+        signal_location_home = "/etc/life-coach-agent/signal_location_change.sh home";
+        signal_location_office = "/etc/life-coach-agent/signal_location_change.sh at_office";
+        signal_location_away = "/etc/life-coach-agent/signal_location_change.sh away";
       };
-      # All automations are in /var/lib/hass/automations.yaml
-      automation = "!include automations.yaml";
+      # Nix-managed automations
+      "automation manual" = [
+        {
+          alias = "Life Coach - Location Tracking";
+          trigger = [
+            {
+              platform = "state";
+              entity_id = "person.kimberly";
+            }
+          ];
+          action = [
+            {
+              choose = [
+                {
+                  conditions = [
+                    {
+                      condition = "zone";
+                      entity_id = "person.kimberly";
+                      zone = "zone.home";
+                    }
+                  ];
+                  sequence = [{service = "shell_command.signal_location_home";}];
+                }
+                {
+                  conditions = [
+                    {
+                      condition = "zone";
+                      entity_id = "person.kimberly";
+                      zone = "zone.work";
+                    }
+                  ];
+                  sequence = [{service = "shell_command.signal_location_office";}];
+                }
+              ];
+              default = [{service = "shell_command.signal_location_away";}];
+            }
+          ];
+        }
+      ];
+      # UI-defined automations (existing)
+      "automation ui" = "!include automations.yaml";
       script = "!include scripts.yaml";
       scene = "!include scenes.yaml";
       # Text input for life-coach agent user prompts
