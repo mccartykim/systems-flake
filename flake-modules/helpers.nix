@@ -86,16 +86,19 @@ in {
       hostname,
       system ? "x86_64-linux",
       extraModules ? [],
+      extraSpecialArgs ? {},
       hardwareModules ? [],
       homeConfig ? (self + "/home/${hostname}.nix"),
       useGlobalPkgs ? false,
     }:
       nixpkgs.lib.nixosSystem {
         inherit system;
-        specialArgs = {
-          inherit inputs;
-          outputs = self;
-        };
+        specialArgs =
+          {
+            inherit inputs;
+            outputs = self;
+          }
+          // extraSpecialArgs;
         modules =
           desktopModules
           ++ commonModules

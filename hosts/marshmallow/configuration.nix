@@ -83,6 +83,9 @@
 
   # Services configuration
   services = {
+    # Thermal management - bypass DYTC platform check
+    thermald.ignoreCpuidCheck = true;
+
     # Thunderbolt dock support
     hardware.bolt.enable = true;
 

@@ -52,6 +52,10 @@
     claude_yapper.url = "git+ssh://git@github.com/mccartykim/claude-alarmclock-agent.git";
     claude_yapper.inputs.nixpkgs.follows = "nixpkgs";
 
+    # Gleamroom - Gleam/OTP life coach agent
+    gleamroom.url = "git+ssh://git@github.com/mccartykim/gleamroom.git";
+    gleamroom.inputs.nixpkgs.follows = "nixpkgs";
+
     # Kokoro TTS - local flake for now (has working build)
     kokoro.url = "git+ssh://git@github.com/mccartykim/kokoro-flake.git";
     kokoro.inputs.nixpkgs.follows = "nixpkgs";

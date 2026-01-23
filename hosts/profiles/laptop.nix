@@ -9,7 +9,21 @@
   services = {
     # Power management
     thermald.enable = true;
-    auto-cpufreq.enable = true;
+    auto-cpufreq = {
+      enable = true;
+      settings = {
+        charger = {
+          governor = "powersave";
+          energy_performance_preference = "balance_performance";
+          turbo = "auto";
+        };
+        battery = {
+          governor = "powersave";
+          energy_performance_preference = "power";
+          turbo = "never";
+        };
+      };
+    };
 
     # Disable conflicting power service
     power-profiles-daemon.enable = false;
@@ -39,6 +53,7 @@
     powertop
     acpi
     brightnessctl
+    lm_sensors
   ];
 
   # Networking - prefer Wi-Fi management

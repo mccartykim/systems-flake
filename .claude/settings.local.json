@@ -64,7 +64,8 @@
       "Bash(nix flake metadata:*)",
       "Bash(time nix develop --command python:*)",
       "Bash(nix search:*)",
-      "Bash(nix flake show:*)"
+      "Bash(nix flake show:*)",
+      "Bash(powerprofilesctl get:*)"
     ],
     "deny": [],
     "ask": []
