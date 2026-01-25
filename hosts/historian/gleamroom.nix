@@ -45,7 +45,7 @@ in {
 
     ollama = {
       host = "http://${registry.nodes.total-eclipse.ip}:11434"; # NVIDIA GPU host
-      model = "qwen3-vl";
+      model = "qwen3-vl:8b-instruct";
     };
 
     piperModel = "/var/lib/gleamroom/voices/en_US-amy-medium.onnx";
