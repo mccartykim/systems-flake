@@ -326,11 +326,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1769316195,
-        "narHash": "sha256-L1yaNl+B9crGT4zqgicybdyoLAErUbxjYMBPfC1fewU=",
+        "lastModified": 1769319252,
+        "narHash": "sha256-kPHv4igl7MVuVVuxk+xVjR/6jpWnbs64aqTvsvPs8yg=",
         "ref": "refs/heads/main",
-        "rev": "625b09580f5cd09219ba5d10934deb646b92362b",
-        "revCount": 8,
+        "rev": "89a5cffdbae4a379eca50561b96821454ecc6a8b",
+        "revCount": 9,
         "type": "git",
         "url": "ssh://git@github.com/mccartykim/gleamroom.git"
       },
