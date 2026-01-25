@@ -35,7 +35,7 @@ in {
   users.groups.gleamroom = {};
 
   services.gleamroom = {
-    enable = true;
+    enable = false;
     package = gleamroom.packages.${pkgs.system}.default;
     port = 8080;
     model = "haiku";
@@ -74,6 +74,7 @@ in {
       catt
       curl
       jq
+      claude-code
     ];
   };
 

@@ -58,11 +58,11 @@
         "uv2nix": "uv2nix"
       },
       "locked": {
-        "lastModified": 1769126912,
-        "narHash": "sha256-J77fysyaro/V6viqgXoD78KaM4YhOG7sa1NsYq/bkS0=",
+        "lastModified": 1769363690,
+        "narHash": "sha256-lHX0BCZtZJ7CMiqk66DCJYeN2TdJ4dCt79gQVYtnZ0g=",
         "ref": "refs/heads/main",
-        "rev": "123da4245541d811d6fd6ccf56e8fc5323f5bc78",
-        "revCount": 206,
+        "rev": "72974c3f81fe0601762aef04034e4818b9b55de9",
+        "revCount": 209,
         "type": "git",
         "url": "ssh://git@github.com/mccartykim/claude-alarmclock-agent.git"
       },
@@ -326,11 +326,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1769319252,
-        "narHash": "sha256-kPHv4igl7MVuVVuxk+xVjR/6jpWnbs64aqTvsvPs8yg=",
+        "lastModified": 1769359738,
+        "narHash": "sha256-fUnGw6HoV+4DE5Y6G0TV7pnZjo9kOl88QhsjJI8uyLs=",
         "ref": "refs/heads/main",
-        "rev": "89a5cffdbae4a379eca50561b96821454ecc6a8b",
-        "revCount": 9,
+        "rev": "a876e2a9e52f37921bd23236a71436fce1519344",
+        "revCount": 12,
         "type": "git",
         "url": "ssh://git@github.com/mccartykim/gleamroom.git"
       },
