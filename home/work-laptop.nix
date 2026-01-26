@@ -46,6 +46,9 @@ let
           pytest
         ]
       ))
+      pkgs.silver-searcher
+      pkgs.jq
+      pkgs.nh
     ];
 
     programs = {
@@ -116,6 +119,10 @@ let
           {
             name = "autopair";
             inherit (pkgs.fishPlugins.autopair) src;
+          }
+          {
+            name = "z";
+            inherit (pkgs.fishPlugins.z) src;
           }
         ];
         functions = {
