@@ -157,6 +157,7 @@
               pkgs.esptool # ESP32/ESP8266 flasher
               pkgs.age # age encryption tool
               pkgs.age-plugin-yubikey # YubiKey support for age encryption
+              pkgs.beads # AI-native issue tracking
             ];
           };
         };
