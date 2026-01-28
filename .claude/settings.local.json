@@ -75,7 +75,8 @@
       "Bash(bd update:*)",
       "Bash(bd ready:*)",
       "Bash(bd stats:*)",
-      "Bash(jj --no-pager show:*)"
+      "Bash(jj --no-pager show:*)",
+      "Bash(jj edit:*)"
     ],
     "deny": [],
     "ask": []

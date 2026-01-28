@@ -122,7 +122,7 @@ in {
                       value_template = ''
                         {% set lat = state_attr('sensor.pixel_9_pro_geocoded_location', 'location')[0] %}
                         {% set lon = state_attr('sensor.pixel_9_pro_geocoded_location', 'location')[1] %}
-                        {{ distance(lat, lon, zone.home) < 0.1 }}
+                        {{ distance(lat, lon, states.zone.home) < 0.1 }}
                       '';
                     }
                   ];
@@ -135,7 +135,7 @@ in {
                       value_template = ''
                         {% set lat = state_attr('sensor.pixel_9_pro_geocoded_location', 'location')[0] %}
                         {% set lon = state_attr('sensor.pixel_9_pro_geocoded_location', 'location')[1] %}
-                        {{ distance(lat, lon, zone.work) < 0.1 }}
+                        {{ distance(lat, lon, states.zone.work) < 0.1 }}
                       '';
                     }
                   ];
