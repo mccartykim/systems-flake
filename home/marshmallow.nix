@@ -88,13 +88,25 @@
     # Enable zed editor
     zed-editor.enable = lib.mkForce true;
 
-    # Fish plugins specific to marshmallow
-    fish.plugins = [
-      {
-        name = "tide";
-        inherit (pkgs.fishPlugins.tide) src;
-      }
-    ];
+    # Fish configuration specific to marshmallow
+    fish = {
+      interactiveShellInit = ''
+        # Set terminal background color and window title for marshmallow
+        if status is-interactive
+          # OSC 11: Set background color to soft pink
+          printf '\033]11;#ffe4e8\007'
+          # OSC 0: Set window title
+          printf '\033]0;marshmallow\007'
+        end
+      '';
+
+      plugins = [
+        {
+          name = "tide";
+          inherit (pkgs.fishPlugins.tide) src;
+        }
+      ];
+    };
 
     swayr = {
       enable = false;

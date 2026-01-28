@@ -71,7 +71,18 @@
     # Enable home-manager
     home-manager.enable = true;
 
-    fish.functions = {
+    fish = {
+      interactiveShellInit = ''
+        # Set terminal background color and window title for total-eclipse
+        if status is-interactive
+          # OSC 11: Set background color to dark purplish
+          printf '\033]11;#2d2a45\007'
+          # OSC 0: Set window title
+          printf '\033]0;total-eclipse\007'
+        end
+      '';
+
+      functions = {
       fish_jj_prompt = ''
         # Is jj installed?
         if not command -sq jj
@@ -128,6 +139,7 @@
             # or fish_svn_prompt
         end
       '';
+      };
     };
   };
 
