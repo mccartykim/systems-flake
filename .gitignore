@@ -9,3 +9,9 @@ secrets/.age-recipients.backup
 *.key
 *.crt
 .esphome/
+
+# Beads runtime state
+.beads/last-touched
+
+# Claude Code local settings
+.claude/settings.local.json
