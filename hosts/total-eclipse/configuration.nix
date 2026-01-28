@@ -22,6 +22,9 @@
 
     # Coqui TTS for voice cloning
     ./coqui-tts.nix
+
+    # Auto-reload NVIDIA modules after config changes
+    ./nvidia-reload.nix
   ];
 
   # Restic backups
