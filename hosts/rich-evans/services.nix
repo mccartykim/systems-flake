@@ -83,6 +83,42 @@ in {
         ];
       };
       api = {};
+      # Template device tracker that uses geocoded location sensor
+      # The mobile_app diagnostic device_tracker doesn't get location updates
+      template = [
+        {
+          trigger = [
+            {
+              platform = "state";
+              entity_id = ["sensor.pixel_9_pro_geocoded_location"];
+            }
+          ];
+          device_tracker = [
+            {
+              name = "Kimberly Location";
+              unique_id = "kimberly_location_tracker";
+              state = ''
+                {% if states('sensor.pixel_9_pro_geocoded_location') not in ['unknown', 'unavailable'] %}
+                  {% set lat = state_attr('sensor.pixel_9_pro_geocoded_location', 'location')[0] %}
+                  {% set lon = state_attr('sensor.pixel_9_pro_geocoded_location', 'location')[1] %}
+                  {% if distance(lat, lon, zone.home) < 0.1 %}
+                    home
+                  {% elif distance(lat, lon, zone.work) < 0.1 %}
+                    work
+                  {% else %}
+                    not_home
+                  {% endif %}
+                {% else %}
+                  unknown
+                {% endif %}
+              '';
+              latitude = ''{{ state_attr('sensor.pixel_9_pro_geocoded_location', 'location')[0] | float(0) }}'';
+              longitude = ''{{ state_attr('sensor.pixel_9_pro_geocoded_location', 'location')[1] | float(0) }}'';
+              source_type = "gps";
+            }
+          ];
+        }
+      ];
       # Shell commands for life-coach agent button press interrupts
       # One per button since shell_command doesn't support templating
       shell_command = {
