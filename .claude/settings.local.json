@@ -65,7 +65,17 @@
       "Bash(time nix develop --command python:*)",
       "Bash(nix search:*)",
       "Bash(nix flake show:*)",
-      "Bash(powerprofilesctl get:*)"
+      "Bash(powerprofilesctl get:*)",
+      "Bash(bd create:*)",
+      "Bash(bd dep add:*)",
+      "Bash(bd list:*)",
+      "WebFetch(domain:ghostty.org)",
+      "Bash(bd inject:*)",
+      "Bash(bd close:*)",
+      "Bash(bd update:*)",
+      "Bash(bd ready:*)",
+      "Bash(bd stats:*)",
+      "Bash(jj --no-pager show:*)"
     ],
     "deny": [],
     "ask": []
