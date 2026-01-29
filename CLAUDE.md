@@ -143,6 +143,37 @@ jj edit -r @  # Return to latest
 5. **Descriptive Messages**: Follow conventional commits format
 6. **Clean History**: Use `jj edit` and `jj split` to fix mistakes
 
+### AI Agent-Specific Guidelines
+
+**CRITICAL**: Always use `-m` flag to avoid opening editors:
+
+```bash
+# CORRECT - Specify message inline
+jj split file.nix -m "commit message"
+jj squash -m "commit message"
+jj describe -m "commit message"
+
+# WRONG - Will hang waiting for editor
+jj split file.nix           # Opens editor!
+jj squash                   # Opens editor!
+```
+
+**Resolving Conflicts After Abandon**:
+When `jj abandon` causes conflicts in descendant commits, use the new-and-squash pattern:
+
+```bash
+# For each conflicted commit, starting from the first
+jj new <conflicted-change-id>    # Creates new commit on top
+# Conflicts appear in working copy - resolve them
+jj squash -m "resolve conflicts"  # Squash resolution into conflicted commit
+# Move to next conflicted commit and repeat
+```
+
+**Why Abandon Can Cause Conflicts**:
+- Abandoning a commit rebases its descendants onto its parent
+- If descendants modified files that were in the abandoned commit, conflicts arise
+- The abandoned commit's changes "disappear," creating conflicts in descendants
+
 ## Commit Conventions
 Use conventional commits format:
 ```
