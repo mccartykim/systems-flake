@@ -75,16 +75,6 @@
     home-manager.enable = true;
 
     fish = {
-      interactiveShellInit = ''
-        # Set terminal background color and window title for historian
-        if status is-interactive
-          # OSC 11: Set background color to soft light blue-green
-          printf '\033]11;#e0f0e8\007'
-          # OSC 0: Set window title
-          printf '\033]0;historian\007'
-        end
-      '';
-
       functions = {
       fish_jj_prompt = ''
         # Is jj installed?
