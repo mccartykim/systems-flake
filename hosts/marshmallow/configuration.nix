@@ -1,6 +1,7 @@
 # Marshmallow - ThinkPad T490 (Intel graphics, gaming laptop)
 {
   config,
+  lib,
   pkgs,
   inputs,
   ...
@@ -31,14 +32,13 @@
     openToPersonalDevices = true;
   };
 
+  # Power management - use schedutil instead of auto-cpufreq
+  services.auto-cpufreq.enable = lib.mkForce false;
+  powerManagement.cpuFreqGovernor = "schedutil";
+
   # Boot configuration
   boot = {
-    # Intel-specific optimizations
     kernelModules = ["i915"];
-    kernelParams = [
-      "i915.enable_fbc=1"
-      "i915.enable_psr=2"
-    ];
 
     # systemd initrd
     initrd.systemd.enable = true;
