@@ -76,7 +76,8 @@
       "Bash(bd ready:*)",
       "Bash(bd stats:*)",
       "Bash(jj --no-pager show:*)",
-      "Bash(jj edit:*)"
+      "Bash(jj edit:*)",
+      "Bash(nix repl:*)"
     ],
     "deny": [],
     "ask": []
