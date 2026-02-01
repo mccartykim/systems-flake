@@ -20,9 +20,6 @@
     # Restic backups to Backblaze B2
     ../../modules/restic-backup.nix
 
-    # Coqui TTS for voice cloning
-    ./coqui-tts.nix
-
     # Auto-reload NVIDIA modules after config changes
     ./nvidia-reload.nix
   ];
@@ -136,8 +133,6 @@
       sunshine
       toolbox
       tealdeer
-      # Coqui TTS for voice cloning
-      tts
     ];
   };
 
