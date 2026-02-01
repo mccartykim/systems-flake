@@ -5,7 +5,7 @@
   self,
   ...
 }: let
-  inherit (inputs) nixpkgs nixos-hardware nixos-facter-modules nixos-avf copyparty nil-flake claude_yapper kokoro gleamroom;
+  inherit (inputs) nixpkgs nixos-hardware nixos-facter-modules nixos-avf copyparty nil-flake claude_yapper kokoro;
   inherit (config.flake.lib) mkDesktop mkServer mkHomeManager commonModules;
 in {
   flake.nixosConfigurations = {
@@ -52,11 +52,6 @@ in {
     # Desktops using mkDesktop helper
     historian = mkDesktop {
       hostname = "historian";
-      extraSpecialArgs = {inherit gleamroom;};
-      extraModules = [
-        gleamroom.nixosModules.default
-        (self + "/hosts/historian/gleamroom.nix")
-      ];
     };
     total-eclipse = mkDesktop {hostname = "total-eclipse";};
 
