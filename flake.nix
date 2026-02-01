@@ -89,7 +89,7 @@
         ./flake-modules # Modularized flake configuration
       ];
 
-      systems = ["x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin"];
+      systems = ["x86_64-linux" "aarch64-linux" "x86_64-darwin"];
 
       perSystem = {
         config,

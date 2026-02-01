@@ -10,13 +10,6 @@ let
 in
 {
   flake.darwinConfigurations = {
-    "kmccarty-27YM2K" = nix-darwin.lib.darwinSystem {
-      modules = darwinCommon ++ [
-        ../darwin/kmccarty-27YM2K/configuration.nix
-        ../home/work-laptop.nix
-      ];
-    };
-
     "cronut" = nix-darwin.lib.darwinSystem {
       modules = darwinCommon ++ [
         ../darwin/cronut/configuration.nix
