@@ -5,6 +5,7 @@
     ./default.nix
     ./modules/shell-essentials.nix
     ./modules/terminal-enhanced.nix
+    ./modules/ai-tools.nix
     ./modules/gaming.nix
   ];
 
@@ -42,6 +43,7 @@
       enable = true;
       kitty = true;
     };
+    ai-tools.enable = true;
     gaming = {
       enable = true;
       steam = true;

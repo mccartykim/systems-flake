@@ -10,6 +10,7 @@
     ./modules/development.nix
     ./modules/shell-essentials.nix
     ./modules/terminal-enhanced.nix
+    ./modules/ai-tools.nix
   ];
 
   modules = {
@@ -19,6 +20,7 @@
       enable = true;
       kitty = true;
     };
+    ai-tools.enable = true;
   };
 
   home.stateVersion = "23.05";
