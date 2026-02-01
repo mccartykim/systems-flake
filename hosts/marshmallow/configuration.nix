@@ -114,6 +114,7 @@
 
     keybase.enable = true;
     kbfs.enable = true;
+    input-remapper.enable = true;
 
     syncthing = {
       enable = true;

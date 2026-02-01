@@ -23,6 +23,9 @@
 
     # Nebula mesh network
     ../../modules/nebula-node.nix
+
+    # Restic backups to Backblaze B2
+    ../../modules/restic-backup.nix
   ];
 
   # Nebula mesh network configuration
@@ -36,6 +39,9 @@
     enable = true;
     openToPersonalDevices = true;
   };
+
+  # Restic backups
+  kimb.restic.enable = true;
 
   # Steam Deck hardware support
   jovian = {
@@ -55,7 +61,17 @@
     decky-loader.enable = true; # Plugin framework for Gaming Mode
   };
 
-  services.openssh.enable = true;
+  services.openssh = {
+    enable = true;
+    settings.PasswordAuthentication = false;
+  };
+
+  services.syncthing = {
+    enable = true;
+    openDefaultPorts = true;
+    user = "kimb";
+    dataDir = "/home/kimb";
+  };
 
   # Network configuration
   networking = {

@@ -4,6 +4,7 @@
   imports = [
     ./default.nix
     ./modules/shell-essentials.nix
+    ./modules/terminal-enhanced.nix
     ./modules/gaming.nix
   ];
 
@@ -37,6 +38,10 @@
   # Enable modules
   modules = {
     shell-essentials.enable = true;
+    terminal-enhanced = {
+      enable = true;
+      kitty = true;
+    };
     gaming = {
       enable = true;
       steam = true;
