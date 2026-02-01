@@ -1,5 +1,5 @@
-# Distributed Nix builds using historian as remote builder
-# Clients offload builds to historian when reachable over nebula
+# Distributed Nix builds using historian and total-eclipse as remote builders
+# Clients offload builds to builders when reachable over nebula
 # Supports both trusted (main mesh) and untrusted (buildnet) builders
 {
   config,
@@ -13,9 +13,11 @@ with lib; let
   registry = import ../hosts/nebula-registry.nix;
   sshKeys = import ../hosts/ssh-keys.nix;
 
-  # Main mesh config (existing)
+  # Builder configs
   historianIP = registry.nodes.historian.ip;
   historianKey = registry.nodes.historian.publicKey;
+  totalEclipseIP = registry.nodes.total-eclipse.ip;
+  totalEclipseKey = registry.nodes.total-eclipse.publicKey;
 
   # Host keys from desktops/laptops that can use distributed builds
   clientHostKeys = sshKeys.desktopList ++ sshKeys.laptopList;
@@ -36,7 +38,7 @@ in {
 
     isBuilder = mkOption {
       type = types.bool;
-      default = hostname == "historian";
+      default = builtins.elem hostname ["historian" "total-eclipse"];
       description = "Whether this host accepts remote builds";
     };
 
@@ -170,26 +172,39 @@ in {
       };
     })
 
-    # === CLIENT CONFIG (all other hosts - unchanged) ===
+    # === CLIENT CONFIG (all other hosts) ===
     (mkIf (!cfg.isBuilder) {
       nix.buildMachines = [
         {
-          hostName = historianIP; # Main mesh IP
+          hostName = historianIP;
           system = "x86_64-linux";
           sshUser = "root";
           sshKey = "/etc/ssh/ssh_host_ed25519_key";
           inherit (cfg) maxJobs speedFactor;
           supportedFeatures = ["nixos-test" "big-parallel" "kvm"];
         }
+        {
+          hostName = totalEclipseIP;
+          system = "x86_64-linux";
+          sshUser = "root";
+          sshKey = "/etc/ssh/ssh_host_ed25519_key";
+          maxJobs = 4;
+          speedFactor = 1;
+          supportedFeatures = ["nixos-test" "kvm"];
+        }
       ];
 
       nix.distributedBuilds = true;
       nix.settings.connect-timeout = cfg.connectTimeout;
 
-      # Add historian's host key to known_hosts for root
+      # Add builder host keys to known_hosts for root
       programs.ssh.knownHosts.historian = {
         hostNames = [historianIP "historian"];
         publicKey = historianKey;
+      };
+      programs.ssh.knownHosts.total-eclipse = {
+        hostNames = [totalEclipseIP "total-eclipse"];
+        publicKey = totalEclipseKey;
       };
     })
   ]);
