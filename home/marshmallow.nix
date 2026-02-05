@@ -59,6 +59,8 @@
       gleam
       rebar3
       android-studio
+      # GPG for email auth
+      gnupg
     ];
   };
 
