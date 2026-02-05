@@ -79,7 +79,8 @@
       "Bash(jj edit:*)",
       "Bash(nix repl:*)",
       "Bash(, ag claude)",
-      "Bash(ag:*)"
+      "Bash(ag:*)",
+      "Bash(GIT_DIR=.git git log:*)"
     ],
     "deny": [],
     "ask": []
