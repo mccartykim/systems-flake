@@ -34,6 +34,14 @@ wifi:
 
 captive_portal:
 
+# Bluetooth proxy for Home Assistant
+esp32_ble_tracker:
+  scan_parameters:
+    active: true
+
+bluetooth_proxy:
+  active: true
+
 light:
   - platform: esp32_rmt_led_strip
     id: led
