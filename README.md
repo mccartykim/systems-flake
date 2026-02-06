@@ -22,7 +22,7 @@ Plus a few others. Sweets are portable, anything goes for desktops and servers :
 * Automatic deployment from garnix, or at least cron job updates.
 
 ## My hive-mindification approach so far:
-1. Install NixOS on machine using whatever installer works. I've mostly used the GUI installer but I've also used the manual installer. They're both nice. But both make an opinionated config.
+1. Install NixOS on machine using whatever installer works. I've mostly used the GUI installer but I've also used the manual installer. They're both nice. But both make an opinionated config I need to then install over.
 2. Fix up that config to work with flakes and probably also tailscale and garnix
 3. Sort out hardware specific issues
 4. Copy nixos config files from that machine into this flake's hosts/$HOST directory.
@@ -30,14 +30,18 @@ Plus a few others. Sweets are portable, anything goes for desktops and servers :
 6. Add import of default nix config. Test again.
 7. Strip out redundant components, leaving just the quirks for that machine in the config.
 
+I've dabbled with building custom installers but without the whole SSH pubkey copy routine, building a flake with private inputs kinda sucks... I might have to open source stuff, maybe move my blog content to a separate repo/bucket so I still have private drafts. But I'm just thinking out loud!
+
 ## Nebula Mesh Network
 
-All machines are connected via a [Nebula](https://github.com/slackhq/nebula) mesh network with age-encrypted certificates. The lighthouse runs on Google Cloud.
+All machines are connected via a [Nebula](https://github.com/slackhq/nebula) mesh network with age-encrypted certificates. The lighthouse runs on Oracle and there's another running on my domain.
 
 ### Network Layout
 - **Subnet**: `10.100.0.0/16`
 - **Lighthouse**: Uses centralized registry (`registry.network.lighthouse.ip`)
 - **DNS Server**: maitred router at `registry.nodes.maitred.ip` (primary DNS for network)
+
+I'm also experimenting with a buildnet and containernet parallel nebula networks, but I'm starting to realize that might just be awful compared to creating a certbot to add ephemeral machines to a group. That's for later!
 
 ### Adding New Devices
 
@@ -78,5 +82,4 @@ All machines are connected via a [Nebula](https://github.com/slackhq/nebula) mes
 
 ## Wish list
 * Create a few simple configs that suit my idea of an archetypal config, for easier installs down the line.
-* Steamdeck
-* ~~Some kind of clever garnix friendly scheme to autoconfig tailscale from the box, maybe some garbo like agenix?~~ ✅ Done with Nebula + agenix!
+* See if I can get off flakes and try [Nixtamal](https://nixtamel.toast.al/). Not sure if that works well with my flake parts impl. However, flakes are indeed annoying and set rules I'm not sure I need.
