@@ -31,6 +31,9 @@ in {
     # Nebula mesh network (consolidated module)
     ../../modules/nebula-node.nix
 
+    # Matrix homeserver (Tuwunel) + Discord bridge
+    ./matrix.nix
+
     # DNS server - DISABLED: moved to maitred router
     # ./dns.nix
 
@@ -128,6 +131,12 @@ in {
         port = 8585;
         proto = "tcp";
         groups = ["desktops" "laptops"];
+      }
+      # Matrix/Tuwunel homeserver
+      {
+        port = 6167;
+        proto = "tcp";
+        host = "any";
       }
     ];
   };

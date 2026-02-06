@@ -120,9 +120,20 @@ in {
         virtualHosts =
           serviceVirtualHosts
           // {
-            # Root domain points to blog
+            # Root domain points to blog + Matrix .well-known delegation
             ${cfg.domain} = lib.mkIf cfg.services.blog.enable {
               extraConfig = ''
+                # Matrix .well-known delegation (server_name = kimb.dev, actual server = matrix.kimb.dev)
+                handle /.well-known/matrix/server {
+                  header Content-Type application/json
+                  respond `{"m.server": "matrix.${cfg.domain}:443"}`
+                }
+                handle /.well-known/matrix/client {
+                  header Content-Type application/json
+                  header Access-Control-Allow-Origin *
+                  respond `{"m.homeserver":{"base_url":"https://matrix.${cfg.domain}"}}`
+                }
+                # Blog (default handler)
                 reverse_proxy ${cfg.services.blog.containerIP}:${toString cfg.services.blog.port}
               '';
             };

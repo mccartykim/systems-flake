@@ -225,6 +225,15 @@ in {
                   publicAccess = true;
                   websockets = true; # Required for HA frontend
                 };
+                matrix = {
+                  enable = true;
+                  port = 6167;
+                  subdomain = "matrix";
+                  host = "rich-evans";
+                  auth = "builtin"; # Matrix has its own auth
+                  publicAccess = true;
+                  websockets = true; # Matrix uses websockets for sync
+                };
               };
               networks = {
                 containerBridge = "192.168.100.1";
