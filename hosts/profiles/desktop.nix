@@ -49,6 +49,12 @@
   # Security configuration
   security.rtkit.enable = true;
 
+  # GPG agent with Qt pinentry for KDE integration
+  programs.gnupg.agent = {
+    enable = true;
+    pinentryPackage = pkgs.pinentry-qt;
+  };
+
   # Hardware configuration
   hardware = {
     # Bluetooth
@@ -67,6 +73,7 @@
     firefox
     vlc
     pinentry-curses
+    pinentry-qt  # KDE/Qt GUI for gpg passphrase entry
   ];
 
   # Font configuration
