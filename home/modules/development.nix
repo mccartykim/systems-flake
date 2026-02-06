@@ -62,6 +62,7 @@ with lib; {
       meld
       emacs
       emacsPackages.mu4e
+      isync # provides mbsync for mu4e email sync
       sqlite
       ripgrep
       coreutils

@@ -80,7 +80,9 @@
       "Bash(nix repl:*)",
       "Bash(, ag claude)",
       "Bash(ag:*)",
-      "Bash(GIT_DIR=.git git log:*)"
+      "Bash(GIT_DIR=.git git log:*)",
+      "WebFetch(domain:wiki.nixos.org)",
+      "WebFetch(domain:restic.readthedocs.io)"
     ],
     "deny": [],
     "ask": []
