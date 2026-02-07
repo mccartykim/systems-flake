@@ -8,6 +8,7 @@
 }: let
   cfg = config.kimb;
   registry = import ../nebula-registry.nix;
+  certServicePort = (config.kimb.certService or {}).port or 8445;
 
   # Generate Caddy virtual host for a service
   mkServiceVirtualHost = serviceName: service: let
@@ -153,6 +154,13 @@ in {
             "net.${cfg.domain}" = {
               extraConfig = ''
                 reverse_proxy ${cfg.networks.containerBridge}:8444
+              '';
+            };
+
+            # Mainnet dynamic cert signing service (bearer-token protected)
+            "certs.${cfg.domain}" = {
+              extraConfig = ''
+                reverse_proxy ${cfg.networks.containerBridge}:${toString certServicePort}
               '';
             };
           };

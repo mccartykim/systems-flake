@@ -13,16 +13,32 @@ let
   # All working machines that can decrypt shared secrets
   workingMachines = (builtins.attrValues hostKeys) ++ [bootstrap oracleKey mochiKey];
 
-  # Helper to create node cert/key secrets for a host
+  # Helper to create node cert/key secrets for a host (static cert mode)
   createNodeSecrets = name: {
     "nebula-${name}-cert.age".publicKeys = [hostKeys.${name} bootstrap];
     "nebula-${name}-key.age".publicKeys = [hostKeys.${name} bootstrap];
   };
 
-  # Generate nebula secrets for all NixOS hosts
+  # Helper to create a dynamic cert token secret for a host
+  createTokenSecret = name: {
+    "nebula-${name}-token.age".publicKeys = [hostKeys.${name} bootstrap];
+  };
+
+  # Generate nebula secrets for all NixOS hosts (static cert mode)
   allNebulaSecrets =
     builtins.foldl' (acc: name: acc // createNodeSecrets name) {}
     (builtins.attrNames hostKeys);
+
+  # Generate token secrets for hosts using dynamic certs
+  # Add hostnames here as they migrate from static to dynamic certs
+  dynamicCertHosts = [
+    # "historian"
+    # "marshmallow"
+  ];
+
+  allTokenSecrets =
+    builtins.foldl' (acc: name: acc // createTokenSecret name) {}
+    dynamicCertHosts;
 in
   {
     # Shared CA certificate - all working systems
@@ -76,8 +92,13 @@ in
     "containernet-reverse-proxy-key.age".publicKeys = [hostKeys.maitred bootstrap];
 
     # ===== CERT SERVICE =====
-    # API token for cert allocation service
+    # API token for ephemeral cert allocation service (buildnet/containernet)
     "cert-service-token.age".publicKeys = [hostKeys.maitred bootstrap];
+
+    # ===== DYNAMIC CERT SIGNING SERVICE (mainnet) =====
+    # CA key for signing mainnet certs (hot CA on maitred)
+    # Create with: cat nebula-ca.key | agenix -e nebula-ca-key.age -i ~/.ssh/id_ed25519
+    "nebula-ca-key.age".publicKeys = [hostKeys.maitred bootstrap];
 
     # ===== LIFE COACH AGENT =====
     # Home Assistant long-lived access token for presence sensor queries
@@ -89,3 +110,4 @@ in
     "restic-b2-env.age".publicKeys = workingMachines;
   }
   // allNebulaSecrets
+  // allTokenSecrets

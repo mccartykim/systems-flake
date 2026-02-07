@@ -21,6 +21,9 @@ in {
     # Ephemeral nebula networks (buildnet + containernet)
     ./ephemeral-networks.nix
 
+    # Dynamic cert signing service for mainnet mesh
+    ../../modules/nebula-cert-service.nix
+
     # Reverse proxy container
     ./reverse-proxy.nix
 
@@ -73,6 +76,21 @@ in {
         groups = ["printing"];
       }
     ];
+  };
+
+  # Dynamic cert signing service for mainnet mesh
+  # Hosts fetch short-lived certs (48h) via bearer token auth
+  # Populate tokenHashes after generating tokens for each host:
+  #   TOKEN=$(openssl rand -hex 32)
+  #   echo -n "$TOKEN" | sha256sum | cut -d' ' -f1
+  kimb.certService = {
+    enable = true;
+    certDuration = "48h";
+    tokenHashes = {
+      # Add sha256(token) for each host that uses dynamic certs
+      # historian = "sha256-hash-here";
+      # marshmallow = "sha256-hash-here";
+    };
   };
 
   # Boot configuration

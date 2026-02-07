@@ -12,6 +12,13 @@ let
     nebula = {
       subnet = "10.100.0.0/16";
       # Lighthouses are now oracle + maitred (defined in hosts below)
+      # Dynamic cert signing service for short-lived mesh certs
+      certService = {
+        url = "https://certs.kimb.dev";
+        internalUrl = "http://192.168.69.1:8445"; # LAN direct access
+        certDuration = "48h";
+        refreshInterval = "daily"; # Hosts fetch every 24h
+      };
     };
     lan = {
       subnet = "192.168.69.0/24";
