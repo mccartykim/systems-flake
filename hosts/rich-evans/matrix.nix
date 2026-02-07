@@ -17,10 +17,8 @@
       server_name = "kimb.dev"; # Matrix ID domain (NOT matrix.kimb.dev)
       port = [6167];
       address = ["0.0.0.0"]; # Accessible via Nebula
-      allow_registration = true; # Disable after creating account
+      allow_registration = false;
       allow_federation = true;
-      # Registration token - use this when registering, then disable registration
-      registration_token = "kimb-matrix-setup-2026";
     };
   };
 

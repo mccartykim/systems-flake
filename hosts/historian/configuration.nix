@@ -132,6 +132,9 @@
     # AMD-specific kernel modules
     kernelModules = ["amdgpu" "kvm-amd"];
 
+    # Increase GTT for large model inference (4GB VRAM + 56GB GTT ≈ 60GB for ROCm)
+    kernelParams = ["amdgpu.gttsize=57344"];
+
     # Boot loader customizations
     loader.systemd-boot = {
       netbootxyz.enable = true;
@@ -241,6 +244,12 @@
       rocmOverrideGfx = "11.5.0";
       openFirewall = true;
       host = "0.0.0.0";
+      # Enable parallel inference for batch processing (6 concurrent requests)
+      environmentVariables = {
+        OLLAMA_NUM_PARALLEL = "6";
+        OLLAMA_FLASH_ATTENTION = "1"; # Reduce VRAM usage
+        OLLAMA_KV_CACHE_TYPE = "q8_0"; # Further VRAM reduction
+      };
     };
     open-webui = {
       enable = false;
