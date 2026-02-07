@@ -40,6 +40,8 @@
   boot = {
     kernelModules = ["i915"];
 
+    kernelPackages = pkgs.linuxKernel.packages.linux_6_18;
+
     # systemd initrd
     initrd.systemd.enable = true;
 
