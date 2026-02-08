@@ -23,6 +23,10 @@
 
   # Restic backups
   kimb.restic.enable = true;
+  kimb.restic.extraExclude = [
+    "/home/kimb/.android"
+    "/home/kimb/.gradle"
+  ];
 
   # Nebula configuration
   kimb.nebula = {
