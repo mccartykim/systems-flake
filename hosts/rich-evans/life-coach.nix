@@ -119,6 +119,8 @@
       HOME = "/var/lib/life-coach-agent";
       SHELL = "${pkgs.bash}/bin/bash";
       PYTHONUNBUFFERED = "1";
+      # Tooms: local VLM primary mode - handles idle periods, escalates to Claude when needed
+      TOOMS_MODE = "primary";
     };
 
     # Add sqlite and jq to PATH for logging scripts
