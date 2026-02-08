@@ -94,6 +94,16 @@
       schedule = "04:00";
       reportDir = "/var/lib/life-coach-agent/reports";
     };
+
+    # Tooms - Local VLM reflex layer for idle observation
+    # Uses qwen3-vl:30b on historian (~26s) for detailed scene understanding
+    # Disabled by default for gradual rollout
+    tooms = {
+      enable = false; # Set to true to enable Tooms
+      idleMinutes = 10; # Wake after 10 minutes of idle
+      photoDir = "/mnt/seagate/tooms_photos"; # External drive for training data
+      photoRetentionDays = 30; # Keep photos for 30 days
+    };
   };
 
   # Override systemd service for better failure handling

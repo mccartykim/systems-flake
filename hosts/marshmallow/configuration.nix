@@ -183,6 +183,9 @@
     }
   ];
 
+  # zram compressed swap - used before file swap (priority 5 vs -2)
+  zramSwap.enable = true;
+
   # User configuration
   users = {
     users.kimb = {
