@@ -25,6 +25,12 @@
 
   # Enable restic backups
   kimb.restic.enable = true;
+  kimb.restic.extraExclude = [
+    "/home/kimb/.platformio" # ESP32 toolchains - reinstallable
+    "/home/kimb/.android" # Android emulator images
+    "/home/kimb/Android" # Android SDK
+    "/home/kimb/.gradle" # Build cache
+  ];
 
   # Nebula configuration
   kimb.nebula = {
