@@ -31,6 +31,9 @@ in {
     # Nebula mesh network (consolidated module)
     ../../modules/nebula-node.nix
 
+    # Restic backups to Backblaze B2
+    ../../modules/restic-backup.nix
+
     # Matrix homeserver (Tuwunel) + Discord bridge
     ./matrix.nix
 
@@ -40,6 +43,9 @@ in {
     # Static networking
     ./networking.nix
   ];
+
+  # Restic backup to shared B2 repo
+  kimb.restic.enable = true;
 
   # Nebula configuration with server-specific firewall rules
   kimb.nebula = {
