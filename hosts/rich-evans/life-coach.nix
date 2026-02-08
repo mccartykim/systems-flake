@@ -98,12 +98,16 @@
     # Tooms - Local VLM reflex layer for idle observation
     # Uses qwen3-vl:30b on historian (~26s) for detailed scene understanding
     # Disabled by default for gradual rollout
-    tooms = {
-      enable = false; # Set to true to enable Tooms
-      idleMinutes = 10; # Wake after 10 minutes of idle
-      photoDir = "/mnt/seagate/tooms_photos"; # External drive for training data
-      photoRetentionDays = 30; # Keep photos for 30 days
-    };
+    #
+    # NOTE: Uncomment after updating flake.lock with new claude_yapper:
+    #   nix flake update claude_yapper
+    #
+    # tooms = {
+    #   enable = false; # Set to true to enable Tooms
+    #   idleMinutes = 10; # Wake after 10 minutes of idle
+    #   photoDir = "/mnt/seagate/tooms_photos"; # External drive for training data
+    #   photoRetentionDays = 30; # Keep photos for 30 days
+    # };
   };
 
   # Override systemd service for better failure handling
