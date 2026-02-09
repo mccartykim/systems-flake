@@ -129,6 +129,8 @@
     serviceConfig = {
       # On failure, wait longer before restart to avoid spam
       RestartSec = lib.mkForce "5min";
+      # Allow writing Tooms training photos to seagate
+      ReadWritePaths = ["/mnt/seagate/tooms_photos"];
     };
   };
 
