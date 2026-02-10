@@ -186,7 +186,7 @@ in {
       ];
 
       # Trust LAN and container interfaces
-      trustedInterfaces = ["enp2s0" "ve-+"];
+      trustedInterfaces = ["enp2s0" "ve-+" "nebula1"];
 
       # Log dropped packets (for debugging)
       logRefusedConnections = false;
@@ -379,6 +379,7 @@ in {
           access-control = [
             "192.168.69.0/24 allow"
             "192.168.100.0/24 allow" # Container network
+            "10.100.0.0/16 allow" # Nebula network
             "127.0.0.0/8 allow"
           ];
           # Local DNS entries for Nebula hosts and enabled services
