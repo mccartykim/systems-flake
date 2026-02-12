@@ -46,7 +46,17 @@
   boot = {
     kernelModules = ["i915"];
 
-    kernelPackages = pkgs.linuxKernel.packages.linux_latest;
+    kernelPackages = pkgs.linuxPackages_latest;
+
+    kernelPatches = [
+      {
+        name = "elecom-huge-plus-patch";
+        patch = pkgs.fetchpatch {
+          url = "https://github.com/torvalds/linux/commit/b8e5fdf0bd022cd5493a5987ef66f5a24f8352d8.patch";
+          sha256 = "1sjwn80m5pyakjr54g740j39825qi3fl0fp9yls3jz87yi9rrz1y";
+        };
+      }
+    ];
 
     # systemd initrd
     initrd.systemd.enable = true;
