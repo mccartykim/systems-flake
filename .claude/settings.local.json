@@ -83,7 +83,9 @@
       "Bash(GIT_DIR=.git git log:*)",
       "WebFetch(domain:wiki.nixos.org)",
       "WebFetch(domain:restic.readthedocs.io)",
-      "Bash(top:*)"
+      "Bash(top:*)",
+      "Bash(lsmod:*)",
+      "Bash(modinfo:*)"
     ],
     "deny": [],
     "ask": []
