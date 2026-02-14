@@ -78,11 +78,21 @@ in {
   # Package configuration
   nixpkgs.config.allowUnfree = true;
 
+  # Environment variables for unfree packages and Firefox gestures
+  environment.sessionVariables = {
+    # Allow unfree for comma/nix-run/nix-shell
+    NIXPKGS_ALLOW_UNFREE = "1";
+    # Better touchpad gestures and smooth scrolling in Firefox
+    MOZ_USE_XINPUT2 = "1";
+  };
+
   # Essential system packages
   environment.systemPackages = with pkgs; [
     neovim
     git
+    gh
     wget
+    jq
     tailscale
   ];
 
