@@ -42,8 +42,6 @@
       gleam
       rebar3
       android-studio
-      # GPG for email auth
-      gnupg
     ];
   };
 
@@ -62,10 +60,27 @@
     ai-tools.enable = true;
   };
 
+  # GPG agent - use Qt pinentry for KDE, with Emacs fallback
+  services.gpg-agent = {
+    enable = true;
+    pinentryPackage = pkgs.pinentry-qt;
+    defaultCacheTtl = 3600;      # Cache passphrase for 1 hour
+    maxCacheTtl = 86400;         # Max cache 24 hours
+    extraConfig = ''
+      # Allow Emacs to handle pinentry via pinentry.el
+      allow-emacs-pinentry
+      # Allow loopback for programmatic access
+      allow-loopback-pinentry
+    '';
+  };
+
   # Programs configuration
   programs = {
     # Enable home-manager
     home-manager.enable = true;
+
+    # GPG with home-manager
+    gpg.enable = true;
 
     # Enable nix-index for marshmallow
     nix-index.enable = true;
