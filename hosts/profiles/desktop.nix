@@ -44,6 +44,30 @@
 
     # Flatpak support
     flatpak.enable = true;
+
+    # Key remapping daemon (works on X11 and Wayland)
+    keyd = {
+      enable = true;
+      keyboards = {
+        # Realforce JIS keyboard - remap Asian character keys
+        # Find ID with: keyd -m (or lsusb | grep -i topre)
+        realforce = {
+          ids = ["0853:0200"];  # Topre RealForce Compact
+          settings = {
+            main = {
+              # Muhenkan (left of space) → Backspace
+              muhenkan = "backspace";
+              # Henkan (right of space) → Right Ctrl
+              henkan = "rightcontrol";
+              # Katakanahiragana (further right) → Hyper (all mods when held)
+              katakanahiragana = "layer(hyper)";
+            };
+            # Hyper layer: any key pressed while held gets all modifiers
+            "hyper:C-S-M-A" = {};
+          };
+        };
+      };
+    };
   };
 
   # Security configuration
@@ -69,9 +93,24 @@
   };
   xdg.portal.enable = true;
 
+  # Firefox with KDE file picker integration and hardware acceleration
+  programs.firefox = {
+    enable = true;
+    preferences = {
+      # Use KDE file picker via xdg-desktop-portal
+      "widget.use-xdg-desktop-portal.file-picker" = 1;
+      # Use KDE for opening links/files
+      "widget.use-xdg-desktop-portal.mime-handler" = 1;
+      # Hardware video decoding (VA-API)
+      "media.ffmpeg.vaapi.enabled" = true;
+      "media.hardware-video-decoding.enabled" = true;
+      # GPU-accelerated rendering (WebRender)
+      "gfx.webrender.all" = true;
+    };
+  };
+
   # Add desktop-specific packages
   environment.systemPackages = with pkgs; [
-    firefox
     vlc
     pinentry-curses
     pinentry-qt  # KDE/Qt GUI for gpg passphrase entry
