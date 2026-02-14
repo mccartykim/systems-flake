@@ -4,7 +4,7 @@
   self,
   ...
 }: let
-  inherit (inputs) nixpkgs home-manager srvos nix-index-database;
+  inherit (inputs) nixpkgs home-manager srvos nix-index-database firefox-nightly;
 
   # Overlay to fix Python packages with build/test issues
   pythonFixesOverlay = final: prev: {
@@ -28,6 +28,13 @@
       };
     };
   };
+
+  # Overlay to use Firefox Nightly and override pkgs.firefox to point to nightly
+  firefoxNightlyOverlay = final: prev: let
+    nightlyPkgs = firefox-nightly.packages.${prev.system};
+  in {
+    firefox = nightlyPkgs.firefox-nightly-bin;
+  };
 in {
   # Export helpers via flake.lib for use by other modules
   flake.lib = rec {
@@ -38,8 +45,8 @@ in {
       (self + "/modules/distributed-builds.nix")
       {kimb.distributedBuilds.enable = true;}
       (self + "/modules/agenix.nix")
-      # Fix Python packages with strict version bounds
-      {nixpkgs.overlays = [pythonFixesOverlay];}
+      # Fix Python packages with strict version bounds + Firefox Nightly
+      {nixpkgs.overlays = [pythonFixesOverlay firefoxNightlyOverlay];}
     ];
 
     # Desktop-specific modules (srvos desktop + common mixins)
@@ -68,7 +75,7 @@ in {
     mkHomeManager = {
       user ? "kimb",
       homeConfig,
-      useGlobalPkgs ? false,
+      useGlobalPkgs ? true,
     }: [
       home-manager.nixosModules.home-manager
       {
@@ -89,7 +96,7 @@ in {
       extraSpecialArgs ? {},
       hardwareModules ? [],
       homeConfig ? (self + "/home/${hostname}.nix"),
-      useGlobalPkgs ? false,
+      useGlobalPkgs ? true,
     }:
       nixpkgs.lib.nixosSystem {
         inherit system;
