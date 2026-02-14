@@ -45,6 +45,18 @@
   # XDG portal configuration
   xdg.portal.config.common.default = "*";
 
+  # Firefox with hardware acceleration
+  programs.firefox = {
+    enable = true;
+    preferences = {
+      # Hardware video decoding (VA-API)
+      "media.ffmpeg.vaapi.enabled" = true;
+      "media.hardware-video-decoding.enabled" = true;
+      # GPU-accelerated rendering (WebRender)
+      "gfx.webrender.all" = true;
+    };
+  };
+
   # Environment setup for i3
   environment = {
     pathsToLink = ["/libexec"];
@@ -55,7 +67,6 @@
 
     # Basic packages for i3 environment
     systemPackages = with pkgs; [
-      firefox
       kitty
       brightnessctl
       linux-firmware
