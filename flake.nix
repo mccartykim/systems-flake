@@ -61,6 +61,10 @@
     # Jovian NixOS for Steam Deck
     jovian-nixos.url = "github:Jovian-Experiments/Jovian-NixOS";
     jovian-nixos.inputs.nixpkgs.follows = "nixpkgs";
+
+    # Firefox Nightly
+    firefox-nightly.url = "github:nix-community/flake-firefox-nightly";
+    firefox-nightly.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs = {
