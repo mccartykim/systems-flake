@@ -60,18 +60,12 @@
     ai-tools.enable = true;
   };
 
-  # GPG agent - use Qt pinentry for KDE, with Emacs fallback
+  # GPG agent - Qt pinentry for KDE integration
   services.gpg-agent = {
     enable = true;
     pinentryPackage = pkgs.pinentry-qt;
-    defaultCacheTtl = 3600;      # Cache passphrase for 1 hour
+    defaultCacheTtl = 7200;      # Cache passphrase for 2 hours
     maxCacheTtl = 86400;         # Max cache 24 hours
-    extraConfig = ''
-      # Allow Emacs to handle pinentry via pinentry.el
-      allow-emacs-pinentry
-      # Allow loopback for programmatic access
-      allow-loopback-pinentry
-    '';
   };
 
   # Programs configuration
