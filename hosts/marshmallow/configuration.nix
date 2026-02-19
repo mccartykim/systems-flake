@@ -48,12 +48,16 @@
 
     kernelPackages = pkgs.linuxKernel.packages.linux_6_18;
 
+    # Disable Intel Panel Self Refresh - fixes Wayland freezes on KWin
+    # See: https://wiki.archlinux.org/title/Intel_graphics
+    kernelParams = ["i915.enable_psr=0"];
+
     kernelPatches = [
       {
         name = "elecom-huge-plus-patch";
         patch = pkgs.fetchpatch {
           url = "https://github.com/torvalds/linux/commit/b8e5fdf0bd022cd5493a5987ef66f5a24f8352d8.patch";
-          sha256 = "1sjwn80m5pyakjr54g740j39825qi3fl0fp9yls3jz87yi9rrz1y";
+          sha256 = "sha256-TrnyN0B+IEnCk34Y24gD12EatWOvacFm3g67tI8e8Yk=";
         };
       }
     ];

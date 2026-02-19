@@ -8,6 +8,13 @@
 - Format code: `nix fmt` (using Alejandra formatter)
 - Check flake: `nix flake check`
 
+## Nix Store Path Lookup
+NEVER use `find /nix/store` - it's extremely slow. Use these instead:
+- `nix-build '<nixpkgs>' --no-build-output -A <pkg>` — prints store path
+- `nix-build '<nixpkgs>' --no-build-output -A mu.mu4e` — sub-outputs
+- `nix repl` then `:l <nixpkgs>` then `"${pkg}"` — interactive lookup
+- `nix repl --file '<nixpkgs/nixos>' -I nixos-config=./configuration.nix` — load NixOS config
+
 ## Version Control
 - **VCS**: This repository uses Jujutsu (jj) for version control
 - **Workflow**: Working-copy-as-commit model - changes are automatically tracked
