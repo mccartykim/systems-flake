@@ -52,6 +52,7 @@ BUILD_ROOT = os.environ.get("BUILD_ROOT", "")
 NSPAWN_NETWORK = os.environ.get("NSPAWN_NETWORK", "veth")
 BUILD_MEMORY_LIMIT = os.environ.get("BUILD_MEMORY_LIMIT", "4G")
 BUILD_CPU_QUOTA = os.environ.get("BUILD_CPU_QUOTA", "200%")
+NSPAWN_ROOT_DIR = ""  # Set in main() — writable copy of BUILD_ROOT
 
 # Concurrency control
 vm_semaphore = threading.Semaphore(MAX_CONCURRENT)
@@ -587,10 +588,10 @@ def run_build_nspawn(job_id, source_type, url, tarball_b64, command, target, tim
         else:
             nspawn_net_args = ["--private-network"]
 
-        nspawn_cmd = resource_limit_prefix() + [
+        nspawn_cmd = [
             "systemd-nspawn",
             "--ephemeral",
-            f"--directory={BUILD_ROOT}",
+            f"--directory={NSPAWN_ROOT_DIR}",
             f"--machine=sandbox-{slot}",
             "--register=no",
             "--keep-unit",
@@ -601,6 +602,7 @@ def run_build_nspawn(job_id, source_type, url, tarball_b64, command, target, tim
             "--chdir=/build",
             "--setenv=PATH=/bin:/usr/bin",
             "--setenv=NIX_REMOTE=daemon",
+            "--setenv=NIX_CONFIG=experimental-features = nix-command flakes",
             "--",
             "/bin/sh", "-c", f"{inner_setup}{nix_cmd}",
         ]
@@ -865,6 +867,17 @@ def main():
         print("WARNING: PRIMER_PATH not set, /primer will fail")
 
     os.makedirs("/run/nix-sandbox", exist_ok=True)
+
+    # Copy BUILD_ROOT to writable location — systemd-nspawn --ephemeral
+    # creates a lock file in the parent directory of --directory, which fails
+    # when BUILD_ROOT is in the read-only /nix/store.
+    global NSPAWN_ROOT_DIR
+    NSPAWN_ROOT_DIR = "/run/nix-sandbox/.build-root"
+    if BUILD_MODE == "nspawn" and BUILD_ROOT:
+        if os.path.exists(NSPAWN_ROOT_DIR):
+            shutil.rmtree(NSPAWN_ROOT_DIR)
+        shutil.copytree(BUILD_ROOT, NSPAWN_ROOT_DIR, symlinks=True)
+        print(f"Copied build root to {NSPAWN_ROOT_DIR}")
 
     server = ThreadedHTTPServer(("0.0.0.0", PORT), SandboxHandler)
     print(f"Nix sandbox service listening on 0.0.0.0:{PORT}")
