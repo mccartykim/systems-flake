@@ -107,6 +107,13 @@
       in {
         # Per-system packages
         packages = lib.optionalAttrs (system == "x86_64-linux" || system == "aarch64-linux") {
+          # Sandbox VM image for nix-sandbox remote build service
+          sandbox-vm-image = nixos-generators.nixosGenerate {
+            inherit system;
+            modules = [(self + "/packages/nix-sandbox/sandbox-vm.nix")];
+            format = "qcow";
+          };
+
           # ESPHome firmware builds
           esp32-cam-01-firmware = pkgs.stdenv.mkDerivation {
             name = "esp32-cam-01-firmware";
@@ -377,6 +384,7 @@
           minimal-test = import ./tests/minimal-test.nix {inherit pkgs;};
           network-test = import ./tests/network-test.nix {inherit pkgs;};
           working-vm-test = import ./tests/working-vm-test.nix {inherit pkgs;};
+          nix-sandbox-test = import ./tests/nix-sandbox-test.nix {inherit pkgs;};
 
           # Configuration evaluation tests (fast - no VM)
           eval-historian = self.nixosConfigurations.historian.config.system.build.toplevel;

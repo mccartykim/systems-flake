@@ -85,7 +85,9 @@
       "WebFetch(domain:restic.readthedocs.io)",
       "Bash(top:*)",
       "Bash(lsmod:*)",
-      "Bash(modinfo:*)"
+      "Bash(modinfo:*)",
+      "WebFetch(domain:en.wikipedia.org)",
+      "Bash(nix fmt:*)"
     ],
     "deny": [],
     "ask": []

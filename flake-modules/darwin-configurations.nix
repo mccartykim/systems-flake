@@ -3,18 +3,18 @@
   inputs,
   config,
   ...
-}:
-let
+}: let
   inherit (inputs) nix-darwin;
   inherit (config.flake.lib) darwinCommon;
-in
-{
+in {
   flake.darwinConfigurations = {
     "cronut" = nix-darwin.lib.darwinSystem {
-      modules = darwinCommon ++ [
-        ../darwin/cronut/configuration.nix
-        ../home/cronut.nix
-      ];
+      modules =
+        darwinCommon
+        ++ [
+          ../darwin/cronut/configuration.nix
+          ../home/cronut.nix
+        ];
     };
   };
 }

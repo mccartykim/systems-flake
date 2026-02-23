@@ -19,7 +19,13 @@
 
     # Restic backups to Backblaze B2
     ../../modules/restic-backup.nix
+
+    # Nix sandbox - remote build service for Claude Code
+    ../../modules/nix-sandbox.nix
   ];
+
+  # Nix sandbox remote build service (vmImage set via flake extraModules)
+  kimb.nixSandbox.enable = true;
 
   # Restic backups
   kimb.restic.enable = true;
@@ -34,7 +40,11 @@
     openToPersonalDevices = true;
     # Allow servers (like rich-evans) to access Ollama API
     extraInboundRules = [
-      { port = 11434; proto = "tcp"; group = "servers"; }
+      {
+        port = 11434;
+        proto = "tcp";
+        group = "servers";
+      }
     ];
   };
 

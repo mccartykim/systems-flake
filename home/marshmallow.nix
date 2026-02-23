@@ -64,8 +64,8 @@
   services.gpg-agent = {
     enable = true;
     pinentryPackage = pkgs.pinentry-qt;
-    defaultCacheTtl = 7200;      # Cache passphrase for 2 hours
-    maxCacheTtl = 86400;         # Max cache 24 hours
+    defaultCacheTtl = 7200; # Cache passphrase for 2 hours
+    maxCacheTtl = 86400; # Max cache 24 hours
   };
 
   # Programs configuration

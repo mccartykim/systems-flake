@@ -83,6 +83,10 @@ in
     # Home Assistant long-lived access token for presence sensor queries
     "ha-life-coach-token.age".publicKeys = [hostKeys.rich-evans hostKeys.historian hostKeys.marshmallow bootstrap];
 
+    # ===== NIX SANDBOX =====
+    # API token for nix-sandbox remote build service
+    "nix-sandbox-token.age".publicKeys = [hostKeys.historian bootstrap];
+
     # ===== RESTIC BACKUPS (Backblaze B2) =====
     # All hosts can decrypt for deduplication across syncthing-replicated data
     "restic-password.age".publicKeys = workingMachines;

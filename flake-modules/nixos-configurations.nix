@@ -234,6 +234,15 @@ in {
                   publicAccess = true;
                   websockets = true; # Matrix uses websockets for sync
                 };
+                nix-sandbox = {
+                  enable = true;
+                  port = 8090;
+                  subdomain = "sandbox";
+                  host = "historian";
+                  auth = "builtin"; # Bearer token handled by service
+                  publicAccess = true;
+                  websockets = false;
+                };
               };
               networks = {
                 containerBridge = "192.168.100.1";
