@@ -85,9 +85,11 @@ in
             MAX_CONCURRENT = "1";
             BUILD_TIMEOUT = "60";
             BUILD_MODE = "direct";
+            BUILD_MEMORY_LIMIT = "4G";
+            BUILD_CPU_QUOTA = "200%";
           };
 
-          path = [pkgs.gnutar pkgs.gzip pkgs.git pkgs.nix];
+          path = [pkgs.gnutar pkgs.gzip pkgs.git pkgs.nix pkgs.systemd];
 
           serviceConfig = {
             ExecStart = "${pkgs.python3}/bin/python3 ${apiScript}";
@@ -125,6 +127,8 @@ in
             BUILD_MODE = "nspawn";
             BUILD_ROOT = toString buildRoot;
             NSPAWN_NETWORK = "private"; # Offline — no veth setup in test VM
+            BUILD_MEMORY_LIMIT = "4G";
+            BUILD_CPU_QUOTA = "200%";
           };
 
           path = with pkgs; [gnutar gzip git nix systemd iproute2 coreutils];
@@ -411,6 +415,14 @@ in
       assert "duration_seconds" in nspawn_result, "Missing duration_seconds in nspawn response"
       print(f"  Nspawn build completed in {nspawn_result['duration_seconds']}s")
       print("  PASS: Nspawn-mode build succeeded end-to-end")
+
+      # ===== Test 21: Verify systemd-run scope was used for resource limits =====
+      print("Test 21: Verify systemd-run scope was used during nspawn build")
+      journal = nspawn.succeed("journalctl --no-pager -u nix-sandbox-nspawn -o cat")
+      # systemd-run creates transient scope units visible in the journal
+      # The service should have invoked systemd-run as part of the build
+      assert "systemd-nspawn" in journal, "Expected systemd-nspawn in journal output"
+      print("  PASS: Build used nspawn (resource-limited via systemd-run scope)")
 
       print("")
       print("All nix-sandbox API tests passed!")

@@ -50,6 +50,8 @@ WAN_INTERFACE = os.environ.get("WAN_INTERFACE", "eth0")
 BUILD_MODE = os.environ.get("BUILD_MODE", "nspawn")
 BUILD_ROOT = os.environ.get("BUILD_ROOT", "")
 NSPAWN_NETWORK = os.environ.get("NSPAWN_NETWORK", "veth")
+BUILD_MEMORY_LIMIT = os.environ.get("BUILD_MEMORY_LIMIT", "4G")
+BUILD_CPU_QUOTA = os.environ.get("BUILD_CPU_QUOTA", "200%")
 
 # Concurrency control
 vm_semaphore = threading.Semaphore(MAX_CONCURRENT)
@@ -94,6 +96,16 @@ def validate_git_url(url):
     if not url.startswith(ALLOWED_URL_SCHEMES):
         return False, f"URL must start with https:// or http://"
     return True, None
+
+
+def resource_limit_prefix():
+    """Return systemd-run scope prefix for cgroup resource limits."""
+    return [
+        "systemd-run", "--scope", "--quiet",
+        f"--property=MemoryMax={BUILD_MEMORY_LIMIT}",
+        f"--property=CPUQuota={BUILD_CPU_QUOTA}",
+        "--",
+    ]
 
 
 def setup_tap(slot):
@@ -456,9 +468,12 @@ def run_build_direct(job_id, source_type, url, tarball_b64, command, target, tim
         else:
             nix_cmd = ["nix", "flake", "check"]
 
+        # Wrap with resource limits
+        full_cmd = resource_limit_prefix() + nix_cmd
+
         # Run the build
         result = subprocess.run(
-            nix_cmd,
+            full_cmd,
             cwd=str(src_dir),
             capture_output=True,
             text=True,
@@ -548,7 +563,7 @@ def run_build_nspawn(job_id, source_type, url, tarball_b64, command, target, tim
         else:
             nspawn_net_args = ["--private-network"]
 
-        nspawn_cmd = [
+        nspawn_cmd = resource_limit_prefix() + [
             "systemd-nspawn",
             "--ephemeral",
             f"--directory={BUILD_ROOT}",
