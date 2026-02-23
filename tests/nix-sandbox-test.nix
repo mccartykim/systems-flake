@@ -382,6 +382,30 @@ in
       print(f"  Build completed in {build_result['duration_seconds']}s")
       print("  PASS: Direct-mode build succeeded end-to-end")
 
+      # ===== Test 22: Verify build_start and build_complete audit log entries =====
+      print("Test 22: Check journal for structured audit log entries after build")
+      journal = sandbox.succeed("journalctl --no-pager -u nix-sandbox-test -o cat")
+      assert '"event": "build_start"' in journal or '"event":"build_start"' in journal, \
+          f"Expected build_start event in journal"
+      assert '"event": "build_complete"' in journal or '"event":"build_complete"' in journal, \
+          f"Expected build_complete event in journal"
+      # Verify the entries are valid JSON by finding and parsing one
+      for line in journal.split("\n"):
+          if "build_start" in line and "{" in line:
+              start_idx = line.index("{")
+              entry = json.loads(line[start_idx:])
+              assert entry["event"] == "build_start", f"Unexpected event: {entry}"
+              assert "job_id" in entry, "build_start missing job_id"
+              assert "build_mode" in entry, "build_start missing build_mode"
+              break
+      print("  PASS: Structured audit log entries found in journal")
+
+      # ===== Test 23: Verify auth_failure audit log entry =====
+      print("Test 23: Check journal for auth_failure event after test 2")
+      assert '"event": "auth_failure"' in journal or '"event":"auth_failure"' in journal, \
+          f"Expected auth_failure event in journal"
+      print("  PASS: auth_failure event found in journal")
+
       # ===== Test 13: End-to-end build via nspawn mode (--private-network) =====
       print("Test 13: POST /build with tarball executes nix build (nspawn mode)")
 

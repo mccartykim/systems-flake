@@ -108,6 +108,16 @@ def resource_limit_prefix():
     ]
 
 
+def log_event(event_type, **kwargs):
+    """Print a structured JSON audit log entry to stdout (captured by journald)."""
+    entry = {
+        "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "event": event_type,
+        **kwargs,
+    }
+    print(json.dumps(entry), flush=True)
+
+
 def setup_tap(slot):
     """Create TAP device and iptables rules for VM isolation."""
     tap_name = f"sandbox{slot}"
@@ -436,6 +446,9 @@ def run_build_direct(job_id, source_type, url, tarball_b64, command, target, tim
     src_dir = workspace / "src"
     start_time = time.time()
 
+    log_event("build_start", source_type=source_type, command=command,
+              target=target, job_id=job_id, build_mode="direct")
+
     try:
         # Prepare source
         if source_type == "git":
@@ -444,6 +457,7 @@ def run_build_direct(job_id, source_type, url, tarball_b64, command, target, tim
                 capture_output=True, text=True, timeout=120,
             )
             if result.returncode != 0:
+                log_event("build_error", job_id=job_id, error="git clone failed")
                 return {
                     "exit_code": result.returncode,
                     "log": f"git clone failed:\n{result.stderr}",
@@ -483,6 +497,9 @@ def run_build_direct(job_id, source_type, url, tarball_b64, command, target, tim
         duration = time.time() - start_time
         log = result.stdout + result.stderr
 
+        log_event("build_complete", job_id=job_id, exit_code=result.returncode,
+                  success=result.returncode == 0, duration_seconds=round(duration, 1))
+
         return {
             "exit_code": result.returncode,
             "log": log,
@@ -491,6 +508,7 @@ def run_build_direct(job_id, source_type, url, tarball_b64, command, target, tim
         }
 
     except subprocess.TimeoutExpired:
+        log_event("build_error", job_id=job_id, error="timeout")
         return {
             "exit_code": 124,
             "log": "[TIMEOUT] Build exceeded time limit\n",
@@ -511,6 +529,9 @@ def run_build_nspawn(job_id, source_type, url, tarball_b64, command, target, tim
     use_veth = NSPAWN_NETWORK == "veth"
     veth_setup_done = False
 
+    log_event("build_start", source_type=source_type, command=command,
+              target=target, job_id=job_id, build_mode="nspawn", slot=slot)
+
     try:
         # Prepare source (same as direct mode)
         if source_type == "git":
@@ -519,6 +540,7 @@ def run_build_nspawn(job_id, source_type, url, tarball_b64, command, target, tim
                 capture_output=True, text=True, timeout=120,
             )
             if result.returncode != 0:
+                log_event("build_error", job_id=job_id, error="git clone failed")
                 return {
                     "exit_code": result.returncode,
                     "log": f"git clone failed:\n{result.stderr}",
@@ -591,6 +613,9 @@ def run_build_nspawn(job_id, source_type, url, tarball_b64, command, target, tim
         duration = time.time() - start_time
         log = result.stdout + result.stderr
 
+        log_event("build_complete", job_id=job_id, exit_code=result.returncode,
+                  success=result.returncode == 0, duration_seconds=round(duration, 1))
+
         return {
             "exit_code": result.returncode,
             "log": log,
@@ -599,6 +624,7 @@ def run_build_nspawn(job_id, source_type, url, tarball_b64, command, target, tim
         }
 
     except subprocess.TimeoutExpired:
+        log_event("build_error", job_id=job_id, error="timeout")
         return {
             "exit_code": 124,
             "log": "[TIMEOUT] Build exceeded time limit\n",
@@ -619,6 +645,7 @@ class SandboxHandler(BaseHTTPRequestHandler):
         """Check Bearer token authentication."""
         auth = self.headers.get("Authorization", "")
         if auth != f"Bearer {API_TOKEN}":
+            log_event("auth_failure", client_ip=self.client_address[0])
             self.send_error(403, "Invalid or missing API token")
             return False
         return True
@@ -714,6 +741,8 @@ class SandboxHandler(BaseHTTPRequestHandler):
                 return
             ok, err = validate_git_url(url)
             if not ok:
+                log_event("validation_error", field="url", reason=err,
+                          client_ip=self.client_address[0])
                 self._send_json({"error": err}, 400)
                 return
             tarball_b64 = None
@@ -736,6 +765,8 @@ class SandboxHandler(BaseHTTPRequestHandler):
         target = body.get("target", "")
         ok, err = validate_target(target)
         if not ok:
+            log_event("validation_error", field="target", reason=err,
+                      client_ip=self.client_address[0])
             self._send_json({"error": err}, 400)
             return
 
@@ -790,8 +821,9 @@ class SandboxHandler(BaseHTTPRequestHandler):
             self._send_json({"error": str(e)}, 500)
 
     def log_message(self, format, *args):
-        """Override to add timestamps."""
-        print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {args[0]}")
+        """Override default logging with structured event."""
+        log_event("http_request", message=args[0] if args else "",
+                  client_ip=self.client_address[0])
 
 
 class ThreadedHTTPServer(HTTPServer):
