@@ -201,6 +201,26 @@ in {
             exec ${pkgs.python3}/bin/python3 ${apiScript}
           '';
         };
+
+        # GC timer to clean up sandbox build outputs from the host store.
+        # Since the daemon socket is bind-mounted from the host, nix-collect-garbage
+        # talks to the host daemon and operates on the host store. It only deletes
+        # paths with no GC roots — sandbox builds use --no-link (no roots), while
+        # the host's system profiles and other services are protected.
+        systemd.services.nix-sandbox-gc = {
+          description = "Garbage-collect sandbox build outputs";
+          serviceConfig = {
+            Type = "oneshot";
+            ExecStart = "${pkgs.nix}/bin/nix-collect-garbage --delete-older-than 1d";
+          };
+        };
+        systemd.timers.nix-sandbox-gc = {
+          wantedBy = ["timers.target"];
+          timerConfig = {
+            OnCalendar = "daily";
+            Persistent = true;
+          };
+        };
       };
     };
   };

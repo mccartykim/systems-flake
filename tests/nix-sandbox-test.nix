@@ -139,6 +139,22 @@ in
           };
         };
 
+        # GC timer (mirrors module's nix-sandbox-gc)
+        systemd.services.nix-sandbox-gc = {
+          description = "Garbage-collect sandbox build outputs";
+          serviceConfig = {
+            Type = "oneshot";
+            ExecStart = "${pkgs.nix}/bin/nix-collect-garbage --delete-older-than 1d";
+          };
+        };
+        systemd.timers.nix-sandbox-gc = {
+          wantedBy = ["timers.target"];
+          timerConfig = {
+            OnCalendar = "daily";
+            Persistent = true;
+          };
+        };
+
         environment.systemPackages = [pkgs.curl pkgs.jq];
       };
     };
@@ -447,6 +463,13 @@ in
       # The service should have invoked systemd-run as part of the build
       assert "systemd-nspawn" in journal, "Expected systemd-nspawn in journal output"
       print("  PASS: Build used nspawn (resource-limited via systemd-run scope)")
+
+      # ===== Test 24: Verify GC timer unit exists =====
+      print("Test 24: Verify nix-sandbox-gc timer is loaded on nspawn node")
+      timer_list = nspawn.succeed("systemctl list-timers --no-pager")
+      assert "nix-sandbox-gc" in timer_list, \
+          f"Expected nix-sandbox-gc in timer list, got: {timer_list}"
+      print("  PASS: nix-sandbox-gc timer is loaded")
 
       print("")
       print("All nix-sandbox API tests passed!")
