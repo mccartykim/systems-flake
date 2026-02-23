@@ -77,6 +77,25 @@ def validate_target(target):
     return False, f"Invalid target: must be empty or match .#<path> (got {target!r})"
 
 
+# Shell metacharacters that should never appear in URLs
+URL_DANGEROUS_CHARS = re.compile(r"[;|$`\n\r\\]")
+# Allowed URL schemes for git sources
+ALLOWED_URL_SCHEMES = ("https://", "http://")
+
+
+def validate_git_url(url):
+    """Validate git clone URL. Returns (ok, error_message)."""
+    if URL_DANGEROUS_CHARS.search(url):
+        return False, f"URL contains forbidden characters"
+    if url.startswith("file://") or (not url.startswith(("https://", "http://")) and "/" in url):
+        # Block file:// and bare paths to prevent local filesystem access
+        if url.startswith("file://"):
+            return False, "file:// URLs are not allowed"
+    if not url.startswith(ALLOWED_URL_SCHEMES):
+        return False, f"URL must start with https:// or http://"
+    return True, None
+
+
 def setup_tap(slot):
     """Create TAP device and iptables rules for VM isolation."""
     tap_name = f"sandbox{slot}"
@@ -677,6 +696,10 @@ class SandboxHandler(BaseHTTPRequestHandler):
             url = body.get("url")
             if not url:
                 self._send_json({"error": "url is required for git source_type"}, 400)
+                return
+            ok, err = validate_git_url(url)
+            if not ok:
+                self._send_json({"error": err}, 400)
                 return
             tarball_b64 = None
         else:

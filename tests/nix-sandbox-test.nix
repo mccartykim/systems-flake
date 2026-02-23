@@ -307,6 +307,44 @@ in
           f"Target .#packages.x86_64-linux.default should be accepted, got: {resp}"
       print("  PASS: Valid nested target path accepted")
 
+      # ===== Test 18: Reject file:// URL =====
+      print("Test 18: POST /build rejects file:// URL")
+      result = sandbox.succeed(
+          f"curl -s -o /dev/null -w '%{{http_code}}' "
+          f"-H 'Authorization: Bearer {TOKEN}' "
+          f"-H 'Content-Type: application/json' "
+          f"-X POST -d '{{\"source_type\": \"git\", \"url\": \"file:///etc/passwd\"}}' "
+          f"http://localhost:8090/build"
+      )
+      assert result.strip() == "400", f"Expected 400 for file:// URL, got: {result.strip()}"
+      print("  PASS: file:// URL rejected with 400")
+
+      # ===== Test 19: Reject URL with shell injection =====
+      print("Test 19: POST /build rejects URL with shell metacharacters")
+      result = sandbox.succeed(
+          f"curl -s -o /dev/null -w '%{{http_code}}' "
+          f"-H 'Authorization: Bearer {TOKEN}' "
+          f"-H 'Content-Type: application/json' "
+          f"-X POST -d '{{\"source_type\": \"git\", \"url\": \"https://github.com/NixOS/nixpkgs; cat /etc/passwd\"}}' "
+          f"http://localhost:8090/build"
+      )
+      assert result.strip() == "400", f"Expected 400 for URL with semicolon, got: {result.strip()}"
+      print("  PASS: URL with shell metacharacters rejected with 400")
+
+      # ===== Test 20: Accept valid https URL =====
+      print("Test 20: POST /build accepts valid https URL (will fail at clone, not validation)")
+      result = sandbox.succeed(
+          f"curl -s "
+          f"-H 'Authorization: Bearer {TOKEN}' "
+          f"-H 'Content-Type: application/json' "
+          f"-X POST -d '{{\"source_type\": \"git\", \"url\": \"https://github.com/valid/repo.git\"}}' "
+          f"http://localhost:8090/build"
+      )
+      resp = json.loads(result)
+      assert "error" not in resp or "URL" not in resp.get("error", ""), \
+          f"Valid https URL should pass validation, got: {resp}"
+      print("  PASS: Valid https URL accepted past validation")
+
       # ===== Test 12: End-to-end build via direct mode =====
       print("Test 12: POST /build with tarball executes nix build (direct mode)")
 
