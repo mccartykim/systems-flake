@@ -448,6 +448,8 @@ def run_build_direct(job_id, source_type, url, tarball_b64, command, target, tim
 
     log_event("build_start", source_type=source_type, command=command,
               target=target, job_id=job_id, build_mode="direct")
+    log_event("build_warning", job_id=job_id,
+              message="Running in direct mode (no isolation)")
 
     try:
         # Prepare source
@@ -854,6 +856,10 @@ def main():
 
     if BUILD_MODE == "nspawn" and not BUILD_ROOT:
         print("WARNING: BUILD_ROOT not set, nspawn builds will fail")
+
+    if BUILD_MODE == "direct":
+        log_event("config_warning",
+                  message="BUILD_MODE=direct has no isolation; use nspawn for production")
 
     if not PRIMER_PATH:
         print("WARNING: PRIMER_PATH not set, /primer will fail")

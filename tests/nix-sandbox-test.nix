@@ -172,6 +172,15 @@ in
       # Wait for API to be ready
       sandbox.wait_until_succeeds("curl -sf http://localhost:8090/health", timeout=15)
 
+      # ===== Test 25: Direct mode config_warning at startup =====
+      print("Test 25: Verify config_warning for direct mode at startup")
+      startup_journal = sandbox.succeed("journalctl --no-pager -u nix-sandbox-test -o cat")
+      assert "config_warning" in startup_journal, \
+          f"Expected config_warning event in startup journal"
+      assert "direct" in startup_journal.lower(), \
+          f"Expected 'direct' mentioned in config_warning"
+      print("  PASS: config_warning for direct mode found in journal")
+
       # ===== Test 1: Health endpoint (no auth required) =====
       print("Test 1: GET /health returns 200 with status ok")
       result = sandbox.succeed("curl -sf http://localhost:8090/health")
