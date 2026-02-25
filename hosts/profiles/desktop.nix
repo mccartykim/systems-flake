@@ -52,7 +52,7 @@
         # Realforce JIS keyboard - remap Asian character keys
         # Find ID with: keyd -m (or lsusb | grep -i topre)
         realforce = {
-          ids = ["0853:0200"];  # Topre RealForce Compact
+          ids = ["0853:0200"]; # Topre RealForce Compact
           settings = {
             main = {
               # Muhenkan (left of space) → Backspace
@@ -113,7 +113,7 @@
   environment.systemPackages = with pkgs; [
     vlc
     pinentry-curses
-    pinentry-qt  # KDE/Qt GUI for gpg passphrase entry
+    pinentry-qt # KDE/Qt GUI for gpg passphrase entry
   ];
 
   # Font configuration

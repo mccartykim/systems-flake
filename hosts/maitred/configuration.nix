@@ -99,6 +99,9 @@ in {
     listenAddresses = ["*:631"];
     allowFrom = ["all"];
     browsing = true;
+    extraConf = ''
+      ServerAlias maitred.nebula
+    '';
     drivers = [
       pkgs.brlaser
       pkgs.brgenml1lpr

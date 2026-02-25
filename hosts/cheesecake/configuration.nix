@@ -161,6 +161,19 @@
     ];
   };
 
+  hardware.printers = {
+    ensurePrinters = [
+      {
+        name = "Brother-HL-L2400D";
+        description = "Brother HL-L2400D Laser Printer";
+        location = "Living Room";
+        deviceUri = "ipp://maitred.nebula:631/printers/Brother-HL-L2400D";
+        model = "everywhere";
+      }
+    ];
+    ensureDefaultPrinter = "Brother-HL-L2400D";
+  };
+
   nixpkgs.config.allowUnfree = true;
 
   # Enable sound with pipewire.

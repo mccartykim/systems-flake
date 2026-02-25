@@ -13,9 +13,11 @@
         # extract_msg requires beautifulsoup4<4.14 but nixpkgs has 4.14.x
         # The package works fine with newer versions, just has strict bounds
         extract-msg = pyPrev.extract-msg.overridePythonAttrs (old: {
-          nativeBuildInputs = (old.nativeBuildInputs or []) ++ [
-            pyFinal.pythonRelaxDepsHook
-          ];
+          nativeBuildInputs =
+            (old.nativeBuildInputs or [])
+            ++ [
+              pyFinal.pythonRelaxDepsHook
+            ];
           pythonRelaxDeps = ["beautifulsoup4"];
         });
 
