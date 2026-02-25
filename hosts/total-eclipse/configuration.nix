@@ -36,7 +36,11 @@
     enable = true;
     openToPersonalDevices = true;
     extraInboundRules = [
-      {port = 11434; proto = "tcp"; host = "any";} # Ollama API
+      {
+        port = 11434;
+        proto = "tcp";
+        host = "any";
+      } # Ollama API
     ];
   };
 

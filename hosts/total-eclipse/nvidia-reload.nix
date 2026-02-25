@@ -1,6 +1,9 @@
-{ config, lib, pkgs, ... }:
-
 {
+  config,
+  lib,
+  pkgs,
+  ...
+}: {
   # Systemd service to reload NVIDIA modules
   systemd.services.nvidia-module-reload = {
     description = "Reload NVIDIA kernel modules";
@@ -39,7 +42,7 @@
   };
 
   # Trigger the service on every activation
-  system.activationScripts.nvidia-reload = lib.stringAfter [ "specialfs" ] ''
+  system.activationScripts.nvidia-reload = lib.stringAfter ["specialfs"] ''
     echo "nvidia-module-reload.service" >> /run/nixos/activation-reload-list
   '';
 }

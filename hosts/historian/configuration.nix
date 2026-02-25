@@ -34,7 +34,11 @@
     openToPersonalDevices = true;
     # Allow servers (like rich-evans) to access Ollama API
     extraInboundRules = [
-      { port = 11434; proto = "tcp"; group = "servers"; }
+      {
+        port = 11434;
+        proto = "tcp";
+        group = "servers";
+      }
     ];
   };
 
