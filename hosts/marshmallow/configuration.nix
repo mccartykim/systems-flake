@@ -44,7 +44,7 @@
 
   # Boot configuration
   boot = {
-    kernelModules = ["i915"];
+    kernelModules = ["i915" "uinput"];
 
     kernelPackages = pkgs.linuxKernel.packages.linux_6_18;
 
@@ -98,7 +98,7 @@
 
     # Firewall configuration
     firewall = {
-      allowedTCPPorts = [9001];
+      allowedTCPPorts = [9001 1701];
       allowedUDPPorts = [65535];
     };
   };
@@ -205,6 +205,7 @@
       gparted
       niri
       nh
+      weylus
     ];
   };
 
@@ -222,7 +223,7 @@
   # User configuration
   users = {
     users.kimb = {
-      extraGroups = ["docker" "dialout"];
+      extraGroups = ["docker" "dialout" "input"];
       initialPassword = "recovery";
     };
     groups.dialout.members = ["kimb"];
