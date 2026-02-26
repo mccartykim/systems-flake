@@ -5,7 +5,7 @@
   self,
   ...
 }: let
-  inherit (inputs) nixpkgs nixos-hardware nixos-facter-modules nixos-avf copyparty nil-flake claude_yapper kokoro;
+  inherit (inputs) nixpkgs nixos-hardware nixos-facter-modules nixos-avf copyparty nil-flake claude_yapper kokoro media-classifier;
   inherit (config.flake.lib) mkDesktop mkServer mkHomeManager commonModules;
 in {
   flake.nixosConfigurations = {
@@ -52,6 +52,8 @@ in {
     # Desktops using mkDesktop helper
     historian = mkDesktop {
       hostname = "historian";
+      extraSpecialArgs = {inherit media-classifier;};
+      extraModules = [media-classifier.nixosModules.default];
     };
     total-eclipse = mkDesktop {hostname = "total-eclipse";};
 

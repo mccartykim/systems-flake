@@ -1,6 +1,7 @@
 # Historian - Desktop (AMD graphics, gaming, AI/ML workloads)
 {
   config,
+  lib,
   pkgs,
   inputs,
   ...
@@ -20,6 +21,21 @@
     # Restic backups to Backblaze B2
     ../../modules/restic-backup.nix
   ];
+
+  # External media drive (exFAT — ownership set at mount time)
+  fileSystems."/mnt/media-drive" = {
+    device = "/dev/disk/by-uuid/4A44-E68C";
+    fsType = "exfat";
+    options = [
+      "nofail" # Don't block boot if drive absent
+      "x-systemd.automount"
+      "x-systemd.idle-timeout=0"
+      "uid=1000" # kimb
+      "gid=${toString config.users.groups.media.gid}"
+      "dmask=0027" # rwxr-x--- dirs
+      "fmask=0137" # rw-r----- files
+    ];
+  };
 
   # Restic backups
   kimb.restic.enable = true;
@@ -183,6 +199,7 @@
       gleam
       # Media
       vlc
+      rclone
       # Email
       mu
       isync
@@ -215,7 +232,7 @@
   users.users.tv = {
     isNormalUser = true;
     description = "Living Room TV";
-    extraGroups = ["video" "audio" "input" "users"];
+    extraGroups = ["video" "audio" "input" "users" "media"];
     # No password - auto-login only
     hashedPassword = "";
     shell = pkgs.bash;
@@ -239,6 +256,27 @@
 
   # Services configuration
   services = {
+    # Jellyfin media server with VA-API hardware transcoding
+    jellyfin = {
+      enable = true;
+      openFirewall = true;
+      hardwareAcceleration = {
+        enable = true;
+        type = "vaapi";
+        device = "/dev/dri/renderD128";
+      };
+      transcoding = {
+        enableHardwareEncoding = true;
+        hardwareDecodingCodecs = {
+          h264 = true;
+          hevc = true;
+          vp9 = true;
+          av1 = true; # VCN 3.0 supports AV1 decode
+        };
+        enableToneMapping = true;
+      };
+    };
+
     # Smart card daemon for YubiKey support
     pcscd.enable = true;
 
@@ -291,6 +329,9 @@
     };
   };
 
+  # Media group for Jellyfin + drive access
+  users.groups.media.gid = 1500;
+
   # Additional user groups
   users.users.kimb = {
     description = "Kimberly";
@@ -299,8 +340,12 @@
       "dialout"
       "input"
       "libvirtd"
+      "media"
     ];
   };
+
+  # Jellyfin needs video/render for VA-API and media for library access
+  users.users.jellyfin.extraGroups = ["video" "render" "media"];
 
   # Enable cross-compilation for ARM via QEMU emulation
   boot.binfmt.emulatedSystems = ["armv6l-linux" "aarch64-linux"];
@@ -310,6 +355,72 @@
     nix-ld.enable = true;
     virt-manager.enable = true;
     appimage.enable = true;
+  };
+
+  # === Agenix secrets for media pipeline ===
+  age.secrets.rclone-config = {
+    file = ../../secrets/rclone-config.age;
+    path = "/run/agenix/rclone-config";
+    mode = "0400";
+    owner = "kimb";
+  };
+
+  # === Media pipeline systemd services ===
+
+  # rclone sync from put.io (every 6 hours)
+  systemd.services.rclone-putio-sync = {
+    description = "Sync put.io to local media drive";
+    after = ["network-online.target"];
+    wants = ["network-online.target"];
+    serviceConfig = {
+      Type = "oneshot";
+      User = "kimb";
+      Group = "media";
+      ExecStart = let
+        syncScript = pkgs.writeShellScript "rclone-putio-sync" ''
+          ${pkgs.rclone}/bin/rclone sync \
+            --config /run/agenix/rclone-config \
+            putio:chill.institute \
+            /mnt/media-drive/putio/chill.institute/ \
+            --verbose --stats 30s
+
+          ${pkgs.rclone}/bin/rclone sync \
+            --config /run/agenix/rclone-config \
+            "putio:Items shared with you/Parsimony" \
+            "/mnt/media-drive/putio/Items shared with you/Parsimony/" \
+            --verbose --stats 30s
+        '';
+      in "${syncScript}";
+      ExecStartPost = let
+        postSync = pkgs.writeShellScript "post-sync" ''
+          # Clean up broken symlinks then classify new media
+          ${pkgs.systemd}/bin/systemctl start media-symlink-cleanup.service
+          ${pkgs.systemd}/bin/systemctl start media-classifier.service
+        '';
+      in "+${postSync}";
+    };
+  };
+
+  systemd.timers.rclone-putio-sync = {
+    wantedBy = ["timers.target"];
+    timerConfig = {
+      OnCalendar = "*-*-* 0/6:00:00";
+      RandomizedDelaySec = "30m";
+      Persistent = true;
+    };
+  };
+
+  # Media classifier module (external flake)
+  services.media-classifier = {
+    enable = true;
+    sourceDirs = [
+      "/mnt/media-drive/putio/chill.institute"
+      "/mnt/media-drive/putio/Items shared with you/Parsimony"
+    ];
+    ollamaHost = "http://total-eclipse.nebula:11434";
+    ollamaModel = "qwen3:8b";
+    user = "kimb";
+    group = "media";
   };
 
   system.stateVersion = "23.11";
