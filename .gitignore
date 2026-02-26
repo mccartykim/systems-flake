@@ -1,9 +1,9 @@
 result
 .DS_Store
+__pycache__/
 
-# Age/Agenix - these are safe to commit
-# *.age files are encrypted and safe
-# But NEVER commit these:
+# Age/Agenix - only secrets/*.age should exist (not root-level)
+/*.age
 secrets/age-key.txt
 secrets/.age-recipients.backup
 *.key
