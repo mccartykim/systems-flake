@@ -535,6 +535,23 @@
         "type": "github"
       }
     },
+    "media-classifier": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1772241457,
+        "narHash": "sha256-Og5zbPCZcKKsiK36XBY2emwUSvEErCbQlmLu8DPUaTU=",
+        "path": "/home/kimb/shared_projects/media-classifier",
+        "type": "path"
+      },
+      "original": {
+        "path": "/home/kimb/shared_projects/media-classifier",
+        "type": "path"
+      }
+    },
     "mist-blog": {
       "inputs": {
         "flake-utils": "flake-utils_5",
@@ -962,6 +979,7 @@
         "home-manager": "home-manager_2",
         "jovian-nixos": "jovian-nixos",
         "kokoro": "kokoro",
+        "media-classifier": "media-classifier",
         "mist-blog": "mist-blog",
         "nil-flake": "nil-flake",
         "nix-darwin": "nix-darwin",

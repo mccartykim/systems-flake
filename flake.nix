@@ -56,6 +56,10 @@
     kokoro.url = "git+ssh://git@github.com/mccartykim/kokoro-flake.git";
     kokoro.inputs.nixpkgs.follows = "nixpkgs";
 
+    # Media classifier for Jellyfin library organization
+    media-classifier.url = "path:/home/kimb/shared_projects/media-classifier";
+    media-classifier.inputs.nixpkgs.follows = "nixpkgs";
+
     nixos-facter-modules.url = "github:nix-community/nixos-facter-modules";
 
     # Jovian NixOS for Steam Deck
