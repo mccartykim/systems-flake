@@ -109,7 +109,6 @@
     };
   };
 
-  programs.chromium.enable = true;
 
   # Add desktop-specific packages
   environment.systemPackages = with pkgs; [
