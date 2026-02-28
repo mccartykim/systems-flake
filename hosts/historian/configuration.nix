@@ -382,13 +382,15 @@
             --config /run/agenix/rclone-config \
             putio:chill.institute \
             /mnt/media-drive/putio/chill.institute/ \
-            --verbose --stats 30s
+            --verbose --stats 30s --modify-window 2s \
+            --no-update-modtime
 
           ${pkgs.rclone}/bin/rclone sync \
             --config /run/agenix/rclone-config \
             "putio:Items shared with you/Parsimony" \
             "/mnt/media-drive/putio/Items shared with you/Parsimony/" \
-            --verbose --stats 30s
+            --verbose --stats 30s --modify-window 2s \
+            --no-update-modtime
         '';
       in "${syncScript}";
       ExecStartPost = let

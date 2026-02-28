@@ -191,6 +191,14 @@
     ensureDefaultPrinter = "Brother-HL-L2400D";
   };
 
+  # ensure-printers needs nebula for maitred.nebula DNS
+  systemd.services.ensure-printers = {
+    after = ["nebula@nebula1.service"];
+    wants = ["nebula@nebula1.service"];
+    serviceConfig.Restart = "on-failure";
+    serviceConfig.RestartSec = "10s";
+  };
+
   # Hardware acceleration for media
   environment = {
     sessionVariables = {
