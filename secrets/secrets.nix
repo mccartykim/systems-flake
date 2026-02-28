@@ -86,9 +86,6 @@ in
     # ===== MEDIA PIPELINE (historian) =====
     # rclone config with put.io OAuth token
     "rclone-config.age".publicKeys = [hostKeys.historian bootstrap];
-    # Anthropic API key for Claude Haiku media classifier fallback
-    "anthropic-api-key.age".publicKeys = [hostKeys.historian bootstrap];
-
     # ===== RESTIC BACKUPS (Backblaze B2) =====
     # All hosts can decrypt for deduplication across syncthing-replicated data
     "restic-password.age".publicKeys = workingMachines;
