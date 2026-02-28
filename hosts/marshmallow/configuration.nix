@@ -38,6 +38,8 @@
     openToPersonalDevices = true;
   };
 
+  programs.chromium.enable = true;
+
   # Power management - use schedutil instead of auto-cpufreq
   services.auto-cpufreq.enable = lib.mkForce false;
   powerManagement.cpuFreqGovernor = "schedutil";
