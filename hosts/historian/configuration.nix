@@ -55,6 +55,11 @@
         proto = "tcp";
         group = "servers";
       }
+      {
+        port = 8096;
+        proto = "tcp";
+        host = "maitred";
+      }
     ];
   };
 
@@ -367,7 +372,7 @@
 
   # === Media pipeline systemd services ===
 
-  # rclone sync from put.io (every 6 hours)
+  # rclone sync from put.io (every 15 minutes)
   systemd.services.rclone-putio-sync = {
     description = "Sync put.io to local media drive";
     after = ["network-online.target"];
@@ -383,14 +388,14 @@
             putio:chill.institute \
             /mnt/media-drive/putio/chill.institute/ \
             --verbose --stats 30s --modify-window 2s \
-            --no-update-modtime
+            --no-update-modtime --fast-list --checkers 16
 
           ${pkgs.rclone}/bin/rclone sync \
             --config /run/agenix/rclone-config \
             "putio:Items shared with you/Parsimony" \
             "/mnt/media-drive/putio/Items shared with you/Parsimony/" \
             --verbose --stats 30s --modify-window 2s \
-            --no-update-modtime
+            --no-update-modtime --fast-list --checkers 16
         '';
       in "${syncScript}";
       ExecStartPost = let
@@ -406,8 +411,8 @@
   systemd.timers.rclone-putio-sync = {
     wantedBy = ["timers.target"];
     timerConfig = {
-      OnCalendar = "*-*-* 0/6:00:00";
-      RandomizedDelaySec = "30m";
+      OnCalendar = "*:0/15"; # Every 15 minutes
+      RandomizedDelaySec = "2m";
       Persistent = true;
     };
   };

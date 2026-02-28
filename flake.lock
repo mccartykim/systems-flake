@@ -542,8 +542,8 @@
         ]
       },
       "locked": {
-        "lastModified": 1772250107,
-        "narHash": "sha256-ZtL7dulPRhmeAh7FFXCiUeZ43ai62qv/U1ZAg4lbxDI=",
+        "lastModified": 1772256954,
+        "narHash": "sha256-A903VVYSQVRNeSc2M4ZY3KuwriWZzc3NVJqss/WjvlA=",
         "path": "/home/kimb/shared_projects/media-classifier",
         "type": "path"
       },
