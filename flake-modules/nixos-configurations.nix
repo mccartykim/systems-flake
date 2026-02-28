@@ -236,6 +236,15 @@ in {
                   publicAccess = true;
                   websockets = true; # Matrix uses websockets for sync
                 };
+                jellyfin = {
+                  enable = true;
+                  port = 8096;
+                  subdomain = "media";
+                  host = "historian";
+                  auth = "builtin"; # Jellyfin handles its own auth
+                  publicAccess = true;
+                  websockets = true; # Required for live playback
+                };
               };
               networks = {
                 containerBridge = "192.168.100.1";
