@@ -57,8 +57,15 @@
     kokoro.inputs.nixpkgs.follows = "nixpkgs";
 
     # Media classifier for Jellyfin library organization
-    media-classifier.url = "path:/home/kimb/shared_projects/media-classifier";
+    media-classifier.url = "git+ssh://git@github.com/mccartykim/media-classifier";
     media-classifier.inputs.nixpkgs.follows = "nixpkgs";
+
+    # org-agent + org-life-coach (replaces claude_yapper life-coach)
+    org-agent.url = "git+ssh://git@github.com/mccartykim/org-agent.git";
+    org-agent.inputs.nixpkgs.follows = "nixpkgs";
+    org-life-coach.url = "git+ssh://git@github.com/mccartykim/org-life-coach.git";
+    org-life-coach.inputs.nixpkgs.follows = "nixpkgs";
+    org-life-coach.inputs.org-agent.follows = "org-agent";
 
     nixos-facter-modules.url = "github:nix-community/nixos-facter-modules";
 

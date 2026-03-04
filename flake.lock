@@ -370,6 +370,42 @@
         "type": "github"
       }
     },
+    "flake-utils_6": {
+      "inputs": {
+        "systems": "systems_6"
+      },
+      "locked": {
+        "lastModified": 1731533236,
+        "narHash": "sha256-l0KFg5HjrsfsO/JpG+r7fRrqm12kzFHyUHqHCVpMMbI=",
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "rev": "11707dc2f618dd54ca8739b309ec4fc024de578b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "type": "github"
+      }
+    },
+    "flake-utils_7": {
+      "inputs": {
+        "systems": "systems_7"
+      },
+      "locked": {
+        "lastModified": 1731533236,
+        "narHash": "sha256-l0KFg5HjrsfsO/JpG+r7fRrqm12kzFHyUHqHCVpMMbI=",
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "rev": "11707dc2f618dd54ca8739b309ec4fc024de578b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "type": "github"
+      }
+    },
     "gitignore": {
       "inputs": {
         "nixpkgs": [
@@ -542,14 +578,17 @@
         ]
       },
       "locked": {
-        "lastModified": 1772256954,
-        "narHash": "sha256-A903VVYSQVRNeSc2M4ZY3KuwriWZzc3NVJqss/WjvlA=",
-        "path": "/home/kimb/shared_projects/media-classifier",
-        "type": "path"
+        "lastModified": 1772587145,
+        "narHash": "sha256-uVVnCSMnpy+NP93fnh57IV3lLbRHuOUZwQ5qZ4I5xmE=",
+        "ref": "refs/heads/main",
+        "rev": "a0ab53d7f877cdf27e90d640389f8139419149a3",
+        "revCount": 1,
+        "type": "git",
+        "url": "ssh://git@github.com/mccartykim/media-classifier"
       },
       "original": {
-        "path": "/home/kimb/shared_projects/media-classifier",
-        "type": "path"
+        "type": "git",
+        "url": "ssh://git@github.com/mccartykim/media-classifier"
       }
     },
     "mist-blog": {
@@ -866,6 +905,51 @@
         "type": "github"
       }
     },
+    "org-agent": {
+      "inputs": {
+        "flake-utils": "flake-utils_6",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1772587816,
+        "narHash": "sha256-3cGp8KVq0QeWF4uzLlDozmPqLjx+bTzJXi9X2z9GDSM=",
+        "ref": "refs/heads/main",
+        "rev": "851e742ae52584026927c2ec468a96adf4753c8a",
+        "revCount": 2,
+        "type": "git",
+        "url": "ssh://git@github.com/mccartykim/org-agent.git"
+      },
+      "original": {
+        "type": "git",
+        "url": "ssh://git@github.com/mccartykim/org-agent.git"
+      }
+    },
+    "org-life-coach": {
+      "inputs": {
+        "flake-utils": "flake-utils_7",
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "org-agent": [
+          "org-agent"
+        ]
+      },
+      "locked": {
+        "lastModified": 1772587899,
+        "narHash": "sha256-iitP37LELE37JJM08+6Y/0nDHk8ESyYeZ8lFf6Miy+8=",
+        "ref": "refs/heads/main",
+        "rev": "bb7ff2ea81ba0a690157f082bd795c8d80282189",
+        "revCount": 2,
+        "type": "git",
+        "url": "ssh://git@github.com/mccartykim/org-life-coach.git"
+      },
+      "original": {
+        "type": "git",
+        "url": "ssh://git@github.com/mccartykim/org-life-coach.git"
+      }
+    },
     "pre-commit-hooks": {
       "inputs": {
         "flake-compat": "flake-compat",
@@ -989,6 +1073,8 @@
         "nixos-generators": "nixos-generators",
         "nixos-hardware": "nixos-hardware",
         "nixpkgs": "nixpkgs_5",
+        "org-agent": "org-agent",
+        "org-life-coach": "org-life-coach",
         "srvos": "srvos",
         "system-manager": "system-manager"
       }
@@ -1145,6 +1231,36 @@
         "type": "github"
       }
     },
+    "systems_7": {
+      "locked": {
+        "lastModified": 1681028828,
+        "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
+        "owner": "nix-systems",
+        "repo": "default",
+        "rev": "da67096a3b9bf56a91d16901293e51ba5b49a27e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-systems",
+        "repo": "default",
+        "type": "github"
+      }
+    },
+    "systems_8": {
+      "locked": {
+        "lastModified": 1681028828,
+        "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
+        "owner": "nix-systems",
+        "repo": "default",
+        "rev": "da67096a3b9bf56a91d16901293e51ba5b49a27e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-systems",
+        "repo": "default",
+        "type": "github"
+      }
+    },
     "treefmt-nix": {
       "inputs": {
         "nixpkgs": [
@@ -1175,7 +1291,7 @@
           "nixpkgs"
         ],
         "pre-commit-hooks-nix": "pre-commit-hooks-nix",
-        "systems": "systems_6"
+        "systems": "systems_8"
       },
       "locked": {
         "lastModified": 1770377964,
