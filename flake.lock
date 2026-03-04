@@ -913,11 +913,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1772587816,
-        "narHash": "sha256-3cGp8KVq0QeWF4uzLlDozmPqLjx+bTzJXi9X2z9GDSM=",
+        "lastModified": 1772591877,
+        "narHash": "sha256-SbVsWBIwrCC8MvsHhqYjnxv6UreE0oz2f0g4zfpAEnc=",
         "ref": "refs/heads/main",
-        "rev": "851e742ae52584026927c2ec468a96adf4753c8a",
-        "revCount": 2,
+        "rev": "eadc63806f56e15b71f0fa5937b07b2da96e172a",
+        "revCount": 3,
         "type": "git",
         "url": "ssh://git@github.com/mccartykim/org-agent.git"
       },
