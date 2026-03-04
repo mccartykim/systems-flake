@@ -387,15 +387,17 @@
             --config /run/agenix/rclone-config \
             putio:chill.institute \
             /mnt/media-drive/putio/chill.institute/ \
-            --verbose --stats 30s --modify-window 2s \
-            --no-update-modtime --fast-list --checkers 16
+            --verbose --stats 30s --size-only \
+            --no-update-modtime --no-update-dir-modtime \
+            --delete-before --fast-list --checkers 16 --transfers 16
 
           ${pkgs.rclone}/bin/rclone sync \
             --config /run/agenix/rclone-config \
             "putio:Items shared with you/Parsimony" \
             "/mnt/media-drive/putio/Items shared with you/Parsimony/" \
-            --verbose --stats 30s --modify-window 2s \
-            --no-update-modtime --fast-list --checkers 16
+            --verbose --stats 30s --size-only \
+            --no-update-modtime --no-update-dir-modtime \
+            --delete-before --fast-list --checkers 16 --transfers 16
         '';
       in "${syncScript}";
       ExecStartPost = let
@@ -426,6 +428,7 @@
     ];
     ollamaHost = "http://total-eclipse.nebula:11434";
     ollamaModel = "qwen3:8b";
+    jellyfinApiKey = "de74d6028a334e348929e23d797c9f85";
     user = "kimb";
     group = "media";
   };
