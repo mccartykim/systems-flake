@@ -5,7 +5,7 @@
   self,
   ...
 }: let
-  inherit (inputs) nixpkgs nixos-hardware nixos-facter-modules nixos-avf copyparty nil-flake claude_yapper kokoro media-classifier;
+  inherit (inputs) nixpkgs nixos-hardware nixos-facter-modules nixos-avf copyparty nil-flake claude_yapper kokoro media-classifier org-life-coach;
   inherit (config.flake.lib) mkDesktop mkServer mkHomeManager commonModules;
 in {
   flake.nixosConfigurations = {
@@ -93,12 +93,14 @@ in {
     # Servers using mkServer helper
     rich-evans = mkServer {
       hostname = "rich-evans";
-      extraSpecialArgs = {inherit copyparty claude_yapper kokoro;};
+      extraSpecialArgs = {inherit copyparty claude_yapper kokoro; org_life_coach = org-life-coach;};
       extraModules = [
         copyparty.nixosModules.default
         claude_yapper.nixosModules.default
+        org-life-coach.nixosModules.default
         (self + "/modules/kimb-services.nix")
         (self + "/hosts/rich-evans/life-coach.nix")
+        (self + "/hosts/rich-evans/org-life-coach.nix")
         {
           kimb.services = {
             copyparty = {
