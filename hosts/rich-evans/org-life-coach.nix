@@ -18,7 +18,7 @@
     user = "life-coach";
     stateDir = "/var/lib/life-coach-agent";
 
-    orgFile = "/home/life-coach/agent.org";
+    orgFile = "/var/lib/life-coach-agent/agent.org";
     interval = 300;  # 5 minutes
 
     # LLM for reasoning (uses claude CLI by default)
