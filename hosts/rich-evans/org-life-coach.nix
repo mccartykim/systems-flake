@@ -21,9 +21,9 @@
     orgFile = "/var/lib/life-coach-agent/agent.org";
     interval = 300;  # 5 minutes
 
-    # LLM for reasoning (uses claude CLI by default)
-    # provider = "anthropic";
-    # model = "claude-haiku-4-5-20251001";
+    # LLM for reasoning
+    provider = "ollama";
+    model = "qwen3:8b";
 
     # Home Assistant (same host)
     haUrl = "http://127.0.0.1:8123";
@@ -43,6 +43,7 @@
   systemd.services.org-life-coach.environment = {
     HOME = "/var/lib/life-coach-agent";
     SHELL = "${pkgs.bash}/bin/bash";
+    OLLAMA_HOST = "http://total-eclipse.nebula:11434";
     KASA_BEDROOM_LAMP = "192.168.69.152";
     # KASA_DESK_LAMP = "";  # TODO: find desk lamp IP (not currently on network)
   };
