@@ -891,11 +891,11 @@
     },
     "nixpkgs_5": {
       "locked": {
-        "lastModified": 1772082373,
-        "narHash": "sha256-wySf8a6hvuqgFdwvvzPPTARBCMLDz7WFAufGkllD1M4=",
+        "lastModified": 1772927210,
+        "narHash": "sha256-FdRDRoV0jRTiPK5ID22BaUX5P0wdsclpxtIOjaEy9Lo=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "26eaeac4e409d7b5a6bf6f90a2a2dc223c78d915",
+        "rev": "0e6cdd5be64608ef630c2e41f8d51d484468492f",
         "type": "github"
       },
       "original": {
@@ -913,11 +913,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1772591877,
-        "narHash": "sha256-SbVsWBIwrCC8MvsHhqYjnxv6UreE0oz2f0g4zfpAEnc=",
+        "lastModified": 1773069103,
+        "narHash": "sha256-pQy7EQkRtsO4VjgGmhvoZyvZ8ytGO96nKDtc1sxiRKE=",
         "ref": "refs/heads/main",
-        "rev": "eadc63806f56e15b71f0fa5937b07b2da96e172a",
-        "revCount": 3,
+        "rev": "b657c45ccf089bc53d00d4b145ec268706be0234",
+        "revCount": 7,
         "type": "git",
         "url": "ssh://git@github.com/mccartykim/org-agent.git"
       },
@@ -937,11 +937,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1773029784,
-        "narHash": "sha256-LO6YpgjGRO502L59p5DTIxuP8v4s6Sbj3r2U9Zaocwk=",
+        "lastModified": 1773068165,
+        "narHash": "sha256-qtTa+AJtxX8d6AQzNy2ofCfBjoAbHLGiBc0s+PzNkrQ=",
         "ref": "refs/heads/main",
-        "rev": "2a9dcc2d9b652bc047bf2699a14d2aeed7dadf01",
-        "revCount": 18,
+        "rev": "63568404b682c55e3a7dcb75089ab7c78bbfdb07",
+        "revCount": 19,
         "type": "git",
         "url": "ssh://git@github.com/mccartykim/org-life-coach.git"
       },
@@ -1030,6 +1030,32 @@
         "type": "github"
       }
     },
+    "pyproject-build-systems_2": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "pyproject-nix": [
+          "pyproject-nix"
+        ],
+        "uv2nix": [
+          "uv2nix"
+        ]
+      },
+      "locked": {
+        "lastModified": 1772555609,
+        "narHash": "sha256-3BA3HnUvJSbHJAlJj6XSy0Jmu7RyP2gyB/0fL7XuEDo=",
+        "owner": "pyproject-nix",
+        "repo": "build-system-pkgs",
+        "rev": "c37f66a953535c394244888598947679af231863",
+        "type": "github"
+      },
+      "original": {
+        "owner": "pyproject-nix",
+        "repo": "build-system-pkgs",
+        "type": "github"
+      }
+    },
     "pyproject-nix": {
       "inputs": {
         "nixpkgs": [
@@ -1043,6 +1069,26 @@
         "owner": "pyproject-nix",
         "repo": "pyproject.nix",
         "rev": "2c8df1383b32e5443c921f61224b198a2282a657",
+        "type": "github"
+      },
+      "original": {
+        "owner": "pyproject-nix",
+        "repo": "pyproject.nix",
+        "type": "github"
+      }
+    },
+    "pyproject-nix_2": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1772865871,
+        "narHash": "sha256-/ZTSg97aouL0SlPHaokA4r3iuH9QzHVuWPACD2CUCFY=",
+        "owner": "pyproject-nix",
+        "repo": "pyproject.nix",
+        "rev": "e537db02e72d553cea470976b9733581bcf5b3ed",
         "type": "github"
       },
       "original": {
@@ -1075,8 +1121,11 @@
         "nixpkgs": "nixpkgs_5",
         "org-agent": "org-agent",
         "org-life-coach": "org-life-coach",
+        "pyproject-build-systems": "pyproject-build-systems_2",
+        "pyproject-nix": "pyproject-nix_2",
         "srvos": "srvos",
-        "system-manager": "system-manager"
+        "system-manager": "system-manager",
+        "uv2nix": "uv2nix_2"
       }
     },
     "rust-overlay": {
@@ -1107,11 +1156,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1772071250,
-        "narHash": "sha256-LDWvJDR1J8xE8TBJjzWnOA0oVP/l9xBFC4npQPJDHN4=",
+        "lastModified": 1773021923,
+        "narHash": "sha256-ro+i3wNoD2p5FloGGlkCzdmzgBDeq2LJwaIpaI9Dk7Q=",
         "owner": "nix-community",
         "repo": "srvos",
-        "rev": "5cd73bcf984b72d8046e1175d13753de255adfb9",
+        "rev": "7f92c2bcbeb42ce87770a7565f0e6f92c8134354",
         "type": "github"
       },
       "original": {
@@ -1325,6 +1374,29 @@
         "owner": "pyproject-nix",
         "repo": "uv2nix",
         "rev": "1b8f4d4c874f909de24639142c1141c84119b0f0",
+        "type": "github"
+      },
+      "original": {
+        "owner": "pyproject-nix",
+        "repo": "uv2nix",
+        "type": "github"
+      }
+    },
+    "uv2nix_2": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "pyproject-nix": [
+          "pyproject-nix"
+        ]
+      },
+      "locked": {
+        "lastModified": 1773039484,
+        "narHash": "sha256-+boo33KYkJDw9KItpeEXXv8+65f7hHv/earxpcyzQ0I=",
+        "owner": "pyproject-nix",
+        "repo": "uv2nix",
+        "rev": "b68be7cfeacbed9a3fa38a2b5adc0cfb81d9bb1f",
         "type": "github"
       },
       "original": {

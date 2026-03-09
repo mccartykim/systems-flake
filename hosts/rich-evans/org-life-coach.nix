@@ -1,7 +1,7 @@
 # org-life-coach: Autonomous life coach agent
 #
 # Replaces claude_yapper's life-coach-agent service.
-# Uses org-mode + emacs daemon + LLM reasoning + VLM cameras.
+# Uses org-mode + emacs daemon + unified vision+reasoning model.
 #
 # HA TOKEN: Defined in life-coach.nix (shared agenix secret)
 {
@@ -21,9 +21,10 @@
     orgFile = "/var/lib/life-coach-agent/agent.org";
     interval = 300;  # 5 minutes
 
-    # LLM for reasoning
+    # Unified vision+reasoning model (MoE, 3B active / 35B total)
     provider = "ollama";
-    model = "qwen3:8b";
+    model = "qwen3.5:35b-a3b";
+    ollamaHost = "http://historian.nebula:11434";
 
     # Home Assistant (same host)
     haUrl = "http://127.0.0.1:8123";
@@ -33,17 +34,12 @@
     # cam0 = /dev/video0 = desk, cam1 = /dev/video2 = bed
     cameraBedUrl = "http://127.0.0.1:8554/cam1";
     cameraDeskUrl = "http://127.0.0.1:8554/cam0";
-
-    # VLM on historian
-    vlmHost = "http://historian.nebula:11434";
-    vlmModel = "qwen3-vl:30b-instruct";
   };
 
   # Set HOME so claude CLI can find credentials, plus Kasa plug IPs
   systemd.services.org-life-coach.environment = {
     HOME = "/var/lib/life-coach-agent";
     SHELL = "${pkgs.bash}/bin/bash";
-    OLLAMA_HOST = "http://total-eclipse.nebula:11434";
     KASA_BEDROOM_LAMP = "192.168.69.152";
     # KASA_DESK_LAMP = "";  # TODO: find desk lamp IP (not currently on network)
   };

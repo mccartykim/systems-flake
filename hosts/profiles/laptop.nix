@@ -61,7 +61,5 @@
   networking.networkmanager.wifi.backend = lib.mkDefault "wpa_supplicant";
 
   # Suspend/hibernate support
-  systemd.sleep.extraConfig = ''
-    HibernateDelaySec=1h
-  '';
+  systemd.sleep.settings.Sleep.HibernateDelaySec = "1h";
 }
