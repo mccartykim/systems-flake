@@ -48,6 +48,10 @@ in {
     enable = true;
     openFirewall = true;
 
+    customLovelaceModules = with pkgs.home-assistant-custom-lovelace-modules; [
+      valetudo-map-card
+    ];
+
     extraComponents = [
       "default_config"
       "met"
@@ -61,6 +65,7 @@ in {
       "cast" # Chromecast/Google Cast
       "thread" # Thread mesh networking
       "otbr" # OpenThread Border Router
+      "tplink" # TP-Link Kasa switches + Tapo cameras
       "vacuum" # Vacuum base
       "mqtt" # MQTT for Valetudo
     ];
@@ -170,6 +175,17 @@ in {
     };
   };
 
+  # MQTT broker for Valetudo vacuum integration (LAN-only, no auth)
+  services.mosquitto = {
+    enable = true;
+    listeners = [{
+      port = 1883;
+      omitPasswordAuth = true;
+      settings.allow_anonymous = true;
+      acl = [ "topic readwrite #" ];
+    }];
+  };
+
   # Allow HA to write to life-coach-agent state directory for button interrupts
   # (HA uses ProtectSystem=strict by default, limiting writes to /var/lib/hass)
   systemd.services.home-assistant.serviceConfig.ReadWritePaths = [
@@ -254,6 +270,9 @@ in {
 
       # CUPS printing
       [631]
+
+      # MQTT (Mosquitto for Valetudo)
+      [1883]
     ];
 
     allowedUDPPorts = lib.optionals cfg.services.copyparty.enable [
