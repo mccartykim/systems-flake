@@ -22,6 +22,9 @@
 
     # Auto-reload NVIDIA modules after config changes
     ./nvidia-reload.nix
+
+    # Qwen3-TTS voice cloning server (port 8091)
+    ./qwen3-tts.nix
   ];
 
   # Restic backups
@@ -41,6 +44,11 @@
         proto = "tcp";
         host = "any";
       } # Ollama API
+      {
+        port = 8091;
+        proto = "tcp";
+        group = "servers";
+      } # Qwen3-TTS for life coach on rich-evans
     ];
   };
 
