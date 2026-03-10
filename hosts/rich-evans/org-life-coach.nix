@@ -14,7 +14,7 @@
   # NOTE: age.secrets.ha-life-coach-token is defined in life-coach.nix
 
   services.org-life-coach = {
-    enable = true;
+    enable = false;
     user = "life-coach";
     stateDir = "/var/lib/life-coach-agent";
 
