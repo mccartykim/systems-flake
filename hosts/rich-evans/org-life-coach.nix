@@ -30,6 +30,9 @@
     haUrl = "http://127.0.0.1:8123";
     haTokenFile = config.age.secrets.ha-life-coach-token.path;
 
+    # TTS voice
+    ttsVoice = "biden-legs";
+
     # Cameras (webcam server on same host)
     # cam0 = /dev/video0 = desk, cam1 = /dev/video2 = bed
     cameraBedUrl = "http://127.0.0.1:8554/cam1";
