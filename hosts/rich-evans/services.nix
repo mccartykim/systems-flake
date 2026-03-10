@@ -151,6 +151,18 @@ in {
             }
           ];
         }
+        {
+          alias = "Life Coach - Submit User Input";
+          trigger = [
+            {
+              platform = "state";
+              entity_id = "input_button.life_coach_submit";
+            }
+          ];
+          action = [
+            { service = "shell_command.signal_user_input"; }
+          ];
+        }
       ];
       # UI-defined automations (existing)
       "automation ui" = "!include automations.yaml";
