@@ -38,9 +38,8 @@
     openToPersonalDevices = true;
   };
 
-  # Power management - use schedutil instead of auto-cpufreq
-  services.auto-cpufreq.enable = lib.mkForce false;
-  powerManagement.cpuFreqGovernor = "schedutil";
+  # Power management - use laptop profile's auto-cpufreq defaults
+  # (turbo=auto on charger, turbo=never on battery, thermald as safety net)
 
   # Boot configuration
   boot = {
