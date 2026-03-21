@@ -221,6 +221,10 @@
     wants = ["bolt.service"];
   };
 
+  # Jellyfin system user has home=/var/empty (read-only), so Mesa/Vulkan
+  # shader cache writes fail and the Vulkan subtitle overlay pipeline deadlocks.
+  systemd.services.jellyfin.environment.XDG_CACHE_HOME = "/var/cache/jellyfin";
+
   # Auto-login for TV use
   services.displayManager.autoLogin = {
     enable = true;
