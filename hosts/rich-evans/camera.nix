@@ -24,7 +24,7 @@
       serve_cam() {
         tmpfile=$(mktemp /tmp/webcam.XXXXXX.jpg)
         trap 'rm -f "$tmpfile"' EXIT
-        ${pkgs.fswebcam}/bin/fswebcam -d "$1" --skip 5 -r 1280x720 --no-banner -q "$tmpfile" 2>/dev/null
+        ${pkgs.fswebcam}/bin/fswebcam -d "$1" --skip 60 -r 1280x720 --no-banner -q "$tmpfile" 2>/dev/null
         size=$(${pkgs.coreutils}/bin/stat -c%s "$tmpfile" 2>/dev/null || echo 0)
         echo "HTTP/1.1 200 OK"
         echo "Content-Type: image/jpeg"
