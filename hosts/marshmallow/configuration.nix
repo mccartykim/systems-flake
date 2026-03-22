@@ -51,7 +51,7 @@
     # See: https://wiki.archlinux.org/title/Intel_graphics
     kernelParams = ["i915.enable_psr=0"];
 
-# systemd initrd
+    # systemd initrd
     initrd.systemd.enable = true;
 
     # Boot loader customizations
