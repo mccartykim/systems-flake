@@ -21,27 +21,23 @@
       read request
       url=$(echo "$request" | cut -d' ' -f2)
 
+      serve_cam() {
+        tmpfile=$(mktemp /tmp/webcam.XXXXXX.jpg)
+        trap 'rm -f "$tmpfile"' EXIT
+        ${pkgs.fswebcam}/bin/fswebcam -d "$1" --skip 5 -r 1280x720 --no-banner -q "$tmpfile" 2>/dev/null
+        size=$(${pkgs.coreutils}/bin/stat -c%s "$tmpfile" 2>/dev/null || echo 0)
+        echo "HTTP/1.1 200 OK"
+        echo "Content-Type: image/jpeg"
+        echo "Content-Length: $size"
+        echo "Cache-Control: no-cache"
+        echo "Connection: close"
+        echo ""
+        cat "$tmpfile"
+      }
+
       case "$url" in
-        /cam0|/cam0.jpg)
-          ${pkgs.fswebcam}/bin/fswebcam -d /dev/video0 --skip 30 -r 1280x720 --no-banner -q - 2>/dev/null | {
-            echo "HTTP/1.1 200 OK"
-            echo "Content-Type: image/jpeg"
-            echo "Cache-Control: no-cache"
-            echo "Connection: close"
-            echo ""
-            cat
-          }
-          ;;
-        /cam1|/cam1.jpg)
-          ${pkgs.fswebcam}/bin/fswebcam -d /dev/video2 --skip 30 -r 1280x720 --no-banner -q - 2>/dev/null | {
-            echo "HTTP/1.1 200 OK"
-            echo "Content-Type: image/jpeg"
-            echo "Cache-Control: no-cache"
-            echo "Connection: close"
-            echo ""
-            cat
-          }
-          ;;
+        /cam0|/cam0.jpg) serve_cam /dev/video0 ;;
+        /cam1|/cam1.jpg) serve_cam /dev/video2 ;;
         *)
           echo "HTTP/1.1 200 OK"
           echo "Content-Type: text/html"
