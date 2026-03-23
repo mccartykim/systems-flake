@@ -39,10 +39,14 @@
     cameraDeskUrl = "http://127.0.0.1:8554/cam0";
   };
 
-  # Kasa smart plug IPs
+  # Extra environment for org-life-coach service
   systemd.services.org-life-coach.environment = {
+    # Kasa smart plug IPs
     KASA_BEDROOM_LAMP = "192.168.69.152";
     # KASA_DESK_LAMP = "";  # TODO: find desk lamp IP (not currently on network)
+
+    # Explicit VLM_HOST (vision.py reads this, not OLLAMA_HOST)
+    VLM_HOST = "http://historian.nebula:11434";
   };
 
   # Open port for TTS audio serving to Chromecast
