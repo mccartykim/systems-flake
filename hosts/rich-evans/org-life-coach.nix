@@ -46,6 +46,8 @@
     # KASA_DESK_LAMP = "";  # TODO: find desk lamp IP (not currently on network)
 
     VLM_HOST = "http://historian.nebula:11434";
+    OLLAMA_TIMEOUT = "600";
+    OLLAMA_NUM_CTX = "8192";
   };
 
   # Open port for TTS audio serving to Chromecast
