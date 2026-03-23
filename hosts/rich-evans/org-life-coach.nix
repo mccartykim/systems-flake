@@ -21,9 +21,10 @@
     orgFile = "/var/lib/life-coach-agent/agent.org";
     interval = 300;  # 5 minutes
 
-    # Qwen 3.5 MoE on historian (fast, local)
+    # Qwen 3 VL MoE on historian — handles both vision and text reasoning
+    # Single model eliminates GPU swap timeouts between VLM and text model
     provider = "ollama";
-    model = "qwen3.5:35b-a3b";
+    model = "qwen3-vl:30b";
     ollamaHost = "http://historian.nebula:11434";
 
     # Home Assistant (same host)
