@@ -23,7 +23,7 @@
 
     # Single omnimodal model — vision + text reasoning in one call
     provider = "ollama";
-    model = "qwen3-vl:30b";
+    model = "qwen3.5:27b";
     ollamaHost = "http://historian.nebula:11434";
 
     # Home Assistant (same host)
