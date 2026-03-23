@@ -21,10 +21,10 @@
     orgFile = "/var/lib/life-coach-agent/agent.org";
     interval = 300;  # 5 minutes
 
-    # Qwen 3 VL MoE on historian — handles both vision and text reasoning
-    # Single model eliminates GPU swap timeouts between VLM and text model
+    # Reasoning: qwen3.5 35b MoE (text-only, best reasoning quality)
+    # Vision handled separately by qwen3-vl:8b via VLM_MODEL env var
     provider = "ollama";
-    model = "qwen3-vl:30b";
+    model = "qwen3.5:35b-a3b";
     ollamaHost = "http://historian.nebula:11434";
 
     # Home Assistant (same host)
@@ -46,8 +46,9 @@
     KASA_BEDROOM_LAMP = "192.168.69.152";
     # KASA_DESK_LAMP = "";  # TODO: find desk lamp IP (not currently on network)
 
-    # Explicit VLM_HOST (vision.py reads this, not OLLAMA_HOST)
+    # Vision model (small enough to swap without OOM alongside 35b reasoning)
     VLM_HOST = "http://historian.nebula:11434";
+    VLM_MODEL = "qwen3-vl:8b";
   };
 
   # Open port for TTS audio serving to Chromecast
