@@ -82,6 +82,8 @@ in
     # ===== LIFE COACH AGENT =====
     # Home Assistant long-lived access token for presence sensor queries
     "ha-life-coach-token.age".publicKeys = [hostKeys.rich-evans hostKeys.historian hostKeys.marshmallow bootstrap];
+    # Matrix access token for life-coach chatbot (Tuwunel on rich-evans)
+    "matrix-life-coach-token.age".publicKeys = [hostKeys.rich-evans bootstrap];
 
     # ===== MEDIA PIPELINE (historian) =====
     # rclone config with put.io OAuth token

@@ -17,6 +17,13 @@
     mode = "0400";
   };
 
+  # Matrix access token for life-coach chatbot
+  age.secrets.matrix-life-coach-token = {
+    file = ../../secrets/matrix-life-coach-token.age;
+    owner = "life-coach";
+    mode = "0400";
+  };
+
   # User and group are now created by org-life-coach module.
   # Keep these here as lib.mkDefault so they don't conflict.
 
