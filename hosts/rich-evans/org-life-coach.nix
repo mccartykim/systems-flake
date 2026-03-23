@@ -45,6 +45,9 @@
 
     # Discord bot
     discordBotTokenFile = config.age.secrets.discord-life-coach-token.path;
+
+    # Gemini vision
+    geminiApiKeyFile = config.age.secrets.gemini-life-coach-key.path;
   };
 
   # Extra environment for org-life-coach service
@@ -53,7 +56,6 @@
     KASA_BEDROOM_LAMP = "192.168.69.152";
     # KASA_DESK_LAMP = "";  # TODO: find desk lamp IP (not currently on network)
 
-    VLM_HOST = "http://historian.nebula:11434";
     OLLAMA_TIMEOUT = "600";
     OLLAMA_NUM_CTX = "8192";
     CAMERA_MAX_WIDTH = "320";

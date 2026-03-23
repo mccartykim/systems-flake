@@ -86,6 +86,8 @@ in
     "matrix-life-coach-token.age".publicKeys = [hostKeys.rich-evans bootstrap];
     # Discord bot token for life-coach chatbot
     "discord-life-coach-token.age".publicKeys = [hostKeys.rich-evans bootstrap];
+    # Gemini API key for life-coach vision
+    "gemini-life-coach-key.age".publicKeys = [hostKeys.rich-evans bootstrap];
 
     # ===== MEDIA PIPELINE (historian) =====
     # rclone config with put.io OAuth token

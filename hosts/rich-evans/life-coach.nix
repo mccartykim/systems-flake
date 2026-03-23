@@ -31,6 +31,13 @@
     mode = "0400";
   };
 
+  # Gemini API key for life-coach vision
+  age.secrets.gemini-life-coach-key = {
+    file = ../../secrets/gemini-life-coach-key.age;
+    owner = "life-coach";
+    mode = "0400";
+  };
+
   # User and group are now created by org-life-coach module.
   # Keep these here as lib.mkDefault so they don't conflict.
 
