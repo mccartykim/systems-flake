@@ -37,6 +37,11 @@
     # cam0 = /dev/video0 = desk, cam1 = /dev/video2 = bed
     cameraBedUrl = "http://127.0.0.1:8554/cam1";
     cameraDeskUrl = "http://127.0.0.1:8554/cam0";
+
+    # Matrix chatbot (Tuwunel on same host)
+    matrixHomeserver = "http://127.0.0.1:6167";
+    matrixBotUser = "@lifecoach:kimb.dev";
+    matrixBotTokenFile = config.age.secrets.matrix-life-coach-token.path;
   };
 
   # Extra environment for org-life-coach service
