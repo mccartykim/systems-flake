@@ -24,6 +24,13 @@
     mode = "0400";
   };
 
+  # Discord bot token for life-coach chatbot
+  age.secrets.discord-life-coach-token = {
+    file = ../../secrets/discord-life-coach-token.age;
+    owner = "life-coach";
+    mode = "0400";
+  };
+
   # User and group are now created by org-life-coach module.
   # Keep these here as lib.mkDefault so they don't conflict.
 

@@ -42,6 +42,9 @@
     matrixHomeserver = "http://127.0.0.1:6167";
     matrixBotUser = "@lifecoach:kimb.dev";
     matrixBotTokenFile = config.age.secrets.matrix-life-coach-token.path;
+
+    # Discord bot
+    discordBotTokenFile = config.age.secrets.discord-life-coach-token.path;
   };
 
   # Extra environment for org-life-coach service
