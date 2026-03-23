@@ -58,7 +58,7 @@
 
     OLLAMA_TIMEOUT = "600";
     OLLAMA_NUM_CTX = "8192";
-    CAMERA_MAX_WIDTH = "320";
+    CAMERA_MAX_WIDTH = "1280";
   };
 
   # Open port for TTS audio serving to Chromecast

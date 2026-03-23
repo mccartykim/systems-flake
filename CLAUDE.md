@@ -608,6 +608,20 @@ Common pitfalls when running commands on remote NixOS hosts via SSH:
 - ALWAYS wrap complex commands in `bash -c '...'` when SSHing to these hosts
 - Example: `ssh total-eclipse.nebula 'bash -c "for x in a b c; do echo \$x; done"'`
 
+### Image/File Processing on Remote Hosts
+Don't run complex Python image processing on remote hosts through SSH. The nested
+quoting with bash -c + fish shell + Python string escaping is fragile and wastes time.
+
+Instead: `scp` the file locally and process it here.
+```bash
+# WRONG - nested quoting nightmare
+ssh host 'bash -c "nix-shell -p python3Packages.pillow --run \"python3 -c \\\"...\\\"\""'
+
+# RIGHT - just copy and process locally
+scp host:/tmp/image.jpg /tmp/image.jpg
+# Then use Read tool or local python
+```
+
 ### Permission for State Directories
 - Service state dirs (e.g., `/var/lib/service`) are often 0700 or 0750
 - Check group membership if another service needs access
