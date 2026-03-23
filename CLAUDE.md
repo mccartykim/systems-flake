@@ -216,6 +216,56 @@ Use conventional commits format:
   - Deploy all: `nix develop -c colmena apply`
 - **Network**: Colmena uses Nebula mesh network IPs for direct deployment (except maitred)
 
+### Colmena + jj (dirty tree fix)
+Colmena/Nix flakes require a clean git tree. jj's working copy is always
+"dirty" from git's perspective. Before deploying, push to main:
+
+```bash
+jj describe -m "message" && jj bookmark set main -r @ && jj git push
+# Tree is now clean, deploy:
+nix develop -c colmena apply --on <hostname>
+```
+
+For rapid iteration on org-life-coach without pushing to GitHub:
+```bash
+nix flake lock --override-input org-life-coach path:../org_life_coach
+jj describe -m "..." && jj bookmark set main -r @ && jj git push
+nix develop -c colmena apply --on rich-evans
+```
+
+### org-life-coach Deploy Sequence
+org-life-coach is a remote flake input. Full deploy sequence:
+1. In org_life_coach repo: commit and push (`git add && git commit && git push`)
+2. In systems-flake: `nix flake update org-life-coach`
+3. Push to main: `jj describe -m "..." && jj bookmark set main -r @ && jj git push`
+4. `nix develop -c colmena apply --on rich-evans`
+
+### Editing agent.org on Remote Hosts
+NEVER use `sed`, `awk`, or direct file writes to modify agent.org while
+the emacs daemon is running. This causes the emacs buffer to go stale
+and can hang the daemon. Use emacsclient instead:
+```bash
+sudo -u life-coach emacsclient -s /var/lib/life-coach-agent/emacs/org-agent \
+  --eval '(org-agent/append-log "manual edit via CLI")'
+```
+
+## Python Package Gotchas (NixOS)
+
+### discord.py vs py-cord
+nixpkgs `python3Packages.discordpy` is **discord.py**, NOT py-cord.
+They share the `discord` import but have incompatible APIs:
+- **discord.py**: `discord.Client` + `app_commands.CommandTree` for slash commands
+- **py-cord**: `discord.Bot` with built-in slash commands (NOT in nixpkgs)
+
+```python
+# CORRECT for nixpkgs discordpy:
+client = discord.Client(intents=intents)
+tree = app_commands.CommandTree(client)
+
+@tree.command(name="foo", description="...")
+async def foo(interaction: discord.Interaction, ...): ...
+```
+
 ## System-Manager for Non-NixOS Hosts
 
 For non-NixOS hosts (e.g., Ubuntu VMs), use [numtide/system-manager](https://github.com/numtide/system-manager) to manage systemd services and /etc files declaratively.
