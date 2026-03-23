@@ -35,8 +35,8 @@
 
     # Cameras (webcam server on same host)
     # cam0 = /dev/video0 = desk, cam1 = /dev/video2 = bed
-    cameraBedUrl = "http://127.0.0.1:8554/cam1";
-    cameraDeskUrl = "http://127.0.0.1:8554/cam0";
+    cameraBedUrl = "http://127.0.0.1:8554/cam0";
+    cameraDeskUrl = "http://127.0.0.1:8554/cam1";
 
     # Matrix chatbot (Tuwunel on same host)
     matrixHomeserver = "http://127.0.0.1:6167";
