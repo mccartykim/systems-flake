@@ -101,6 +101,10 @@ in {
       # Nice it down so it doesn't compete with other services
       Nice = 10;
       IOSchedulingClass = "idle";
+      # Prevent rapid-fire restarts from path watcher
+      RestartSec = "10";
     };
+    # Wait a moment for rsync to finish writing before processing
+    preStart = "${pkgs.coreutils}/bin/sleep 5";
   };
 }
