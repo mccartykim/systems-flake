@@ -40,6 +40,9 @@ in {
     # DNS server - DISABLED: moved to maitred router
     # ./dns.nix
 
+    # Scan processor (OCR incoming scans from maitred)
+    ./scan-processor.nix
+
     # Static networking
     ./networking.nix
   ];
