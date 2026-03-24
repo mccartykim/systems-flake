@@ -10,6 +10,7 @@
   services.paperless = {
     enable = true;
     port = 28981;
+    address = "0.0.0.0"; # Accessible over Nebula
     consumptionDirIsPublic = true; # maitred rsyncs as kimb
     settings = {
       # OCR settings
@@ -27,7 +28,7 @@
       PAPERLESS_CONSUMER_SUBDIRS_AS_TAGS = "true";
 
       # Filename handling
-      PAPERLESS_FILENAME_FORMAT = "{created_year}/{created_month}/{title}";
+      PAPERLESS_FILENAME_FORMAT = "{{ created_year }}/{{ created_month }}/{{ title }}";
 
       # Performance - use available CPU threads
       PAPERLESS_TASK_WORKERS = "4";
