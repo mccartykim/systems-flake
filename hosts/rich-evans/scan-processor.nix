@@ -75,10 +75,11 @@
     done
   '';
 in {
-  # Create directories
+  # Create directories (kimb-owned so maitred can rsync as kimb)
   systemd.tmpfiles.rules = [
-    "d ${incomingDir} 0775 root root -"
-    "d ${outputDir} 0775 root root -"
+    "d /var/lib/scans 0775 kimb kimb -"
+    "d ${incomingDir} 0775 kimb kimb -"
+    "d ${outputDir} 0775 kimb kimb -"
   ];
 
   # Path watcher: trigger processing when new .batch files arrive

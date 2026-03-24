@@ -223,15 +223,12 @@ in {
 
   # User configuration with SSH keys
   users.users.kimb = {
-    openssh.authorizedKeys.keys = sshKeys.authorizedKeys;
+    openssh.authorizedKeys.keys =
+      sshKeys.authorizedKeys
+      ++ [(import ../nebula-registry.nix).nodes.maitred.publicKey]; # maitred host key for scanner rsync
     initialPassword = "changeme";
     extraGroups = ["dialout"]; # USB serial access for ESPHome flashing
   };
-
-  # Allow maitred root (via host key) to rsync scans
-  users.users.root.openssh.authorizedKeys.keys = [
-    (import ../nebula-registry.nix).nodes.maitred.publicKey
-  ];
 
   # Programs configuration
   programs = {
