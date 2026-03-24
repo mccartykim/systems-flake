@@ -1,6 +1,6 @@
 # Scanner configuration for maitred
 # Fujitsu fi-6130Z with ADF duplex scanning + scan button automation
-# Scans stage locally, rsync to rich-evans for permanent storage + restic backup
+# Scans stage locally as TIFF, rsync to rich-evans for OCR + permanent storage
 {
   config,
   lib,
@@ -8,18 +8,16 @@
   ...
 }: let
   scanDir = "/var/lib/scans";
-  remoteScanDir = "/var/lib/scans";
+  remoteScanDir = "/var/lib/scans/incoming";
   remoteHost = "rich-evans.nebula";
 
-  # Duplex scan script: ADF duplex → OCR'd timestamped PDF with short hash ID
+  # Duplex scan script: ADF duplex → timestamped multi-page TIFF
   scanScript = pkgs.writeShellScript "duplex-scan" ''
     set -euo pipefail
     export PATH="${lib.makeBinPath [
       pkgs.coreutils
       pkgs.findutils
       pkgs.sane-backends
-      pkgs.img2pdf
-      pkgs.ocrmypdf
     ]}:$PATH"
 
     TIMESTAMP=$(date +%Y%m%dT%H%M%S)
@@ -37,42 +35,30 @@
       --hwdeskewcrop=yes \
       --swskip 5 \
       --buffermode On \
-      --format=pnm \
-      --batch="''${TMPDIR}/page-%04d.pnm" \
+      --format=tiff \
+      --batch="''${TMPDIR}/page-%04d.tiff" \
       --batch-print \
       2>&1 || true
 
     # Check if any pages were scanned
-    PAGE_COUNT=$(find "''${TMPDIR}" -name '*.pnm' | wc -l)
+    PAGE_COUNT=$(find "''${TMPDIR}" -name '*.tiff' | wc -l)
     if [ "$PAGE_COUNT" -eq 0 ]; then
       echo "No pages scanned (ADF empty?)"
       exit 0
     fi
 
-    echo "Scanned ''${PAGE_COUNT} pages, converting to PDF..."
+    echo "Scanned ''${PAGE_COUNT} pages, staging for sync..."
 
-    # Convert PNM pages to intermediate PDF
-    img2pdf $(ls -1 "''${TMPDIR}"/page-*.pnm | sort) -o "''${TMPDIR}/raw.pdf"
+    # Move TIFF files to scan dir with timestamp prefix
+    for f in "''${TMPDIR}"/page-*.tiff; do
+      BASE=$(basename "$f")
+      mv "$f" "${scanDir}/''${TIMESTAMP}_''${BASE}"
+    done
 
-    # OCR + optimize (makes PDF searchable, compresses significantly)
-    ocrmypdf \
-      --rotate-pages \
-      --deskew \
-      --clean \
-      --optimize 2 \
-      --output-type pdf \
-      "''${TMPDIR}/raw.pdf" \
-      "''${TMPDIR}/ocr.pdf"
+    # Write a marker file so rich-evans knows this batch is complete
+    echo "''${PAGE_COUNT}" > "${scanDir}/''${TIMESTAMP}.batch"
 
-    # Generate 4-char hash from PDF content
-    HASH=$(sha256sum "''${TMPDIR}/ocr.pdf" | head -c 4)
-    OUTFILE="${scanDir}/scan-''${TIMESTAMP}-''${HASH}.pdf"
-
-    mv "''${TMPDIR}/ocr.pdf" "''${OUTFILE}"
-    chmod 664 "''${OUTFILE}"
-    chgrp scanner "''${OUTFILE}"
-
-    echo "Saved: ''${OUTFILE} (''${PAGE_COUNT} pages, id: ''${HASH})"
+    echo "Staged ''${PAGE_COUNT} pages for sync (batch ''${TIMESTAMP})"
   '';
 
   # Button watcher: polls scan button, triggers scan script
@@ -114,7 +100,7 @@
     export PATH="${lib.makeBinPath [pkgs.coreutils pkgs.rsync pkgs.openssh]}:$PATH"
 
     # Only run if there are files to sync
-    if ! ls ${scanDir}/scan-*.pdf &>/dev/null; then
+    if ! ls ${scanDir}/*.batch &>/dev/null; then
       exit 0
     fi
 
@@ -126,7 +112,7 @@
     # Rsync with --remove-source-files to clean up after successful transfer
     rsync -av \
       --remove-source-files \
-      ${scanDir}/scan-*.pdf \
+      ${scanDir}/ \
       ${remoteHost}:${remoteScanDir}/
 
     echo "Sync complete."
@@ -160,7 +146,7 @@ in {
     };
   };
 
-  # Rsync scans to rich-evans every 5 minutes
+  # Rsync scans to rich-evans every 2 minutes
   systemd.services.sync-scans = {
     description = "Sync scanned documents to rich-evans";
     after = ["network.target" "nebula@mesh.service"];
@@ -172,17 +158,17 @@ in {
   };
 
   systemd.timers.sync-scans = {
-    description = "Sync scans to rich-evans every 5 minutes";
+    description = "Sync scans to rich-evans every 2 minutes";
     wantedBy = ["timers.target"];
     timerConfig = {
-      OnCalendar = "*:0/5";
+      OnCalendar = "*:0/2";
       Persistent = true;
     };
   };
 
   # Share scans directory via Samba (read-only, same ACL as printers)
   services.samba.settings.scans = {
-    "comment" = "Scanned Documents";
+    "comment" = "Scanned Documents (staging)";
     "path" = scanDir;
     "public" = "yes";
     "browseable" = "yes";
