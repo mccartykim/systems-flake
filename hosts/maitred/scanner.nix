@@ -9,7 +9,7 @@
 }: let
   scanDir = "/var/lib/scans";
   remoteScanDir = "/var/lib/scans/incoming";
-  remoteHost = "rich-evans.nebula";
+  remoteHost = "kimb@rich-evans.nebula";
 
   # Duplex scan script: ADF duplex → timestamped multi-page TIFF
   scanScript = pkgs.writeShellScript "duplex-scan" ''
