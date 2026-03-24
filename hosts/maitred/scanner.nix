@@ -97,7 +97,7 @@
       echo "Recovering scanner..."
       usb-reset 04c5:11f3 2>/dev/null || true
       sleep 3
-      DEVICE=$(timeout --kill-after=5 10 scanimage -L 2>/dev/null | grep -oP 'fujitsu:\S+' | head -1 || true)
+      DEVICE=$(timeout --kill-after=5 30 scanimage -L 2>/dev/null | grep -oP 'fujitsu:\S+' | head -1 || true)
       DEVICE="''${DEVICE%\'}"
       if [ -n "$DEVICE" ]; then
         echo "Scanner found: $DEVICE"
@@ -118,7 +118,7 @@
       fi
 
       # Poll the scan button sensor (timeout prevents hang)
-      BUTTON=$(timeout --kill-after=5 10 scanimage \
+      BUTTON=$(timeout --kill-after=5 30 scanimage \
         --device-name="$DEVICE" \
         --dont-scan \
         -A 2>/dev/null \
