@@ -1,6 +1,6 @@
 # Scanner configuration for maitred
 # Fujitsu fi-6130Z with ADF duplex scanning + scan button automation
-# Scans stage locally as TIFF, rsync to rich-evans for OCR + permanent storage
+# Scans stage locally as TIFF, rsync to total-eclipse paperless-ngx for processing
 {
   config,
   lib,
@@ -8,8 +8,8 @@
   ...
 }: let
   scanDir = "/var/lib/scans";
-  remoteScanDir = "/var/lib/scans/incoming";
-  remoteHost = "kimb@rich-evans.nebula";
+  remoteScanDir = "/var/lib/paperless/consume";
+  remoteHost = "kimb@total-eclipse.nebula";
 
   commonPath = lib.makeBinPath [
     pkgs.coreutils
@@ -79,9 +79,6 @@
       mv "$f" "${scanDir}/''${TIMESTAMP}_''${BASE}"
     done
 
-    # Write a marker file so rich-evans knows this batch is complete
-    echo "''${PAGE_COUNT}" > "${scanDir}/''${TIMESTAMP}.batch"
-
     echo "Staged ''${PAGE_COUNT} pages for sync (batch ''${TIMESTAMP})"
   '';
 
@@ -135,13 +132,13 @@
     done
   '';
 
-  # Rsync script: push scans to rich-evans, remove synced files
+  # Rsync script: push scans to total-eclipse paperless, remove synced files
   syncScript = pkgs.writeShellScript "sync-scans" ''
     set -euo pipefail
-    export PATH="${lib.makeBinPath [pkgs.coreutils pkgs.rsync pkgs.openssh]}:$PATH"
+    export PATH="${lib.makeBinPath [pkgs.coreutils pkgs.rsync pkgs.openssh pkgs.findutils]}:$PATH"
 
     # Only run if there are files to sync
-    if ! ls ${scanDir}/*.batch &>/dev/null; then
+    if [ -z "$(find ${scanDir} -name '*.tiff' 2>/dev/null)" ]; then
       exit 0
     fi
 
