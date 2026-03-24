@@ -11,14 +11,38 @@
   remoteScanDir = "/var/lib/scans/incoming";
   remoteHost = "kimb@rich-evans.nebula";
 
+  commonPath = lib.makeBinPath [
+    pkgs.coreutils
+    pkgs.findutils
+    pkgs.sane-backends
+    pkgs.gnugrep
+    pkgs.usb-reset
+  ];
+
+  # Find the fujitsu scanner device name dynamically
+  findDevice = ''
+    DEVICE=$(scanimage -L 2>/dev/null | grep -oP 'fujitsu:\S+' | head -1)
+    if [ -z "$DEVICE" ]; then
+      echo "Scanner not found, attempting USB reset..."
+      usb-reset 04c5:11f3 2>/dev/null || true
+      sleep 3
+      DEVICE=$(scanimage -L 2>/dev/null | grep -oP 'fujitsu:\S+' | head -1)
+    fi
+    if [ -z "$DEVICE" ]; then
+      echo "Scanner still not found after reset"
+      return 1
+    fi
+    # Strip trailing quote if scanimage -L wraps in quotes
+    DEVICE="''${DEVICE%\'}"
+    echo "Using device: $DEVICE"
+  '';
+
   # Duplex scan script: ADF duplex → timestamped multi-page TIFF
   scanScript = pkgs.writeShellScript "duplex-scan" ''
     set -euo pipefail
-    export PATH="${lib.makeBinPath [
-      pkgs.coreutils
-      pkgs.findutils
-      pkgs.sane-backends
-    ]}:$PATH"
+    export PATH="${commonPath}:$PATH"
+
+    ${findDevice}
 
     TIMESTAMP=$(date +%Y%m%dT%H%M%S)
     TMPDIR=$(mktemp -d /tmp/scan-XXXXXX)
@@ -28,7 +52,7 @@
 
     # Duplex ADF scan: 300dpi color, hardware deskew+crop, skip blank pages
     scanimage \
-      --device-name='fujitsu:fi-6130Zdj:605052' \
+      --device-name="$DEVICE" \
       --source "ADF Duplex" \
       --mode Color \
       --resolution 300 \
@@ -64,20 +88,38 @@
   # Button watcher: polls scan button, triggers scan script
   buttonWatcher = pkgs.writeShellScript "scan-button-watcher" ''
     set -euo pipefail
-    export PATH="${lib.makeBinPath [pkgs.coreutils pkgs.sane-backends pkgs.gnugrep]}:$PATH"
+    export PATH="${commonPath}:$PATH"
 
-    DEVICE='fujitsu:fi-6130Zdj:605052'
     SCANNING=0
+    FAIL_COUNT=0
 
-    echo "Watching scan button on ''${DEVICE}..."
+    echo "Starting scan button watcher..."
 
     while true; do
-      # Poll the scan button sensor via scanimage option query
+      # Discover device each iteration (handles sleep/reset)
+      DEVICE=$(scanimage -L 2>/dev/null | grep -oP 'fujitsu:\S+' | head -1)
+      DEVICE="''${DEVICE%\'}"
+
+      if [ -z "$DEVICE" ]; then
+        FAIL_COUNT=$((FAIL_COUNT + 1))
+        if [ "$FAIL_COUNT" -ge 5 ]; then
+          echo "Scanner not found after $FAIL_COUNT attempts, trying USB reset..."
+          usb-reset 04c5:11f3 2>/dev/null || true
+          FAIL_COUNT=0
+          sleep 5
+        else
+          sleep 3
+        fi
+        continue
+      fi
+      FAIL_COUNT=0
+
+      # Poll the scan button sensor
       BUTTON=$(scanimage \
-        --device-name="''${DEVICE}" \
+        --device-name="$DEVICE" \
         --dont-scan \
-        --all-options 2>/dev/null \
-        | grep -A0 '^\s*--scan' \
+        -A 2>/dev/null \
+        | grep -P '^\s+--scan' \
         | grep -oP '\[(yes|no)\]' \
         | tr -d '[]' || echo "no")
 
@@ -86,7 +128,6 @@
         echo "Scan button pressed! Starting scan..."
         ${scanScript} || echo "Scan failed"
         SCANNING=0
-        # Wait a bit after scan completes before polling again
         sleep 3
       fi
 
@@ -129,6 +170,9 @@ in {
 
   # Add scanner group to user
   users.users.kimb.extraGroups = ["scanner" "lp"];
+
+  # usb-reset for scanner recovery
+  environment.systemPackages = [pkgs.usb-reset];
 
   # Create scan output directory
   systemd.tmpfiles.rules = [
