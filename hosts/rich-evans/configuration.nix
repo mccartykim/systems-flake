@@ -228,6 +228,11 @@ in {
     extraGroups = ["dialout"]; # USB serial access for ESPHome flashing
   };
 
+  # Allow maitred root (via host key) to rsync scans
+  users.users.root.openssh.authorizedKeys.keys = [
+    (import ../nebula-registry.nix).nodes.maitred.publicKey
+  ];
+
   # Programs configuration
   programs = {
     mosh.enable = true;
