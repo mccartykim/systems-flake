@@ -195,6 +195,7 @@ in {
     description = "Fujitsu fi-6130Z scan button watcher";
     after = ["multi-user.target"];
     wantedBy = ["multi-user.target"];
+    environment.SANE_CONFIG_DIR = "/etc/sane-config";
     serviceConfig = {
       ExecStart = buttonWatcher;
       Restart = "always";
