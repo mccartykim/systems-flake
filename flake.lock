@@ -913,11 +913,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1774228828,
-        "narHash": "sha256-APADhkqa+Pcq8BW9H0gbyv/osxs7kRproftHvUVuqds=",
+        "lastModified": 1774346710,
+        "narHash": "sha256-EE+1P9wmEomDzROLpocEvam8yWa+/Xv07P7wmoUezOo=",
         "ref": "refs/heads/main",
-        "rev": "1e44fba0f27ec5e30ed6d2bddce53c8f07571b5e",
-        "revCount": 9,
+        "rev": "bfc077cbc24a21b0a32bc28a18df66878f099c37",
+        "revCount": 10,
         "type": "git",
         "url": "ssh://git@github.com/mccartykim/org-agent.git"
       },
@@ -937,11 +937,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1774245482,
-        "narHash": "sha256-4nVMaU0A7/eWJW9091DE82QyX8na9vsp5Vy2XBw/oPo=",
+        "lastModified": 1774346719,
+        "narHash": "sha256-Xff48x8OElnA3V+T6Z/gdg6YTdGuQzqIbqgzlBZkPUY=",
         "ref": "refs/heads/main",
-        "rev": "49717d460d69644a1ef805dbc8b43fed457ba993",
-        "revCount": 42,
+        "rev": "ac7d3a6fa01b6014189c6abbd6022778968dfeb1",
+        "revCount": 43,
         "type": "git",
         "url": "ssh://git@github.com/mccartykim/org-life-coach.git"
       },
