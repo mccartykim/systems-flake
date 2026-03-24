@@ -94,12 +94,13 @@
 
     while true; do
       # Discover device each iteration (handles sleep/reset)
-      DEVICE=$(scanimage -L 2>/dev/null | grep -oP 'fujitsu:\S+' | head -1)
+      # Timeout prevents hang when scanner is in bad state
+      DEVICE=$(timeout 10 scanimage -L 2>/dev/null | grep -oP 'fujitsu:\S+' | head -1 || true)
       DEVICE="''${DEVICE%\'}"
 
       if [ -z "$DEVICE" ]; then
         FAIL_COUNT=$((FAIL_COUNT + 1))
-        if [ "$FAIL_COUNT" -ge 5 ]; then
+        if [ "$FAIL_COUNT" -ge 3 ]; then
           echo "Scanner not found after $FAIL_COUNT attempts, trying USB reset..."
           usb-reset 04c5:11f3 2>/dev/null || true
           FAIL_COUNT=0
@@ -111,8 +112,8 @@
       fi
       FAIL_COUNT=0
 
-      # Poll the scan button sensor
-      BUTTON=$(scanimage \
+      # Poll the scan button sensor (timeout prevents hang)
+      BUTTON=$(timeout 10 scanimage \
         --device-name="$DEVICE" \
         --dont-scan \
         -A 2>/dev/null \
