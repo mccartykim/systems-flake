@@ -25,6 +25,9 @@
 
     # Qwen3-TTS voice cloning server (port 8091)
     ./qwen3-tts.nix
+
+    # Paperless-ngx document management (scanned mail from maitred)
+    ./paperless.nix
   ];
 
   # Restic backups
