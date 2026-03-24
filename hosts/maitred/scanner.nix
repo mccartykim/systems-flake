@@ -104,13 +104,16 @@
       exit 0
     fi
 
+    SSH_OPTS="-i /etc/ssh/ssh_host_ed25519_key -o StrictHostKeyChecking=accept-new"
+
     echo "Syncing scans to ${remoteHost}:${remoteScanDir}..."
 
     # Ensure remote directory exists
-    ssh ${remoteHost} "mkdir -p ${remoteScanDir}"
+    ssh $SSH_OPTS ${remoteHost} "mkdir -p ${remoteScanDir}"
 
     # Rsync with --remove-source-files to clean up after successful transfer
     rsync -av \
+      -e "ssh $SSH_OPTS" \
       --remove-source-files \
       ${scanDir}/ \
       ${remoteHost}:${remoteScanDir}/
