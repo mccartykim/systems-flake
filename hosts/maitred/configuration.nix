@@ -42,6 +42,9 @@ in {
     # Printer configuration
     ./printer.nix
 
+    # Scanner configuration (Fujitsu fi-6130Z)
+    ./scanner.nix
+
     # Tor middle relay
     ./tor-relay.nix
   ];
