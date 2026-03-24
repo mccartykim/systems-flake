@@ -88,48 +88,61 @@
     export PATH="${commonPath}:$PATH"
 
     SCANNING=0
-    FAIL_COUNT=0
+    DEVICE=""
+
+    # Recover scanner: USB reset + re-discover
+    recover_scanner() {
+      echo "Recovering scanner..."
+      usb-reset 04c5:11f3 2>/dev/null || true
+      sleep 3
+      DEVICE=$(timeout --kill-after=5 10 scanimage -L 2>/dev/null | grep -oP 'fujitsu:\S+' | head -1 || true)
+      DEVICE="''${DEVICE%\'}"
+      if [ -n "$DEVICE" ]; then
+        echo "Scanner found: $DEVICE"
+      else
+        echo "Scanner not found after recovery"
+      fi
+    }
 
     echo "Starting scan button watcher..."
+    recover_scanner
 
     while true; do
-      # Discover device each iteration (handles sleep/reset)
-      # Timeout prevents hang when scanner is in bad state
-      DEVICE=$(timeout 10 scanimage -L 2>/dev/null | grep -oP 'fujitsu:\S+' | head -1 || true)
-      DEVICE="''${DEVICE%\'}"
-
+      # If no device, try recovery
       if [ -z "$DEVICE" ]; then
-        FAIL_COUNT=$((FAIL_COUNT + 1))
-        if [ "$FAIL_COUNT" -ge 3 ]; then
-          echo "Scanner not found after $FAIL_COUNT attempts, trying USB reset..."
-          usb-reset 04c5:11f3 2>/dev/null || true
-          FAIL_COUNT=0
-          sleep 5
-        else
-          sleep 3
-        fi
+        sleep 10
+        recover_scanner
         continue
       fi
-      FAIL_COUNT=0
 
       # Poll the scan button sensor (timeout prevents hang)
-      BUTTON=$(timeout 10 scanimage \
+      BUTTON=$(timeout --kill-after=5 10 scanimage \
         --device-name="$DEVICE" \
         --dont-scan \
         -A 2>/dev/null \
         | grep -P '^\s+--scan' \
         | grep -oP '\[(yes|no)\]' \
-        | tr -d '[]' || echo "no")
+        | tr -d '[]' || echo "error")
+
+      # If poll failed, device is stale — recover
+      if [ "$BUTTON" = "error" ]; then
+        echo "Scanner poll failed, recovering..."
+        DEVICE=""
+        recover_scanner
+        continue
+      fi
 
       if [ "$BUTTON" = "yes" ] && [ "$SCANNING" -eq 0 ]; then
         SCANNING=1
         echo "Scan button pressed! Starting scan..."
         ${scanScript} || echo "Scan failed"
         SCANNING=0
+        # Re-discover device after scan (scanner may reset)
+        recover_scanner
         sleep 3
       fi
 
-      sleep 1
+      sleep 2
     done
   '';
 
