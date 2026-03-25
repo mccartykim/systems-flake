@@ -59,6 +59,9 @@
     OLLAMA_TIMEOUT = "600";
     OLLAMA_NUM_CTX = "8192";
     CAMERA_MAX_WIDTH = "1280";
+
+    # Vacuum (Valetudo)
+    VALETUDO_URL = "http://192.168.69.177";
   };
 
   # Open port for TTS audio serving to Chromecast
