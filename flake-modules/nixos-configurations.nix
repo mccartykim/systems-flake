@@ -259,6 +259,15 @@ in {
                   publicAccess = true;
                   websockets = true; # Required for live playback
                 };
+                life-coach-dashboard = {
+                  enable = true;
+                  port = 8585;
+                  subdomain = "coach";
+                  host = "rich-evans";
+                  auth = "authelia";
+                  publicAccess = true;
+                  websockets = false;
+                };
               };
               networks = {
                 containerBridge = "192.168.100.1";
