@@ -937,11 +937,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1774472604,
-        "narHash": "sha256-G7+OLUmHXaWh4EcO1w+GOMlEfqA9G6EK6Uth3m3aU48=",
+        "lastModified": 1774892009,
+        "narHash": "sha256-VzWyaj+LjzneR/R2ourhWzRWldYGO2yddYHjqT3dDZs=",
         "ref": "refs/heads/main",
-        "rev": "a0c652d49a076a0e30c270a5771979785d0544f2",
-        "revCount": 52,
+        "rev": "578faaaf8faaf061b2289f3eb72964242adc71a1",
+        "revCount": 53,
         "type": "git",
         "url": "ssh://git@github.com/mccartykim/org-life-coach.git"
       },
