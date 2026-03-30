@@ -93,7 +93,10 @@ in {
     # Servers using mkServer helper
     rich-evans = mkServer {
       hostname = "rich-evans";
-      extraSpecialArgs = {inherit copyparty claude_yapper kokoro; org_life_coach = org-life-coach;};
+      extraSpecialArgs = {
+        inherit copyparty claude_yapper kokoro;
+        org_life_coach = org-life-coach;
+      };
       extraModules = [
         copyparty.nixosModules.default
         claude_yapper.nixosModules.default
@@ -129,6 +132,15 @@ in {
               auth = "builtin";
               publicAccess = true;
               websockets = true;
+            };
+            life-coach-dashboard = {
+              enable = true;
+              port = 8585;
+              subdomain = "coach";
+              host = "rich-evans";
+              auth = "authelia";
+              publicAccess = true;
+              websockets = false;
             };
           };
         }

@@ -15,11 +15,12 @@
 
   services.org-life-coach = {
     enable = true;
+    dashboard.enable = true;
     user = "life-coach";
     stateDir = "/var/lib/life-coach-agent";
 
     orgFile = "/var/lib/life-coach-agent/agent.org";
-    interval = 300;  # 5 minutes
+    interval = 300; # 5 minutes
 
     # Claude Haiku via claude CLI — vision + reasoning in one call
     provider = "claude";
