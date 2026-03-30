@@ -122,15 +122,15 @@ in {
       echo "To use voice cloning, ensure soup-short.wav is present at the expected location"
     fi
 
-    # Miku voice reference
-    MIKU_DIR="/home/kimb/shared_projects/claude_yapper/assets/voice-references"
+    # Jet2 voice reference
+    JET2_DIR="/home/kimb/shared_projects/claude_yapper/assets/voice-references"
     for ext in wav txt; do
-      if [ -f "$MIKU_DIR/miku.$ext" ]; then
-        cp "$MIKU_DIR/miku.$ext" "/var/lib/voice-references/miku.$ext"
-        chmod 644 "/var/lib/voice-references/miku.$ext"
-        echo "Copied miku.$ext to /var/lib/voice-references/"
+      if [ -f "$JET2_DIR/jet2.$ext" ]; then
+        cp "$JET2_DIR/jet2.$ext" "/var/lib/voice-references/jet2.$ext"
+        chmod 644 "/var/lib/voice-references/jet2.$ext"
+        echo "Copied jet2.$ext to /var/lib/voice-references/"
       else
-        echo "Warning: miku.$ext not found at $MIKU_DIR"
+        echo "Warning: jet2.$ext not found at $JET2_DIR"
       fi
     done
   '';
