@@ -136,7 +136,7 @@ in {
       {
         port = 8585;
         proto = "tcp";
-        groups = ["desktops" "laptops"];
+        host = "any";
       }
       # Matrix/Tuwunel homeserver
       {
