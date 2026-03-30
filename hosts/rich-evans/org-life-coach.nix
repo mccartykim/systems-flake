@@ -31,7 +31,7 @@
     haTokenFile = config.age.secrets.ha-life-coach-token.path;
 
     # TTS voice
-    ttsVoice = "biden-legs";
+    ttsVoice = "soup";
 
     # Cameras (webcam server on same host)
     # cam0 = /dev/video0 = desk, cam1 = /dev/video2 = bed
