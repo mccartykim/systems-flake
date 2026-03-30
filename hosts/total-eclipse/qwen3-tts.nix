@@ -125,7 +125,24 @@
   serverExecutable = pkgs.writeScript script.name (
     script.renderScript {inherit venv;}
   );
+  voiceRefDir = "/home/kimb/shared_projects/claude_yapper/assets/voice-references";
 in {
+  # Copy voice reference files to /var/lib/voice-references/ for the TTS server
+  system.activationScripts.voice-references = lib.stringAfter ["users"] ''
+    mkdir -p /var/lib/voice-references
+    for voice in soup-short jet2; do
+      for ext in wav txt; do
+        src="${voiceRefDir}/$voice.$ext"
+        # soup-short.wav -> soup.wav (legacy naming)
+        dest="/var/lib/voice-references/''${voice%-short}.$ext"
+        if [ -f "$src" ]; then
+          cp "$src" "$dest"
+          chmod 644 "$dest"
+        fi
+      done
+    done
+  '';
+
   users.users.qwen3-tts = {
     isSystemUser = true;
     group = "qwen3-tts";
