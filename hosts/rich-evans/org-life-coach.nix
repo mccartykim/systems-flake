@@ -35,7 +35,7 @@
     ttsVoice = "jet2";
 
     # Cameras (webcam server on same host)
-    # cam0 = /dev/video0 = desk, cam1 = /dev/video2 = bed
+    # cam0 = /dev/video0 = bed, cam1 = /dev/video2 = desk
     cameraBedUrl = "http://127.0.0.1:8554/cam0";
     cameraDeskUrl = "http://127.0.0.1:8554/cam1";
 
@@ -47,8 +47,8 @@
     # Discord bot
     discordBotTokenFile = config.age.secrets.discord-life-coach-token.path;
 
-    # Gemini vision
-    geminiApiKeyFile = config.age.secrets.gemini-life-coach-key.path;
+    # Gemini vision (unused — images go directly to Claude as multimodal)
+    # geminiApiKeyFile = config.age.secrets.gemini-life-coach-key.path;
   };
 
   # Extra environment for org-life-coach service
