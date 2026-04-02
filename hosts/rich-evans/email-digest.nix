@@ -163,6 +163,9 @@
           mkdir -p "$MAIL_DIR/$acct/INBOX/cur" "$MAIL_DIR/$acct/INBOX/new" "$MAIL_DIR/$acct/INBOX/tmp"
         done
 
+        # Clean stale lock files from interrupted runs
+        find "$MAIL_DIR" -name '.lock' -delete 2>/dev/null || true
+
         # Sync mail (continue on failure for each account)
         for account in zoho gmail fastmail; do
           mbsync -c "$MBSYNCRC" "$account" 2>&1 || echo "WARNING: $account sync failed" >&2
@@ -344,7 +347,7 @@ in {
       ExecStart = "${digestScript}";
       User = "email-digest";
       Group = "email-digest";
-      TimeoutStartSec = "15min";
+      TimeoutStartSec = "30min";
       ProtectHome = "read-only";
       ProtectSystem = "strict";
       ReadWritePaths = [stateDir];
