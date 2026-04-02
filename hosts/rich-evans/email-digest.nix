@@ -158,6 +158,11 @@
         # Format date for mu query
         SINCE_DATE=$(date -d "@$LAST_RUN" +%Y%m%d)
 
+        # Ensure Maildir structure exists for mbsync
+        for acct in zoho gmail fastmail; do
+          mkdir -p "$MAIL_DIR/$acct/INBOX/cur" "$MAIL_DIR/$acct/INBOX/new" "$MAIL_DIR/$acct/INBOX/tmp"
+        done
+
         # Sync mail (continue on failure for each account)
         for account in zoho gmail fastmail; do
           mbsync -c "$MBSYNCRC" "$account" 2>&1 || echo "WARNING: $account sync failed" >&2
@@ -165,7 +170,7 @@
 
         # Index mail
         mu init --maildir="$MAIL_DIR" --my-address=mccartykim@zoho.com --my-address=mccarty.tim@gmail.com --my-address=kimb@kimb.dev 2>/dev/null || true
-        mu index --maildir="$MAIL_DIR" 2>&1
+        mu index 2>&1
 
         # Find new messages
         MESSAGES=$(mu find "date:$SINCE_DATE.." --fields='d f s l' --sortfield=date 2>/dev/null || true)
