@@ -137,6 +137,7 @@
       pkgs.isync
       pkgs.mu
       pkgs.findutils
+      pkgs.claude-code
     ]}:$PATH"
 
         MBSYNCRC="${mbsyncrc}"
