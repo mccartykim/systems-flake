@@ -15,3 +15,4 @@ secrets/.age-recipients.backup
 
 # Claude Code local settings
 .claude/settings.local.json
+.claude/skills/

@@ -104,6 +104,7 @@ in {
         (self + "/modules/kimb-services.nix")
         (self + "/hosts/rich-evans/life-coach.nix")
         (self + "/hosts/rich-evans/org-life-coach.nix")
+        (self + "/hosts/rich-evans/email-digest.nix")
         {
           kimb.services = {
             copyparty = {
