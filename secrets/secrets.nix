@@ -89,6 +89,12 @@ in
     # Gemini API key for life-coach vision
     "gemini-life-coach-key.age".publicKeys = [hostKeys.rich-evans bootstrap];
 
+    # ===== EMAIL DIGEST =====
+    # Mail account passwords for mbsync on rich-evans (pull-only sync)
+    "mail-zoho-password.age".publicKeys = [hostKeys.rich-evans bootstrap];
+    "mail-gmail-password.age".publicKeys = [hostKeys.rich-evans bootstrap];
+    "mail-fastmail-password.age".publicKeys = [hostKeys.rich-evans bootstrap];
+
     # ===== MEDIA PIPELINE (historian) =====
     # rclone config with put.io OAuth token
     "rclone-config.age".publicKeys = [hostKeys.historian bootstrap];
