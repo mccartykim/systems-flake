@@ -172,8 +172,10 @@
           mbsync -c "$MBSYNCRC" "$account" 2>&1 || echo "WARNING: $account sync failed" >&2
         done
 
-        # Index mail
-        mu init --maildir="$MAIL_DIR" --my-address=mccartykim@zoho.com --my-address=mccarty.tim@gmail.com --my-address=kimb@kimb.dev 2>/dev/null || true
+        # Index mail (only init if database doesn't exist)
+        if [ ! -d "$HOME/.cache/mu/xapian" ]; then
+          mu init --maildir="$MAIL_DIR" --my-address=mccartykim@zoho.com --my-address=mccarty.tim@gmail.com --my-address=kimb@kimb.dev 2>&1
+        fi
         mu index 2>&1
 
         # Find new messages
