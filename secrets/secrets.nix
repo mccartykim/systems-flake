@@ -89,11 +89,17 @@ in
     # Gemini API key for life-coach vision
     "gemini-life-coach-key.age".publicKeys = [hostKeys.rich-evans bootstrap];
 
-    # ===== EMAIL DIGEST =====
+    # ===== EMAIL / MAIL =====
     # Mail account passwords for mbsync on rich-evans (pull-only sync)
+    # Used by both email-digest and org-crm services
     "mail-zoho-password.age".publicKeys = [hostKeys.rich-evans bootstrap];
     "mail-gmail-password.age".publicKeys = [hostKeys.rich-evans bootstrap];
     "mail-fastmail-password.age".publicKeys = [hostKeys.rich-evans bootstrap];
+
+    # ===== ORG-CRM =====
+    # Discord bot token for CRM agent (separate from life-coach)
+    # Uncomment after creating Discord application and encrypting token:
+    # "discord-org-crm-token.age".publicKeys = [hostKeys.rich-evans bootstrap];
 
     # ===== MEDIA PIPELINE (historian) =====
     # rclone config with put.io OAuth token
