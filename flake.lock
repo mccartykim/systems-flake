@@ -955,11 +955,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1775396490,
-        "narHash": "sha256-4hM/Mq/XWCXqh2Xy4mvY/ueh4uZq1l7V8X10TcH1YFw=",
+        "lastModified": 1775396650,
+        "narHash": "sha256-NoZsmAwsAICsemLX1F94rn+3kLONoeXc2GyNiT/5sk4=",
         "ref": "refs/heads/main",
-        "rev": "3307fb7c7e15e5dfa2e1e7bf1e8f73cc79a67067",
-        "revCount": 15,
+        "rev": "6fbe39697d96e1c024bc025e37e213fc33f0d5f3",
+        "revCount": 16,
         "type": "git",
         "url": "file:///home/kimb/shared_projects/org_crm"
       },
