@@ -18,8 +18,8 @@
     user = "org-crm";
     stateDir = "/var/lib/org-crm";
 
-    orgFile = "/home/kimb/shared_projects/org_crm/tasks.org";
-    notesDir = "/home/kimb/shared_projects/org_crm/notes";
+    orgFile = "/var/lib/org-crm/data/tasks.org";
+    notesDir = "/var/lib/org-crm/data/notes";
     scanDir = "/var/lib/scans/documents";
 
     interval = 300; # 5 minutes
@@ -59,27 +59,4 @@
   #   mode = "0400";
   # };
 
-  # Grant org-crm user traverse access to syncthing'd org_crm directory.
-  # /home/kimb is 700, so we need ACLs for the org-crm user to reach the data.
-  # The org_crm dir itself gets group-writable via syncthing group membership.
-  systemd.services.org-crm-acl = {
-    description = "Set ACLs for org-crm access to syncthing'd data";
-    wantedBy = ["multi-user.target"];
-    before = ["org-agent-emacs-crm.service" "org-crm.service"];
-    serviceConfig = {
-      Type = "oneshot";
-      RemainAfterExit = true;
-      ExecStart = let
-        script = pkgs.writeShellScript "org-crm-acl" ''
-          # Traverse permission on parent dirs
-          ${pkgs.acl}/bin/setfacl -m u:org-crm:x /home/kimb
-          ${pkgs.acl}/bin/setfacl -m u:org-crm:x /home/kimb/shared_projects
-
-          # Read/write/traverse on the org_crm dir and contents
-          ${pkgs.acl}/bin/setfacl -R -m u:org-crm:rwx /home/kimb/shared_projects/org_crm
-          ${pkgs.acl}/bin/setfacl -R -d -m u:org-crm:rwx /home/kimb/shared_projects/org_crm
-        '';
-      in "${script}";
-    };
-  };
 }
