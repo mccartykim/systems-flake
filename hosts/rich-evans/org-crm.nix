@@ -32,8 +32,10 @@
 
     discordUserId = "366455267673636866";
 
-    # Reuse life-coach bot token for now
+    # Bot token for proactive DMs (REST API only — sidecar disabled until
+    # we have a dedicated bot app, since life-coach holds the gateway connection)
     discordBotTokenFile = config.age.secrets.discord-org-crm-token.path;
+    discordAllowedUsers = "366455267673636866";  # Kimb only
   };
 
   # Mail secrets (same .age files as email-digest, but owned by org-crm user)
