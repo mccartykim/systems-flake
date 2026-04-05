@@ -23,7 +23,7 @@
 
     interval = 300; # 5 minutes
     provider = "claude";
-    model = "haiku";
+    model = "sonnet";
 
     # Mail passwords (own copies of the same secrets, owned by org-crm user)
     mailZohoPasswordFile = config.age.secrets.org-crm-mail-zoho.path;
