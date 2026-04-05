@@ -31,6 +31,8 @@
     mailGmailPasswordFile = config.age.secrets.org-crm-mail-gmail.path;
     mailFastmailPasswordFile = config.age.secrets.org-crm-mail-fastmail.path;
 
+    discordUserId = "366455267673636866";
+
     # Discord bot — uncomment after creating the bot application and encrypting token
     # discordBotTokenFile = config.age.secrets.discord-org-crm-token.path;
   };
