@@ -3,7 +3,7 @@
 # Manages contacts, tasks, email digest, and scanned documents.
 # Once verified working, remove email-digest.nix (this absorbs its functionality).
 #
-# Reuses life-coach Discord bot token for now. Switch to dedicated bot later.
+# Dedicated Discord bot app (Secretary) for DMs and slash commands.
 {
   config,
   lib,
@@ -32,9 +32,8 @@
 
     discordUserId = "366455267673636866";
 
-    # Bot token for proactive DMs (REST API only — sidecar disabled until
-    # we have a dedicated bot app, since life-coach holds the gateway connection)
     discordBotTokenFile = config.age.secrets.discord-org-crm-token.path;
+    enableDiscordBot = true;
     discordAllowedUsers = "366455267673636866";  # Kimb only
   };
 
@@ -55,9 +54,9 @@
     mode = "0400";
   };
 
-  # Reuse life-coach Discord bot token, owned by org-crm user
+  # Dedicated Discord bot token (Secretary app)
   age.secrets.discord-org-crm-token = {
-    file = ../../secrets/discord-life-coach-token.age;
+    file = ../../secrets/discord-org-crm-token.age;
     owner = "org-crm";
     mode = "0400";
   };

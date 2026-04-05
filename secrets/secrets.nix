@@ -99,7 +99,7 @@ in
     # ===== ORG-CRM =====
     # Discord bot token for CRM agent (separate from life-coach)
     # Uncomment after creating Discord application and encrypting token:
-    # "discord-org-crm-token.age".publicKeys = [hostKeys.rich-evans bootstrap];
+    "discord-org-crm-token.age".publicKeys = [hostKeys.rich-evans bootstrap];
 
     # ===== MEDIA PIPELINE (historian) =====
     # rclone config with put.io OAuth token
