@@ -22,7 +22,6 @@
     scanDir = "/var/lib/scans/documents";
 
     interval = 300; # 5 minutes
-    provider = "claude";
     model = "sonnet";
 
     # Mail passwords (own copies of the same secrets, owned by org-crm user)
