@@ -3,8 +3,7 @@
 # Manages contacts, tasks, email digest, and scanned documents.
 # Once verified working, remove email-digest.nix (this absorbs its functionality).
 #
-# Discord bot token: requires manual setup of a new Discord application
-# ("Secretary") — see org_crm plan for details.
+# Reuses life-coach Discord bot token for now. Switch to dedicated bot later.
 {
   config,
   lib,
@@ -33,8 +32,8 @@
 
     discordUserId = "366455267673636866";
 
-    # Discord bot — uncomment after creating the bot application and encrypting token
-    # discordBotTokenFile = config.age.secrets.discord-org-crm-token.path;
+    # Reuse life-coach bot token for now
+    discordBotTokenFile = config.age.secrets.discord-org-crm-token.path;
   };
 
   # Mail secrets (same .age files as email-digest, but owned by org-crm user)
@@ -54,11 +53,11 @@
     mode = "0400";
   };
 
-  # Discord bot token — uncomment after encrypting with agenix
-  # age.secrets.discord-org-crm-token = {
-  #   file = ../../secrets/discord-org-crm-token.age;
-  #   owner = "org-crm";
-  #   mode = "0400";
-  # };
+  # Reuse life-coach Discord bot token, owned by org-crm user
+  age.secrets.discord-org-crm-token = {
+    file = ../../secrets/discord-life-coach-token.age;
+    owner = "org-crm";
+    mode = "0400";
+  };
 
 }
