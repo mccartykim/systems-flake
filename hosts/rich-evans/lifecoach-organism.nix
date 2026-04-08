@@ -17,8 +17,15 @@
   config,
   lib,
   pkgs,
+  inputs,
   ...
-}: {
+}: let
+  # Reuse the existing org-agent emacs build from the upstream
+  # org-agent flake input. Needed on the PATH of every lifecoach
+  # service that calls emacsclient (build-view babel block,
+  # org-task write verbs, dashboard /api/agenda).
+  org-agent-emacs = inputs.org-agent.packages.${pkgs.system}.emacs;
+in {
   services.lifecoach-organism = {
     enable = true;
     user = "life-coach";
@@ -35,6 +42,7 @@
     # Talk to the existing org-agent emacs daemon for task view
     # and org-task writes.
     orgAgentSocket = "/var/lib/life-coach-agent/emacs/org-agent";
+    orgAgentEmacsclient = "${org-agent-emacs}/bin/emacsclient";
 
     # TTS defaults — Qwen server on total-eclipse, bajoran voice,
     # default device Kim's nest hub. Keep the "jet2" voice used
@@ -58,4 +66,12 @@
       openFirewall = true;
     };
   };
+
+  # Make emacsclient findable from every lifecoach service. The
+  # module's default `path =` doesn't include it because the
+  # lifecoach-organism flake has no dependency on org-agent — we
+  # wire it here at the host level where the dependency exists.
+  systemd.services.lifecoach-heartbeat.path  = lib.mkAfter [org-agent-emacs];
+  systemd.services.lifecoach-scheduler.path  = lib.mkAfter [org-agent-emacs];
+  systemd.services.lifecoach-dashboard.path  = lib.mkAfter [org-agent-emacs];
 }
