@@ -634,11 +634,11 @@
         "organism": "organism"
       },
       "locked": {
-        "lastModified": 1775679710,
-        "narHash": "sha256-aAzLDuD9dkc181EocVcdEqwQ1ZA8EKEy0xDKox2ieRw=",
+        "lastModified": 1775679946,
+        "narHash": "sha256-l2FVVVxwqXDGWx5CBIvJitfWIyAtVOLXzaYerU+hAd4=",
         "ref": "refs/heads/main",
-        "rev": "757aa6c880b232ba017af09c7f9902c48d5e0a8d",
-        "revCount": 22,
+        "rev": "c12f48cf9fc193486a7a864ab5d6b292f5649ab3",
+        "revCount": 23,
         "type": "git",
         "url": "file:///home/kimb/shared_projects/lifecoach_organism"
       },
