@@ -176,12 +176,31 @@ in {
           mode = "text";
           icon = "mdi:message-text";
         };
+        # An input_text.vacuum_location_hint can be added here if a
+        # free-text room hint should accompany find-me button presses.
       };
       # Submit button for life-coach input (pressing Enter or this button submits)
       input_button = {
         life_coach_submit = {
           name = "Send to Life Coach";
           icon = "mdi:send";
+        };
+        vacuum_find_me = {
+          name = "Vacuum: Come Find Me";
+          icon = "mdi:map-marker-account";
+        };
+        vacuum_belay = {
+          name = "Vacuum: Belay (I'm coming)";
+          icon = "mdi:hand-back-right-off";
+        };
+      };
+      # Hard kill switch for vacuum_organism. When on, the agent
+      # refuses all motion and marks in-flight dispatches SKIPPED
+      # with reason "off-duty". See vacuum_organism/HA_SETUP.md.
+      input_boolean = {
+        vacuum_offduty = {
+          name = "Vacuum Organism Off-Duty";
+          icon = "mdi:robot-off";
         };
       };
     };
