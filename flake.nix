@@ -66,6 +66,8 @@
     org-life-coach.url = "git+ssh://git@github.com/mccartykim/org-life-coach.git";
     org-life-coach.inputs.nixpkgs.follows = "nixpkgs";
     org-life-coach.inputs.org-agent.follows = "org-agent";
+    lifecoach-organism.url = "git+file:///home/kimb/shared_projects/lifecoach_organism";
+    lifecoach-organism.inputs.nixpkgs.follows = "nixpkgs";
     org-crm.url = "git+file:///home/kimb/shared_projects/org_crm";
     org-crm.inputs.nixpkgs.follows = "nixpkgs";
     org-crm.inputs.org-agent.follows = "org-agent";
