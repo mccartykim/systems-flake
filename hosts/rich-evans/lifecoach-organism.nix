@@ -1,18 +1,18 @@
-# lifecoach-organism: parallel-operation proof-of-concept deploy.
+# lifecoach-organism: full cutover from org-life-coach.
 #
-# Runs the new organism-based life coach agent alongside the
-# existing org-life-coach Python daemon. Intentionally minimal
-# for a first deploy:
+# This file does two things:
 #
-# - Button monitor OFF — old daemon keeps handling physical presses
-# - Matrix/Discord bots OFF — old bots keep handling chat
-# - Dashboard ON at port 8586 (old dashboard stays on 8585)
-# - Heartbeat every 4h (gentle, not pushy)
-# - HA state + task view + TTS all wired
-# - Camera URLs unset (HA state alone drives situational awareness)
+# 1. Turns on lifecoach-organism with the full feature set
+#    (button monitor, matrix/discord bots, cameras, dashboard).
 #
-# Rollback: set enable = false and redeploy. Old daemon is
-# untouched by this file so it stays working the whole time.
+# 2. Disables the old org-life-coach python daemon, matrix/discord
+#    bots, and dashboard — while keeping the org-agent emacs daemon
+#    running so the new agent can still call emacsclient for the
+#    task view and org-task write verbs.
+#
+# Rollback: set enable = false here and re-enable the old services
+# in hosts/rich-evans/org-life-coach.nix. The old daemon's state
+# dir (/var/lib/life-coach-agent) is untouched so nothing is lost.
 {
   config,
   lib,
@@ -20,10 +20,6 @@
   inputs,
   ...
 }: let
-  # Reuse the existing org-agent emacs build from the upstream
-  # org-agent flake input. Needed on the PATH of every lifecoach
-  # service that calls emacsclient (build-view babel block,
-  # org-task write verbs, dashboard /api/agenda).
   org-agent-emacs = inputs.org-agent.packages.${pkgs.system}.emacs;
 in {
   services.lifecoach-organism = {
@@ -31,35 +27,48 @@ in {
     user = "life-coach";
     stateDir = "/var/lib/lifecoach-organism";
 
-    # Agent cadence: slow safety-net heartbeat. Scheduled wakeups
-    # the agent requests via #+LOOP_AT fire on their own schedule.
-    heartbeatInterval = "4h";
+    # Heartbeat every 1h. This is the safety net in case the
+    # LOOP_AT scheduling chain breaks (e.g. a transient API error
+    # causes a scheduled cycle to fail without emitting a new
+    # LOOP_AT — first time we saw this happen on 04-08 after an
+    # Anthropic 500). A 1h ceiling means the worst case is an hour
+    # of silence before the heartbeat re-primes the agent.
+    heartbeatInterval = "1h";
 
     # Home Assistant — reuse the existing agenix secret
     haUrl = "http://127.0.0.1:8123";
     haTokenFile = config.age.secrets.ha-life-coach-token.path;
 
-    # Talk to the existing org-agent emacs daemon for task view
-    # and org-task writes.
+    # Emacs daemon from the old module's socket path. The old
+    # org-life-coach module still provides the running org-agent
+    # emacs daemon; we just disable its python loop below.
     orgAgentSocket = "/var/lib/life-coach-agent/emacs/org-agent";
     orgAgentEmacsclient = "${org-agent-emacs}/bin/emacsclient";
 
-    # TTS defaults — Qwen server on total-eclipse, bajoran voice,
-    # default device Kim's nest hub. Keep the "jet2" voice used
-    # by the current prod deploy.
+    # TTS
     ttsServer = "http://total-eclipse.nebula:8091";
     ttsVoice = "jet2";
     ttsDevice = "Kim's nest hub";
 
-    # PARALLEL-MODE SAFEGUARDS:
-    # These capabilities are intentionally left to the old daemon
-    # during parallel operation. Flip to true + set the respective
-    # token files when doing a full cutover.
-    enableButtonMonitor = false;
-    # matrixBotTokenFile = null;   # default
-    # discordBotTokenFile = null;  # default
+    # Full cutover: everything on.
+    enableButtonMonitor = true;
 
-    # Dashboard on a separate port from the old one (8585).
+    matrixHomeserver = "http://127.0.0.1:6167";
+    matrixBotUser = "@lifecoach:kimb.dev";
+    matrixBotTokenFile = config.age.secrets.matrix-life-coach-token.path;
+    matrixAllowedSenders = "@kimb:kimb.dev";
+
+    discordBotTokenFile = config.age.secrets.discord-life-coach-token.path;
+    # discordAllowedUsers left empty = allow all
+
+    # Cameras — same URLs the old daemon was using.
+    cameraBedUrl = "http://127.0.0.1:8554/cam0";
+    cameraDeskUrl = "http://127.0.0.1:8554/cam1";
+
+    # Dashboard stays on 8586 for now — taking over 8585 requires
+    # stopping the old dashboard first which we're doing below,
+    # but cross-service port renegotiation in a single activation
+    # is fragile. Leave old URL dead and Kim can bookmark 8586.
     dashboard = {
       enable = true;
       port = 8586;
@@ -69,9 +78,36 @@ in {
 
   # Make emacsclient findable from every lifecoach service. The
   # module's default `path =` doesn't include it because the
-  # lifecoach-organism flake has no dependency on org-agent — we
-  # wire it here at the host level where the dependency exists.
-  systemd.services.lifecoach-heartbeat.path  = lib.mkAfter [org-agent-emacs];
-  systemd.services.lifecoach-scheduler.path  = lib.mkAfter [org-agent-emacs];
-  systemd.services.lifecoach-dashboard.path  = lib.mkAfter [org-agent-emacs];
+  # lifecoach-organism flake has no dependency on org-agent.
+  systemd.services.lifecoach-heartbeat.path       = lib.mkAfter [org-agent-emacs];
+  systemd.services.lifecoach-scheduler.path       = lib.mkAfter [org-agent-emacs];
+  systemd.services.lifecoach-dashboard.path       = lib.mkAfter [org-agent-emacs];
+  systemd.services.lifecoach-button-monitor.path  = lib.mkAfter [org-agent-emacs];
+  systemd.services.lifecoach-matrix-bot.path      = lib.mkAfter [org-agent-emacs];
+  systemd.services.lifecoach-discord-bot.path     = lib.mkAfter [org-agent-emacs];
+
+  # ------------------------------------------------------------------
+  # Cutover: disable the old org-life-coach services while keeping
+  # the org-agent emacs daemon alive. The emacs daemon is defined
+  # separately inside the old module and is not gated on these
+  # overrides, so it stays running.
+  # ------------------------------------------------------------------
+
+  # Null out the bot token options. The old module's systemd unit
+  # definitions are inside `lib.mkIf (cfg.matrixBotTokenFile != null)`
+  # so setting them to null removes those units entirely from the
+  # new system config — nixos-rebuild will stop them on switch.
+  services.org-life-coach.matrixBotTokenFile  = lib.mkForce null;
+  services.org-life-coach.discordBotTokenFile = lib.mkForce null;
+
+  # Disable the old dashboard the same way (sub-option).
+  services.org-life-coach.dashboard.enable = lib.mkForce false;
+
+  # Stop the main python daemon itself. Setting wantedBy=[] removes
+  # the multi-user.target.wants symlink so it's no longer "wanted"
+  # by systemd, and on activation NixOS will stop it because the
+  # previous config's wantedBy referenced it. The service unit
+  # file stays (since the old module still defines it under
+  # cfg.enable), but nothing starts it.
+  systemd.services.org-life-coach.wantedBy = lib.mkForce [];
 }
