@@ -74,7 +74,20 @@ in {
       port = 8586;
       openFirewall = true;
     };
+
+    # Health watchdog: 5-min timer, alerts via TTS + Discord DM when
+    # the agent is broken and can't self-recover. Quiet hours
+    # 23:00–08:00 local — see modules/lifecoach-organism.nix for the
+    # cadence + dispatch logic.
+    watchdog = {
+      enable = true;
+      # Kim's DM channel id — fill in once known. Empty string =
+      # TTS only, no Discord fan-out.
+      alertChannelId = "";
+    };
   };
+
+  systemd.services.lifecoach-watchdog.path = lib.mkAfter [org-agent-emacs];
 
   # Make emacsclient findable from every lifecoach service. The
   # module's default `path =` doesn't include it because the
