@@ -68,6 +68,8 @@
     org-life-coach.inputs.org-agent.follows = "org-agent";
     lifecoach-organism.url = "git+file:///home/kimb/shared_projects/lifecoach_organism";
     lifecoach-organism.inputs.nixpkgs.follows = "nixpkgs";
+    vacuum-organism.url = "path:/home/kimb/shared_projects/vacuum_organism";
+    vacuum-organism.inputs.nixpkgs.follows = "nixpkgs";
     org-crm.url = "git+file:///home/kimb/shared_projects/org_crm";
     org-crm.inputs.nixpkgs.follows = "nixpkgs";
     org-crm.inputs.org-agent.follows = "org-agent";

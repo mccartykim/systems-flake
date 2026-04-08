@@ -17,6 +17,12 @@
     mode = "0400";
   };
 
+  # vacuum-organism currently reuses ha-life-coach-token above for
+  # its HA reads (off-duty switch + button polling). If you want
+  # token isolation, mint a new long-lived HA token, encrypt it as
+  # secrets/ha-vacuum-token.age, and add a parallel age.secrets
+  # entry owned by the vacuum-organism user.
+
   # Matrix access token for life-coach chatbot
   age.secrets.matrix-life-coach-token = {
     file = ../../secrets/matrix-life-coach-token.age;
