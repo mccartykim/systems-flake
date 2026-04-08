@@ -634,8 +634,8 @@
         "organism": "organism"
       },
       "locked": {
-        "lastModified": 1775623794,
-        "narHash": "sha256-WwuMlIRoSOVIJz9FvIjpb5mBZ2vst4Vm+fP3xaMgbug=",
+        "lastModified": 1775670717,
+        "narHash": "sha256-dHDZ1SKXov+MVIhmJF59HobVF+Q7Yf2KjaUQRY0KCnY=",
         "path": "/home/kimb/shared_projects/lifecoach_organism",
         "type": "path"
       },
