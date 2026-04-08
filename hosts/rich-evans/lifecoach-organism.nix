@@ -105,9 +105,20 @@ in {
 
   # Stop the main python daemon itself. Setting wantedBy=[] removes
   # the multi-user.target.wants symlink so it's no longer "wanted"
-  # by systemd, and on activation NixOS will stop it because the
-  # previous config's wantedBy referenced it. The service unit
-  # file stays (since the old module still defines it under
-  # cfg.enable), but nothing starts it.
+  # by systemd on boot. But NixOS activation won't stop a currently-
+  # running unit whose unit file still exists in the new config
+  # (the old module still defines it under cfg.enable, which we
+  # keep true to preserve the emacs daemon). So we also need an
+  # activation script to stop it imperatively during switch.
   systemd.services.org-life-coach.wantedBy = lib.mkForce [];
+
+  system.activationScripts.stop-old-org-life-coach = {
+    text = ''
+      if /run/current-system/sw/bin/systemctl is-active --quiet org-life-coach.service 2>/dev/null; then
+        echo "stopping old org-life-coach daemon (cutover to lifecoach-organism)"
+        /run/current-system/sw/bin/systemctl stop org-life-coach.service || true
+      fi
+    '';
+    deps = [];
+  };
 }
