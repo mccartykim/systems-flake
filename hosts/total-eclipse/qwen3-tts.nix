@@ -130,7 +130,7 @@ in {
   # Copy voice reference files to /var/lib/voice-references/ for the TTS server
   system.activationScripts.voice-references = lib.stringAfter ["users"] ''
     mkdir -p /var/lib/voice-references
-    for voice in soup-short jet2; do
+    for voice in soup-short jet2 caine; do
       for ext in wav txt; do
         src="${voiceRefDir}/$voice.$ext"
         # soup-short.wav -> soup.wav (legacy naming)
