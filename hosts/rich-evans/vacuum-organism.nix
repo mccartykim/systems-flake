@@ -27,6 +27,22 @@
     # under our own user (see life-coach.nix age.secrets.ha-vacuum-token).
     haUrl = "http://127.0.0.1:8123";
     haTokenFile = config.age.secrets.ha-vacuum-token.path;
+
+    # Discord bot sidecar. Token is decrypted per-host via agenix;
+    # the allowlist is Kimb (ikea_femme) + Lily (parsimony). An empty
+    # allowlist would be fail-closed (refuse all) — the vacuum bot
+    # deliberately diverges from life-coach's empty-means-allow-all
+    # default because this bot controls motion.
+    discordBotTokenFile = config.age.secrets.discord-vacuum-bot-token.path;
+    discordAllowedUsers = "366455267673636866,100735298694021120";
+  };
+
+  # Discord bot token for the vacuum-organism sidecar. Separate Discord
+  # application from life-coach / org-crm; encrypted to rich-evans only.
+  age.secrets.discord-vacuum-bot-token = {
+    file = ../../secrets/discord-vacuum-bot-token.age;
+    owner = "vacuum-organism";
+    mode = "0400";
   };
 
   # Let lifecoach's dispatch-robot wrapper write to vacuum-organism's
