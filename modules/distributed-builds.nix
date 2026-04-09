@@ -195,6 +195,9 @@ in {
       ];
 
       nix.distributedBuilds = true;
+      # nix.distributedBuilds no longer auto-populates this in current nixpkgs,
+      # so point nix at the generated machines file explicitly.
+      nix.settings.builders = ["@/etc/nix/machines"];
       nix.settings.connect-timeout = cfg.connectTimeout;
 
       # Add builder host keys to known_hosts for root
