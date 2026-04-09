@@ -70,7 +70,7 @@
     lifecoach-organism.inputs.nixpkgs.follows = "nixpkgs";
     vacuum-organism.url = "git+ssh://git@github.com/mccartykim/vacuum_organism.git";
     vacuum-organism.inputs.nixpkgs.follows = "nixpkgs";
-    org-crm.url = "git+file:///home/kimb/shared_projects/org_crm";
+    org-crm.url = "git+ssh://git@github.com/mccartykim/org_crm.git";
     org-crm.inputs.nixpkgs.follows = "nixpkgs";
     org-crm.inputs.org-agent.follows = "org-agent";
 
