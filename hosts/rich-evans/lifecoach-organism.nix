@@ -35,6 +35,11 @@ in {
     # of silence before the heartbeat re-primes the agent.
     heartbeatInterval = "1h";
 
+    # Live mode: dispatch-robot actually files entries to
+    # vacuum_organism's dispatch.org. The vacuum agent will physically
+    # come find Kim when lifecoach decides to dispatch.
+    dispatchRobotMode = "live";
+
     # Home Assistant — reuse the existing agenix secret
     haUrl = "http://127.0.0.1:8123";
     haTokenFile = config.age.secrets.ha-life-coach-token.path;
