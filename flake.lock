@@ -741,11 +741,11 @@
         "organism": "organism"
       },
       "locked": {
-        "lastModified": 1775748864,
-        "narHash": "sha256-umylOI0VgPIoubvntyD2ueamOlpotxB91N5bhBFTWCk=",
+        "lastModified": 1775759814,
+        "narHash": "sha256-XbG6+359m7CN3s9QuasdEcl0UGHe/sauppnGCQk/h7I=",
         "ref": "refs/heads/main",
-        "rev": "7c5cdd594b5cb42c034a43c69d21745eca4dffb6",
-        "revCount": 32,
+        "rev": "87a0469a7b0e00cf8443ca76e5a89463f32367e4",
+        "revCount": 33,
         "type": "git",
         "url": "file:///home/kimb/shared_projects/lifecoach_organism"
       },
@@ -1878,8 +1878,8 @@
         "vacuum-skills": "vacuum-skills"
       },
       "locked": {
-        "lastModified": 1775753199,
-        "narHash": "sha256-gGAK1KbBAyves8HaMfjiiWJYDJekeN++UVRYpsxBE0g=",
+        "lastModified": 1775759832,
+        "narHash": "sha256-gWcgjfV+rJe1DyXPo51oXsLhMWWK35OJyJlKupm17rw=",
         "path": "/home/kimb/shared_projects/vacuum_organism",
         "type": "path"
       },

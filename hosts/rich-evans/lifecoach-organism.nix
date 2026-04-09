@@ -3,9 +3,9 @@
 # This file does two things:
 #
 # 1. Turns on lifecoach-organism with the full feature set
-#    (button monitor, matrix/discord bots, cameras, dashboard).
+#    (button monitor, discord bot, cameras, dashboard).
 #
-# 2. Disables the old org-life-coach python daemon, matrix/discord
+# 2. Disables the old org-life-coach python daemon, discord
 #    bots, and dashboard — while keeping the org-agent emacs daemon
 #    running so the new agent can still call emacsclient for the
 #    task view and org-task write verbs.
@@ -58,11 +58,6 @@ in {
     # Full cutover: everything on.
     enableButtonMonitor = true;
 
-    matrixHomeserver = "http://127.0.0.1:6167";
-    matrixBotUser = "@lifecoach:kimb.dev";
-    matrixBotTokenFile = config.age.secrets.matrix-life-coach-token.path;
-    matrixAllowedSenders = "@kimb:kimb.dev";
-
     discordBotTokenFile = config.age.secrets.discord-life-coach-token.path;
     # discordAllowedUsers left empty = allow all
 
@@ -101,7 +96,6 @@ in {
   systemd.services.lifecoach-scheduler.path       = lib.mkAfter [org-agent-emacs];
   systemd.services.lifecoach-dashboard.path       = lib.mkAfter [org-agent-emacs];
   systemd.services.lifecoach-button-monitor.path  = lib.mkAfter [org-agent-emacs];
-  systemd.services.lifecoach-matrix-bot.path      = lib.mkAfter [org-agent-emacs];
   systemd.services.lifecoach-discord-bot.path     = lib.mkAfter [org-agent-emacs];
 
   # ------------------------------------------------------------------
@@ -117,6 +111,9 @@ in {
   # new system config — nixos-rebuild will stop them on switch.
   services.org-life-coach.matrixBotTokenFile  = lib.mkForce null;
   services.org-life-coach.discordBotTokenFile = lib.mkForce null;
+  # (matrixBotTokenFile is still an option on the OLD org-life-coach
+  # module; the lifecoach-organism module no longer has it. Leave
+  # the null override so the old units stay stopped.)
 
   # Disable the old dashboard the same way (sub-option).
   services.org-life-coach.dashboard.enable = lib.mkForce false;
