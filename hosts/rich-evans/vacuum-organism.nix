@@ -28,4 +28,9 @@
     haUrl = "http://127.0.0.1:8123";
     haTokenFile = config.age.secrets.ha-vacuum-token.path;
   };
+
+  # Let lifecoach's dispatch-robot wrapper write to vacuum-organism's
+  # dispatch.org. The vacuum-organism module makes the state dir
+  # group-writable; this puts the lifecoach service user in that group.
+  users.users.life-coach.extraGroups = [ "vacuum-organism" ];
 }
