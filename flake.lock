@@ -1878,8 +1878,8 @@
         "vacuum-skills": "vacuum-skills"
       },
       "locked": {
-        "lastModified": 1775712959,
-        "narHash": "sha256-G0XSNrrZ7/t3PKqh3LrJTJomGAxbHHWWLmfmgWVUuec=",
+        "lastModified": 1775753199,
+        "narHash": "sha256-gGAK1KbBAyves8HaMfjiiWJYDJekeN++UVRYpsxBE0g=",
         "path": "/home/kimb/shared_projects/vacuum_organism",
         "type": "path"
       },
