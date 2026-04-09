@@ -25,85 +25,111 @@
   # CUDA overlay: make autopatchelf find CUDA libs in torch/nvidia wheels
   cudaOverlay = self: super: {
     torch = super.torch.overrideAttrs (old: {
-      nativeBuildInputs = (old.nativeBuildInputs or []) ++ [
-        pkgs.cudaPackages.cudatoolkit
-        pkgs.cudaPackages.cudnn
-        pkgs.cudaPackages.libcusparse
-        pkgs.cudaPackages.libcusparse_lt
-        pkgs.cudaPackages.libcufile
-        pkgs.cudaPackages.libnvshmem
-        pkgs.cudaPackages.nccl
-        pkgs.addDriverRunpath
-      ];
-      autoPatchelfIgnoreMissingDeps = (old.autoPatchelfIgnoreMissingDeps or [])
+      nativeBuildInputs =
+        (old.nativeBuildInputs or [])
+        ++ [
+          pkgs.cudaPackages.cudatoolkit
+          pkgs.cudaPackages.cudnn
+          pkgs.cudaPackages.libcusparse
+          pkgs.cudaPackages.libcusparse_lt
+          pkgs.cudaPackages.libcufile
+          pkgs.cudaPackages.libnvshmem
+          pkgs.cudaPackages.nccl
+          pkgs.addDriverRunpath
+        ];
+      autoPatchelfIgnoreMissingDeps =
+        (old.autoPatchelfIgnoreMissingDeps or [])
         ++ [
           "libcuda.so.1"
           "libnvshmem_host.so.*"
         ];
-      postFixup = (old.postFixup or "") + ''
-        addDriverRunpath $out/lib/python*/site-packages/torch/lib/libtorch_cuda*.so
-      '';
+      postFixup =
+        (old.postFixup or "")
+        + ''
+          addDriverRunpath $out/lib/python*/site-packages/torch/lib/libtorch_cuda*.so
+        '';
     });
     nvidia-cusparse-cu12 = super.nvidia-cusparse-cu12.overrideAttrs (old: {
-      nativeBuildInputs = (old.nativeBuildInputs or []) ++ [
-        pkgs.cudaPackages.libnvjitlink
-      ];
+      nativeBuildInputs =
+        (old.nativeBuildInputs or [])
+        ++ [
+          pkgs.cudaPackages.libnvjitlink
+        ];
     });
     nvidia-cusolver-cu12 = super.nvidia-cusolver-cu12.overrideAttrs (old: {
-      nativeBuildInputs = (old.nativeBuildInputs or []) ++ [
-        pkgs.cudaPackages.libnvjitlink
-        pkgs.cudaPackages.libcusparse
-        pkgs.cudaPackages.libcublas
-      ];
+      nativeBuildInputs =
+        (old.nativeBuildInputs or [])
+        ++ [
+          pkgs.cudaPackages.libnvjitlink
+          pkgs.cudaPackages.libcusparse
+          pkgs.cudaPackages.libcublas
+        ];
     });
     nvidia-cufile-cu12 = super.nvidia-cufile-cu12.overrideAttrs (old: {
-      nativeBuildInputs = (old.nativeBuildInputs or []) ++ [
-        pkgs.rdma-core
-      ];
-      autoPatchelfIgnoreMissingDeps = (old.autoPatchelfIgnoreMissingDeps or [])
+      nativeBuildInputs =
+        (old.nativeBuildInputs or [])
+        ++ [
+          pkgs.rdma-core
+        ];
+      autoPatchelfIgnoreMissingDeps =
+        (old.autoPatchelfIgnoreMissingDeps or [])
         ++ ["libcuda.so.1"];
     });
     nvidia-nvshmem-cu12 = super.nvidia-nvshmem-cu12.overrideAttrs (old: {
-      nativeBuildInputs = (old.nativeBuildInputs or []) ++ [
-        pkgs.openmpi
-        pkgs.pmix
-        pkgs.ucx
-        pkgs.libfabric
-        pkgs.rdma-core
-      ];
+      nativeBuildInputs =
+        (old.nativeBuildInputs or [])
+        ++ [
+          pkgs.openmpi
+          pkgs.pmix
+          pkgs.ucx
+          pkgs.libfabric
+          pkgs.rdma-core
+        ];
     });
     numba = super.numba.overrideAttrs (old: {
-      nativeBuildInputs = (old.nativeBuildInputs or []) ++ [
-        pkgs.tbb_2022
-      ];
+      nativeBuildInputs =
+        (old.nativeBuildInputs or [])
+        ++ [
+          pkgs.tbb_2022
+        ];
     });
     # torchaudio/torchvision link against libtorch*.so at runtime via Python's
     # import mechanism (torch is loaded first, adds its lib dir to search path).
     # Safe to ignore at build time.
     torchaudio = super.torchaudio.overrideAttrs (old: {
-      nativeBuildInputs = (old.nativeBuildInputs or []) ++ [
-        pkgs.cudaPackages.cudatoolkit
-      ];
-      autoPatchelfIgnoreMissingDeps = (old.autoPatchelfIgnoreMissingDeps or [])
+      nativeBuildInputs =
+        (old.nativeBuildInputs or [])
+        ++ [
+          pkgs.cudaPackages.cudatoolkit
+        ];
+      autoPatchelfIgnoreMissingDeps =
+        (old.autoPatchelfIgnoreMissingDeps or [])
         ++ ["libcuda.so.1" "libtorch*.so" "libc10*.so" "libcudart.so.*" "libtorch_python.so"];
     });
     torchvision = super.torchvision.overrideAttrs (old: {
-      nativeBuildInputs = (old.nativeBuildInputs or []) ++ [
-        pkgs.cudaPackages.cudatoolkit
-      ];
-      autoPatchelfIgnoreMissingDeps = (old.autoPatchelfIgnoreMissingDeps or [])
+      nativeBuildInputs =
+        (old.nativeBuildInputs or [])
+        ++ [
+          pkgs.cudaPackages.cudatoolkit
+        ];
+      autoPatchelfIgnoreMissingDeps =
+        (old.autoPatchelfIgnoreMissingDeps or [])
         ++ ["libcuda.so.1" "libtorch*.so" "libc10*.so" "libcudart.so.*" "libtorch_python.so"];
     });
     # soundfile needs libsndfile.so at runtime
     soundfile = super.soundfile.overrideAttrs (old: {
-      nativeBuildInputs = (old.nativeBuildInputs or []) ++ [
-        pkgs.libsndfile
-      ];
+      nativeBuildInputs =
+        (old.nativeBuildInputs or [])
+        ++ [
+          pkgs.libsndfile
+        ];
     });
     sox = super.sox.overrideAttrs (old: {
-      nativeBuildInputs = (old.nativeBuildInputs or []) ++ [
-        self.setuptools
-      ];
+      nativeBuildInputs =
+        (old.nativeBuildInputs or [])
+        ++ [
+          self.setuptools
+        ];
     });
   };
 
@@ -164,10 +190,12 @@ in {
       VOICES_DIR = "/var/lib/voice-references";
       HOME = "/var/lib/qwen3-tts";
       # libcuda.so.1 from NVIDIA driver, libsndfile for soundfile, libcudnn_graph for cuDNN
-      LD_LIBRARY_PATH = lib.makeLibraryPath [
-        (lib.getLib pkgs.libsndfile)
-        (lib.getLib pkgs.cudaPackages.cudnn)
-      ] + ":/run/opengl-driver/lib";
+      LD_LIBRARY_PATH =
+        lib.makeLibraryPath [
+          (lib.getLib pkgs.libsndfile)
+          (lib.getLib pkgs.cudaPackages.cudnn)
+        ]
+        + ":/run/opengl-driver/lib";
     };
 
     serviceConfig = {

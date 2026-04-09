@@ -14,12 +14,14 @@
   # NOTE: sane-backends is NOT included here — we use the system scanimage
   # at /run/current-system/sw/bin/scanimage which is properly wrapped
   # to find /etc/sane-config by the NixOS SANE module.
-  commonPath = lib.makeBinPath [
-    pkgs.coreutils
-    pkgs.findutils
-    pkgs.gnugrep
-    pkgs.usb-reset
-  ] + ":/run/current-system/sw/bin";
+  commonPath =
+    lib.makeBinPath [
+      pkgs.coreutils
+      pkgs.findutils
+      pkgs.gnugrep
+      pkgs.usb-reset
+    ]
+    + ":/run/current-system/sw/bin";
 
   # Find the fujitsu scanner device name dynamically
   findDevice = ''

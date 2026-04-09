@@ -33,7 +33,7 @@
 
     discordBotTokenFile = config.age.secrets.discord-org-crm-token.path;
     enableDiscordBot = true;
-    discordAllowedUsers = "366455267673636866";  # Kimb only
+    discordAllowedUsers = "366455267673636866"; # Kimb only
   };
 
   # Mail secrets (same .age files as email-digest, but owned by org-crm user)
@@ -59,5 +59,4 @@
     owner = "org-crm";
     mode = "0400";
   };
-
 }

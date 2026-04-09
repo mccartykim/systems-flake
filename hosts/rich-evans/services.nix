@@ -160,7 +160,7 @@ in {
             }
           ];
           action = [
-            { service = "shell_command.signal_user_input"; }
+            {service = "shell_command.signal_user_input";}
           ];
         }
       ];
@@ -209,12 +209,14 @@ in {
   # MQTT broker for Valetudo vacuum integration (LAN-only, no auth)
   services.mosquitto = {
     enable = true;
-    listeners = [{
-      port = 1883;
-      omitPasswordAuth = true;
-      settings.allow_anonymous = true;
-      acl = [ "topic readwrite #" ];
-    }];
+    listeners = [
+      {
+        port = 1883;
+        omitPasswordAuth = true;
+        settings.allow_anonymous = true;
+        acl = ["topic readwrite #"];
+      }
+    ];
   };
 
   # Allow HA to write to life-coach-agent state directory for button interrupts
