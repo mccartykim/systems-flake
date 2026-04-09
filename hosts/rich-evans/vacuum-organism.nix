@@ -23,8 +23,9 @@
     qwenTtsServer = "http://total-eclipse.nebula:8091";
     qwenTtsVoice = "biden-legs";
 
-    # HA: reuse the life-coach token for the polling loop.
+    # HA: same encrypted token as life-coach, decrypted independently
+    # under our own user (see life-coach.nix age.secrets.ha-vacuum-token).
     haUrl = "http://127.0.0.1:8123";
-    haTokenFile = config.age.secrets.ha-life-coach-token.path;
+    haTokenFile = config.age.secrets.ha-vacuum-token.path;
   };
 }
