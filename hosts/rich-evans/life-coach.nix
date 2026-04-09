@@ -17,11 +17,17 @@
     mode = "0400";
   };
 
-  # vacuum-organism currently reuses ha-life-coach-token above for
-  # its HA reads (off-duty switch + button polling). If you want
-  # token isolation, mint a new long-lived HA token, encrypt it as
-  # secrets/ha-vacuum-token.age, and add a parallel age.secrets
-  # entry owned by the vacuum-organism user.
+  # vacuum-organism reads the same HA token but as its own user, so
+  # we declare a parallel age.secrets entry pointing at the SAME
+  # encrypted .age file. Agenix decrypts it independently into a
+  # second file owned by the vacuum-organism user. This avoids
+  # minting a new HA long-lived token while still respecting the
+  # one-user-per-decrypted-secret model.
+  age.secrets.ha-vacuum-token = {
+    file = ../../secrets/ha-life-coach-token.age;
+    owner = "vacuum-organism";
+    mode = "0400";
+  };
 
   # Matrix access token for life-coach chatbot
   age.secrets.matrix-life-coach-token = {
