@@ -92,11 +92,11 @@ in {
   # Make emacsclient findable from every lifecoach service. The
   # module's default `path =` doesn't include it because the
   # lifecoach-organism flake has no dependency on org-agent.
-  systemd.services.lifecoach-heartbeat.path       = lib.mkAfter [org-agent-emacs];
-  systemd.services.lifecoach-scheduler.path       = lib.mkAfter [org-agent-emacs];
-  systemd.services.lifecoach-dashboard.path       = lib.mkAfter [org-agent-emacs];
-  systemd.services.lifecoach-button-monitor.path  = lib.mkAfter [org-agent-emacs];
-  systemd.services.lifecoach-discord-bot.path     = lib.mkAfter [org-agent-emacs];
+  systemd.services.lifecoach-heartbeat.path = lib.mkAfter [org-agent-emacs];
+  systemd.services.lifecoach-scheduler.path = lib.mkAfter [org-agent-emacs];
+  systemd.services.lifecoach-dashboard.path = lib.mkAfter [org-agent-emacs];
+  systemd.services.lifecoach-button-monitor.path = lib.mkAfter [org-agent-emacs];
+  systemd.services.lifecoach-discord-bot.path = lib.mkAfter [org-agent-emacs];
 
   # ------------------------------------------------------------------
   # Cutover: disable the old org-life-coach services while keeping
@@ -109,7 +109,7 @@ in {
   # definitions are inside `lib.mkIf (cfg.matrixBotTokenFile != null)`
   # so setting them to null removes those units entirely from the
   # new system config — nixos-rebuild will stop them on switch.
-  services.org-life-coach.matrixBotTokenFile  = lib.mkForce null;
+  services.org-life-coach.matrixBotTokenFile = lib.mkForce null;
   services.org-life-coach.discordBotTokenFile = lib.mkForce null;
   # (matrixBotTokenFile is still an option on the OLD org-life-coach
   # module; the lifecoach-organism module no longer has it. Leave
