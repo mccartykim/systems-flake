@@ -89,6 +89,12 @@ in
     # Gemini API key for life-coach vision
     "gemini-life-coach-key.age".publicKeys = [hostKeys.rich-evans bootstrap];
 
+    # ===== VACUUM ORGANISM =====
+    # Discord bot token for vacuum_organism sidecar (separate Discord
+    # application from life-coach; see lib/discord_bot.py fail-closed
+    # allowlist semantics).
+    "discord-vacuum-bot-token.age".publicKeys = [hostKeys.rich-evans bootstrap];
+
     # ===== EMAIL / MAIL =====
     # Mail account passwords for mbsync on rich-evans (pull-only sync)
     # Used by both email-digest and org-crm services
