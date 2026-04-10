@@ -27,13 +27,12 @@ in {
     user = "life-coach";
     stateDir = "/var/lib/lifecoach-organism";
 
-    # Heartbeat every 1h. This is the safety net in case the
-    # LOOP_AT scheduling chain breaks (e.g. a transient API error
-    # causes a scheduled cycle to fail without emitting a new
-    # LOOP_AT — first time we saw this happen on 04-08 after an
-    # Anthropic 500). A 1h ceiling means the worst case is an hour
-    # of silence before the heartbeat re-primes the agent.
-    heartbeatInterval = "1h";
+    # Heartbeat every 30m. Safety net for when the agent fails to
+    # set a close LOOP_AT — which happens reliably when Haiku decides
+    # "all tools are ineffective" and parks the next wakeup hours out.
+    # At ~$0.04/cycle this costs ~$1.92/day total and guarantees the
+    # agent re-evaluates at least twice an hour.
+    heartbeatInterval = "30m";
 
     # Live mode: dispatch-robot actually files entries to
     # vacuum_organism's dispatch.org. The vacuum agent will physically
