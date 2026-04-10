@@ -11,7 +11,6 @@ with lib; {
 
   config = mkIf config.modules.ai-tools.enable {
     home.packages = with pkgs; [
-      goose-cli
       claude-code
     ];
   };

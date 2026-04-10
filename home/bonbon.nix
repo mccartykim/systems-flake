@@ -9,7 +9,6 @@
 }: {
   home.packages = with pkgs; [
     uv
-    goose-cli
     claude-code
   ];
   programs = {
