@@ -688,11 +688,11 @@
         "organism": "organism"
       },
       "locked": {
-        "lastModified": 1775798508,
-        "narHash": "sha256-2MFroRYWEtgie5528+R3Sd/qE8z/NUReb+nCLTmz7uU=",
+        "lastModified": 1775842409,
+        "narHash": "sha256-ZLG1r9+vx23TRT8CirpOVxludaBuWWtNgBkBpsBEShI=",
         "ref": "refs/heads/main",
-        "rev": "d6d00c5a1f9300e89b526c226fc0a25182d72c6c",
-        "revCount": 41,
+        "rev": "e9d099ba2e880a8a8d772cc0a2be9f43a0e5852a",
+        "revCount": 42,
         "type": "git",
         "url": "ssh://git@github.com/mccartykim/lifecoach_organism.git"
       },
@@ -973,11 +973,11 @@
     },
     "nixpkgs_2": {
       "locked": {
-        "lastModified": 1775423009,
-        "narHash": "sha256-vPKLpjhIVWdDrfiUM8atW6YkIggCEKdSAlJPzzhkQlw=",
+        "lastModified": 1775710090,
+        "narHash": "sha256-ar3rofg+awPB8QXDaFJhJ2jJhu+KqN/PRCXeyuXR76E=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "68d8aa3d661f0e6bd5862291b5bb263b2a6595c9",
+        "rev": "4c1018dae018162ec878d42fec712642d214fdfa",
         "type": "github"
       },
       "original": {
