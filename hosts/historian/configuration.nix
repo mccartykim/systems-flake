@@ -192,6 +192,7 @@
       # ROCm packages for compute
       rocmPackages.rocm-smi
       radeontop
+      python3Packages.torchWithRocm
       # Historian specific packages
       legendary-gl
       sunshine
