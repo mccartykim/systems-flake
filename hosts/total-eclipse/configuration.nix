@@ -147,6 +147,7 @@
       # NVIDIA packages
       nvtopPackages.nvidia
       nvidia-container-toolkit
+      python3Packages.torchWithCuda
       # Total-eclipse specific packages
       legendary-gl
       sunshine
