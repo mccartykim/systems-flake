@@ -37,9 +37,9 @@
     ];
   };
 
-  # Expose syncthing'd music library to Jellyfin (read-only bind mount)
+  # Expose music library to Jellyfin (read-only bind mount)
   fileSystems."/var/lib/jellyfin/music" = {
-    device = "/home/kimb/shared_music";
+    device = "/home/kimb/Music";
     fsType = "none";
     options = ["bind" "ro"];
   };
