@@ -37,6 +37,13 @@
     ];
   };
 
+  # Expose syncthing'd music library to Jellyfin (read-only bind mount)
+  fileSystems."/var/lib/jellyfin/music" = {
+    device = "/home/kimb/shared_music";
+    fsType = "none";
+    options = ["bind" "ro"];
+  };
+
   # Restic backups
   kimb.restic.enable = true;
   kimb.restic.extraExclude = [
