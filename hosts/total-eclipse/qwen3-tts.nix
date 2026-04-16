@@ -176,10 +176,23 @@ in {
   };
   users.groups.qwen3-tts = {};
 
+  # Socket activation: systemd keeps port 8091 listening persistently. First
+  # incoming connection spawns qwen3-tts.service, which handles requests then
+  # exits after QWEN3_TTS_IDLE_TIMEOUT seconds of idle (see server code).
+  # Process exit fully frees the ~4.5GB CUDA context so ollama can use the GPU.
+  systemd.sockets.qwen3-tts = {
+    description = "Qwen3 TTS socket (activation)";
+    wantedBy = ["sockets.target"];
+    socketConfig = {
+      ListenStream = "0.0.0.0:8091";
+      Accept = false;
+    };
+  };
+
   systemd.services.qwen3-tts = {
     description = "Qwen3 TTS OpenAI-compatible Server";
-    wantedBy = ["multi-user.target"];
-    after = ["network.target"];
+    after = ["network.target" "qwen3-tts.socket"];
+    requires = ["qwen3-tts.socket"];
 
     path = [pkgs.sox];
 
@@ -189,6 +202,7 @@ in {
       PYTHONUNBUFFERED = "1";
       VOICES_DIR = "/var/lib/voice-references";
       HOME = "/var/lib/qwen3-tts";
+      QWEN3_TTS_IDLE_TIMEOUT = "45";
       # libcuda.so.1 from NVIDIA driver, libsndfile for soundfile, libcudnn_graph for cuDNN
       LD_LIBRARY_PATH =
         lib.makeLibraryPath [
@@ -203,9 +217,10 @@ in {
       User = "qwen3-tts";
       Group = "qwen3-tts";
       ExecStart = "${serverExecutable}";
-      Restart = "on-failure";
-      RestartSec = 30;
-      # First start downloads ~4.5GB model from HuggingFace
+      # Clean idle exit is exit 0; socket activation handles respawn.
+      Restart = "no";
+      # First start downloads ~4.5GB model from HuggingFace; warm cold-starts
+      # take 8-20s for model load + CUDA graph capture.
       TimeoutStartSec = "10min";
       WorkingDirectory = "/var/lib/qwen3-tts";
       StateDirectory = "qwen3-tts";
