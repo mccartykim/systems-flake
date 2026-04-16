@@ -318,8 +318,9 @@
       # Enable parallel inference for batch processing (6 concurrent requests)
       environmentVariables = {
         OLLAMA_NUM_PARALLEL = "6";
-        OLLAMA_FLASH_ATTENTION = "1"; # Reduce VRAM usage
-        OLLAMA_KV_CACHE_TYPE = "q8_0"; # Further VRAM reduction
+        OLLAMA_FLASH_ATTENTION = "1";
+        OLLAMA_KV_CACHE_TYPE = "q8_0";
+        OLLAMA_KEEP_ALIVE = "2h";
       };
     };
     open-webui = {
