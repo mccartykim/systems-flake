@@ -97,6 +97,33 @@
     # Thermal management - bypass DYTC platform check
     thermald.ignoreCpuidCheck = true;
 
+    # nixos-hardware's lenovo-thinkpad-t490 module enables services.throttled
+    # implicitly. Its upstream defaults (PL1=44W AC, trip 95°C) assume a
+    # chassis that can cool sustained 44W — the T490's single heatpipe
+    # cannot, so the core was hitting 94°C on idle-ish load. These limits
+    # are sized for the 15W base TDP of the i5-8365U with a little headroom
+    # for bursts, and trip earlier than the 95°C default.
+    throttled.extraConfig = ''
+      [GENERAL]
+      Enabled: True
+      Sysfs_Power_Path: /sys/class/power_supply/AC*/online
+      Autoreload: True
+      [BATTERY]
+      Update_Rate_s: 30
+      PL1_Tdp_W: 15
+      PL1_Duration_s: 28
+      PL2_Tdp_W: 25
+      PL2_Duration_S: 0.002
+      Trip_Temp_C: 80
+      [AC]
+      Update_Rate_s: 5
+      PL1_Tdp_W: 20
+      PL1_Duration_s: 28
+      PL2_Tdp_W: 30
+      PL2_Duration_S: 0.002
+      Trip_Temp_C: 85
+    '';
+
     # Thunderbolt dock support
     hardware.bolt.enable = true;
 
