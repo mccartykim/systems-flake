@@ -168,8 +168,16 @@
     # AMD-specific kernel modules
     kernelModules = ["amdgpu" "kvm-amd"];
 
-    # Increase GTT for large model inference (4GB VRAM + 56GB GTT ≈ 60GB for ROCm)
-    kernelParams = ["amdgpu.gttsize=57344"];
+    # - amdgpu.gttsize: 4GB VRAM + 56GB GTT ≈ 60GB for ROCm inference
+    # - video=HDMI-A-1:...@60e: force AMDGPU to expose a fake 1080p connector
+    #   even when no monitor is plugged in, so SDDM's autologin actually
+    #   brings up a Plasma session (and therefore Sunshine) for headless
+    #   Moonlight streaming. The trailing 'e' forces enabled regardless of
+    #   hotplug state.
+    kernelParams = [
+      "amdgpu.gttsize=57344"
+      "video=HDMI-A-1:1920x1080@60e"
+    ];
 
     # Boot loader customizations
     loader.systemd-boot = {

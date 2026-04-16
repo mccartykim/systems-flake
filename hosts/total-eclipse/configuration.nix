@@ -109,6 +109,15 @@
   # NVIDIA graphics hardware configuration
   services.xserver.videoDrivers = ["nvidia"];
 
+  # Headless display: NVIDIA needs a hint that a monitor *might* appear,
+  # otherwise the X server exits and the autologin Plasma session never
+  # starts — which is why Sunshine (a user unit under graphical-session)
+  # never launches until someone logs in in person.
+  services.xserver.deviceSection = ''
+    Option "AllowEmptyInitialConfiguration" "true"
+    Option "ConnectedMonitor" "DFP-0"
+  '';
+
   # CUDA support
   nixpkgs.config.cudaSupport = true;
 
