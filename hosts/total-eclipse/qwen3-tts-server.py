@@ -15,6 +15,7 @@ Exposes POST /v1/audio/speech with voice cloning from reference audio.
 """
 
 import argparse
+import asyncio
 import io
 import os
 import time
@@ -32,6 +33,39 @@ app = FastAPI(title="Qwen3-TTS")
 model = None
 MODEL_NAME = os.environ.get("QWEN3_TTS_MODEL", "Qwen/Qwen3-TTS-12Hz-0.6B-Base")
 VOICES_DIR = Path(os.environ.get("VOICES_DIR", "/var/lib/voice-references"))
+
+# Idle-exit: full process exit is the only way to release the CUDA context's
+# VRAM footprint so ollama can use the GPU. Socket activation in systemd
+# re-spawns us on the next incoming request.
+IDLE_TIMEOUT = float(os.environ.get("QWEN3_TTS_IDLE_TIMEOUT", "45"))
+LAST_REQ = time.monotonic()
+_server_ref: dict = {}
+
+
+@app.middleware("http")
+async def track_activity(request, call_next):
+    global LAST_REQ
+    LAST_REQ = time.monotonic()
+    try:
+        return await call_next(request)
+    finally:
+        LAST_REQ = time.monotonic()
+
+
+async def idle_watchdog(server):
+    while not server.should_exit:
+        await asyncio.sleep(10)
+        if time.monotonic() - LAST_REQ > IDLE_TIMEOUT:
+            print(f"Idle {IDLE_TIMEOUT}s — exiting to free VRAM")
+            server.should_exit = True
+            return
+
+
+@app.on_event("startup")
+async def _start_watchdog():
+    server = _server_ref.get("s")
+    if server is not None:
+        asyncio.create_task(idle_watchdog(server))
 
 
 class SpeechRequest(BaseModel):
@@ -106,8 +140,17 @@ async def speech(request: SpeechRequest):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--host", default="0.0.0.0")
-    parser.add_argument("--port", type=int, default=8091)
-    args = parser.parse_args()
-    uvicorn.run(app, host=args.host, port=args.port)
+    # Socket-activated by systemd: LISTEN_FDS=N, listening socket at fd 3.
+    # Standalone: fall back to host/port binding.
+    listen_fds = int(os.environ.get("LISTEN_FDS", "0"))
+    if listen_fds >= 1:
+        config = uvicorn.Config(app, fd=3, log_level="info")
+    else:
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--host", default="0.0.0.0")
+        parser.add_argument("--port", type=int, default=8091)
+        args = parser.parse_args()
+        config = uvicorn.Config(app, host=args.host, port=args.port)
+    server = uvicorn.Server(config)
+    _server_ref["s"] = server
+    server.run()
