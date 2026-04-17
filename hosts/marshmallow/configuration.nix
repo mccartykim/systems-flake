@@ -77,38 +77,17 @@
     # Wi-Fi backend
     networkmanager.wifi.backend = "iwd";
 
-    # NM delegates DNS to systemd-resolved; DHCP-provided servers go
-    # per-link, and the nebula-dns-route oneshot below tags nebula1
-    # with routing domains so .nebula/.kimb.dev always reach maitred.
-    networkmanager.dns = "systemd-resolved";
+    # Put maitred (via Nebula) first in resolv.conf so .nebula names
+    # resolve on any network. NM dispatcher rewrites resolv.conf on
+    # every connection change, inserting this before DHCP-provided DNS.
+    networkmanager.insertNameservers = let
+      registry = import ../nebula-registry.nix;
+    in [registry.nodes.maitred.ip];
 
     # Firewall configuration
     firewall = {
       allowedTCPPorts = [9001 1701];
       allowedUDPPorts = [65535];
-    };
-  };
-
-  services.resolved = {
-    enable = true;
-    fallbackDns = ["1.1.1.1" "9.9.9.9"];
-    dnssec = "allow-downgrade";
-  };
-
-  systemd.services.nebula-dns-route = let
-    registry = import ../nebula-registry.nix;
-  in {
-    description = "Route .nebula and .kimb.dev via maitred over Nebula";
-    after = ["nebula@mesh.service" "systemd-resolved.service"];
-    wants = ["nebula@mesh.service"];
-    wantedBy = ["nebula@mesh.service"];
-    serviceConfig = {
-      Type = "oneshot";
-      RemainAfterExit = true;
-      ExecStart = pkgs.writeShellScript "nebula-dns-route" ''
-        ${pkgs.systemd}/bin/resolvectl dns nebula1 ${registry.nodes.maitred.ip}
-        ${pkgs.systemd}/bin/resolvectl domain nebula1 '~nebula' '~kimb.dev'
-      '';
     };
   };
 
