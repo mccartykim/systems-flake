@@ -249,7 +249,16 @@
           # Extract file path (last field)
           MSG_PATH=$(echo "$line" | awk '{print $NF}')
           if [ -f "$MSG_PATH" ]; then
+            # Try plain text first; fall back to HTML for HTML-only emails
             MSG_BODY=$(mu view "$MSG_PATH" 2>/dev/null || echo "[could not read message]")
+            # Check if body is empty (headers-only = no content after blank line)
+            BODY_CONTENT=$(echo "$MSG_BODY" | awk 'BEGIN{found=0} /^$/{found=1; next} found{print}')
+            if [ -z "$BODY_CONTENT" ]; then
+              HTML_BODY=$(mu view "$MSG_PATH" --format=html 2>/dev/null || true)
+              if [ -n "$HTML_BODY" ]; then
+                MSG_BODY="$HTML_BODY"
+              fi
+            fi
             ENTRY="---
     $line
 

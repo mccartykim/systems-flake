@@ -1115,11 +1115,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1775448511,
-        "narHash": "sha256-uiKfD9ND0CJafnMkk1w5iOabqhXbl2tqHfa4NrHpmbE=",
+        "lastModified": 1776605624,
+        "narHash": "sha256-jVaNIXl/yC2nI4/A92lRAxqWmKi0SWtjlHtD6tODa7E=",
         "ref": "refs/heads/main",
-        "rev": "5c4f365f50fcfe498c439beb8cb3b3f54b64d9f1",
-        "revCount": 17,
+        "rev": "6e7e3a0d104b18d32175c71b7893df13469767df",
+        "revCount": 18,
         "type": "git",
         "url": "ssh://git@github.com/mccartykim/org_crm.git"
       },
