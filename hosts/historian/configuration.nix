@@ -298,7 +298,7 @@
           vp9 = true;
           av1 = true; # VCN 3.0 supports AV1 decode
         };
-        enableToneMapping = true;
+        enableToneMapping = false; # Vulkan overlay deadlocks on AMD RADV with HEVC 10-bit + ASS subtitle burn-in
       };
     };
 
