@@ -317,10 +317,11 @@
       host = "0.0.0.0";
       # Enable parallel inference for batch processing (6 concurrent requests)
       environmentVariables = {
-        OLLAMA_NUM_PARALLEL = "6";
+        OLLAMA_NUM_PARALLEL = "1";
         OLLAMA_FLASH_ATTENTION = "1";
         OLLAMA_KV_CACHE_TYPE = "q8_0";
         OLLAMA_KEEP_ALIVE = "2h";
+        OLLAMA_NUM_CTX = "32768";
       };
     };
     open-webui = {
