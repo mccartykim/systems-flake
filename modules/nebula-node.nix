@@ -31,7 +31,12 @@ with lib; let
     if isLighthouse
     then []
     else map (n: n.ip) allLighthouses;
-  staticHosts = listToAttrs (map (n: nameValuePair n.ip [n.external]) allLighthouses);
+  # Include LAN IP alongside external endpoint so nebula can bootstrap
+  # without DNS (avoids chicken-and-egg when maitred IS the DNS server)
+  staticHosts = listToAttrs (map (n:
+    nameValuePair n.ip (
+      [n.external] ++ optional (n ? lanIp) "${n.lanIp}:4242"
+    )) allLighthouses);
   relayIps = getOtherIps allRelays;
 in {
   options.kimb.nebula = {
