@@ -42,6 +42,10 @@
     agenix-rekey.url = "github:oddlama/agenix-rekey";
     agenix-rekey.inputs.nixpkgs.follows = "nixpkgs";
 
+    # buildbot-nix for CI (master on rich-evans, worker on historian)
+    buildbot-nix.url = "github:nix-community/buildbot-nix";
+    buildbot-nix.inputs.nixpkgs.follows = "nixpkgs";
+
     # System-manager for non-NixOS hosts (e.g., Oracle VM lighthouse)
     system-manager.url = "github:numtide/system-manager";
     system-manager.inputs.nixpkgs.follows = "nixpkgs";
@@ -408,12 +412,16 @@
           working-vm-test = import ./tests/working-vm-test.nix {inherit pkgs;};
 
           # Configuration evaluation tests (fast - no VM)
+          # buildbot-nix builds every .#checks attr on each commit, so adding a
+          # host's toplevel here means CI will catch breakage for that host.
           eval-historian = self.nixosConfigurations.historian.config.system.build.toplevel;
           eval-marshmallow = self.nixosConfigurations.marshmallow.config.system.build.toplevel;
           eval-bartleby = self.nixosConfigurations.bartleby.config.system.build.toplevel;
           eval-total-eclipse = self.nixosConfigurations.total-eclipse.config.system.build.toplevel;
           eval-maitred = self.nixosConfigurations.maitred.config.system.build.toplevel;
           eval-rich-evans = self.nixosConfigurations.rich-evans.config.system.build.toplevel;
+          eval-cheesecake = self.nixosConfigurations.cheesecake.config.system.build.toplevel;
+          eval-donut = self.nixosConfigurations.donut.config.system.build.toplevel;
         };
       };
 

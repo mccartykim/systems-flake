@@ -107,6 +107,19 @@ in
     # Uncomment after creating Discord application and encrypting token:
     "discord-org-crm-token.age".publicKeys = [hostKeys.rich-evans bootstrap];
 
+    # ===== BUILDBOT-NIX CI =====
+    # Master lives on rich-evans, worker on historian.
+    # GitHub App private key PEM (rich-evans master uses this to authenticate to GitHub)
+    "buildbot-github-app-key.age".publicKeys = [hostKeys.rich-evans bootstrap];
+    # Webhook shared secret (entered in the GitHub App's webhook config)
+    "buildbot-webhook-secret.age".publicKeys = [hostKeys.rich-evans bootstrap];
+    # GitHub App OAuth client secret (used for user login to buildbot UI)
+    "buildbot-oauth-secret.age".publicKeys = [hostKeys.rich-evans bootstrap];
+    # workers.json: JSON array of {name, pass, cores} entries for the master
+    "buildbot-workers.age".publicKeys = [hostKeys.rich-evans bootstrap];
+    # Worker-side password file (same string as the "pass" field in workers.json)
+    "buildbot-worker-password.age".publicKeys = [hostKeys.historian bootstrap];
+
     # ===== MEDIA PIPELINE (historian) =====
     # rclone config with put.io OAuth token
     "rclone-config.age".publicKeys = [hostKeys.historian bootstrap];
