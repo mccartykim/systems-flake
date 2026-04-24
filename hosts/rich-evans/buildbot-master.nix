@@ -21,10 +21,10 @@
 
     authBackend = "github";
     github = {
-      appId = 0; # TODO: fill in after creating the GitHub App
+      appId = 3486605;
       appSecretKeyFile = config.age.secrets.buildbot-github-app-key.path;
       webhookSecretFile = config.age.secrets.buildbot-webhook-secret.path;
-      oauthId = ""; # TODO: fill in after creating the GitHub App
+      oauthId = "Iv23liOdnTsmRP7ngl68";
       oauthSecretFile = config.age.secrets.buildbot-oauth-secret.path;
       topic = "buildbot-nix";
     };
