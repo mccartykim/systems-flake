@@ -20,6 +20,9 @@
 
     # Restic backups to Backblaze B2
     ../../modules/restic-backup.nix
+
+    # Buildbot worker (CI runner for systems-flake; master on rich-evans)
+    ./buildbot-worker.nix
   ];
 
   # External media drive (exFAT — ownership set at mount time)

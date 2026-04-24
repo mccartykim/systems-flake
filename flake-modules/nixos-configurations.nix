@@ -111,6 +111,7 @@ in {
         org-crm.nixosModules.default
         (self + "/hosts/rich-evans/org-crm.nix")
         (self + "/hosts/rich-evans/email-digest.nix")
+        (self + "/hosts/rich-evans/buildbot-master.nix")
         {
           kimb.services = {
             copyparty = {
@@ -265,6 +266,15 @@ in {
                   auth = "builtin"; # Jellyfin handles its own auth
                   publicAccess = true;
                   websockets = true; # Required for live playback
+                };
+                buildbot = {
+                  enable = true;
+                  port = 80; # rich-evans nginx (provisioned by buildbot-nix module) listens on :80
+                  subdomain = "buildbot";
+                  host = "rich-evans";
+                  auth = "none"; # buildbot has its own GitHub OAuth; webhook must not be auth-gated
+                  publicAccess = true; # GitHub webhook must be reachable from the internet
+                  websockets = true; # live log streaming + SSE in the buildbot UI
                 };
                 life-coach-dashboard = {
                   enable = true;
