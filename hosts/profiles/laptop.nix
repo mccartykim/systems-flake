@@ -19,8 +19,8 @@
         };
         battery = {
           governor = "powersave";
-          energy_performance_preference = "power";
-          turbo = "never";
+          energy_performance_preference = "balance_power";
+          turbo = "auto";
         };
       };
     };
