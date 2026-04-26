@@ -21,17 +21,19 @@
     ../../modules/restic-backup.nix
   ];
 
-  # Restic backups
-  kimb.restic.enable = true;
-  kimb.restic.extraExclude = [
-    "/home/kimb/.android"
-    "/home/kimb/.gradle"
-  ];
+  kimb = {
+    # Restic backups
+    restic.enable = true;
+    restic.extraExclude = [
+      "/home/kimb/.android"
+      "/home/kimb/.gradle"
+    ];
 
-  # Nebula configuration
-  kimb.nebula = {
-    enable = true;
-    openToPersonalDevices = true;
+    # Nebula configuration
+    nebula = {
+      enable = true;
+      openToPersonalDevices = true;
+    };
   };
 
   # Host identification

@@ -30,29 +30,31 @@
     ./paperless.nix
   ];
 
-  # Restic backups
-  kimb.restic.enable = true;
-  kimb.restic.extraExclude = [
-    "/home/kimb/.android"
-    "/home/kimb/.gradle"
-  ];
-
-  # Nebula configuration
-  kimb.nebula = {
-    enable = true;
-    openToPersonalDevices = true;
-    extraInboundRules = [
-      {
-        port = 11434;
-        proto = "tcp";
-        host = "any";
-      } # Ollama API
-      {
-        port = 8091;
-        proto = "tcp";
-        group = "servers";
-      } # Qwen3-TTS for life coach on rich-evans
+  kimb = {
+    # Restic backups
+    restic.enable = true;
+    restic.extraExclude = [
+      "/home/kimb/.android"
+      "/home/kimb/.gradle"
     ];
+
+    # Nebula configuration
+    nebula = {
+      enable = true;
+      openToPersonalDevices = true;
+      extraInboundRules = [
+        {
+          port = 11434;
+          proto = "tcp";
+          host = "any";
+        } # Ollama API
+        {
+          port = 8091;
+          proto = "tcp";
+          group = "servers";
+        } # Qwen3-TTS for life coach on rich-evans
+      ];
+    };
   };
 
   # Disable sleep/suspend (keeps waking immediately anyway)

@@ -50,7 +50,7 @@ in {
       # Fix Python packages with strict version bounds + Firefox Nightly
       {nixpkgs.overlays = [pythonFixesOverlay firefoxNightlyOverlay];}
       # Static nebula host entries so hostname.nebula resolves without maitred DNS
-      ({...}: let
+      (_: let
         registry = import (self + "/hosts/nebula-registry.nix");
         names = builtins.attrNames registry.nodes;
       in {

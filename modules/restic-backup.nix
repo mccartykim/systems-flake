@@ -107,9 +107,9 @@ in {
         repository = "b2:kim-bucket:/restic";
         passwordFile = config.age.secrets.restic-password.path;
         environmentFile = config.age.secrets.restic-b2-env.path;
-        paths = cfg.paths;
+        inherit (cfg) paths;
         exclude = cfg.exclude ++ cfg.extraExclude;
-        timerConfig = cfg.timerConfig;
+        inherit (cfg) timerConfig;
         pruneOpts = [
           "--keep-daily 7"
           "--keep-weekly 4"
@@ -118,7 +118,7 @@ in {
         ];
       }
       // lib.optionalAttrs (cfg.backupCleanupCommand != null) {
-        backupCleanupCommand = cfg.backupCleanupCommand;
+        inherit (cfg) backupCleanupCommand;
       };
   };
 }

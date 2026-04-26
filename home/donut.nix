@@ -50,14 +50,16 @@
     };
   };
 
-  # Fish shell
-  programs.fish.enable = true;
+  programs = {
+    # Fish shell
+    fish.enable = true;
 
-  # Shell history sync
-  programs.atuin.enable = true;
+    # Shell history sync
+    atuin.enable = true;
 
-  # Enable home-manager
-  programs.home-manager.enable = true;
+    # Enable home-manager
+    home-manager.enable = true;
+  };
 
   home.stateVersion = "24.11";
 }

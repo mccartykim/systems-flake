@@ -77,12 +77,12 @@ pkgs.testers.nixosTest {
       # Enable a simple HTTP server to simulate blog
       services = {
         nginx = {
-          enable = config.kimb.services.blog.enable;
+          inherit (config.kimb.services.blog) enable;
           virtualHosts."${config.kimb.domain}" = {
             listen = [
               {
                 addr = "0.0.0.0";
-                port = config.kimb.services.blog.port;
+                inherit (config.kimb.services.blog) port;
               }
             ];
             locations."/" = {

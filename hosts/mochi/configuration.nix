@@ -13,74 +13,78 @@ in {
     nixpkgs.hostPlatform = "aarch64-linux";
     nixpkgs.config.allowUnfree = true;
 
-    environment.systemPackages = with pkgs; [
-      nebula
-      age
-      # Dev tools
-      helix
-      btop
-      htop
-      ripgrep
-      fd
-      jq
-      git
-      # Claude Code
-      claude-code
-    ];
+    environment = {
+      systemPackages = with pkgs; [
+        nebula
+        age
+        # Dev tools
+        helix
+        btop
+        htop
+        ripgrep
+        fd
+        jq
+        git
+        # Claude Code
+        claude-code
+      ];
 
-    # Encrypted secrets in /etc
-    environment.etc."nebula/mainnet/encrypted/ca.age".source = encryptedSecrets.mainnet.ca;
-    environment.etc."nebula/mainnet/encrypted/cert.age".source = encryptedSecrets.mainnet.cert;
-    environment.etc."nebula/mainnet/encrypted/key.age".source = encryptedSecrets.mainnet.key;
+      etc = {
+        # Encrypted secrets in /etc
+        "nebula/mainnet/encrypted/ca.age".source = encryptedSecrets.mainnet.ca;
+        "nebula/mainnet/encrypted/cert.age".source = encryptedSecrets.mainnet.cert;
+        "nebula/mainnet/encrypted/key.age".source = encryptedSecrets.mainnet.key;
 
-    # Nebula mainnet config (10.100.0.0/16)
-    environment.etc."nebula/mainnet/config.yml".text = ''
-      pki:
-        ca: /run/nebula-secrets/mainnet/ca.crt
-        cert: /run/nebula-secrets/mainnet/mochi.crt
-        key: /run/nebula-secrets/mainnet/mochi.key
+        # Nebula mainnet config (10.100.0.0/16)
+        "nebula/mainnet/config.yml".text = ''
+          pki:
+            ca: /run/nebula-secrets/mainnet/ca.crt
+            cert: /run/nebula-secrets/mainnet/mochi.crt
+            key: /run/nebula-secrets/mainnet/mochi.key
 
-      static_host_map:
-        "10.100.0.50": ["kimb.dev:4242"]
-        "10.100.0.2": ["150.136.155.204:4242"]
+          static_host_map:
+            "10.100.0.50": ["kimb.dev:4242"]
+            "10.100.0.2": ["150.136.155.204:4242"]
 
-      lighthouse:
-        am_lighthouse: false
-        hosts:
-          - "10.100.0.50"
-          - "10.100.0.2"
+          lighthouse:
+            am_lighthouse: false
+            hosts:
+              - "10.100.0.50"
+              - "10.100.0.2"
 
-      listen:
-        host: 0.0.0.0
-        port: 0
+          listen:
+            host: 0.0.0.0
+            port: 0
 
-      tun:
-        dev: nebula0
-        mtu: 1300
+          tun:
+            dev: nebula0
+            mtu: 1300
 
-      punchy:
-        punch: true
-        respond: true
+          punchy:
+            punch: true
+            respond: true
 
-      relay:
-        relays:
-          - "10.100.0.50"
-          - "10.100.0.2"
-        use_relays: true
+          relay:
+            relays:
+              - "10.100.0.50"
+              - "10.100.0.2"
+            use_relays: true
 
-      firewall:
-        outbound:
-          - port: any
-            proto: any
-            host: any
-        inbound:
-          - port: any
-            proto: icmp
-            host: any
-          - port: 22
-            proto: tcp
-            host: any
-    '';
+          firewall:
+            outbound:
+              - port: any
+                proto: any
+                host: any
+            inbound:
+              - port: any
+                proto: icmp
+                host: any
+              - port: 22
+                proto: tcp
+                host: any
+        '';
+      };
+    };
 
     # Decrypt secrets service
     systemd.services.nebula-secrets = {

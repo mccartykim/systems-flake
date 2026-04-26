@@ -189,46 +189,50 @@ in {
   # usb-reset for scanner recovery
   environment.systemPackages = [pkgs.usb-reset];
 
-  # Create scan output directory
-  systemd.tmpfiles.rules = [
-    "d ${scanDir} 0775 root scanner -"
-  ];
+  systemd = {
+    # Create scan output directory
+    tmpfiles.rules = [
+      "d ${scanDir} 0775 root scanner -"
+    ];
 
-  # Scan button watcher service
-  systemd.services.scan-button-watcher = {
-    description = "Fujitsu fi-6130Z scan button watcher";
-    after = ["multi-user.target"];
-    wantedBy = ["multi-user.target"];
-    environment = {
-      SANE_CONFIG_DIR = "/etc/sane-config";
-      LD_LIBRARY_PATH = "/run/current-system/sw/lib";
-    };
-    serviceConfig = {
-      ExecStart = buttonWatcher;
-      Restart = "always";
-      RestartSec = "5";
-      User = "root";
-      Group = "scanner";
-    };
-  };
+    services = {
+      # Scan button watcher service
+      scan-button-watcher = {
+        description = "Fujitsu fi-6130Z scan button watcher";
+        after = ["multi-user.target"];
+        wantedBy = ["multi-user.target"];
+        environment = {
+          SANE_CONFIG_DIR = "/etc/sane-config";
+          LD_LIBRARY_PATH = "/run/current-system/sw/lib";
+        };
+        serviceConfig = {
+          ExecStart = buttonWatcher;
+          Restart = "always";
+          RestartSec = "5";
+          User = "root";
+          Group = "scanner";
+        };
+      };
 
-  # Rsync scans to rich-evans every 2 minutes
-  systemd.services.sync-scans = {
-    description = "Sync scanned documents to rich-evans";
-    after = ["network.target" "nebula@mesh.service"];
-    serviceConfig = {
-      Type = "oneshot";
-      ExecStart = syncScript;
-      User = "root";
+      # Rsync scans to rich-evans every 2 minutes
+      sync-scans = {
+        description = "Sync scanned documents to rich-evans";
+        after = ["network.target" "nebula@mesh.service"];
+        serviceConfig = {
+          Type = "oneshot";
+          ExecStart = syncScript;
+          User = "root";
+        };
+      };
     };
-  };
 
-  systemd.timers.sync-scans = {
-    description = "Sync scans to rich-evans every 2 minutes";
-    wantedBy = ["timers.target"];
-    timerConfig = {
-      OnCalendar = "*:0/2";
-      Persistent = true;
+    timers.sync-scans = {
+      description = "Sync scans to rich-evans every 2 minutes";
+      wantedBy = ["timers.target"];
+      timerConfig = {
+        OnCalendar = "*:0/2";
+        Persistent = true;
+      };
     };
   };
 

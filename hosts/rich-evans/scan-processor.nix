@@ -75,36 +75,38 @@
     done
   '';
 in {
-  # Create directories (kimb-owned so maitred can rsync as kimb)
-  systemd.tmpfiles.rules = [
-    "d /var/lib/scans 0775 kimb kimb -"
-    "d ${incomingDir} 0775 kimb kimb -"
-    "d ${outputDir} 0775 kimb kimb -"
-  ];
+  systemd = {
+    # Create directories (kimb-owned so maitred can rsync as kimb)
+    tmpfiles.rules = [
+      "d /var/lib/scans 0775 kimb kimb -"
+      "d ${incomingDir} 0775 kimb kimb -"
+      "d ${outputDir} 0775 kimb kimb -"
+    ];
 
-  # Path watcher: trigger processing when new .batch files arrive
-  systemd.paths.scan-processor = {
-    description = "Watch for new scan batches";
-    wantedBy = ["multi-user.target"];
-    pathConfig = {
-      DirectoryNotEmpty = incomingDir;
-      MakeDirectory = true;
+    # Path watcher: trigger processing when new .batch files arrive
+    paths.scan-processor = {
+      description = "Watch for new scan batches";
+      wantedBy = ["multi-user.target"];
+      pathConfig = {
+        DirectoryNotEmpty = incomingDir;
+        MakeDirectory = true;
+      };
     };
-  };
 
-  # Processing service (triggered by path watcher)
-  systemd.services.scan-processor = {
-    description = "Process scanned documents (OCR + PDF)";
-    serviceConfig = {
-      Type = "oneshot";
-      ExecStart = processScript;
-      # Nice it down so it doesn't compete with other services
-      Nice = 10;
-      IOSchedulingClass = "idle";
-      # Prevent rapid-fire restarts from path watcher
-      RestartSec = "10";
+    # Processing service (triggered by path watcher)
+    services.scan-processor = {
+      description = "Process scanned documents (OCR + PDF)";
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = processScript;
+        # Nice it down so it doesn't compete with other services
+        Nice = 10;
+        IOSchedulingClass = "idle";
+        # Prevent rapid-fire restarts from path watcher
+        RestartSec = "10";
+      };
+      # Wait a moment for rsync to finish writing before processing
+      preStart = "${pkgs.coreutils}/bin/sleep 5";
     };
-    # Wait a moment for rsync to finish writing before processing
-    preStart = "${pkgs.coreutils}/bin/sleep 5";
   };
 }

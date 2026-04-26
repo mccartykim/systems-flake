@@ -37,9 +37,9 @@ in {
 
   config = mkIf cfg.enable (let
     # Get endpoints from registry
-    certServiceEndpoints = containernetConfig.certServiceEndpoints;
+    inherit (containernetConfig) certServiceEndpoints;
     lighthouseIps = containernetConfig.lighthouses;
-    lighthouseEndpoints = containernetConfig.lighthouseEndpoints;
+    inherit (containernetConfig) lighthouseEndpoints;
 
     # DNS server IP - use dummy-cnt which is reachable from all containers
     # (192.168.100.1 only works for reverse-proxy, not other containers)
@@ -153,7 +153,7 @@ in {
                 -H "Content-Type: application/json" \
                 -d '${builtins.toJSON (
             if cfg.groups != []
-            then {groups = cfg.groups;}
+            then {inherit (cfg) groups;}
             else {}
           )}' \
                 "$endpoint/containernet/allocate" 2>/dev/null); then
