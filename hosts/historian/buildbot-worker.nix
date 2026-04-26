@@ -22,4 +22,13 @@
     owner = "buildbot-worker";
     group = "buildbot-worker";
   };
+
+  # Daemon-driven GC: when free space drops below min-free, the Nix daemon
+  # collects until max-free is available. Prevents builds from failing with
+  # ENOSPC under 12-parallel CI load. /nix/store has 62k+ gcroots from
+  # buildbot-nix, so non-rooted intermediates are what gets collected.
+  nix.settings = {
+    min-free = 50 * 1024 * 1024 * 1024; # 50 GiB
+    max-free = 100 * 1024 * 1024 * 1024; # 100 GiB
+  };
 }
