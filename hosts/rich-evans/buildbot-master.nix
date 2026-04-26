@@ -53,6 +53,14 @@
     };
   };
 
+  # Daemon-driven GC for the master host. Same rationale as the worker:
+  # avoid ENOSPC during eval/build orchestration as buildbot-nix accumulates
+  # gcroots over time.
+  nix.settings = {
+    min-free = 50 * 1024 * 1024 * 1024; # 50 GiB
+    max-free = 100 * 1024 * 1024 * 1024; # 100 GiB
+  };
+
   # Nebula firewall: allow maitred socat to hit nginx (port 80) and
   # historian's worker to connect to the worker protocol (port 9989).
   # Host firewall is trustedInterfaces=["nebula1"] already, so no iptables rule needed.
