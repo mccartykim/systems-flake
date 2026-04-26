@@ -313,6 +313,8 @@ in {
           RestartSec = "5";
           User = "nobody";
           Group = "nogroup";
+          # Needed when service.port is a privileged port (<1024), e.g. buildbot:80
+          AmbientCapabilities = ["CAP_NET_BIND_SERVICE"];
         };
       };
 
