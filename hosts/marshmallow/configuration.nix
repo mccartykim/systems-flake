@@ -23,19 +23,21 @@
     ../../modules/restic-backup.nix
   ];
 
-  # Enable restic backups
-  kimb.restic.enable = true;
-  kimb.restic.extraExclude = [
-    "/home/kimb/.platformio" # ESP32 toolchains - reinstallable
-    "/home/kimb/.android" # Android emulator images
-    "/home/kimb/Android" # Android SDK
-    "/home/kimb/.gradle" # Build cache
-  ];
+  kimb = {
+    # Enable restic backups
+    restic.enable = true;
+    restic.extraExclude = [
+      "/home/kimb/.platformio" # ESP32 toolchains - reinstallable
+      "/home/kimb/.android" # Android emulator images
+      "/home/kimb/Android" # Android SDK
+      "/home/kimb/.gradle" # Build cache
+    ];
 
-  # Nebula configuration
-  kimb.nebula = {
-    enable = true;
-    openToPersonalDevices = true;
+    # Nebula configuration
+    nebula = {
+      enable = true;
+      openToPersonalDevices = true;
+    };
   };
 
   # Power management - use laptop profile's auto-cpufreq defaults

@@ -36,27 +36,29 @@
     discordAllowedUsers = "366455267673636866"; # Kimb only
   };
 
-  # Mail secrets (same .age files as email-digest, but owned by org-crm user)
-  age.secrets.org-crm-mail-zoho = {
-    file = ../../secrets/mail-zoho-password.age;
-    owner = "org-crm";
-    mode = "0400";
-  };
-  age.secrets.org-crm-mail-gmail = {
-    file = ../../secrets/mail-gmail-password.age;
-    owner = "org-crm";
-    mode = "0400";
-  };
-  age.secrets.org-crm-mail-fastmail = {
-    file = ../../secrets/mail-fastmail-password.age;
-    owner = "org-crm";
-    mode = "0400";
-  };
+  age.secrets = {
+    # Mail secrets (same .age files as email-digest, but owned by org-crm user)
+    org-crm-mail-zoho = {
+      file = ../../secrets/mail-zoho-password.age;
+      owner = "org-crm";
+      mode = "0400";
+    };
+    org-crm-mail-gmail = {
+      file = ../../secrets/mail-gmail-password.age;
+      owner = "org-crm";
+      mode = "0400";
+    };
+    org-crm-mail-fastmail = {
+      file = ../../secrets/mail-fastmail-password.age;
+      owner = "org-crm";
+      mode = "0400";
+    };
 
-  # Dedicated Discord bot token (Secretary app)
-  age.secrets.discord-org-crm-token = {
-    file = ../../secrets/discord-org-crm-token.age;
-    owner = "org-crm";
-    mode = "0400";
+    # Dedicated Discord bot token (Secretary app)
+    discord-org-crm-token = {
+      file = ../../secrets/discord-org-crm-token.age;
+      owner = "org-crm";
+      mode = "0400";
+    };
   };
 }

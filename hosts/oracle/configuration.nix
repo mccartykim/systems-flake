@@ -28,150 +28,154 @@ in {
     # System-manager requires setting the platform
     nixpkgs.hostPlatform = "x86_64-linux";
 
-    environment.systemPackages = [pkgs.nebula pkgs.age pkgs.iptables];
+    environment = {
+      systemPackages = [pkgs.nebula pkgs.age pkgs.iptables];
 
-    # ===== ENCRYPTED SECRETS IN /etc =====
-    # Mainnet
-    environment.etc."nebula/mainnet/encrypted/ca.age".source = encryptedSecrets.mainnet.ca;
-    environment.etc."nebula/mainnet/encrypted/cert.age".source = encryptedSecrets.mainnet.cert;
-    environment.etc."nebula/mainnet/encrypted/key.age".source = encryptedSecrets.mainnet.key;
-    # Buildnet
-    environment.etc."nebula/buildnet/encrypted/ca.age".source = encryptedSecrets.buildnet.ca;
-    environment.etc."nebula/buildnet/encrypted/cert.age".source = encryptedSecrets.buildnet.cert;
-    environment.etc."nebula/buildnet/encrypted/key.age".source = encryptedSecrets.buildnet.key;
-    # Containernet
-    environment.etc."nebula/containernet/encrypted/ca.age".source = encryptedSecrets.containernet.ca;
-    environment.etc."nebula/containernet/encrypted/cert.age".source = encryptedSecrets.containernet.cert;
-    environment.etc."nebula/containernet/encrypted/key.age".source = encryptedSecrets.containernet.key;
+      etc = {
+        # ===== ENCRYPTED SECRETS IN /etc =====
+        # Mainnet
+        "nebula/mainnet/encrypted/ca.age".source = encryptedSecrets.mainnet.ca;
+        "nebula/mainnet/encrypted/cert.age".source = encryptedSecrets.mainnet.cert;
+        "nebula/mainnet/encrypted/key.age".source = encryptedSecrets.mainnet.key;
+        # Buildnet
+        "nebula/buildnet/encrypted/ca.age".source = encryptedSecrets.buildnet.ca;
+        "nebula/buildnet/encrypted/cert.age".source = encryptedSecrets.buildnet.cert;
+        "nebula/buildnet/encrypted/key.age".source = encryptedSecrets.buildnet.key;
+        # Containernet
+        "nebula/containernet/encrypted/ca.age".source = encryptedSecrets.containernet.ca;
+        "nebula/containernet/encrypted/cert.age".source = encryptedSecrets.containernet.cert;
+        "nebula/containernet/encrypted/key.age".source = encryptedSecrets.containernet.key;
 
-    # ===== MAINNET CONFIG (10.100.0.0/16, port 4242) =====
-    environment.etc."nebula/mainnet/config.yml".text = ''
-      pki:
-        ca: /run/nebula-secrets/mainnet/ca.crt
-        cert: /run/nebula-secrets/mainnet/oracle.crt
-        key: /run/nebula-secrets/mainnet/oracle.key
+        # ===== MAINNET CONFIG (10.100.0.0/16, port 4242) =====
+        "nebula/mainnet/config.yml".text = ''
+          pki:
+            ca: /run/nebula-secrets/mainnet/ca.crt
+            cert: /run/nebula-secrets/mainnet/oracle.crt
+            key: /run/nebula-secrets/mainnet/oracle.key
 
-      static_host_map:
-        "10.100.0.50": ["kimb.dev:4242"]
+          static_host_map:
+            "10.100.0.50": ["kimb.dev:4242"]
 
-      lighthouse:
-        am_lighthouse: true
-        serve_dns: false
+          lighthouse:
+            am_lighthouse: true
+            serve_dns: false
 
-      listen:
-        host: 0.0.0.0
-        port: 4242
+          listen:
+            host: 0.0.0.0
+            port: 4242
 
-      tun:
-        dev: nebula0
+          tun:
+            dev: nebula0
 
-      punchy:
-        punch: true
-        respond: true
+          punchy:
+            punch: true
+            respond: true
 
-      relay:
-        am_relay: true
-        use_relays: true
+          relay:
+            am_relay: true
+            use_relays: true
 
-      firewall:
-        outbound:
-          - port: any
-            proto: any
-            host: any
-        inbound:
-          - port: any
-            proto: icmp
-            host: any
-          - port: 22
-            proto: tcp
-            host: any
-    '';
+          firewall:
+            outbound:
+              - port: any
+                proto: any
+                host: any
+            inbound:
+              - port: any
+                proto: icmp
+                host: any
+              - port: 22
+                proto: tcp
+                host: any
+        '';
 
-    # ===== BUILDNET CONFIG (10.101.0.0/16, port 4243) =====
-    environment.etc."nebula/buildnet/config.yml".text = ''
-      pki:
-        ca: /run/nebula-secrets/buildnet/ca.crt
-        cert: /run/nebula-secrets/buildnet/oracle.crt
-        key: /run/nebula-secrets/buildnet/oracle.key
+        # ===== BUILDNET CONFIG (10.101.0.0/16, port 4243) =====
+        "nebula/buildnet/config.yml".text = ''
+          pki:
+            ca: /run/nebula-secrets/buildnet/ca.crt
+            cert: /run/nebula-secrets/buildnet/oracle.crt
+            key: /run/nebula-secrets/buildnet/oracle.key
 
-      static_host_map:
-        "10.101.0.1": ["kimb.dev:4243"]
+          static_host_map:
+            "10.101.0.1": ["kimb.dev:4243"]
 
-      lighthouse:
-        am_lighthouse: true
-        serve_dns: false
-        # Peer with maitred for dual-lighthouse redundancy
-        hosts:
-          - "10.101.0.1"
+          lighthouse:
+            am_lighthouse: true
+            serve_dns: false
+            # Peer with maitred for dual-lighthouse redundancy
+            hosts:
+              - "10.101.0.1"
 
-      listen:
-        host: 0.0.0.0
-        port: 4243
+          listen:
+            host: 0.0.0.0
+            port: 4243
 
-      tun:
-        dev: nebula-build
+          tun:
+            dev: nebula-build
 
-      punchy:
-        punch: true
-        respond: true
+          punchy:
+            punch: true
+            respond: true
 
-      relay:
-        am_relay: true
-        use_relays: true
+          relay:
+            am_relay: true
+            use_relays: true
 
-      firewall:
-        outbound:
-          - port: any
-            proto: any
-            host: any
-        inbound:
-          - port: any
-            proto: icmp
-            host: any
-    '';
+          firewall:
+            outbound:
+              - port: any
+                proto: any
+                host: any
+            inbound:
+              - port: any
+                proto: icmp
+                host: any
+        '';
 
-    # ===== CONTAINERNET CONFIG (10.102.0.0/16, port 4244) =====
-    environment.etc."nebula/containernet/config.yml".text = ''
-      pki:
-        ca: /run/nebula-secrets/containernet/ca.crt
-        cert: /run/nebula-secrets/containernet/oracle.crt
-        key: /run/nebula-secrets/containernet/oracle.key
+        # ===== CONTAINERNET CONFIG (10.102.0.0/16, port 4244) =====
+        "nebula/containernet/config.yml".text = ''
+          pki:
+            ca: /run/nebula-secrets/containernet/ca.crt
+            cert: /run/nebula-secrets/containernet/oracle.crt
+            key: /run/nebula-secrets/containernet/oracle.key
 
-      static_host_map:
-        "10.102.0.1": ["kimb.dev:4244"]
+          static_host_map:
+            "10.102.0.1": ["kimb.dev:4244"]
 
-      lighthouse:
-        am_lighthouse: true
-        serve_dns: false
-        # Peer with maitred for dual-lighthouse redundancy
-        hosts:
-          - "10.102.0.1"
+          lighthouse:
+            am_lighthouse: true
+            serve_dns: false
+            # Peer with maitred for dual-lighthouse redundancy
+            hosts:
+              - "10.102.0.1"
 
-      listen:
-        host: 0.0.0.0
-        port: 4244
+          listen:
+            host: 0.0.0.0
+            port: 4244
 
-      tun:
-        dev: nebula-container
+          tun:
+            dev: nebula-container
 
-      punchy:
-        punch: true
-        respond: true
+          punchy:
+            punch: true
+            respond: true
 
-      relay:
-        am_relay: true
-        use_relays: true
+          relay:
+            am_relay: true
+            use_relays: true
 
-      firewall:
-        outbound:
-          - port: any
-            proto: any
-            host: any
-        inbound:
-          - port: any
-            proto: icmp
-            host: any
-    '';
+          firewall:
+            outbound:
+              - port: any
+                proto: any
+                host: any
+            inbound:
+              - port: any
+                proto: icmp
+                host: any
+        '';
+      };
+    };
 
     # ===== DECRYPT SECRETS SERVICE =====
     systemd.services.nebula-secrets = {

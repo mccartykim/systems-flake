@@ -47,43 +47,45 @@
     options = ["bind" "ro"];
   };
 
-  # Restic backups
-  kimb.restic.enable = true;
-  kimb.restic.extraExclude = [
-    "/home/kimb/.android"
-    "/home/kimb/.gradle"
-  ];
-
-  # Nebula configuration (certs generated via `nix run .#generate-nebula-certs`)
-  kimb.nebula = {
-    enable = true;
-    openToPersonalDevices = true;
-    # Allow servers (like rich-evans) to access Ollama API
-    extraInboundRules = [
-      {
-        port = 11434;
-        proto = "tcp";
-        group = "servers";
-      }
-      {
-        port = 8096;
-        proto = "tcp";
-        host = "maitred";
-      }
+  kimb = {
+    # Restic backups
+    restic.enable = true;
+    restic.extraExclude = [
+      "/home/kimb/.android"
+      "/home/kimb/.gradle"
     ];
-  };
 
-  # Distributed builds
-  kimb.distributedBuilds = {
-    # enable = true; # Already enabled via commonModules
+    # Nebula configuration (certs generated via `nix run .#generate-nebula-certs`)
+    nebula = {
+      enable = true;
+      openToPersonalDevices = true;
+      # Allow servers (like rich-evans) to access Ollama API
+      extraInboundRules = [
+        {
+          port = 11434;
+          proto = "tcp";
+          group = "servers";
+        }
+        {
+          port = 8096;
+          proto = "tcp";
+          host = "maitred";
+        }
+      ];
+    };
 
-    # Buildnet disabled - CA cert needs regeneration
-    # buildnet.enable = true;
+    # Distributed builds
+    distributedBuilds = {
+      # enable = true; # Already enabled via commonModules
 
-    # Claude Code SSH key - can only run nix-daemon, no shell access
-    builderOnlyKeys = [
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKcpY/DdbidptJJsrr3DgZyrwMYW79cpRwqwb5GbCGy7 claude"
-    ];
+      # Buildnet disabled - CA cert needs regeneration
+      # buildnet.enable = true;
+
+      # Claude Code SSH key - can only run nix-daemon, no shell access
+      builderOnlyKeys = [
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKcpY/DdbidptJJsrr3DgZyrwMYW79cpRwqwb5GbCGy7 claude"
+      ];
+    };
   };
   # Virtualization configuration
   virtualisation = {

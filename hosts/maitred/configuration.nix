@@ -117,7 +117,7 @@ in {
     enable = true;
     package = pkgs.samba.override {
       enablePrinting = true;
-      cups = pkgs.cups;
+      inherit (pkgs) cups;
     };
     openFirewall = true;
     settings = {

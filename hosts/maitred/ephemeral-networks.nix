@@ -17,8 +17,8 @@ in {
 
     networks = {
       buildnet = {
-        subnet = registry.networks.buildnet.subnet;
-        port = registry.networks.buildnet.port;
+        inherit (registry.networks.buildnet) subnet;
+        inherit (registry.networks.buildnet) port;
         lighthouseIp = registry.nodes.maitred.buildnetIp;
         # Peer with oracle for redundancy
         peerLighthouses = [
@@ -35,8 +35,8 @@ in {
       };
 
       containernet = {
-        subnet = registry.networks.containernet.subnet;
-        port = registry.networks.containernet.port;
+        inherit (registry.networks.containernet) subnet;
+        inherit (registry.networks.containernet) port;
         lighthouseIp = registry.nodes.maitred.containernetIp;
         # Peer with oracle for redundancy
         peerLighthouses = [

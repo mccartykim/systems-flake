@@ -67,16 +67,24 @@
     # org-agent + org-life-coach (replaces claude_yapper life-coach)
     org-agent.url = "git+ssh://git@github.com/mccartykim/org-agent.git";
     org-agent.inputs.nixpkgs.follows = "nixpkgs";
-    org-life-coach.url = "git+ssh://git@github.com/mccartykim/org-life-coach.git";
-    org-life-coach.inputs.nixpkgs.follows = "nixpkgs";
-    org-life-coach.inputs.org-agent.follows = "org-agent";
+    org-life-coach = {
+      url = "git+ssh://git@github.com/mccartykim/org-life-coach.git";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        org-agent.follows = "org-agent";
+      };
+    };
     lifecoach-organism.url = "git+ssh://git@github.com/mccartykim/lifecoach_organism.git";
     lifecoach-organism.inputs.nixpkgs.follows = "nixpkgs";
     vacuum-organism.url = "git+ssh://git@github.com/mccartykim/vacuum_organism.git";
     vacuum-organism.inputs.nixpkgs.follows = "nixpkgs";
-    org-crm.url = "git+ssh://git@github.com/mccartykim/org_crm.git";
-    org-crm.inputs.nixpkgs.follows = "nixpkgs";
-    org-crm.inputs.org-agent.follows = "org-agent";
+    org-crm = {
+      url = "git+ssh://git@github.com/mccartykim/org_crm.git";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        org-agent.follows = "org-agent";
+      };
+    };
 
     nixos-facter-modules.url = "github:nix-community/nixos-facter-modules";
 
@@ -91,13 +99,21 @@
     # uv2nix - Python dependency management (used by qwen3-tts on total-eclipse)
     pyproject-nix.url = "github:pyproject-nix/pyproject.nix";
     pyproject-nix.inputs.nixpkgs.follows = "nixpkgs";
-    uv2nix.url = "github:pyproject-nix/uv2nix";
-    uv2nix.inputs.pyproject-nix.follows = "pyproject-nix";
-    uv2nix.inputs.nixpkgs.follows = "nixpkgs";
-    pyproject-build-systems.url = "github:pyproject-nix/build-system-pkgs";
-    pyproject-build-systems.inputs.pyproject-nix.follows = "pyproject-nix";
-    pyproject-build-systems.inputs.uv2nix.follows = "uv2nix";
-    pyproject-build-systems.inputs.nixpkgs.follows = "nixpkgs";
+    uv2nix = {
+      url = "github:pyproject-nix/uv2nix";
+      inputs = {
+        pyproject-nix.follows = "pyproject-nix";
+        nixpkgs.follows = "nixpkgs";
+      };
+    };
+    pyproject-build-systems = {
+      url = "github:pyproject-nix/build-system-pkgs";
+      inputs = {
+        pyproject-nix.follows = "pyproject-nix";
+        uv2nix.follows = "uv2nix";
+        nixpkgs.follows = "nixpkgs";
+      };
+    };
   };
 
   outputs = {
@@ -240,9 +256,9 @@
             hostData =
               lib.mapAttrsToList (name: cfg: {
                 inherit name;
-                ip = cfg.ip;
+                inherit (cfg) ip;
                 groups = cfg.groups or [];
-                publicKey = cfg.publicKey;
+                inherit (cfg) publicKey;
               })
               nebulaHosts;
           in {

@@ -134,7 +134,7 @@ in {
               }
               # Allow cert service access from all hosts on this network
               {
-                port = cfg.certService.port;
+                inherit (cfg.certService) port;
                 proto = "tcp";
                 host = "any";
               }

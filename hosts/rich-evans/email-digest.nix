@@ -321,63 +321,67 @@ in {
   users.groups.email-digest = {};
 
   # Agenix secrets
-  age.secrets.mail-zoho-password = {
-    file = ../../secrets/mail-zoho-password.age;
-    owner = "email-digest";
-    mode = "0400";
-  };
-  age.secrets.mail-gmail-password = {
-    file = ../../secrets/mail-gmail-password.age;
-    owner = "email-digest";
-    mode = "0400";
-  };
-  age.secrets.mail-fastmail-password = {
-    file = ../../secrets/mail-fastmail-password.age;
-    owner = "email-digest";
-    mode = "0400";
-  };
-  age.secrets.discord-email-digest-token = {
-    file = ../../secrets/discord-life-coach-token.age;
-    owner = "email-digest";
-    mode = "0400";
-  };
-
-  # State directory
-  systemd.tmpfiles.rules = [
-    "d ${stateDir} 0750 email-digest email-digest -"
-    "d ${mailDir} 0750 email-digest email-digest -"
-  ];
-
-  # Oneshot service
-  systemd.services.email-digest = {
-    description = "Email Digest Agent";
-    after = ["network-online.target"];
-    wants = ["network-online.target"];
-    path = ["/run/current-system/sw"];
-    serviceConfig = {
-      Type = "oneshot";
-      ExecStart = "${digestScript}";
-      User = "email-digest";
-      Group = "email-digest";
-      TimeoutStartSec = "30min";
-      ProtectHome = "read-only";
-      ProtectSystem = "strict";
-      ReadWritePaths = [stateDir];
-      PrivateTmp = true;
-      NoNewPrivileges = true;
-      StateDirectory = "email-digest";
+  age.secrets = {
+    mail-zoho-password = {
+      file = ../../secrets/mail-zoho-password.age;
+      owner = "email-digest";
+      mode = "0400";
+    };
+    mail-gmail-password = {
+      file = ../../secrets/mail-gmail-password.age;
+      owner = "email-digest";
+      mode = "0400";
+    };
+    mail-fastmail-password = {
+      file = ../../secrets/mail-fastmail-password.age;
+      owner = "email-digest";
+      mode = "0400";
+    };
+    discord-email-digest-token = {
+      file = ../../secrets/discord-life-coach-token.age;
+      owner = "email-digest";
+      mode = "0400";
     };
   };
 
-  # Timer: 8am and 9pm Eastern
-  systemd.timers.email-digest = {
-    wantedBy = ["timers.target"];
-    timerConfig = {
-      OnCalendar = [
-        "*-*-* 08:00:00 America/New_York"
-        "*-*-* 21:00:00 America/New_York"
-      ];
-      Persistent = true;
+  systemd = {
+    # State directory
+    tmpfiles.rules = [
+      "d ${stateDir} 0750 email-digest email-digest -"
+      "d ${mailDir} 0750 email-digest email-digest -"
+    ];
+
+    # Oneshot service
+    services.email-digest = {
+      description = "Email Digest Agent";
+      after = ["network-online.target"];
+      wants = ["network-online.target"];
+      path = ["/run/current-system/sw"];
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = "${digestScript}";
+        User = "email-digest";
+        Group = "email-digest";
+        TimeoutStartSec = "30min";
+        ProtectHome = "read-only";
+        ProtectSystem = "strict";
+        ReadWritePaths = [stateDir];
+        PrivateTmp = true;
+        NoNewPrivileges = true;
+        StateDirectory = "email-digest";
+      };
+    };
+
+    # Timer: 8am and 9pm Eastern
+    timers.email-digest = {
+      wantedBy = ["timers.target"];
+      timerConfig = {
+        OnCalendar = [
+          "*-*-* 08:00:00 America/New_York"
+          "*-*-* 21:00:00 America/New_York"
+        ];
+        Persistent = true;
+      };
     };
   };
 }

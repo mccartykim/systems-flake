@@ -112,7 +112,7 @@ in {
         ca = config.age.secrets.buildnet-ca.path;
         cert = config.age.secrets.buildnet-historian-cert.path;
         key = config.age.secrets.buildnet-historian-key.path;
-        lighthouses = cfg.buildnet.lighthouses;
+        inherit (cfg.buildnet) lighthouses;
         staticHostMap = builtins.listToAttrs (map (lh: {
             name = lh;
             value = [lighthouseEndpoints.${lh}];
