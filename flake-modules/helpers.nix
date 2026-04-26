@@ -49,6 +49,15 @@ in {
       (self + "/modules/agenix.nix")
       # Fix Python packages with strict version bounds + Firefox Nightly
       {nixpkgs.overlays = [pythonFixesOverlay firefoxNightlyOverlay];}
+      # Static nebula host entries so hostname.nebula resolves without maitred DNS
+      ({...}: let
+        registry = import (self + "/hosts/nebula-registry.nix");
+        names = builtins.attrNames registry.nodes;
+      in {
+        networking.extraHosts =
+          builtins.concatStringsSep "\n"
+          (builtins.map (name: "${registry.nodes.${name}.ip} ${name}.nebula") names);
+      })
     ];
 
     # Desktop-specific modules (srvos desktop + common mixins)
