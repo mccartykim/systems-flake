@@ -73,6 +73,8 @@
   # Security configuration
   security.rtkit.enable = true;
 
+  programs.kdeconnect.enable = true;
+
   # GPG agent - pinentry-all auto-selects Qt/curses/tty based on environment
   # This works for both KDE desktop and SSH sessions
   programs.gnupg.agent = {
