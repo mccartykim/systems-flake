@@ -35,6 +35,10 @@
       enable = true;
       nssmdns4 = true;
       openFirewall = true;
+      publish = {
+        enable = true;
+        userServices = true;
+      };
     };
 
     # Additional desktop services
