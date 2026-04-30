@@ -34,10 +34,9 @@ in {
     # agent re-evaluates at least twice an hour.
     heartbeatInterval = "30m";
 
-    # Live mode: dispatch-robot actually files entries to
-    # vacuum_organism's dispatch.org. The vacuum agent will physically
-    # come find Kim when lifecoach decides to dispatch.
-    dispatchRobotMode = "live";
+    # dispatch-robot always files real entries to vacuum_organism's
+    # dispatch.org when reached. Whether the agent reaches it at all is
+    # gated upstream in lifecoach-mechanical.execute_actions.
 
     # Home Assistant — reuse the existing agenix secret
     haUrl = "http://127.0.0.1:8123";
@@ -64,10 +63,10 @@ in {
     cameraBedUrl = "http://127.0.0.1:8554/cam0";
     cameraDeskUrl = "http://127.0.0.1:8554/cam1";
 
-    # Dashboard stays on 8586 for now — taking over 8585 requires
-    # stopping the old dashboard first which we're doing below,
-    # but cross-service port renegotiation in a single activation
-    # is fragile. Leave old URL dead and Kim can bookmark 8586.
+    # Dashboard runs on 8586. The old org-life-coach dashboard on
+    # 8585 is mkForce-disabled (see below), so coach.kimb.dev was
+    # broken until the reverse-proxy entry in
+    # flake-modules/nixos-configurations.nix was repointed to 8586.
     dashboard = {
       enable = true;
       port = 8586;

@@ -143,7 +143,9 @@ in {
             };
             life-coach-dashboard = {
               enable = true;
-              port = 8585;
+              # lifecoach-organism dashboard runs on 8586; the old
+              # org-life-coach dashboard on 8585 is now mkForce-disabled.
+              port = 8586;
               subdomain = "coach";
               host = "rich-evans";
               auth = "authelia";
@@ -278,7 +280,9 @@ in {
                 };
                 life-coach-dashboard = {
                   enable = true;
-                  port = 8585;
+                  # lifecoach-organism dashboard runs on 8586; the old
+                  # org-life-coach dashboard on 8585 is now mkForce-disabled.
+                  port = 8586;
                   subdomain = "coach";
                   host = "rich-evans";
                   auth = "authelia";

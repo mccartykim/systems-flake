@@ -23,6 +23,21 @@
     group = "buildbot-worker";
   };
 
+  # Fine-grained PAT for fetching private flake inputs from
+  # mccartykim/* over HTTPS. The decrypted file is included verbatim
+  # into nix.conf via `nix.extraOptions`, so its content must be a
+  # valid nix.conf line — currently:
+  #   access-tokens = github.com=<the-pat>
+  # nix-daemon runs as root, so root:root 0400 (the agenix default)
+  # is what we need.
+  age.secrets.buildbot-worker-github-token = {
+    file = ../../secrets/buildbot-worker-github-token.age;
+  };
+
+  nix.extraOptions = ''
+    !include ${config.age.secrets.buildbot-worker-github-token.path}
+  '';
+
   # Daemon-driven GC: when free space drops below min-free, the Nix daemon
   # collects until max-free is available. Prevents builds from failing with
   # ENOSPC under 12-parallel CI load. /nix/store has 62k+ gcroots from
