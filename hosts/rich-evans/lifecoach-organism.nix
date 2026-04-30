@@ -64,10 +64,10 @@ in {
     cameraBedUrl = "http://127.0.0.1:8554/cam0";
     cameraDeskUrl = "http://127.0.0.1:8554/cam1";
 
-    # Dashboard stays on 8586 for now — taking over 8585 requires
-    # stopping the old dashboard first which we're doing below,
-    # but cross-service port renegotiation in a single activation
-    # is fragile. Leave old URL dead and Kim can bookmark 8586.
+    # Dashboard runs on 8586. The old org-life-coach dashboard on
+    # 8585 is mkForce-disabled (see below), so coach.kimb.dev was
+    # broken until the reverse-proxy entry in
+    # flake-modules/nixos-configurations.nix was repointed to 8586.
     dashboard = {
       enable = true;
       port = 8586;

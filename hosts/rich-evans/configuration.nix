@@ -133,8 +133,10 @@ in {
         groups = ["desktops" "laptops"];
       }
       # Life Coach Dashboard - web UI for monitoring agent sessions
+      # (lifecoach-organism on 8586; old org-life-coach on 8585 is
+      # mkForce-disabled but firewall hole left open as a no-op)
       {
-        port = 8585;
+        port = 8586;
         proto = "tcp";
         host = "any";
       }
