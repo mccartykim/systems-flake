@@ -50,42 +50,42 @@
     system-manager.url = "github:numtide/system-manager";
     system-manager.inputs.nixpkgs.follows = "nixpkgs";
 
-    mist-blog.url = "git+ssh://git@github.com/mccartykim/mist-blog";
+    # All private mccartykim/* inputs use git+https:// so the buildbot
+    # worker's PAT (in /var/lib/buildbot-worker/.netrc) can authenticate
+    # the fetch. ssh:// would need an SSH key on the worker, which we
+    # don't have wired up; the github: short-form would use the
+    # archive/<rev>.tar.gz URL, which fine-grained PATs cannot read.
+    # git+https:// is the scheme that works with our existing auth.
+    mist-blog.url = "git+https://github.com/mccartykim/mist-blog.git";
     mist-blog.inputs.nixpkgs.follows = "nixpkgs";
 
-    claude_yapper.url = "git+ssh://git@github.com/mccartykim/claude-alarmclock-agent.git";
+    claude_yapper.url = "git+https://github.com/mccartykim/claude-alarmclock-agent.git";
     claude_yapper.inputs.nixpkgs.follows = "nixpkgs";
 
     # Kokoro TTS - local flake for now (has working build)
-    kokoro.url = "git+ssh://git@github.com/mccartykim/kokoro-flake.git";
+    kokoro.url = "git+https://github.com/mccartykim/kokoro-flake.git";
     kokoro.inputs.nixpkgs.follows = "nixpkgs";
 
     # Media classifier for Jellyfin library organization
-    media-classifier.url = "git+ssh://git@github.com/mccartykim/media-classifier";
+    media-classifier.url = "git+https://github.com/mccartykim/media-classifier.git";
     media-classifier.inputs.nixpkgs.follows = "nixpkgs";
 
     # org-agent + org-life-coach (replaces claude_yapper life-coach)
-    org-agent.url = "git+ssh://git@github.com/mccartykim/org-agent.git";
+    org-agent.url = "git+https://github.com/mccartykim/org-agent.git";
     org-agent.inputs.nixpkgs.follows = "nixpkgs";
     org-life-coach = {
-      url = "git+ssh://git@github.com/mccartykim/org-life-coach.git";
+      url = "git+https://github.com/mccartykim/org-life-coach.git";
       inputs = {
         nixpkgs.follows = "nixpkgs";
         org-agent.follows = "org-agent";
       };
     };
-    # git+https:// (not github: short-form) so nix uses git-over-HTTPS
-    # which honors the worker's `access-tokens = github.com=<PAT>` for
-    # auth. The github: scheme would download via
-    # github.com/<owner>/<repo>/archive/<rev>.tar.gz, which fine-grained
-    # PATs cannot read (returns 404). git+https:// avoids that URL and
-    # uses git's credential helper path with the token, which works.
     lifecoach-organism.url = "git+https://github.com/mccartykim/lifecoach_organism.git";
     lifecoach-organism.inputs.nixpkgs.follows = "nixpkgs";
     vacuum-organism.url = "git+https://github.com/mccartykim/vacuum_organism.git";
     vacuum-organism.inputs.nixpkgs.follows = "nixpkgs";
     org-crm = {
-      url = "git+ssh://git@github.com/mccartykim/org_crm.git";
+      url = "git+https://github.com/mccartykim/org_crm.git";
       inputs = {
         nixpkgs.follows = "nixpkgs";
         org-agent.follows = "org-agent";
