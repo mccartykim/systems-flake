@@ -739,11 +739,11 @@
         "organism": "organism"
       },
       "locked": {
-        "lastModified": 1777181507,
-        "narHash": "sha256-LAafOOEH8NYWPdPxN45FfAC2dy7O3q/S/RdFS2U98qM=",
+        "lastModified": 1777525208,
+        "narHash": "sha256-stl60p2oWFBzjrWpLiB/AdxFPW38tPJsr3f9FGGINA8=",
         "ref": "refs/heads/main",
-        "rev": "acc503603dad01e31105232ccdbdb6e8b5ac554b",
-        "revCount": 78,
+        "rev": "f12fc0338d0e165742c7e9f37f3628a52a640c40",
+        "revCount": 80,
         "type": "git",
         "url": "ssh://git@github.com/mccartykim/lifecoach_organism.git"
       },
@@ -1800,11 +1800,11 @@
         "vacuum-skills": "vacuum-skills"
       },
       "locked": {
-        "lastModified": 1775918144,
-        "narHash": "sha256-hdVet/q/SZQi2GRw3TXzw+LopjLNuKLczPPyCXdEg88=",
+        "lastModified": 1777525222,
+        "narHash": "sha256-Fy2VIToBSRFItnLNKsboNZFKJK4FP3pMB3oqw64K7O8=",
         "ref": "refs/heads/main",
-        "rev": "3fc9c48f2ce7c823dfa184824a070d8583623cce",
-        "revCount": 29,
+        "rev": "77a6acb680301b42aed6f6ae535db411c84d7057",
+        "revCount": 30,
         "type": "git",
         "url": "ssh://git@github.com/mccartykim/vacuum_organism.git"
       },
