@@ -34,10 +34,9 @@ in {
     # agent re-evaluates at least twice an hour.
     heartbeatInterval = "30m";
 
-    # Live mode: dispatch-robot actually files entries to
-    # vacuum_organism's dispatch.org. The vacuum agent will physically
-    # come find Kim when lifecoach decides to dispatch.
-    dispatchRobotMode = "live";
+    # dispatch-robot always files real entries to vacuum_organism's
+    # dispatch.org when reached. Whether the agent reaches it at all is
+    # gated upstream in lifecoach-mechanical.execute_actions.
 
     # Home Assistant — reuse the existing agenix secret
     haUrl = "http://127.0.0.1:8123";
