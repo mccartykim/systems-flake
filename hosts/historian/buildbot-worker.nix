@@ -34,6 +34,18 @@
     file = ../../secrets/buildbot-worker-github-token.age;
   };
 
+  # Same PAT in .netrc format, decrypted to /root/.netrc so that
+  # `git` (invoked by nix's git+https:// fetcher) can authenticate
+  # private-repo clones. The access-tokens setting above only covers
+  # the github: / http tarball fetchers; nix's git fetcher shells out
+  # to /usr/bin/git, which reads /root/.netrc by default for the user
+  # nix-daemon runs as (root).
+  age.secrets.buildbot-worker-git-netrc = {
+    file = ../../secrets/buildbot-worker-git-netrc.age;
+    path = "/root/.netrc";
+    mode = "0400";
+  };
+
   nix.extraOptions = ''
     !include ${config.age.secrets.buildbot-worker-github-token.path}
   '';

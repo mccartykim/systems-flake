@@ -124,6 +124,12 @@ in
     # `access-tokens = github.com=<the-pat>` — included verbatim into
     # nix.conf via `nix.extraOptions = "!include ..."` on historian.
     "buildbot-worker-github-token.age".publicKeys = [hostKeys.historian bootstrap];
+    # Same PAT in .netrc format. Used by nix's `git+https://` fetcher:
+    # nix shells out to `git`, which reads /root/.netrc to authenticate
+    # the clone. (The `access-tokens` setting only covers the github:
+    # and tarball fetchers, not git-protocol clones.) Decrypted directly
+    # to /root/.netrc on historian — see hosts/historian/buildbot-worker.nix.
+    "buildbot-worker-git-netrc.age".publicKeys = [hostKeys.historian bootstrap];
 
     # ===== MEDIA PIPELINE (historian) =====
     # rclone config with put.io OAuth token
