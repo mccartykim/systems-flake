@@ -74,9 +74,13 @@
         org-agent.follows = "org-agent";
       };
     };
-    lifecoach-organism.url = "git+ssh://git@github.com/mccartykim/lifecoach_organism.git";
+    # Use github: scheme (HTTPS underneath) so the buildbot worker's
+    # `access-tokens = github.com=<PAT>` setting authenticates the
+    # fetch. ssh:// URLs would ignore that and require an SSH key on
+    # the worker, which we don't have wired up.
+    lifecoach-organism.url = "github:mccartykim/lifecoach_organism";
     lifecoach-organism.inputs.nixpkgs.follows = "nixpkgs";
-    vacuum-organism.url = "git+ssh://git@github.com/mccartykim/vacuum_organism.git";
+    vacuum-organism.url = "github:mccartykim/vacuum_organism";
     vacuum-organism.inputs.nixpkgs.follows = "nixpkgs";
     org-crm = {
       url = "git+ssh://git@github.com/mccartykim/org_crm.git";
