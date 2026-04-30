@@ -74,13 +74,15 @@
         org-agent.follows = "org-agent";
       };
     };
-    # Use github: scheme (HTTPS underneath) so the buildbot worker's
-    # `access-tokens = github.com=<PAT>` setting authenticates the
-    # fetch. ssh:// URLs would ignore that and require an SSH key on
-    # the worker, which we don't have wired up.
-    lifecoach-organism.url = "github:mccartykim/lifecoach_organism";
+    # git+https:// (not github: short-form) so nix uses git-over-HTTPS
+    # which honors the worker's `access-tokens = github.com=<PAT>` for
+    # auth. The github: scheme would download via
+    # github.com/<owner>/<repo>/archive/<rev>.tar.gz, which fine-grained
+    # PATs cannot read (returns 404). git+https:// avoids that URL and
+    # uses git's credential helper path with the token, which works.
+    lifecoach-organism.url = "git+https://github.com/mccartykim/lifecoach_organism.git";
     lifecoach-organism.inputs.nixpkgs.follows = "nixpkgs";
-    vacuum-organism.url = "github:mccartykim/vacuum_organism";
+    vacuum-organism.url = "git+https://github.com/mccartykim/vacuum_organism.git";
     vacuum-organism.inputs.nixpkgs.follows = "nixpkgs";
     org-crm = {
       url = "git+ssh://git@github.com/mccartykim/org_crm.git";
