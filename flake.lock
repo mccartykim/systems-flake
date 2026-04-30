@@ -87,11 +87,11 @@
         "rev": "fe8138f4e00e35c34c4acd9aed0a71299be0c572",
         "revCount": 255,
         "type": "git",
-        "url": "ssh://git@github.com/mccartykim/claude-alarmclock-agent.git"
+        "url": "https://github.com/mccartykim/claude-alarmclock-agent.git"
       },
       "original": {
         "type": "git",
-        "url": "ssh://git@github.com/mccartykim/claude-alarmclock-agent.git"
+        "url": "https://github.com/mccartykim/claude-alarmclock-agent.git"
       }
     },
     "copyparty": {
@@ -688,11 +688,11 @@
         "rev": "9984e453d55bf00562b9a7e24e7221ef70121a09",
         "revCount": 1,
         "type": "git",
-        "url": "ssh://git@github.com/mccartykim/kokoro-flake.git"
+        "url": "https://github.com/mccartykim/kokoro-flake.git"
       },
       "original": {
         "type": "git",
-        "url": "ssh://git@github.com/mccartykim/kokoro-flake.git"
+        "url": "https://github.com/mccartykim/kokoro-flake.git"
       }
     },
     "kokoros-src": {
@@ -765,11 +765,11 @@
         "rev": "a0ab53d7f877cdf27e90d640389f8139419149a3",
         "revCount": 1,
         "type": "git",
-        "url": "ssh://git@github.com/mccartykim/media-classifier"
+        "url": "https://github.com/mccartykim/media-classifier.git"
       },
       "original": {
         "type": "git",
-        "url": "ssh://git@github.com/mccartykim/media-classifier"
+        "url": "https://github.com/mccartykim/media-classifier.git"
       }
     },
     "mist-blog": {
@@ -787,11 +787,11 @@
         "rev": "a304baee31f2cfd81e17e5a8c267d6fd8a2af38d",
         "revCount": 22,
         "type": "git",
-        "url": "ssh://git@github.com/mccartykim/mist-blog"
+        "url": "https://github.com/mccartykim/mist-blog.git"
       },
       "original": {
         "type": "git",
-        "url": "ssh://git@github.com/mccartykim/mist-blog"
+        "url": "https://github.com/mccartykim/mist-blog.git"
       }
     },
     "nil-flake": {
@@ -1132,11 +1132,11 @@
         "rev": "17462deb90c80acfb5c432d6ee6551997fb10ebd",
         "revCount": 12,
         "type": "git",
-        "url": "ssh://git@github.com/mccartykim/org-agent.git"
+        "url": "https://github.com/mccartykim/org-agent.git"
       },
       "original": {
         "type": "git",
-        "url": "ssh://git@github.com/mccartykim/org-agent.git"
+        "url": "https://github.com/mccartykim/org-agent.git"
       }
     },
     "org-crm": {
@@ -1156,11 +1156,11 @@
         "rev": "8be27eeb0df407ebb18e7f3cd50c90c29db2a4cb",
         "revCount": 21,
         "type": "git",
-        "url": "ssh://git@github.com/mccartykim/org_crm.git"
+        "url": "https://github.com/mccartykim/org_crm.git"
       },
       "original": {
         "type": "git",
-        "url": "ssh://git@github.com/mccartykim/org_crm.git"
+        "url": "https://github.com/mccartykim/org_crm.git"
       }
     },
     "org-life-coach": {
@@ -1180,11 +1180,11 @@
         "rev": "6dc7af8cc99cafacc7b65be4895e87ef1d88b760",
         "revCount": 67,
         "type": "git",
-        "url": "ssh://git@github.com/mccartykim/org-life-coach.git"
+        "url": "https://github.com/mccartykim/org-life-coach.git"
       },
       "original": {
         "type": "git",
-        "url": "ssh://git@github.com/mccartykim/org-life-coach.git"
+        "url": "https://github.com/mccartykim/org-life-coach.git"
       }
     },
     "organism": {
