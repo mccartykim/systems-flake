@@ -119,6 +119,11 @@ in
     "buildbot-workers.age".publicKeys = [hostKeys.rich-evans bootstrap];
     # Worker-side password file (same string as the "pass" field in workers.json)
     "buildbot-worker-password.age".publicKeys = [hostKeys.historian bootstrap];
+    # Fine-grained PAT for fetching private flake inputs from
+    # mccartykim/* (Contents: Read). File contents: a single line
+    # `access-tokens = github.com=<the-pat>` — included verbatim into
+    # nix.conf via `nix.extraOptions = "!include ..."` on historian.
+    "buildbot-worker-github-token.age".publicKeys = [hostKeys.historian bootstrap];
 
     # ===== MEDIA PIPELINE (historian) =====
     # rclone config with put.io OAuth token
