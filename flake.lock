@@ -741,15 +741,15 @@
       "locked": {
         "lastModified": 1777525208,
         "narHash": "sha256-stl60p2oWFBzjrWpLiB/AdxFPW38tPJsr3f9FGGINA8=",
-        "owner": "mccartykim",
-        "repo": "lifecoach_organism",
+        "ref": "refs/heads/main",
         "rev": "f12fc0338d0e165742c7e9f37f3628a52a640c40",
-        "type": "github"
+        "revCount": 80,
+        "type": "git",
+        "url": "https://github.com/mccartykim/lifecoach_organism.git"
       },
       "original": {
-        "owner": "mccartykim",
-        "repo": "lifecoach_organism",
-        "type": "github"
+        "type": "git",
+        "url": "https://github.com/mccartykim/lifecoach_organism.git"
       }
     },
     "media-classifier": {
@@ -1802,15 +1802,15 @@
       "locked": {
         "lastModified": 1777525222,
         "narHash": "sha256-Fy2VIToBSRFItnLNKsboNZFKJK4FP3pMB3oqw64K7O8=",
-        "owner": "mccartykim",
-        "repo": "vacuum_organism",
+        "ref": "refs/heads/main",
         "rev": "77a6acb680301b42aed6f6ae535db411c84d7057",
-        "type": "github"
+        "revCount": 30,
+        "type": "git",
+        "url": "https://github.com/mccartykim/vacuum_organism.git"
       },
       "original": {
-        "owner": "mccartykim",
-        "repo": "vacuum_organism",
-        "type": "github"
+        "type": "git",
+        "url": "https://github.com/mccartykim/vacuum_organism.git"
       }
     },
     "vacuum-skills": {
