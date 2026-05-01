@@ -326,7 +326,12 @@
         OLLAMA_FLASH_ATTENTION = "1";
         OLLAMA_KV_CACHE_TYPE = "q8_0";
         OLLAMA_KEEP_ALIVE = "2h";
-        OLLAMA_NUM_CTX = "32768";
+        # NB: must be OLLAMA_CONTEXT_LENGTH, NOT OLLAMA_NUM_CTX. The
+        # latter is silently ignored by ollama serve. Without this set,
+        # ollama falls back to the model's native context (gemma4:e4b
+        # defaults to 131072), and allocating that KV cache + model
+        # weights on the AMD iGPU's shared memory OOMs the runner.
+        OLLAMA_CONTEXT_LENGTH = "4096";
       };
     };
     open-webui = {
