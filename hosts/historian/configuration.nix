@@ -246,6 +246,47 @@
   # shader cache writes fail and the Vulkan subtitle overlay pipeline deadlocks.
   systemd.services.jellyfin.environment.XDG_CACHE_HOME = "/var/cache/jellyfin";
 
+  # Pre-warm gemma4:e4b into ollama after ollama starts. The first cold
+  # load on the AMD iGPU takes ~73s (9GB model + KV cache into shared
+  # memory); without this, the first lifecoach mechanical heartbeat
+  # after a host reboot or ollama restart hits a cold path that exceeds
+  # the 90s ask_ollama timeout. Pre-warming pulls that latency out of
+  # the agent's hot path and into a one-shot service that finishes
+  # before the first heartbeat fires.
+  #
+  # Tied to ollama's lifecycle via partOf so it re-runs when ollama
+  # restarts, and via wantedBy=multi-user.target so it fires at boot.
+  systemd.services.ollama-warmup = {
+    description = "Pre-load gemma4:e4b into ollama";
+    after = ["ollama.service"];
+    requires = ["ollama.service"];
+    partOf = ["ollama.service"];
+    wantedBy = ["multi-user.target"];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+    };
+    script = ''
+      # Wait up to 60s for ollama to accept connections (it usually
+      # binds within a second or two, but ROCm discovery can take
+      # longer right after boot).
+      for i in $(seq 1 60); do
+        if ${pkgs.curl}/bin/curl -sf http://localhost:11434/api/tags >/dev/null 2>&1; then
+          break
+        fi
+        sleep 1
+      done
+      # Tiny chat with explicit num_ctx=4096 — same context lifecoach
+      # uses, so the cold-loaded layout matches the runtime layout and
+      # subsequent calls hit a warm runner. 180s budget for the
+      # cold-load itself; failure is non-fatal (callers will retry).
+      ${pkgs.curl}/bin/curl -sS -X POST http://localhost:11434/api/chat \
+        -H "Content-Type: application/json" \
+        -d '{"model":"gemma4:e4b","options":{"num_ctx":4096},"messages":[{"role":"user","content":"warmup"}],"stream":false}' \
+        --max-time 180 >/dev/null || true
+    '';
+  };
+
   # Auto-login for TV use
   services.displayManager.autoLogin = {
     enable = true;
