@@ -26,6 +26,9 @@
 
     # Restic backups to Backblaze B2
     ../../modules/restic-backup.nix
+
+    # Emulator stack (Switch, PS2/PS3, GC/Wii, 3DS, RetroArch, etc.)
+    ./emulation.nix
   ];
 
   # Nebula mesh network configuration
