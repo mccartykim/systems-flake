@@ -47,6 +47,14 @@
       url = "https://github.com/libsdl-org/SDL/archive/cc016b0046.tar.gz";
       hash = "sha512-uNmHNEbNuSI4dHHfmWjgeHFGgwRmdO8NDt3fjiXaZaU5o7roPWNUlrlwI3+QsHs2pp+NeFXUUN5ZMR1tbow9vA==";
     };
+
+    # Pulled in by USE_DISCORD_PRESENCE=ON; eden's fork is not in nixpkgs.
+    # Note: cpmfile key is "discord-rpc" but the cmake package name (and thus
+    # the var watched by CPMUtil) is "DiscordRPC" — see attribute name below.
+    DiscordRPC = {
+      url = "https://github.com/eden-emulator/discord-rpc/archive/0d8b2d6a37.tar.gz";
+      hash = "sha512-ghPEPcsPfUefWGEJHREe0S+97B5i5tcp1lpLwYHYL0ijXV/TzVwpHyOTrHyWgeq8a3Zgl1X1U3YoTIqNZ+FI8w==";
+    };
   };
 
   unpackDep = name: spec:
