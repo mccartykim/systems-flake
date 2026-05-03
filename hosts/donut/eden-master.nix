@@ -28,17 +28,23 @@
   # <NAME>_CUSTOM_DIR. Use this when the system version is wrong or absent.
   # Each value: { url, sha512 } from the upstream cpmfile.json. Patches are
   # applied automatically by CPM from eden's `.patch/<name>/` directory.
+  # NOTE: GitHub regenerates archive tarballs over time so the sha512 in
+  # upstream cpmfile.json drifts. We use SRI hashes computed from
+  # `nix-prefetch-url` against the live URL, not the cpmfile values.
   bundled = {
+    # cpmfile pins git_version=0.37.0 and version=0.18.7 — the latter is the
+    # find_package min_version, the former is what %VERSION% in `tag` resolves
+    # to (CPMUtil line 184). URL is v0.37.0; hash matches cpmfile.
     httplib = {
-      url = "https://github.com/yhirose/cpp-httplib/archive/refs/tags/v0.18.7.tar.gz";
-      sha512 = "5efa8140aadffe105dcf39935b732476e95755f6c7473ada3d0b64df2bc02c557633ae3948a25b45e1cf67e89a3ff6329fb30362e4ac033b9a1d1e453aa2eded";
+      url = "https://github.com/yhirose/cpp-httplib/archive/refs/tags/v0.37.0.tar.gz";
+      hash = "sha512-XvqBQKrf/hBdzzmTW3MkdulXVfbHRzraPQtk3yvALFV2M645SKJbReHPZ+iaP/Yyn7MDYuSsAzuaHR5FOqLt7Q==";
     };
   };
 
   unpackDep = name: spec:
     stdenv.mkDerivation {
       name = "eden-cpm-${name}";
-      src = fetchurl {inherit (spec) url sha512;};
+      src = fetchurl {inherit (spec) url hash;};
       dontConfigure = true;
       dontBuild = true;
       installPhase = ''
@@ -49,10 +55,18 @@
       '';
     };
 
-  customDirArgs =
-    lib.mapAttrsToList
-    (name: spec: "-D${name}_CUSTOM_DIR=${unpackDep name spec}")
-    bundled;
+  # CPM applies patches in-place into the source dir, which fails on /nix/store
+  # paths (read-only). Copy each pre-fetched source into the build tree at
+  # configure time and point CMake at that writable copy.
+  copyAndFlagsScript =
+    lib.concatStrings
+    (lib.mapAttrsToList
+      (name: spec: ''
+        cp -r ${unpackDep name spec}/. "$NIX_BUILD_TOP/cpm-deps/${name}/"
+        chmod -R u+w "$NIX_BUILD_TOP/cpm-deps/${name}"
+        cmakeFlagsArray+=("-D${name}_CUSTOM_DIR=$NIX_BUILD_TOP/cpm-deps/${name}")
+      '')
+      bundled);
 in
   eden.overrideAttrs (old: {
     pname = "eden-master";
@@ -72,7 +86,12 @@ in
     # 0.2.x added a Qt6Charts dependency.
     buildInputs = old.buildInputs ++ [qt6.qtcharts];
 
-    cmakeFlags = old.cmakeFlags ++ customDirArgs;
+    preConfigure =
+      (old.preConfigure or "")
+      + ''
+        mkdir -p "$NIX_BUILD_TOP/cpm-deps"
+        ${copyAndFlagsScript}
+      '';
 
     doCheck = false;
   })

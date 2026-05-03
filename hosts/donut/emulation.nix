@@ -1,39 +1,17 @@
 # Emulator stack for the Steam Deck. Keys/firmware/ROMs live under
 # ~/.local/share/<emu>/ and are not managed by Nix.
 {pkgs, ...}: let
-  # nixpkgs ships eden 0.1.1; bump to upstream 0.2.0-rc2 (released 2026-03-16).
-  # Drop the aarch64-only fastmem patch — the Deck is x86_64 and the patch
-  # targets 0.1.x source paths.
-  eden-latest = pkgs.eden.overrideAttrs (old: rec {
-    version = "0.2.0-rc2";
-    src = pkgs.fetchFromGitea {
-      domain = "git.eden-emu.dev";
-      owner = "eden-emu";
-      repo = "eden";
-      tag = "v${version}";
-      hash = "sha256-keLkB5qeQch+tM2J6zVh9oQGhP5TuxItqrZRN24apJw=";
-    };
-    # Backport upstream branch many/fix-tomodachi onto rc2: replaces a
-    # static_vector<T,128> with small_vector<T,64> in vk_compute_pipeline,
-    # avoiding stack overflow (SIGABRT/__stack_chk_fail) when Tomodachi Life
-    # configures >128 image views in one call. Master/nightly haven't merged
-    # this fix yet as of 2026-05-03.
-    patches = [
-      ./eden-fix-tomodachi.patch
-      ./eden-fix-npad-null.patch
-    ];
-    doCheck = false;
-    # 0.2.x adds a Qt6Charts dependency (frametime/FPS overlay).
-    buildInputs = old.buildInputs ++ [pkgs.qt6.qtcharts];
-  });
+  # Eden built from upstream master, pre-fetching cpmfile.json deps so the
+  # build is sandbox-friendly. See eden-master.nix for the bump procedure.
+  eden-master = pkgs.callPackage ./eden-master.nix {};
 
-  # Eden nightly via DwarFS-extracted AppImage (cpmfile-based source build is
-  # not yet feasible in nixpkgs; see ./eden-nightly.nix for bump procedure).
+  # Eden nightly via DwarFS-extracted AppImage (kept around in case we need to
+  # diff master-from-source vs the pre-built nightly).
   eden-nightly = pkgs.callPackage ./eden-nightly.nix {};
 in {
   environment.systemPackages = with pkgs; [
     # Switch
-    eden-latest
+    eden-master
     eden-nightly
     ryubing
 
