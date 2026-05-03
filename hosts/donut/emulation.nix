@@ -18,10 +18,15 @@
     # 0.2.x adds a Qt6Charts dependency (frametime/FPS overlay).
     buildInputs = old.buildInputs ++ [pkgs.qt6.qtcharts];
   });
+
+  # Eden nightly via DwarFS-extracted AppImage (cpmfile-based source build is
+  # not yet feasible in nixpkgs; see ./eden-nightly.nix for bump procedure).
+  eden-nightly = pkgs.callPackage ./eden-nightly.nix {};
 in {
   environment.systemPackages = with pkgs; [
     # Switch
     eden-latest
+    eden-nightly
     ryubing
 
     # Sony
