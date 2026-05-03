@@ -1,0 +1,25 @@
+Backport of upstream branch many/fix-tomodachi (commit 3e54fb4c33e1, 2026-04-28)
+adapted for Eden v0.2.0-rc2 source layout.
+
+Fixes SIGABRT/__stack_chk_fail in Tomodachi Life: Living the Dream when the
+Vulkan compute pipeline configures more than `max_elements` image views in one
+call. The previous static_vector overflows its fixed stack capacity; switching
+to small_vector keeps the same inline capacity but spills the overflow to the
+heap, avoiding the stack canary trip.
+
+rc2 already pinned `max_elements = 64`, so the size argument is unchanged here;
+upstream's master had it at 128 and reduced to 64 in the same commit.
+
+--- a/src/video_core/renderer_vulkan/vk_compute_pipeline.cpp
++++ b/src/video_core/renderer_vulkan/vk_compute_pipeline.cpp
+@@ -128,8 +128,8 @@ void ComputePipeline::Configure(Tegra::Engines::KeplerCompute& kepler_compute,
+     texture_cache.SynchronizeComputeDescriptors();
+
+     static constexpr size_t max_elements = 64;
+-    boost::container::static_vector<VideoCommon::ImageViewInOut, max_elements> views;
+-    boost::container::static_vector<VideoCommon::SamplerId, max_elements> samplers;
++    boost::container::small_vector<VideoCommon::ImageViewInOut, max_elements> views;
++    boost::container::small_vector<VideoCommon::SamplerId, max_elements> samplers;
+
+     const auto& qmd{kepler_compute.launch_description};
+     const auto& cbufs{qmd.const_buffer_config};
