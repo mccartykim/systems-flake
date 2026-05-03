@@ -18,7 +18,10 @@
     # avoiding stack overflow (SIGABRT/__stack_chk_fail) when Tomodachi Life
     # configures >128 image views in one call. Master/nightly haven't merged
     # this fix yet as of 2026-05-03.
-    patches = [./eden-fix-tomodachi.patch];
+    patches = [
+      ./eden-fix-tomodachi.patch
+      ./eden-fix-npad-null.patch
+    ];
     doCheck = false;
     # 0.2.x adds a Qt6Charts dependency (frametime/FPS overlay).
     buildInputs = old.buildInputs ++ [pkgs.qt6.qtcharts];
