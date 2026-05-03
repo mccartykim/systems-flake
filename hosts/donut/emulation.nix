@@ -1,9 +1,9 @@
 # Emulator stack for the Steam Deck. Keys/firmware/ROMs live under
 # ~/.local/share/<emu>/ and are not managed by Nix.
 {pkgs, ...}: let
-  # Eden built from upstream master, pre-fetching cpmfile.json deps so the
-  # build is sandbox-friendly. See eden-master.nix for the bump procedure.
-  eden-master = pkgs.callPackage ./eden-master.nix {};
+  # Eden built from upstream master with the steamdeck profile (znver2 + LTO
+  # + sdl2_steamdeck CPM dep). Shared package; see ../../pkgs/eden-master/.
+  eden-master = pkgs.callPackage ../../pkgs/eden-master {profile = "steamdeck";};
 
   # Eden nightly via DwarFS-extracted AppImage (kept around in case we need to
   # diff master-from-source vs the pre-built nightly).

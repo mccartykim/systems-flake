@@ -28,6 +28,9 @@
 
     # Paperless-ngx document management (scanned mail from maitred)
     ./paperless.nix
+
+    # Switch emulator (Eden master, x86-64-v3 generic profile)
+    ./emulation.nix
   ];
 
   kimb = {
