@@ -13,7 +13,12 @@
       tag = "v${version}";
       hash = "sha256-keLkB5qeQch+tM2J6zVh9oQGhP5TuxItqrZRN24apJw=";
     };
-    patches = [];
+    # Backport upstream branch many/fix-tomodachi onto rc2: replaces a
+    # static_vector<T,128> with small_vector<T,64> in vk_compute_pipeline,
+    # avoiding stack overflow (SIGABRT/__stack_chk_fail) when Tomodachi Life
+    # configures >128 image views in one call. Master/nightly haven't merged
+    # this fix yet as of 2026-05-03.
+    patches = [./eden-fix-tomodachi.patch];
     doCheck = false;
     # 0.2.x adds a Qt6Charts dependency (frametime/FPS overlay).
     buildInputs = old.buildInputs ++ [pkgs.qt6.qtcharts];
