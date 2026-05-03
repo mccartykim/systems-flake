@@ -39,6 +39,14 @@
       url = "https://github.com/yhirose/cpp-httplib/archive/refs/tags/v0.37.0.tar.gz";
       hash = "sha512-XvqBQKrf/hBdzzmTW3MkdulXVfbHRzraPQtk3yvALFV2M645SKJbReHPZ+iaP/Yyn7MDYuSsAzuaHR5FOqLt7Q==";
     };
+
+    # Eden's official Steam Deck build pins this SDL2 fork (commit cc016b0046)
+    # for Deck-specific input quirks; selected when YUZU_SYSTEM_PROFILE=steamdeck
+    # via externals/CMakeLists.txt. The nixpkgs SDL2 isn't a 1-to-1 substitute.
+    sdl2_steamdeck = {
+      url = "https://github.com/libsdl-org/SDL/archive/cc016b0046.tar.gz";
+      hash = "sha512-uNmHNEbNuSI4dHHfmWjgeHFGgwRmdO8NDt3fjiXaZaU5o7roPWNUlrlwI3+QsHs2pp+NeFXUUN5ZMR1tbow9vA==";
+    };
   };
 
   unpackDep = name: spec:
@@ -85,6 +93,28 @@ in
 
     # 0.2.x added a Qt6Charts dependency.
     buildInputs = old.buildInputs ++ [qt6.qtcharts];
+
+    # Match the configuration of upstream's `.ci/linux/build.sh steamdeck`:
+    # Zen 2 / Steam Deck-targeted optimizations, system SDL2 fork from CPM,
+    # LTO, faster linker, Discord presence, no bundled Qt.
+    env =
+      (old.env or {})
+      // {
+        NIX_CFLAGS_COMPILE = "-march=znver2 -mtune=znver2 -O3";
+      };
+
+    cmakeFlags =
+      old.cmakeFlags
+      ++ [
+        "-DCMAKE_BUILD_TYPE=Release"
+        "-DYUZU_BUILD_PRESET=zen2"
+        "-DYUZU_SYSTEM_PROFILE=steamdeck"
+        "-DYUZU_USE_EXTERNAL_SDL2=ON"
+        "-DYUZU_USE_BUNDLED_SDL2=OFF"
+        "-DYUZU_USE_FASTER_LD=ON"
+        "-DENABLE_LTO=ON"
+        "-DUSE_DISCORD_PRESENCE=ON"
+      ];
 
     preConfigure =
       (old.preConfigure or "")
