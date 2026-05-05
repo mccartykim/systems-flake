@@ -31,44 +31,6 @@ let
       };
     };
     tailscale.subnet = "100.64.0.0/10";
-
-    # Buildnet: Hot CA network for untrusted builders (Claude Code sandboxes)
-    buildnet = {
-      subnet = "10.101.0.0/16";
-      port = 4243;
-      lighthouses = ["10.101.0.1" "10.101.0.2"]; # maitred + oracle
-      pool = {
-        start = "10.101.0.100";
-        end = "10.101.0.254";
-      };
-    };
-
-    # Containernet: Hot CA network for container service mesh
-    containernet = {
-      subnet = "10.102.0.0/16";
-      port = 4244;
-      lighthouses = ["10.102.0.1" "10.102.0.2"]; # maitred + oracle
-      # External endpoints for each lighthouse (used by containers to bootstrap)
-      # Maitred binds to .254 to avoid conflict with reverse-proxy container (.1)
-      lighthouseEndpoints = {
-        "10.102.0.1" = ["192.168.100.254:4244" "kimb.dev:4244"];
-        "10.102.0.2" = ["150.136.155.204:4244"];
-      };
-      # Cert service endpoints (tried in order: local first, then WAN)
-      certServiceEndpoints = [
-        "http://192.168.100.1:8444" # Local container bridge (fast, maitred only)
-        "https://net.kimb.dev" # WAN fallback (works from anywhere)
-      ];
-      pool = {
-        start = "10.102.0.100";
-        end = "10.102.0.254";
-      };
-      # Static IPs for infrastructure (outside pool range)
-      # These require manually generated certs via nebula-cert sign
-      staticHosts = {
-        reverse-proxy = "10.102.0.10"; # Caddy bridge for container→containernet routing
-      };
-    };
   };
 
   # All managed hosts with complete configuration
@@ -77,8 +39,6 @@ let
 
     oracle = {
       ip = "10.100.0.2";
-      buildnetIp = "10.101.0.2"; # Second lighthouse for buildnet
-      containernetIp = "10.102.0.2"; # Second lighthouse for containernet
       external = "150.136.155.204:4242";
       isLighthouse = true;
       isRelay = true;
@@ -96,7 +56,6 @@ let
 
     historian = {
       ip = "10.100.0.10";
-      buildnetIp = "10.101.0.10"; # Dual-homed for builds from untrusted sources
       role = "desktop";
       groups = ["desktops" "nixos" "printing"];
       publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBXpuMSA1RXsYs6cEhvNqzhWpbIe2NB0ya1MUte87SD+";
@@ -149,8 +108,6 @@ let
 
     maitred = {
       ip = "10.100.0.50";
-      buildnetIp = "10.101.0.1"; # Lighthouse for buildnet
-      containernetIp = "10.102.0.1"; # Lighthouse for containernet
       lanIp = "192.168.69.1";
       isLighthouse = true;
       isRelay = true;
