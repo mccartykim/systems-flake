@@ -460,7 +460,7 @@
             --verbose --stats 30s --size-only \
             --no-update-modtime --no-update-dir-modtime \
             --delete-before --fast-list --checkers 16 --transfers 16 \
-            --min-free-space 20G
+            --max-transfer 50G --cutoff-mode CAUTIOUS --max-duration 1h
 
           ${pkgs.rclone}/bin/rclone sync \
             --config /run/agenix/rclone-config \
@@ -469,7 +469,7 @@
             --verbose --stats 30s --size-only \
             --no-update-modtime --no-update-dir-modtime \
             --delete-before --fast-list --checkers 16 --transfers 16 \
-            --min-free-space 20G
+            --max-transfer 50G --cutoff-mode CAUTIOUS --max-duration 1h
         '';
       in "${syncScript}";
       ExecStartPost = let
