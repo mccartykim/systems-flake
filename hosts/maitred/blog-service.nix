@@ -1,5 +1,4 @@
-# Blog service container using kimb-services options
-# Now with containernet mesh integration for host-decoupled networking
+# Blog service container
 {
   config,
   lib,
@@ -9,29 +8,17 @@
 }: let
   cfg = config.kimb;
   blogService = cfg.services.blog;
+  # Host-side veth IP for this container; also the address blog-service uses
+  # for DNS (unbound on maitred listens on all interfaces).
+  hostVeth = "192.168.100.11";
 in {
-  # Blog service container (uses mist-blog flake input)
   containers.blog-service = lib.mkIf blogService.enable {
     autoStart = true;
     privateNetwork = true;
-    # Each container needs unique hostAddress for point-to-point veth link
-    # Using .11 to avoid collision with reverse-proxy which uses containerBridge (.1)
-    hostAddress = "192.168.100.11";
+    # Each container needs unique hostAddress for point-to-point veth link.
+    # Using .11 to avoid collision with reverse-proxy which uses containerBridge (.1).
+    hostAddress = hostVeth;
     localAddress = blogService.containerIP;
-
-    # Allow tun device for nebula containernet
-    allowedDevices = [
-      {
-        node = "/dev/net/tun";
-        modifier = "rw";
-      }
-    ];
-
-    # Bind-mount cert-service token for containernet integration
-    bindMounts."/run/containernet/token" = {
-      hostPath = "/etc/ephemeral-ca/token";
-      isReadOnly = true;
-    };
 
     config = {
       config,
@@ -39,20 +26,22 @@ in {
       lib,
       ...
     }: {
-      # Import containernet module for fire-and-forget mesh integration
-      imports = [../../modules/containernet-container.nix];
-
-      # Enable containernet with blog port exposed
-      kimb.containernet = {
-        enable = true;
-        servicePorts = [blogService.port];
-      };
+      # Resolve DNS through unbound on maitred via the host-side veth IP.
+      # Same NSS-bypass pattern as reverse-proxy — see note there for why nscd
+      # and nssModules are forced off alongside the static resolv.conf.
+      networking.nameservers = [hostVeth];
+      services.nscd.enable = false;
+      system.nssModules = lib.mkForce [];
+      networking.resolvconf.enable = false;
+      environment.etc."resolv.conf".text = ''
+        nameserver ${hostVeth}
+      '';
 
       environment.systemPackages = [inputs.mist-blog.packages.x86_64-linux.default];
 
       systemd.services.mist-blog = {
         description = "Mist Blog Service";
-        after = ["network.target" "nebula-containernet.service"];
+        after = ["network.target"];
         wantedBy = ["multi-user.target"];
         serviceConfig = {
           ExecStart = "${inputs.mist-blog.packages.x86_64-linux.default}/bin/mist_blog";

@@ -78,9 +78,6 @@
     distributedBuilds = {
       # enable = true; # Already enabled via commonModules
 
-      # Buildnet disabled - CA cert needs regeneration
-      # buildnet.enable = true;
-
       # Claude Code SSH key - can only run nix-daemon, no shell access
       builderOnlyKeys = [
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKcpY/DdbidptJJsrr3DgZyrwMYW79cpRwqwb5GbCGy7 claude"

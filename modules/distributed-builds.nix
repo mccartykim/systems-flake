@@ -1,6 +1,5 @@
 # Distributed Nix builds using historian and total-eclipse as remote builders
 # Clients offload builds to builders when reachable over nebula
-# Supports both trusted (main mesh) and untrusted (buildnet) builders
 {
   config,
   lib,
@@ -21,17 +20,6 @@ with lib; let
 
   # Host keys from desktops/laptops that can use distributed builds
   clientHostKeys = sshKeys.desktopList ++ sshKeys.laptopList;
-
-  # Buildnet config (new)
-  buildnetIP = registry.nodes.historian.buildnetIp or null;
-  buildnetLighthouses = registry.networks.buildnet.lighthouses or ["10.101.0.1"];
-  buildnetPort = registry.networks.buildnet.port or 4243;
-
-  # External endpoints for lighthouses (maitred + oracle)
-  lighthouseEndpoints = {
-    "10.101.0.1" = "kimb.dev:${toString buildnetPort}"; # maitred
-    "10.101.0.2" = "150.136.155.204:${toString buildnetPort}"; # oracle
-  };
 in {
   options.kimb.distributedBuilds = {
     enable = mkEnableOption "distributed Nix builds via historian";
@@ -42,7 +30,7 @@ in {
       description = "Whether this host accepts remote builds";
     };
 
-    # NEW: Builder-only keys (command-restricted, no shell)
+    # Builder-only keys (command-restricted, no shell)
     builderOnlyKeys = mkOption {
       type = types.listOf types.str;
       default = [];
@@ -53,17 +41,6 @@ in {
       example = [
         "ssh-ed25519 AAAA... claude"
       ];
-    };
-
-    # NEW: Enable buildnet (second nebula network for builds)
-    buildnet = {
-      enable = mkEnableOption "buildnet nebula network for untrusted builders";
-
-      lighthouses = mkOption {
-        type = types.listOf types.str;
-        default = buildnetLighthouses;
-        description = "Buildnet lighthouse IPs";
-      };
     };
 
     connectTimeout = mkOption {
@@ -101,75 +78,6 @@ in {
           key: ''command="${pkgs.nix}/bin/nix-daemon --stdio",no-port-forwarding,no-agent-forwarding,no-X11-forwarding,no-pty ${key}''
         )
         cfg.builderOnlyKeys;
-    })
-
-    # === BUILDER BUILDNET CONFIG (historian joins buildnet) ===
-    (mkIf (cfg.isBuilder && cfg.buildnet.enable && buildnetIP != null) {
-      # Buildnet nebula instance
-      services.nebula.networks.buildnet = {
-        enable = true;
-        isLighthouse = false;
-        ca = config.age.secrets.buildnet-ca.path;
-        cert = config.age.secrets.buildnet-historian-cert.path;
-        key = config.age.secrets.buildnet-historian-key.path;
-        inherit (cfg.buildnet) lighthouses;
-        staticHostMap = builtins.listToAttrs (map (lh: {
-            name = lh;
-            value = [lighthouseEndpoints.${lh}];
-          })
-          cfg.buildnet.lighthouses);
-        listen.port = buildnetPort;
-        settings = {
-          tun.dev = "nebula-build";
-          firewall = {
-            inbound = [
-              {
-                port = "any";
-                proto = "icmp";
-                host = "any";
-              }
-              # Only SSH from builders group
-              {
-                port = 22;
-                proto = "tcp";
-                group = "builders";
-              }
-            ];
-            outbound = [
-              {
-                port = "any";
-                proto = "any";
-                host = "any";
-              }
-            ];
-          };
-        };
-      };
-
-      # Buildnet secrets
-      age.secrets = {
-        buildnet-ca = {
-          file = ../secrets/buildnet-ca-cert.age;
-          path = "/etc/nebula-buildnet/ca.crt";
-          owner = "nebula-buildnet";
-          group = "nebula-buildnet";
-          mode = "0644";
-        };
-        buildnet-historian-cert = {
-          file = ../secrets/buildnet-historian-cert.age;
-          path = "/etc/nebula-buildnet/historian.crt";
-          owner = "nebula-buildnet";
-          group = "nebula-buildnet";
-          mode = "0644";
-        };
-        buildnet-historian-key = {
-          file = ../secrets/buildnet-historian-key.age;
-          path = "/etc/nebula-buildnet/historian.key";
-          owner = "nebula-buildnet";
-          group = "nebula-buildnet";
-          mode = "0600";
-        };
-      };
     })
 
     # === CLIENT CONFIG (all other hosts) ===

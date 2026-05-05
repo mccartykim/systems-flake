@@ -18,9 +18,6 @@ in {
     # Nebula mesh network (consolidated module)
     ../../modules/nebula-node.nix
 
-    # Ephemeral nebula networks (buildnet + containernet)
-    ./ephemeral-networks.nix
-
     # Reverse proxy container
     ./reverse-proxy.nix
 

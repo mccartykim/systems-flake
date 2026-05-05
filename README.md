@@ -67,8 +67,6 @@ All machines are connected via a [Nebula](https://github.com/slackhq/nebula) mes
 - **Lighthouse**: Uses centralized registry (`registry.network.lighthouse.ip`)
 - **DNS Server**: maitred router at `registry.nodes.maitred.ip` (primary DNS for network)
 
-I'm also experimenting with a buildnet and containernet parallel nebula networks, but I'm starting to realize that might just be awful compared to creating a certbot to add ephemeral machines to a group. That's for later!
-
 ### Adding New Devices
 
 1. **Add to registry**: Edit `hosts/nebula-registry.nix` and add your device:
