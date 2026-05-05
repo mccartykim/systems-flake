@@ -109,6 +109,7 @@ in {
       services.nscd.enable = false;
       system.nssModules = lib.mkForce [];
       # Force resolv.conf to use host DNS
+      networking.resolvconf.enable = false;
       environment.etc."resolv.conf".text = ''
         nameserver ${cfg.networks.containerBridge}
       '';
