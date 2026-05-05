@@ -232,6 +232,7 @@
       niri
       nh
       weylus
+      orca-slicer
     ];
   };
 
