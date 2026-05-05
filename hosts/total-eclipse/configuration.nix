@@ -167,6 +167,7 @@
       sunshine
       toolbox
       tealdeer
+      orca-slicer
     ];
   };
 
