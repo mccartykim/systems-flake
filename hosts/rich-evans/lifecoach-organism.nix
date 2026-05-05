@@ -95,6 +95,15 @@ in {
       interval = "25min";
       keepAlive = "30m";
     };
+
+    # Bind desk_task_3 as the bed0up override per the Phase 1+2
+    # plan (vision/sensor primary; this button is the "stop being
+    # silent" override for false-negatives). Declarative — does NOT
+    # mutate the live agent.org. Kim's manual `:BUTTON:` drawer
+    # entry on bed0up would still win if she sets one.
+    defaultButtonBindings = {
+      bed0up = "desk_task_3";
+    };
   };
 
   systemd.services.lifecoach-watchdog.path = lib.mkAfter [org-agent-emacs];
