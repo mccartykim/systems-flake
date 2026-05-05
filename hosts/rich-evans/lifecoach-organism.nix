@@ -83,6 +83,18 @@ in {
       # TTS only, no Discord fan-out.
       alertChannelId = "";
     };
+
+    # Keep the agent LLM (qwen3.6:35b-a3b) resident on historian.
+    # Without this, every Discord trigger pays the 35B cold-load cost
+    # and silently fails (organic gets empty stdout from the timeout).
+    # 25-min interval < 30-min keep_alive so the model never falls
+    # out of memory.
+    ollamaWarmup = {
+      enable = true;
+      model = "qwen3.6:35b-a3b";
+      interval = "25min";
+      keepAlive = "30m";
+    };
   };
 
   systemd.services.lifecoach-watchdog.path = lib.mkAfter [org-agent-emacs];
