@@ -474,6 +474,9 @@
         postSync = pkgs.writeShellScript "post-sync" ''
           # Clean up broken symlinks then classify new media
           ${pkgs.systemd}/bin/systemctl start media-symlink-cleanup.service
+          # Prune empty show/season dirs so Jellyfin drops the library entries.
+          # mindepth 2 protects the Anime/Movies/TV Shows roots.
+          ${pkgs.findutils}/bin/find /srv/media -mindepth 2 -type d -empty -delete || true
           ${pkgs.systemd}/bin/systemctl start media-classifier.service
         '';
       in "+${postSync}";
