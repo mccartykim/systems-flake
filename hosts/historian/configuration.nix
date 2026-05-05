@@ -459,7 +459,8 @@
             /mnt/media-drive/putio/chill.institute/ \
             --verbose --stats 30s --size-only \
             --no-update-modtime --no-update-dir-modtime \
-            --delete-before --fast-list --checkers 16 --transfers 16
+            --delete-before --fast-list --checkers 16 --transfers 16 \
+            --min-free-space 20G
 
           ${pkgs.rclone}/bin/rclone sync \
             --config /run/agenix/rclone-config \
@@ -467,7 +468,8 @@
             "/mnt/media-drive/putio/Items shared with you/Parsimony/" \
             --verbose --stats 30s --size-only \
             --no-update-modtime --no-update-dir-modtime \
-            --delete-before --fast-list --checkers 16 --transfers 16
+            --delete-before --fast-list --checkers 16 --transfers 16 \
+            --min-free-space 20G
         '';
       in "${syncScript}";
       ExecStartPost = let
