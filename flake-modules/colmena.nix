@@ -13,9 +13,13 @@
   # Helper to create colmena node from registry entry
   makeColmenaNode = name: node: {
     deployment = {
-      # Use hostname.nebula for DNS resolution, fallback comment shows IP
-      # ${name}.nebula resolves via maitred DNS, or use node.ip (${node.ip}) directly
-      targetHost = "${name}.nebula";
+      # Most hosts: deploy over Nebula. maitred is the DNS/Nebula authority
+      # itself, and its sshd doesn't reliably bind to the Nebula address at
+      # boot — reach it on the LAN router IP instead.
+      targetHost =
+        if name == "maitred"
+        then "192.168.69.1"
+        else "${name}.nebula";
       targetUser = "kimb";
       buildOnTarget = false;
     };
