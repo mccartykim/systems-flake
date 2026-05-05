@@ -28,6 +28,7 @@ in {
     # Sega/handheld/misc
     ppsspp
     mesen
+    flycast # Dreamcast (also available as a libretro core via retroarch-full)
 
     # Catch-all + PS1 via Swanstation core
     retroarch-full
