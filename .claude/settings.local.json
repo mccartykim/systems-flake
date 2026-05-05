@@ -85,7 +85,8 @@
       "WebFetch(domain:restic.readthedocs.io)",
       "Bash(top:*)",
       "Bash(lsmod:*)",
-      "Bash(modinfo:*)"
+      "Bash(modinfo:*)",
+      "Bash(scp /tmp/probe-ra.sh donut.nebula:/tmp/)"
     ],
     "deny": [],
     "ask": []
