@@ -353,17 +353,10 @@ in {
         PasswordAuthentication = false;
         PermitRootLogin = "no";
       };
-      # Restrict SSH to LAN and Nebula VPN only - NO public access
-      listenAddresses = [
-        {
-          addr = "192.168.69.1";
-          port = 22;
-        } # LAN access
-        {
-          addr = "10.100.0.50";
-          port = 22;
-        } # Nebula VPN access
-      ];
+      # Bind on all addresses; the firewall restricts WAN access (enp3s0 is
+      # not in trustedInterfaces and 22 isn't in allowedTCPPorts). Binding
+      # explicitly to 10.100.0.50 raced with nebula1 coming up at boot, so
+      # sshd silently fell back to LAN-only and broke mesh deploys.
     };
 
     # Tailscale for backup access
