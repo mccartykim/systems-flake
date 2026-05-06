@@ -102,6 +102,20 @@
     qwen3-tts-cuda.url = "git+https://github.com/mccartykim/qwen3-tts-cuda-flake.git";
     qwen3-tts-cuda.inputs.nixpkgs.follows = "nixpkgs";
 
+    # Generic restic-to-B2 backup module. systems-flake personalizes it
+    # in modules/restic-backup.nix with kimb-specific paths + repo + secrets.
+    restic-b2-backup.url = "git+https://github.com/mccartykim/restic-b2-backup-flake.git";
+
+    # Generic Cloudflare dynamic DNS (inadyn) module. systems-flake
+    # personalizes it in hosts/maitred/dns-update.nix with the kimb.dev
+    # zone + agenix-managed API token.
+    cloudflare-ddns.url = "git+https://github.com/mccartykim/cloudflare-ddns-flake.git";
+
+    # Generic Nebula mesh-node module. systems-flake personalizes it in
+    # modules/nebula-node.nix by reading hosts/nebula-registry.nix to
+    # compute lighthouses/relays/staticHostMap.
+    nebula-node.url = "git+https://github.com/mccartykim/nebula-node-flake.git";
+
     # Firefox Nightly
     firefox-nightly.url = "github:nix-community/flake-firefox-nightly";
     firefox-nightly.inputs.nixpkgs.follows = "nixpkgs";
