@@ -284,6 +284,24 @@
     },
     "flake-parts_3": {
       "inputs": {
+        "nixpkgs-lib": "nixpkgs-lib_3"
+      },
+      "locked": {
+        "lastModified": 1777988971,
+        "narHash": "sha256-qIoWPDs+0/8JecyYgE3gpKQxW/4bLW/gp45vow9ioCQ=",
+        "owner": "hercules-ci",
+        "repo": "flake-parts",
+        "rev": "0678d8986be1661af6bb555f3489f2fdfc31f6ff",
+        "type": "github"
+      },
+      "original": {
+        "owner": "hercules-ci",
+        "repo": "flake-parts",
+        "type": "github"
+      }
+    },
+    "flake-parts_4": {
+      "inputs": {
         "nixpkgs-lib": [
           "system-manager",
           "userborn",
@@ -974,6 +992,21 @@
         "type": "github"
       }
     },
+    "nixpkgs-lib_3": {
+      "locked": {
+        "lastModified": 1777168982,
+        "narHash": "sha256-GOkGPcboWE9BmGCRMLX3worL4EMnsnG8MyKmXNeYuhQ=",
+        "owner": "nix-community",
+        "repo": "nixpkgs.lib",
+        "rev": "f5901329dade4a6ea039af1433fb087bd9c1fe14",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-community",
+        "repo": "nixpkgs.lib",
+        "type": "github"
+      }
+    },
     "nixpkgs_2": {
       "locked": {
         "lastModified": 1764950072,
@@ -1266,12 +1299,15 @@
     "pyproject-build-systems_2": {
       "inputs": {
         "nixpkgs": [
+          "qwen3-tts-cuda",
           "nixpkgs"
         ],
         "pyproject-nix": [
+          "qwen3-tts-cuda",
           "pyproject-nix"
         ],
         "uv2nix": [
+          "qwen3-tts-cuda",
           "uv2nix"
         ]
       },
@@ -1313,6 +1349,7 @@
     "pyproject-nix_2": {
       "inputs": {
         "nixpkgs": [
+          "qwen3-tts-cuda",
           "nixpkgs"
         ]
       },
@@ -1328,6 +1365,30 @@
         "owner": "pyproject-nix",
         "repo": "pyproject.nix",
         "type": "github"
+      }
+    },
+    "qwen3-tts-cuda": {
+      "inputs": {
+        "flake-parts": "flake-parts_3",
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "pyproject-build-systems": "pyproject-build-systems_2",
+        "pyproject-nix": "pyproject-nix_2",
+        "uv2nix": "uv2nix_2"
+      },
+      "locked": {
+        "lastModified": 1778034188,
+        "narHash": "sha256-5x7fI9IzYS35ajEOaOZCWtQopK0uyyuDpy+UN+ke3BU=",
+        "ref": "refs/heads/master",
+        "rev": "e611ad3538854c4a7563d7763fa9c8b2889d2b5b",
+        "revCount": 2,
+        "type": "git",
+        "url": "https://github.com/mccartykim/qwen3-tts-cuda-flake.git"
+      },
+      "original": {
+        "type": "git",
+        "url": "https://github.com/mccartykim/qwen3-tts-cuda-flake.git"
       }
     },
     "root": {
@@ -1357,11 +1418,9 @@
         "org-agent": "org-agent",
         "org-crm": "org-crm",
         "org-life-coach": "org-life-coach",
-        "pyproject-build-systems": "pyproject-build-systems_2",
-        "pyproject-nix": "pyproject-nix_2",
+        "qwen3-tts-cuda": "qwen3-tts-cuda",
         "srvos": "srvos",
         "system-manager": "system-manager",
-        "uv2nix": "uv2nix_2",
         "vacuum-organism": "vacuum-organism"
       }
     },
@@ -1671,7 +1730,7 @@
           "system-manager",
           "flake-compat"
         ],
-        "flake-parts": "flake-parts_3",
+        "flake-parts": "flake-parts_4",
         "nixpkgs": [
           "system-manager",
           "nixpkgs"
@@ -1722,9 +1781,11 @@
     "uv2nix_2": {
       "inputs": {
         "nixpkgs": [
+          "qwen3-tts-cuda",
           "nixpkgs"
         ],
         "pyproject-nix": [
+          "qwen3-tts-cuda",
           "pyproject-nix"
         ]
       },
