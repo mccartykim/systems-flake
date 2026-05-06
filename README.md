@@ -12,8 +12,7 @@ But to get the ultimate configuration experience, it should apply changes to all
 * bartleby: My college era Thinkpad 131e, a tank of an educational netbook. Bought from some electronics reseller who got it from the Missouri school on ebay.
 * total-eclipse: Circa 2020 gaming PC with a GeForce 4060 RTX whatever. I don't know. It played death stranding fine. Now it can run a modest stable diffusion setup. I should put that in a flake. I should focus tho.
 * marshmallow: My favorite laptop. A Thinkpad T490 with an 8th gen i5. Seems nice. Faster than what I was used to, and while it came broken, I fixed everything wrong with it easily. Just a few captive screws and some scary but strong clips and you're in. I'm hoping it can be a cozy long-form typing machine. It's called marshmallow to embody that coziness. My mind was somewhere else when I named this.
-* donut: My steamdeck. Was going to call it creampuff but accidentally gave that name to
-* creampuff: My Surface 3 Go tablet that I'm trying to make usable without constant overheating. x86 processors shouldn't be passively cooled but I'm hoping Linux can make the most of it.
+* donut: My steamdeck.
 * historian: A server I bought hoping for AI inference with a Strix Point processor, but rocm isn't fantastic so I'm using it as a build machine and multimedia device for now. Also my primary remote dev machine.
 * maitred: My bespoke Datto box turned router, that bridges the WAN to my LAN and runs a few small services of its own.
 
@@ -64,41 +63,7 @@ All machines are connected via a [Nebula](https://github.com/slackhq/nebula) mes
 
 ### Network Layout
 - **Subnet**: `10.100.0.0/16`
-- **Lighthouse**: Uses centralized registry (`registry.network.lighthouse.ip`)
 - **DNS Server**: maitred router at `registry.nodes.maitred.ip` (primary DNS for network)
-
-### Adding New Devices
-
-1. **Add to registry**: Edit `hosts/nebula-registry.nix` and add your device:
-   ```nix
-   my-new-device = {
-     ip = networkIPs.nebula.hosts.my-new-device;  # Define in network-ips.nix first
-     isLighthouse = false;
-     role = "laptop";  # or "desktop", "server"
-     publicKey = null;  # Will be filled in step 3
-   };
-   ```
-
-2. **Add NixOS config**: Create `hosts/my-new-device/configuration.nix` and add to `flake.nix`:
-   ```nix
-   nixosConfigurations.my-new-device = nixpkgs.lib.nixosSystem {
-     specialArgs = {inherit inputs outputs;};
-     modules = [
-       ./hosts/my-new-device/configuration.nix
-       # ... other modules
-     ];
-   };
-   ```
-
-3. **Get SSH host key**: Deploy the basic config, then run:
-   ```bash
-   ./scripts/collect-age-keys.sh
-   ```
-   Update the `publicKey` field in the registry with the output.
-
-4. **Generate certificates**: The system automatically creates encrypted Nebula certs for all devices in the registry.
-
-5. **Deploy**: Build and deploy your config. The device will automatically join the mesh!
 
 ### DNS Resolution
 - `hostname.nebula` - Nebula mesh IPs (e.g., `historian.nebula` → `10.100.0.10`)
