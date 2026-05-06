@@ -1,8 +1,22 @@
-# Eden built from upstream master against a pinned commit, with cpmfile.json
-# dependencies pre-fetched and exposed via CMake `<NAME>_CUSTOM_DIR` so the
-# build never reaches the network.
+# Eden built from upstream master against a pinned commit. Mirrors
+# nixpkgs's `pkgs.eden` derivation structure (which is at 0.1.1, too far
+# behind master to use as an `overrideAttrs` base) plus master-specific
+# additions: qt6.qtcharts (added in 0.2.x), and per-profile arch flags +
+# CPM SDL2 fork variant matching upstream's `.ci/linux/build.sh <profile>`.
 #
-# Configuration matches the upstream `.ci/linux/build.sh <profile>` script.
+# CPM strategy:
+#   - `CPMUTIL_FORCE_SYSTEM=ON` makes every CPM dep try a system package
+#     via find_package; nixpkgs provides almost all of them as buildInputs.
+#   - DiscordRPC (eden's fork) and the per-profile SDL2 fork aren't in
+#     nixpkgs, so we mark them `_FORCE_BUNDLED=ON` and supply a writable
+#     copy at $NIX_BUILD_TOP/cpm-deps/<name>/ via `<NAME>_CUSTOM_DIR`.
+#     CPM applies the .patch/<name>/ patches in-place into that copy.
+#   - httplib was previously bundled too because of an alleged version-
+#     constraint propagation bug in eden's Findhttplib.cmake shim. Reading
+#     the current shim shows it strips the version arg before find_package
+#     CONFIG, so nixpkgs's httplib (0.30.2) satisfies the cpmfile's 0.18.7
+#     min in practice.
+#
 # Two `profile` values are wired up:
 #   - "steamdeck": Zen 2 march, sdl2_steamdeck CPM dep, YUZU_SYSTEM_PROFILE
 #   - "generic":   x86-64-v3 march, sdl2_generic CPM dep
@@ -16,21 +30,93 @@
 #          -o pkgs/eden-master/cpmfile.json
 #        curl -sL https://git.eden-emu.dev/eden-emu/eden/raw/branch/master/externals/cpmfile.json \
 #          -o pkgs/eden-master/cpmfile-externals.json
-#   3. Add new entries to `bundled` below as needed (build will surface them
-#      one at a time as configure-time CPM fetch failures).
-#   4. nix-prefetch-url for each entry; convert to SRI; paste into `bundled`.
+#   3. Diff the upstream cpmfile against `bundled` below + nixpkgs eden's
+#      buildInputs. New CPM deps surface as configure-time fetch failures;
+#      add to `buildInputs` if nixpkgs has them (preferred) or to `bundled`
+#      with a fetched URL + SRI hash if not.
+#   4. nix-prefetch-url for new bundled entries; convert to SRI; paste in.
 {
   stdenv,
   lib,
   fetchzip,
   fetchFromGitea,
-  eden, # nixpkgs base derivation we override
+  cmake,
+  ninja,
+  glslang,
+  pkg-config,
+  python3,
   qt6,
+  SDL2,
+  boost,
+  cpp-jwt,
+  cubeb,
+  enet,
+  ffmpeg-headless,
+  fmt,
+  frozen-containers,
+  gamemode,
+  kdePackages,
+  libopus,
+  libusb1,
+  lz4,
+  mbedtls,
+  mcl-cpp-utility-lib,
+  nlohmann_json,
+  oaknut,
+  openssl,
+  pipewire,
+  simpleini,
+  sirit,
+  spirv-headers,
+  spirv-tools,
+  stb,
+  unordered_dense,
+  vulkan-headers,
+  vulkan-loader,
+  vulkan-memory-allocator,
+  vulkan-utility-libraries,
+  xbyak,
+  zlib,
+  zstd,
+  tzdata,
   profile ? "generic",
 }: let
   commit = "44fa2805d6c6d2b1a7e838d27d7d6eafb9c57420";
   srcHash = "sha256-PF16gdsg5/AfG0pA8ybV0j6gwrT1YbDjrrWoaAiPFzU=";
   shortSha = builtins.substring 0 10 commit;
+
+  # Eden's externals/nx_tzdb/CMakeLists.txt fetches tzdb_to_nx via CPM
+  # unless YUZU_TZDB_PATH is set to a prebuilt nx_tzdb directory. We build
+  # it locally (mirrors nixpkgs eden's pattern) using nixpkgs's tzdata.
+  # Rev pinned via cpmfile-externals.json's `git_version` for tzdb_to_nx;
+  # bump together with a master commit bump.
+  nx_tzdb = stdenv.mkDerivation (finalAttrs: {
+    name = "tzdb_to_nx";
+    version = "230326";
+
+    src = fetchFromGitea {
+      domain = "git.eden-emu.dev";
+      owner = "eden-emu";
+      repo = "tzdb_to_nx";
+      tag = finalAttrs.version;
+      hash = "sha256-koz7C63oHVfrhrf9lfdUqw6idJWi21XRKQnb5PdoEb4=";
+    };
+
+    nativeBuildInputs = [cmake ninja];
+
+    cmakeFlags = [
+      (lib.cmakeFeature "TZDB2NX_ZONEINFO_DIR" "${tzdata}/share/zoneinfo")
+      (lib.cmakeFeature "TZDB2NX_VERSION" tzdata.version)
+    ];
+
+    ninjaFlags = ["x80e"];
+
+    installPhase = ''
+      runHook preInstall
+      cp -r src/tzdb/nx $out
+      runHook postInstall
+    '';
+  });
 
   # Per-profile compile flags + CPM SDL2 variant + cmake preset, matching
   # eden's `.ci/linux/build.sh`.
@@ -61,19 +147,28 @@
       profile
     };
 
-  # Bundled CPM dependencies (independent of profile). Patches at
-  # eden's `.patch/<name>/` apply automatically once CPM resolves the source.
-  # GitHub regenerates archive tarballs over time, so the sha512 in upstream
-  # cpmfile.json drifts; SRI hashes here come from `nix-prefetch-url` against
-  # the live URL, not the cpmfile values.
-  #
-  # Note on httplib: nixpkgs has it (0.30.2) but eden's cpmfile uses
-  # `find_args = "MODULE GLOBAL"`, and eden's Findhttplib.cmake shim doesn't
-  # propagate the version constraint to its inner `find_package(... CONFIG)`
-  # call, so version-aware MODULE-mode lookups fail in
-  # CPM_LOCAL_PACKAGES_ONLY mode. Patching the shim is more invasive than
-  # bundling, so we bundle.
-  baseBundled = {
+  # CPM deps that aren't in nixpkgs (or that nixpkgs has but with a
+  # version-rejecting ConfigVersion file). GitHub regenerates archive
+  # tarballs over time, so the sha512 in upstream cpmfile.json drifts;
+  # SRI hashes here come from `nix-prefetch-url` against the live URL,
+  # not the cpmfile values. Patches at eden's `.patch/<name>/` apply
+  # automatically once CPM resolves the source.
+  bundled = {
+    # Pulled in by USE_DISCORD_PRESENCE=ON; eden's fork is not in nixpkgs.
+    # cpmfile key is "discord-rpc" but the cmake package name (and thus
+    # the var watched by CPMUtil) is "DiscordRPC".
+    DiscordRPC = {
+      url = "https://github.com/eden-emulator/discord-rpc/archive/0d8b2d6a37.tar.gz";
+      hash = "sha512-uI/baM81wrE/hA9FkZlozCDSlbLJ4XLXuaVQX4uGYPhzJLweyuNyTsE19UqP7+vksdGADScm8BKDHqmXdcox6A==";
+    };
+
+    # nixpkgs has httplib (0.30.2) but its httplibConfigVersion.cmake uses
+    # SameMinorVersion compatibility — that rejects eden's
+    # `find_package(httplib 0.18.7 ...)` lookup before our Findhttplib.cmake
+    # shim can intervene. Patching the shim doesn't help because the inner
+    # CONFIG lookup loads the version file directly. Bundle until either
+    # eden vendors httplib's pkg-config-only fallback or nixpkgs ships
+    # httplib with AnyNewerVersion compat (TODO: submit nixpkgs PR).
     # cpmfile pins git_version=0.37.0 and version=0.18.7 — the latter is the
     # find_package min_version, the former is what %VERSION% in `tag` resolves
     # to (CPMUtil line 184). URL is v0.37.0.
@@ -82,20 +177,8 @@
       hash = "sha512-e7cVrhSKKpVa4m1ipFmdnLVnXMqP3vq2gBXIFXd4ihH30LSDqmMotKxsUv767mpMRM6TZVIyBQvkDlAyM+cbzg==";
     };
 
-    # Pulled in by USE_DISCORD_PRESENCE=ON; eden's fork is not in nixpkgs.
-    # Note: cpmfile key is "discord-rpc" but the cmake package name (and thus
-    # the var watched by CPMUtil) is "DiscordRPC".
-    DiscordRPC = {
-      url = "https://github.com/eden-emulator/discord-rpc/archive/0d8b2d6a37.tar.gz";
-      hash = "sha512-uI/baM81wrE/hA9FkZlozCDSlbLJ4XLXuaVQX4uGYPhzJLweyuNyTsE19UqP7+vksdGADScm8BKDHqmXdcox6A==";
-    };
+    ${profileSpec.sdlEntry} = profileSpec.sdlSpec;
   };
-
-  bundled =
-    baseBundled
-    // {
-      ${profileSpec.sdlEntry} = profileSpec.sdlSpec;
-    };
 
   unpackDep = name: spec:
     fetchzip {
@@ -104,22 +187,26 @@
       stripRoot = true;
     };
 
-  # CPM applies patches in-place into the source dir, which fails on /nix/store
-  # paths (read-only). Copy each pre-fetched source into the build tree at
-  # configure time and point CMake at that writable copy. The CUSTOM_DIR
-  # paths use $NIX_BUILD_TOP which only exists at build time, so flags must be
-  # appended via cmakeFlagsArray in preConfigure rather than set declaratively.
+  # CPM applies patches in-place into the source dir, which fails on
+  # /nix/store paths (read-only). Copy each pre-fetched source into the
+  # build tree at configure time and point CMake at that writable copy.
+  # The CUSTOM_DIR paths use $NIX_BUILD_TOP which only exists at build
+  # time, so flags must be appended via cmakeFlagsArray in preConfigure
+  # rather than set declaratively.
   copyAndFlagsScript =
     lib.concatStrings
     (lib.mapAttrsToList
       (name: spec: ''
         cp -r ${unpackDep name spec}/. "$NIX_BUILD_TOP/cpm-deps/${name}/"
         chmod -R u+w "$NIX_BUILD_TOP/cpm-deps/${name}"
-        cmakeFlagsArray+=("-D${name}_CUSTOM_DIR=$NIX_BUILD_TOP/cpm-deps/${name}")
+        cmakeFlagsArray+=(
+          "-D${name}_CUSTOM_DIR=$NIX_BUILD_TOP/cpm-deps/${name}"
+          "-D${name}_FORCE_BUNDLED=ON"
+        )
       '')
       bundled);
 in
-  eden.overrideAttrs (old: {
+  stdenv.mkDerivation (finalAttrs: {
     pname = "eden-master";
     version = "unstable-2026-05-03-${shortSha}-${profile}";
 
@@ -131,50 +218,115 @@ in
       hash = srcHash;
     };
 
-    # rc2 backports don't apply on master.
-    patches = [];
+    nativeBuildInputs = [
+      cmake
+      ninja
+      glslang
+      pkg-config
+      python3
+      qt6.qttools
+      qt6.wrapQtAppsHook
+    ];
 
-    # 0.2.x added a Qt6Charts dependency.
-    buildInputs = old.buildInputs ++ [qt6.qtcharts];
+    buildInputs =
+      [
+        boost
+        cpp-jwt
+        cubeb
+        enet
+        ffmpeg-headless
+        fmt
+        frozen-containers
+        gamemode
+        kdePackages.quazip
+        libopus
+        libusb1
+        lz4
+        mbedtls
+        mcl-cpp-utility-lib
+        nlohmann_json
+        openssl
+        qt6.qtbase
+        qt6.qtcharts # added in eden 0.2.x
+        qt6.qtmultimedia
+        qt6.qtwayland
+        qt6.qtwebengine
+        SDL2
+        simpleini
+        sirit
+        spirv-headers
+        spirv-tools
+        stb
+        unordered_dense
+        vulkan-headers
+        vulkan-memory-allocator
+        vulkan-utility-libraries
+        zlib
+        zstd
+      ]
+      ++ lib.optionals stdenv.hostPlatform.isx86_64 [xbyak]
+      ++ lib.optionals stdenv.hostPlatform.isAarch64 [oaknut];
 
-    # Drop conflicting flags from the upstream rc2 derivation: it sets
-    # YUZU_USE_EXTERNAL_SDL2=FALSE and BUILD_TESTING=TRUE, which we override
-    # below. CMake honors the last value but the compile cost of the tests
-    # we then skip via doCheck=false adds up.
-    cmakeFlags =
-      (lib.filter (f:
-        !(lib.hasPrefix "-DYUZU_USE_EXTERNAL_SDL2:" f)
-        && !(lib.hasPrefix "-DBUILD_TESTING:" f))
-      old.cmakeFlags)
-      ++ [
-        "-DCMAKE_BUILD_TYPE=Release"
-        "-DBUILD_TESTING=OFF"
-        "-DYUZU_BUILD_PRESET=${profileSpec.buildPreset}"
-        "-DYUZU_SYSTEM_PROFILE=${profileSpec.systemProfile}"
-        "-DYUZU_USE_EXTERNAL_SDL2=ON"
-        "-DYUZU_USE_BUNDLED_SDL2=OFF"
-        "-DYUZU_USE_FASTER_LD=ON"
-        "-DENABLE_LTO=ON"
-        "-DUSE_DISCORD_PRESENCE=ON"
-      ];
+    __structuredAttrs = true;
 
-    # Append rather than replace so future upstream additions to NIX_CFLAGS_COMPILE
-    # aren't clobbered.
-    env =
-      (old.env or {})
-      // {
-        NIX_CFLAGS_COMPILE = lib.concatStringsSep " " [
-          (old.env.NIX_CFLAGS_COMPILE or "")
-          profileSpec.archFlags
-        ];
-      };
+    cmakeFlags = [
+      (lib.cmakeBool "BUILD_TESTING" false)
+      (lib.cmakeBool "YUZU_TESTS" false)
 
-    preConfigure =
-      (old.preConfigure or "")
-      + ''
-        mkdir -p "$NIX_BUILD_TOP/cpm-deps"
-        ${copyAndFlagsScript}
-      '';
+      # Make CPMUtil prefer system packages for everything not explicitly
+      # marked _FORCE_BUNDLED via cmakeFlagsArray below.
+      (lib.cmakeBool "CPMUTIL_FORCE_SYSTEM" true)
+
+      # Use bundled per-profile SDL2 fork (NOT nixpkgs SDL2). The CPM dep
+      # `${profileSpec.sdlEntry}` provides it; we mark SDL2 as not
+      # external so eden's CMakeLists doesn't also look for system SDL2.
+      (lib.cmakeBool "YUZU_USE_EXTERNAL_SDL2" true)
+      (lib.cmakeBool "YUZU_USE_BUNDLED_SDL2" false)
+      (lib.cmakeBool "YUZU_USE_BUNDLED_FFMPEG" false)
+      (lib.cmakeFeature "YUZU_TZDB_PATH" "${nx_tzdb}")
+
+      # Profile-specific build flavor (matches .ci/linux/build.sh)
+      (lib.cmakeFeature "YUZU_BUILD_PRESET" profileSpec.buildPreset)
+      (lib.cmakeFeature "YUZU_SYSTEM_PROFILE" profileSpec.systemProfile)
+
+      (lib.cmakeBool "YUZU_USE_FASTER_LD" true)
+      (lib.cmakeBool "ENABLE_LTO" true)
+      (lib.cmakeBool "USE_DISCORD_PRESENCE" true)
+
+      # Optional features — match nixpkgs eden's choices
+      (lib.cmakeBool "YUZU_USE_QT_WEB_ENGINE" true)
+      (lib.cmakeBool "YUZU_USE_QT_MULTIMEDIA" true)
+      (lib.cmakeBool "ENABLE_QT_TRANSLATION" true)
+      (lib.cmakeBool "YUZU_ENABLE_COMPATIBILITY_REPORTING" false)
+    ];
+
+    env.NIX_CFLAGS_COMPILE = profileSpec.archFlags;
+
+    preConfigure = ''
+      mkdir -p "$NIX_BUILD_TOP/cpm-deps"
+      ${copyAndFlagsScript}
+    '';
+
+    postInstall = ''
+      install -Dm444 $src/dist/72-yuzu-input.rules $out/lib/udev/rules.d/72-yuzu-input.rules
+    '';
+
+    preFixup = ''
+      qtWrapperArgs+=(--prefix LD_LIBRARY_PATH : ${
+        lib.makeLibraryPath [
+          vulkan-loader
+          pipewire
+        ]
+      })
+    '';
 
     doCheck = false;
+
+    meta = {
+      description = "Switch 1 emulator (eden master, built from source)";
+      homepage = "https://eden-emu.dev/";
+      mainProgram = "eden";
+      license = with lib.licenses; [gpl3Plus];
+      platforms = ["x86_64-linux" "aarch64-linux"];
+    };
   })
