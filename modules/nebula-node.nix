@@ -1,13 +1,19 @@
-# Personalization layer for the nebula-node flake module.
-# Reads hosts/nebula-registry.nix to compute lighthouses/relays/staticHostMap,
-# manages agenix-encrypted CA + per-host cert/key (generated via
-# `nix run .#generate-nebula-certs`), and exposes the kimb-specific
+# Consolidated Nebula mesh configuration. One place for everything
+# kimb-specific: registry-derived topology, agenix-encrypted CA + per-
+# host cert/key, host firewall opening, and the
 # `openToPersonalDevices` shorthand for opening all ports to phones,
-# laptops, and desktops.
+# laptops, and desktops at once.
+#
+# Certificates are generated via `nix run .#generate-nebula-certs`
+# (requires YubiKey).
+#
+# Talks directly to nixpkgs's `services.nebula.networks.<name>` —
+# previously this went through a thin nebula-node-flake wrapper, but
+# that flake just baked in defaults that nixpkgs already exposes via
+# `settings`, so we inline them here instead.
 {
   config,
   lib,
-  inputs,
   ...
 }:
 with lib; let
@@ -62,8 +68,6 @@ with lib; let
     }
   ];
 in {
-  imports = [inputs.nebula-node.nixosModules.default];
-
   options.kimb.nebula = {
     enable = mkEnableOption "Nebula mesh network with kimb registry-derived config";
 
@@ -114,32 +118,89 @@ in {
       };
     };
 
-    services.nebulaNode = {
+    services.nebula.networks.mesh = {
       enable = true;
-      inherit isLighthouse isRelay;
+      inherit isLighthouse;
+
       ca = config.age.secrets.nebula-ca.path;
       cert = config.age.secrets.nebula-cert.path;
       key = config.age.secrets.nebula-key.path;
+
       lighthouses = lighthouseIps;
       staticHostMap = staticHosts;
-      relays = relayIps;
-      localRange = registry.networks.lan.subnet;
-      preferredRanges = [registry.networks.lan.subnet];
-      inbound =
-        [
+
+      settings = {
+        punchy = {
+          punch = true;
+          respond = true;
+        };
+
+        # Prefer direct LAN connections over relay/lighthouse routing
+        local_range = registry.networks.lan.subnet;
+        preferred_ranges = [registry.networks.lan.subnet];
+
+        relay = {
+          relays = relayIps;
+          am_relay = isRelay; # Independent of lighthouse status
+          use_relays = true;
+        };
+
+        # Periodic LAN route checking (helps mobile devices rediscover LAN)
+        routines.local_range_check_interval = 30; # 0 disables
+
+        tun = {
+          disabled = false;
+          dev = "nebula1";
+        };
+
+        logging.level = "info";
+      };
+
+      firewall = {
+        outbound = [
           {
             port = "any";
-            proto = "icmp";
+            proto = "any";
             host = "any";
           }
-          {
-            port = 22;
-            proto = "tcp";
-            host = "any";
-          }
-        ]
-        ++ personalDevicesRules
-        ++ cfg.extraInboundRules;
+        ];
+
+        inbound =
+          [
+            # ICMP from anywhere
+            {
+              port = "any";
+              proto = "icmp";
+              host = "any";
+            }
+            # SSH from anywhere
+            {
+              port = 22;
+              proto = "tcp";
+              host = "any";
+            }
+          ]
+          # Optional: open all ports to personal devices.
+          # Note: separate rules for OR logic (groups within one rule
+          # are AND; multiple rules are OR).
+          ++ personalDevicesRules
+          # Host-specific rules
+          ++ cfg.extraInboundRules;
+      };
     };
+
+    # Ensure Nebula starts after agenix-decrypted certs are in place.
+    # `wants` not `requires` so a misconfigured agenix doesn't take
+    # nebula down with it.
+    systemd.services."nebula@mesh" = {
+      after = ["agenix.service"];
+      wants = ["agenix.service"];
+    };
+
+    # Open the host firewall for Nebula. We open 4242 unconditionally —
+    # nixpkgs's services.nebula picks 4242 for lighthouses/relays and
+    # 0 (random) for workers, so this is only load-bearing on the
+    # former, but harmless on the latter.
+    networking.firewall.allowedUDPPorts = [4242];
   };
 }

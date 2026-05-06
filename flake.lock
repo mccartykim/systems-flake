@@ -779,21 +779,6 @@
         "url": "https://github.com/mccartykim/mist-blog.git"
       }
     },
-    "nebula-node": {
-      "locked": {
-        "lastModified": 1778041675,
-        "narHash": "sha256-4rEihrJcIozlwEzL0LiL4ulKDwL11VzCoCGWdHFPXI8=",
-        "ref": "refs/heads/master",
-        "rev": "f4a92003ab27a94fd4912050dd227ccdb92a9202",
-        "revCount": 1,
-        "type": "git",
-        "url": "https://github.com/mccartykim/nebula-node-flake.git"
-      },
-      "original": {
-        "type": "git",
-        "url": "https://github.com/mccartykim/nebula-node-flake.git"
-      }
-    },
     "nil-flake": {
       "inputs": {
         "nixpkgs": "nixpkgs_3"
@@ -1453,7 +1438,6 @@
         "lifecoach-organism": "lifecoach-organism",
         "media-classifier": "media-classifier",
         "mist-blog": "mist-blog",
-        "nebula-node": "nebula-node",
         "nil-flake": "nil-flake",
         "nix-darwin": "nix-darwin",
         "nix-index-database": "nix-index-database",

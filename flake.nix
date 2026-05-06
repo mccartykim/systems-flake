@@ -111,11 +111,6 @@
     # zone + agenix-managed API token.
     cloudflare-ddns.url = "git+https://github.com/mccartykim/cloudflare-ddns-flake.git";
 
-    # Generic Nebula mesh-node module. systems-flake personalizes it in
-    # modules/nebula-node.nix by reading hosts/nebula-registry.nix to
-    # compute lighthouses/relays/staticHostMap.
-    nebula-node.url = "git+https://github.com/mccartykim/nebula-node-flake.git";
-
     # Firefox Nightly
     firefox-nightly.url = "github:nix-community/flake-firefox-nightly";
     firefox-nightly.inputs.nixpkgs.follows = "nixpkgs";
