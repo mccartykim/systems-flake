@@ -1,9 +1,13 @@
-# Consolidated Nebula mesh configuration with agenix secrets
-# Certificates are generated via `nix run .#generate-nebula-certs` (requires YubiKey)
+# Personalization layer for the nebula-node flake module.
+# Reads hosts/nebula-registry.nix to compute lighthouses/relays/staticHostMap,
+# manages agenix-encrypted CA + per-host cert/key (generated via
+# `nix run .#generate-nebula-certs`), and exposes the kimb-specific
+# `openToPersonalDevices` shorthand for opening all ports to phones,
+# laptops, and desktops.
 {
   config,
   lib,
-  pkgs,
+  inputs,
   ...
 }:
 with lib; let
@@ -11,41 +15,62 @@ with lib; let
   hostname = config.networking.hostName;
   registry = import ../hosts/nebula-registry.nix;
 
-  # This host's config from registry
   hostConfig = registry.nodes.${hostname} or {};
   isLighthouse = hostConfig.isLighthouse or false;
   isRelay = hostConfig.isRelay or false;
   myIp = hostConfig.ip or "";
 
-  # Helper: get IPs from node list, excluding our own
   getOtherIps = nodes: filter (ip: ip != myIp) (map (n: n.ip) nodes);
 
-  # Lighthouses and relays from registry
   allLighthouses =
     filter (n: (n.isLighthouse or false) && n ? external)
     (attrValues registry.nodes);
   allRelays = filter (n: n.isRelay or false) (attrValues registry.nodes);
 
-  # Derived config: exclude self from lighthouse/relay lists
+  # Lighthouses don't register with themselves.
   lighthouseIps =
     if isLighthouse
     then []
     else map (n: n.ip) allLighthouses;
-  # Include LAN IP alongside external endpoint so nebula can bootstrap
-  # without DNS (avoids chicken-and-egg when maitred IS the DNS server)
+
+  # Include LAN address alongside the public endpoint so nebula can
+  # bootstrap without DNS — avoids chicken-and-egg when maitred IS the
+  # DNS server but also a lighthouse.
   staticHosts = listToAttrs (map (n:
     nameValuePair n.ip (
       [n.external] ++ optional (n ? lanIp) "${n.lanIp}:4242"
-    )) allLighthouses);
+    ))
+    allLighthouses);
+
   relayIps = getOtherIps allRelays;
+
+  personalDevicesRules = optionals cfg.openToPersonalDevices [
+    {
+      port = "any";
+      proto = "any";
+      group = "desktops";
+    }
+    {
+      port = "any";
+      proto = "any";
+      group = "laptops";
+    }
+    {
+      port = "any";
+      proto = "any";
+      group = "mobile";
+    }
+  ];
 in {
+  imports = [inputs.nebula-node.nixosModules.default];
+
   options.kimb.nebula = {
-    enable = mkEnableOption "Nebula mesh network with agenix secrets";
+    enable = mkEnableOption "Nebula mesh network with kimb registry-derived config";
 
     extraInboundRules = mkOption {
       type = types.listOf types.attrs;
       default = [];
-      description = "Additional inbound firewall rules for this host";
+      description = "Additional inbound firewall rules for this host.";
       example = [
         {
           port = 8080;
@@ -58,12 +83,11 @@ in {
     openToPersonalDevices = mkOption {
       type = types.bool;
       default = false;
-      description = "Allow all ports from desktops and laptops groups";
+      description = "Allow all ports from desktops, laptops, and mobile groups.";
     };
   };
 
   config = mkIf cfg.enable {
-    # Agenix secrets for Nebula (file-based, generated via standalone script)
     age.secrets = {
       nebula-ca = {
         file = ../secrets/nebula-ca.age;
@@ -90,102 +114,32 @@ in {
       };
     };
 
-    # Nebula mesh network
-    services.nebula.networks.mesh = {
+    services.nebulaNode = {
       enable = true;
-      inherit isLighthouse;
-
+      inherit isLighthouse isRelay;
       ca = config.age.secrets.nebula-ca.path;
       cert = config.age.secrets.nebula-cert.path;
       key = config.age.secrets.nebula-key.path;
-
       lighthouses = lighthouseIps;
       staticHostMap = staticHosts;
-
-      settings = {
-        punchy = {
-          punch = true;
-          respond = true;
-        };
-
-        # Prefer direct LAN connections over relay/lighthouse routing
-        local_range = registry.networks.lan.subnet;
-        preferred_ranges = [registry.networks.lan.subnet];
-
-        relay = {
-          relays = relayIps;
-          am_relay = isRelay; # Independent of lighthouse status
-          use_relays = true;
-        };
-
-        # Periodic LAN route checking (helps mobile devices rediscover LAN)
-        routines = {
-          local_range_check_interval = 30; # Check every 30 seconds (0 = disabled)
-        };
-
-        tun = {
-          disabled = false;
-          dev = "nebula1";
-        };
-
-        logging.level = "info";
-      };
-
-      firewall = {
-        outbound = [
+      relays = relayIps;
+      localRange = registry.networks.lan.subnet;
+      preferredRanges = [registry.networks.lan.subnet];
+      inbound =
+        [
           {
             port = "any";
-            proto = "any";
+            proto = "icmp";
             host = "any";
           }
-        ];
-
-        inbound =
-          [
-            # ICMP from anywhere
-            {
-              port = "any";
-              proto = "icmp";
-              host = "any";
-            }
-            # SSH from anywhere
-            {
-              port = 22;
-              proto = "tcp";
-              host = "any";
-            }
-          ]
-          # Optional: open all ports to personal devices
-          # Note: separate rules for OR logic (groups = AND, multiple rules = OR)
-          ++ optionals cfg.openToPersonalDevices [
-            {
-              port = "any";
-              proto = "any";
-              group = "desktops";
-            }
-            {
-              port = "any";
-              proto = "any";
-              group = "laptops";
-            }
-            {
-              port = "any";
-              proto = "any";
-              group = "mobile";
-            }
-          ]
-          # Host-specific rules
-          ++ cfg.extraInboundRules;
-      };
+          {
+            port = 22;
+            proto = "tcp";
+            host = "any";
+          }
+        ]
+        ++ personalDevicesRules
+        ++ cfg.extraInboundRules;
     };
-
-    # Ensure Nebula starts after agenix
-    systemd.services."nebula@mesh" = {
-      after = ["agenix.service"];
-      wants = ["agenix.service"];
-    };
-
-    # Open firewall for Nebula
-    networking.firewall.allowedUDPPorts = [4242];
   };
 }

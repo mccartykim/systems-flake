@@ -1,31 +1,56 @@
-# Restic backup module for Backblaze B2
-# Full-system backup suitable for bare-metal restore via restic restore + nixos-install
+# Personalization layer for the generic restic-b2-backup flake module.
+# Sets kimb-specific defaults (repo, paths, secrets), exposes the
+# `kimb.restic.enable` opt-in option that hosts use to turn on backups.
 {
   config,
   lib,
-  pkgs,
+  inputs,
   ...
 }:
 with lib; let
   cfg = config.kimb.restic;
 in {
-  options.kimb.restic = {
-    enable = mkEnableOption "restic backups to Backblaze B2";
+  imports = [inputs.restic-b2-backup.nixosModules.default];
 
-    paths = mkOption {
+  options.kimb.restic = {
+    enable = mkEnableOption "kimb's restic backups to shared B2 repo";
+    extraExclude = mkOption {
       type = types.listOf types.str;
-      default = [
+      default = [];
+      description = "Per-host paths to exclude (appended to the kimb-default excludes).";
+    };
+  };
+
+  config = mkIf cfg.enable {
+    age.secrets = {
+      restic-password = {
+        file = ../secrets/restic-password.age;
+        mode = "0400";
+      };
+      restic-b2-env = {
+        file = ../secrets/restic-b2-env.age;
+        mode = "0400";
+      };
+    };
+
+    services.resticB2 = {
+      enable = true;
+      repository = "b2:kim-bucket:/restic";
+      passwordFile = config.age.secrets.restic-password.path;
+      environmentFile = config.age.secrets.restic-b2-env.path;
+      inherit (cfg) extraExclude;
+
+      paths = [
         "/home/kimb"
         "/etc"
         "/var/lib"
         "/root"
       ];
-      description = "Paths to back up";
-    };
 
-    exclude = mkOption {
-      type = types.listOf types.str;
-      default = [
+      # Override the generic exclude defaults with kimb-specific ones —
+      # the generic module's defaults use globs like `**/.cache`, but
+      # for kimb's paths we want explicit `/home/kimb/.cache` style.
+      exclude = [
         # === /home/kimb excludes ===
         # Caches
         "/home/kimb/.cache"
@@ -63,62 +88,6 @@ in {
         "/var/cache"
         "/var/tmp"
       ];
-      description = "Paths to exclude from backup";
     };
-
-    extraExclude = mkOption {
-      type = types.listOf types.str;
-      default = [];
-      description = "Additional paths to exclude (appended to default excludes)";
-    };
-
-    backupCleanupCommand = mkOption {
-      type = types.nullOr types.str;
-      default = null;
-      description = "Command to run after backup completes";
-    };
-
-    timerConfig = mkOption {
-      type = types.attrs;
-      default = {
-        OnCalendar = "daily";
-        Persistent = true;
-        RandomizedDelaySec = "2h";
-      };
-      description = "Systemd timer configuration";
-    };
-  };
-
-  config = mkIf cfg.enable {
-    age.secrets = {
-      restic-password = {
-        file = ../secrets/restic-password.age;
-        mode = "0400";
-      };
-      restic-b2-env = {
-        file = ../secrets/restic-b2-env.age;
-        mode = "0400";
-      };
-    };
-
-    services.restic.backups.home =
-      {
-        initialize = true;
-        repository = "b2:kim-bucket:/restic";
-        passwordFile = config.age.secrets.restic-password.path;
-        environmentFile = config.age.secrets.restic-b2-env.path;
-        inherit (cfg) paths;
-        exclude = cfg.exclude ++ cfg.extraExclude;
-        inherit (cfg) timerConfig;
-        pruneOpts = [
-          "--keep-daily 7"
-          "--keep-weekly 4"
-          "--keep-monthly 6"
-          "--keep-yearly 2"
-        ];
-      }
-      // lib.optionalAttrs (cfg.backupCleanupCommand != null) {
-        inherit (cfg) backupCleanupCommand;
-      };
   };
 }
