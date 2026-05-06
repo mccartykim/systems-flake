@@ -1,7 +1,8 @@
-# Qwen3-TTS server - zero-shot voice cloning via OpenAI-compatible API
+# Qwen3-TTS server - zero-shot voice cloning via OpenAI-compatible API.
 #
-# Uses faster-qwen3-tts (CUDA graph capture) for realtime inference.
-# Built via uv2nix from PEP-723 inline metadata, with CUDA autopatchelf.
+# Server executable comes from the qwen3-tts-cuda flake input (uv2nix-built
+# venv with CUDA autopatchelf). This module provides only the host-side
+# wiring: voice references, user, socket-activated systemd unit.
 #
 # Model: configurable via QWEN3_TTS_MODEL env (0.6B or 1.7B Base)
 # Endpoint: POST http://total-eclipse.nebula:8091/v1/audio/speech
@@ -12,145 +13,7 @@
   inputs,
   ...
 }: let
-  # Load PEP-723 script + its lock file via uv2nix
-  script = inputs.uv2nix.lib.scripts.loadScript {
-    script = ./qwen3-tts-server.py;
-  };
-
-  # Create overlay from locked deps (prefer pre-built wheels)
-  overlay = script.mkOverlay {
-    sourcePreference = "wheel";
-  };
-
-  # CUDA overlay: make autopatchelf find CUDA libs in torch/nvidia wheels
-  cudaOverlay = self: super: {
-    torch = super.torch.overrideAttrs (old: {
-      nativeBuildInputs =
-        (old.nativeBuildInputs or [])
-        ++ [
-          pkgs.cudaPackages.cudatoolkit
-          pkgs.cudaPackages.cudnn
-          pkgs.cudaPackages.libcusparse
-          pkgs.cudaPackages.libcusparse_lt
-          pkgs.cudaPackages.libcufile
-          pkgs.cudaPackages.libnvshmem
-          pkgs.cudaPackages.nccl
-          pkgs.addDriverRunpath
-        ];
-      autoPatchelfIgnoreMissingDeps =
-        (old.autoPatchelfIgnoreMissingDeps or [])
-        ++ [
-          "libcuda.so.1"
-          "libnvshmem_host.so.*"
-        ];
-      postFixup =
-        (old.postFixup or "")
-        + ''
-          addDriverRunpath $out/lib/python*/site-packages/torch/lib/libtorch_cuda*.so
-        '';
-    });
-    nvidia-cusparse-cu12 = super.nvidia-cusparse-cu12.overrideAttrs (old: {
-      nativeBuildInputs =
-        (old.nativeBuildInputs or [])
-        ++ [
-          pkgs.cudaPackages.libnvjitlink
-        ];
-    });
-    nvidia-cusolver-cu12 = super.nvidia-cusolver-cu12.overrideAttrs (old: {
-      nativeBuildInputs =
-        (old.nativeBuildInputs or [])
-        ++ [
-          pkgs.cudaPackages.libnvjitlink
-          pkgs.cudaPackages.libcusparse
-          pkgs.cudaPackages.libcublas
-        ];
-    });
-    nvidia-cufile-cu12 = super.nvidia-cufile-cu12.overrideAttrs (old: {
-      nativeBuildInputs =
-        (old.nativeBuildInputs or [])
-        ++ [
-          pkgs.rdma-core
-        ];
-      autoPatchelfIgnoreMissingDeps =
-        (old.autoPatchelfIgnoreMissingDeps or [])
-        ++ ["libcuda.so.1"];
-    });
-    nvidia-nvshmem-cu12 = super.nvidia-nvshmem-cu12.overrideAttrs (old: {
-      nativeBuildInputs =
-        (old.nativeBuildInputs or [])
-        ++ [
-          pkgs.openmpi
-          pkgs.pmix
-          pkgs.ucx
-          pkgs.libfabric
-          pkgs.rdma-core
-        ];
-    });
-    numba = super.numba.overrideAttrs (old: {
-      nativeBuildInputs =
-        (old.nativeBuildInputs or [])
-        ++ [
-          pkgs.tbb_2022
-        ];
-    });
-    # torchaudio/torchvision link against libtorch*.so at runtime via Python's
-    # import mechanism (torch is loaded first, adds its lib dir to search path).
-    # Safe to ignore at build time.
-    torchaudio = super.torchaudio.overrideAttrs (old: {
-      nativeBuildInputs =
-        (old.nativeBuildInputs or [])
-        ++ [
-          pkgs.cudaPackages.cudatoolkit
-        ];
-      autoPatchelfIgnoreMissingDeps =
-        (old.autoPatchelfIgnoreMissingDeps or [])
-        ++ ["libcuda.so.1" "libtorch*.so" "libc10*.so" "libcudart.so.*" "libtorch_python.so"];
-    });
-    torchvision = super.torchvision.overrideAttrs (old: {
-      nativeBuildInputs =
-        (old.nativeBuildInputs or [])
-        ++ [
-          pkgs.cudaPackages.cudatoolkit
-        ];
-      autoPatchelfIgnoreMissingDeps =
-        (old.autoPatchelfIgnoreMissingDeps or [])
-        ++ ["libcuda.so.1" "libtorch*.so" "libc10*.so" "libcudart.so.*" "libtorch_python.so"];
-    });
-    # soundfile needs libsndfile.so at runtime
-    soundfile = super.soundfile.overrideAttrs (old: {
-      nativeBuildInputs =
-        (old.nativeBuildInputs or [])
-        ++ [
-          pkgs.libsndfile
-        ];
-    });
-    sox = super.sox.overrideAttrs (old: {
-      nativeBuildInputs =
-        (old.nativeBuildInputs or [])
-        ++ [
-          self.setuptools
-        ];
-    });
-  };
-
-  # Build Python package set with all overlays
-  baseSet = pkgs.callPackage inputs.pyproject-nix.build.packages {
-    python = pkgs.python312;
-  };
-
-  pythonSet = baseSet.overrideScope (
-    lib.composeManyExtensions [
-      inputs.pyproject-build-systems.overlays.wheel
-      overlay
-      cudaOverlay
-    ]
-  );
-
-  # Create virtualenv with all deps, then render script with shebang
-  venv = script.mkVirtualEnv {inherit pythonSet;};
-  serverExecutable = pkgs.writeScript script.name (
-    script.renderScript {inherit venv;}
-  );
+  serverExecutable = inputs.qwen3-tts-cuda.packages.${pkgs.system}.default;
   voiceRefDir = "/home/kimb/shared_projects/claude_yapper/assets/voice-references";
 in {
   # Copy voice reference files to /var/lib/voice-references/ for the TTS server

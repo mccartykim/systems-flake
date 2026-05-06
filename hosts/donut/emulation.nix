@@ -4,15 +4,10 @@
   # Eden built from upstream master with the steamdeck profile (znver2 + LTO
   # + sdl2_steamdeck CPM dep). Shared package; see ../../pkgs/eden-master/.
   eden-master = pkgs.callPackage ../../pkgs/eden-master {profile = "steamdeck";};
-
-  # Eden nightly via DwarFS-extracted AppImage (kept around in case we need to
-  # diff master-from-source vs the pre-built nightly).
-  eden-nightly = pkgs.callPackage ./eden-nightly.nix {};
 in {
   environment.systemPackages = with pkgs; [
     # Switch
     eden-master
-    eden-nightly
     ryubing
 
     # Sony
@@ -34,8 +29,8 @@ in {
     retroarch-full
   ];
 
-  # Allow running AppImages directly (Eden ships an AppImage; useful for
-  # one-off emulator builds outside nixpkgs).
+  # Allow running AppImages directly (useful for one-off emulator builds
+  # outside nixpkgs).
   programs.appimage = {
     enable = true;
     binfmt = true;
