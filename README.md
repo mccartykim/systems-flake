@@ -13,8 +13,11 @@ But to get the ultimate configuration experience, it should apply changes to all
 * total-eclipse: Circa 2020 gaming PC with a GeForce 4060 RTX whatever. I don't know. It played death stranding fine. Now it can run a modest stable diffusion setup. I should put that in a flake. I should focus tho.
 * marshmallow: My favorite laptop. A Thinkpad T490 with an 8th gen i5. Seems nice. Faster than what I was used to, and while it came broken, I fixed everything wrong with it easily. Just a few captive screws and some scary but strong clips and you're in. I'm hoping it can be a cozy long-form typing machine. It's called marshmallow to embody that coziness. My mind was somewhere else when I named this.
 * donut: My steamdeck.
+* cheesecake: My Surface 3 Go tablet that I'm trying to make usable without constant overheating. x86 processors shouldn't be passively cooled but I'm hoping Linux can make the most of it.
 * historian: A server I bought hoping for AI inference with a Strix Point processor, but rocm isn't fantastic so I'm using it as a build machine and multimedia device for now. Also my primary remote dev machine.
 * maitred: My bespoke Datto box turned router, that bridges the WAN to my LAN and runs a few small services of its own.
+* mochi: My Pixel 9 Pro running a tiny Debian VM via the Android Virtualization Framework. Joins the mesh via system-manager since it's not really NixOS.
+* oracle: A free-tier Oracle Cloud Ubuntu VM. Mostly just a nebula lighthouse with a stable public IP. Also via system-manager (see the gripe at the bottom of the install section).
 
 Plus a few others. Sweets are portable, anything goes for desktops and servers :)
 
@@ -33,6 +36,22 @@ Having a declarative mesh network and single config for my fleet makes this syst
 * A dual webcam endpoint for stills from rich-evans for lifecoach to use.
 * Syncthing, a delightful tool for keeping folders synced between computers
 * Restic, for lightly compressed regular backups
+* Buildbot CI on rich-evans (master) and historian (worker). Took over the role garnix used to play; I miss garnix's UI but at least this one runs on hardware I own.
+* Matrix (conduit) on rich-evans for self-hosted chat
+* Kokoro and Qwen3-TTS for the life-coach's voice. Kokoro is the small fast one; Qwen3 is the zero-shot voice cloning one.
+* Eden, the Switch emulator, built from master with a per-host profile (znver2 for the Steam Deck, x86-64-v3 for total-eclipse)
+
+## Modules broken out into their own flakes
+
+A handful of services live in their own little repos and get pulled in here as flake inputs. The pattern is: the upstream flake exports a generic NixOS module with options; this repo imports it and supplies the kimb-specific bits (my domain, my paths, my agenix secrets). I think this is the right shape for things other people might want to copy out without inheriting my specifics.
+
+* `kokoro-flake` — TTS for the life-coach
+* `qwen3-tts-cuda-flake` — Qwen3-TTS via CUDA, runs on total-eclipse
+* `restic-b2-backup-flake` — restic to Backblaze B2 with sensible defaults
+* `cloudflare-ddns-flake` — inadyn wrapper for Cloudflare DDNS
+* `eden-nightly-flake` — Switch emulator AppImage extraction (currently parked; we build from source instead)
+
+I'm not sold on every extraction sticking — once tried pulling out a nebula wrapper and it turned out nixpkgs's `services.nebula` was already doing 90% of it, so that one came back inline.
 
 ## To Do
 * Get agenix rekeying working reliably on computers I actually use, I keep resorting to manual age rotations that still work fine.
@@ -68,6 +87,19 @@ All machines are connected via a [Nebula](https://github.com/slackhq/nebula) mes
 ### DNS Resolution
 - `hostname.nebula` - Nebula mesh IPs (e.g., `historian.nebula` → `10.100.0.10`)
 - `hostname.local` - LAN IPs (e.g., `rich-evans.local` → `192.168.68.200`)
+
+### Adding a host
+
+The annoying part is that nebula certs need the host's SSH pubkey, which doesn't exist until after first install. So this is a two-pass dance:
+
+1. Add the host to `hosts/nebula-registry.nix` — IP, groups (e.g. `["laptops" "nixos"]`), `publicKey = null` for now. The registry's the source of truth; everything else derives from it.
+2. Wire it up in `flake-modules/nixos-configurations.nix`. Most hosts go through the `mkDesktop` / `mkServer` helpers in `flake-modules/helpers.nix`. The weird ones (donut on Jovian, maitred the router, mochi on AVF) call `nixpkgs.lib.nixosSystem` themselves.
+3. First deploy without nebula. Install NixOS however, copy this flake in, `nixos-rebuild switch --flake .#<host>`. Most things come up; nebula won't because there's no cert yet, that's fine.
+4. Run `./scripts/collect-age-keys.sh` to grab the new host's SSH host pubkey. Paste it into the registry's `publicKey` field.
+5. `nix run .#generate-nebula-certs` — wants my YubiKey to decrypt the CA. Outputs per-host certs/keys re-encrypted against each host's SSH pubkey.
+6. Deploy again, this time via colmena (`nix develop -c colmena apply --on <hostname>`). Mesh should be live.
+
+Most of the friction here is the YubiKey ceremony — one day I'll get agenix-rekey working reliably and that'll smooth out a lot.
 
 ## Wish list
 * Create a few simple configs that suit my idea of an archetypal config, for easier installs down the line. Maybe templates but honestly flake templates never work like i hope.
