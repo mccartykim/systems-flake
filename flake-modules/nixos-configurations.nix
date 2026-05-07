@@ -114,7 +114,7 @@ in {
         (self + "/hosts/rich-evans/buildbot-master.nix")
         {
           # Import centralized service configurations
-          kimb.services = import ../services/default.nix { }.rich-evans;
+          kimb.services = (import ../services/default.nix).rich-evans;
         }
       ];
     };
@@ -139,7 +139,7 @@ in {
                 displayName = "Kimberly";
               };
               # Import centralized service configurations
-              services = import ../services/default.nix { }.maitred;
+              services = (import ../services/default.nix).maitred;
               networks = {
                 containerBridge = "192.168.100.1";
                 reverseProxyIP = "192.168.100.2";
