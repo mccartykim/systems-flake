@@ -10,23 +10,12 @@
 in {
   flake.nixosConfigurations = {
     # Surface 3 Go tablet
-    cheesecake = nixpkgs.lib.nixosSystem {
-      system = "x86_64-linux";
-      specialArgs = {
-        inherit inputs;
-        outputs = self;
-      };
-      modules =
-        commonModules
-        ++ mkHomeManager {
-          homeConfig = self + "/home/cheesecake.nix";
-          useGlobalPkgs = true;
-        }
-        ++ [
-          nixos-facter-modules.nixosModules.facter
-          {config.facter.reportPath = self + "/hosts/cheesecake/facter.json";}
-          (self + "/hosts/cheesecake/configuration.nix")
-        ];
+    cheesecake = mkDesktop {
+      hostname = "cheesecake";
+      hardwareModules = [
+        nixos-facter-modules.nixosModules.facter
+        {config.facter.reportPath = self + "/hosts/cheesecake/facter.json";}
+      ];
     };
 
     # Steam Deck (Jovian NixOS)
