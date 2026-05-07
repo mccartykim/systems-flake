@@ -57,7 +57,10 @@
       enable = true;
       steam = true;
     };
-    ai-tools.enable = true;
+    ai-tools = {
+      enable = true;
+      claudeZai = true;
+    };
   };
 
   # GPG agent - Qt pinentry for KDE integration

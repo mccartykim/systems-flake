@@ -440,6 +440,13 @@
     owner = "kimb";
   };
 
+  # z.ai API key for the claude-zai wrapper (home/modules/ai-tools.nix).
+  age.secrets.zai-api-key = {
+    file = ../../secrets/zai-api-key.age;
+    owner = "kimb";
+    mode = "0400";
+  };
+
   # === Media pipeline systemd services ===
 
   # rclone sync from put.io (every 15 minutes)

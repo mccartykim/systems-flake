@@ -236,6 +236,13 @@ in {
     };
   };
 
+  # z.ai API key for the claude-zai wrapper.
+  age.secrets.zai-api-key = {
+    file = ../../secrets/zai-api-key.age;
+    owner = "kimb";
+    mode = "0400";
+  };
+
   # Server-specific packages and environment
   environment = {
     systemPackages = with pkgs; [
@@ -244,6 +251,8 @@ in {
       nh
       zoxide
       esphome # ESP32 flashing and management
+      claude-code
+      (pkgs.callPackage ../../pkgs/claude-zai.nix {})
     ];
 
     # Override default shell setup for server

@@ -104,5 +104,10 @@ in
     # All hosts can decrypt for deduplication across syncthing-replicated data
     "restic-password.age".publicKeys = workingMachines;
     "restic-b2-env.age".publicKeys = workingMachines;
+
+    # ===== Z.AI API (claude-zai wrapper) =====
+    # z.ai serves a Claude-compatible endpoint; consumed by the claude-zai
+    # wrapper in home/modules/ai-tools.nix. Owner is kimb (interactive user).
+    "zai-api-key.age".publicKeys = [hostKeys.marshmallow hostKeys.historian hostKeys.rich-evans bootstrap];
   }
   // allNebulaSecrets
