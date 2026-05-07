@@ -63,7 +63,6 @@ in {
         inputs.srvos.nixosModules.mixins-systemd-boot
       ];
       extraModules = [
-        (self + "/modules/kimb-services.nix")
         {
           nixpkgs.overlays = [nil-flake.overlays.nil];
           kimb.services.fractal-art = {
@@ -92,7 +91,6 @@ in {
         org-life-coach.nixosModules.default
         lifecoach-organism.nixosModules.default
         vacuum-organism.nixosModules.default
-        (self + "/modules/kimb-services.nix")
         (self + "/hosts/rich-evans/life-coach.nix")
         (self + "/hosts/rich-evans/org-life-coach.nix")
         (self + "/hosts/rich-evans/lifecoach-organism.nix")
@@ -101,10 +99,6 @@ in {
         (self + "/hosts/rich-evans/org-crm.nix")
         (self + "/hosts/rich-evans/email-digest.nix")
         (self + "/hosts/rich-evans/buildbot-master.nix")
-        {
-          # Import centralized service configurations
-          kimb.services = (import ../services/default.nix).rich-evans;
-        }
       ];
     };
 
@@ -118,7 +112,6 @@ in {
       modules =
         commonModules
         ++ [
-          (self + "/modules/kimb-services.nix")
           {
             kimb = {
               domain = "kimb.dev";
@@ -127,8 +120,6 @@ in {
                 email = "mccartykim@zoho.com";
                 displayName = "Kimberly";
               };
-              # Import centralized service configurations
-              services = (import ../services/default.nix).maitred;
               networks = {
                 containerBridge = "192.168.100.1";
                 reverseProxyIP = "192.168.100.2";

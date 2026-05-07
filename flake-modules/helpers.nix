@@ -47,6 +47,9 @@ in {
       (self + "/modules/distributed-builds.nix")
       {kimb.distributedBuilds.enable = true;}
       (self + "/modules/agenix.nix")
+      # kimb.* option declarations + per-host service auto-injection
+      (self + "/modules/kimb-services.nix")
+      (self + "/services/default.nix")
       # Fix Python packages with strict version bounds + Firefox Nightly
       {nixpkgs.overlays = [pythonFixesOverlay firefoxNightlyOverlay];}
       # Static nebula host entries so hostname.nebula resolves without maitred DNS
