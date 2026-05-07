@@ -45,7 +45,10 @@
       tmux = true;
     };
     gaming.enable = true;
-    ai-tools.enable = true;
+    ai-tools = {
+      enable = true;
+      claudeZai = true;
+    };
   };
 
   programs = {
