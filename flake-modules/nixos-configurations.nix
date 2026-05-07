@@ -113,46 +113,8 @@ in {
         (self + "/hosts/rich-evans/email-digest.nix")
         (self + "/hosts/rich-evans/buildbot-master.nix")
         {
-          kimb.services = {
-            copyparty = {
-              enable = true;
-              port = 3923;
-              subdomain = "files";
-              host = "rich-evans";
-              auth = "authelia";
-              publicAccess = true;
-              websockets = false;
-            };
-            homepage = {
-              enable = true;
-              port = 8082;
-              subdomain = "home-rich";
-              host = "rich-evans";
-              auth = "none";
-              publicAccess = false;
-              websockets = false;
-            };
-            homeassistant = {
-              enable = true;
-              port = 8123;
-              subdomain = "hass";
-              host = "rich-evans";
-              auth = "builtin";
-              publicAccess = true;
-              websockets = true;
-            };
-            life-coach-dashboard = {
-              enable = true;
-              # lifecoach-organism dashboard runs on 8586; the old
-              # org-life-coach dashboard on 8585 is now mkForce-disabled.
-              port = 8586;
-              subdomain = "coach";
-              host = "rich-evans";
-              auth = "authelia";
-              publicAccess = true;
-              websockets = false;
-            };
-          };
+          # Import centralized service configurations
+          kimb.services = import ../services/default.nix { }.rich-evans;
         }
       ];
     };
@@ -176,111 +138,8 @@ in {
                 email = "mccartykim@zoho.com";
                 displayName = "Kimberly";
               };
-              services = {
-                authelia = {
-                  enable = true;
-                  port = 9091;
-                  subdomain = "auth";
-                  host = "maitred";
-                  auth = "none";
-                  publicAccess = true;
-                  websockets = false;
-                };
-                grafana = {
-                  enable = true;
-                  port = 3000;
-                  subdomain = "grafana";
-                  host = "maitred";
-                  auth = "authelia";
-                  publicAccess = true;
-                  websockets = false;
-                };
-                prometheus = {
-                  enable = true;
-                  port = 9090;
-                  subdomain = "prometheus";
-                  host = "maitred";
-                  auth = "authelia";
-                  publicAccess = true;
-                  websockets = false;
-                };
-                homepage = {
-                  enable = true;
-                  port = 8082;
-                  subdomain = "home";
-                  host = "maitred";
-                  auth = "authelia";
-                  publicAccess = true;
-                  websockets = false;
-                };
-                blog = {
-                  enable = true;
-                  port = 8080;
-                  subdomain = "blog";
-                  host = "maitred";
-                  containerIP = "192.168.100.3";
-                  auth = "none";
-                  publicAccess = true;
-                  websockets = false;
-                };
-                reverse-proxy = {
-                  enable = true;
-                  port = 80;
-                  subdomain = "www";
-                  host = "maitred";
-                  containerIP = "192.168.100.2";
-                  auth = "none";
-                  publicAccess = true;
-                  websockets = false;
-                };
-                homeassistant = {
-                  enable = true;
-                  port = 8123;
-                  subdomain = "hass";
-                  host = "rich-evans";
-                  auth = "builtin"; # HA handles its own auth
-                  publicAccess = true;
-                  websockets = true; # Required for HA frontend
-                };
-                matrix = {
-                  enable = true;
-                  port = 6167;
-                  subdomain = "matrix";
-                  host = "rich-evans";
-                  auth = "builtin"; # Matrix has its own auth
-                  publicAccess = true;
-                  websockets = true; # Matrix uses websockets for sync
-                };
-                jellyfin = {
-                  enable = true;
-                  port = 8096;
-                  subdomain = "media";
-                  host = "historian";
-                  auth = "builtin"; # Jellyfin handles its own auth
-                  publicAccess = true;
-                  websockets = true; # Required for live playback
-                };
-                buildbot = {
-                  enable = true;
-                  port = 80; # rich-evans nginx (provisioned by buildbot-nix module) listens on :80
-                  subdomain = "buildbot";
-                  host = "rich-evans";
-                  auth = "none"; # buildbot has its own GitHub OAuth; webhook must not be auth-gated
-                  publicAccess = true; # GitHub webhook must be reachable from the internet
-                  websockets = true; # live log streaming + SSE in the buildbot UI
-                };
-                life-coach-dashboard = {
-                  enable = true;
-                  # lifecoach-organism dashboard runs on 8586; the old
-                  # org-life-coach dashboard on 8585 is now mkForce-disabled.
-                  port = 8586;
-                  subdomain = "coach";
-                  host = "rich-evans";
-                  auth = "authelia";
-                  publicAccess = true;
-                  websockets = false;
-                };
-              };
+              # Import centralized service configurations
+              services = import ../services/default.nix { }.maitred;
               networks = {
                 containerBridge = "192.168.100.1";
                 reverseProxyIP = "192.168.100.2";

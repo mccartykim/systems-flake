@@ -6,6 +6,8 @@
   programs.neovim = {
     enable = true;
     defaultEditor = true;
+    withRuby = false;
+    withPython3 = false;
 
     plugins = with pkgs.vimPlugins; [
       oil-nvim
@@ -42,7 +44,7 @@
       set cursorline
     '';
 
-    extraLuaConfig = ''
+    initLua = ''
       vim.g.mapleader = ","
 
       require("oil").setup()
