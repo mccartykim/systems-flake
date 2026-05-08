@@ -77,7 +77,7 @@ in {
       };
       default_config = {};
       http = {
-        server_host = "0.0.0.0";
+        server_host = ["0.0.0.0"];
         server_port = cfg.services.homeassistant.port;
         use_x_forwarded_for = true;
         trusted_proxies = [
@@ -211,6 +211,7 @@ in {
     enable = true;
     listeners = [
       {
+        address = "0.0.0.0";
         port = 1883;
         omitPasswordAuth = true;
         settings.allow_anonymous = true;
