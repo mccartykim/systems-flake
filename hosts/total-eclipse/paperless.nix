@@ -13,6 +13,9 @@
     address = "0.0.0.0"; # Accessible over Nebula
     consumptionDirIsPublic = true; # maitred rsyncs as kimb
     settings = {
+      # nix-topology extractor expects this; set to the URL for topology diagram info
+      domain = "total-eclipse.nebula";
+
       # OCR settings
       PAPERLESS_OCR_LANGUAGE = "eng";
       PAPERLESS_OCR_ROTATE_PAGES = "true";

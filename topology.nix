@@ -1,8 +1,4 @@
-{
-  config,
-  lib,
-  ...
-}: let
+{ config, lib, ... }: let
   registry = import ./hosts/nebula-registry.nix;
 in {
   # --- Networks ---
@@ -10,7 +6,6 @@ in {
     lan = {
       name = "Home LAN";
       cidrv4 = "192.168.69.0/24";
-      icon = "icons.internet";
     };
     nebula = {
       name = "Nebula Overlay";
@@ -38,15 +33,14 @@ in {
     };
   };
 
-  # --- Router ---
+  # --- Router (override auto-detected "nixos" to "router") ---
   nodes.maitred = {
-    name = "maitred";
-    deviceType = "router";
+    deviceType = lib.mkForce "router";
     hardware.info = "Datto 1000 — Edge router, reverse proxy, DNS";
     interfaces = {
       wan = {
         addresses = ["DHCP"];
-        physicalConnections = [{node = "internet"; interface = "wan";}];
+        physicalConnections = [{ node = "internet"; interface = "wan"; }];
       };
       lan = {
         addresses = ["192.168.69.1/24"];
@@ -61,16 +55,14 @@ in {
     };
   };
 
-  # --- Desktops ---
+  # --- Desktops (deviceType auto-detected as "nixos") ---
   nodes.historian = {
-    name = "historian";
-    deviceType = "nixos";
     hardware.info = "GmkTec NucBox EVO-X1 — Daily driver desktop, Jellyfin, Ollama";
     interfaces = {
       lan = {
         addresses = ["DHCP"];
         network = "lan";
-        physicalConnections = [{node = "maitred"; interface = "lan";}];
+        physicalConnections = [{ node = "maitred"; interface = "lan"; }];
       };
       nebula = {
         addresses = ["10.100.0.10/16"];
@@ -82,14 +74,12 @@ in {
   };
 
   nodes.total-eclipse = {
-    name = "total-eclipse";
-    deviceType = "nixos";
     hardware.info = "Costco gaming PC — Nvidia RTX 4060";
     interfaces = {
       lan = {
         addresses = ["DHCP"];
         network = "lan";
-        physicalConnections = [{node = "maitred"; interface = "lan";}];
+        physicalConnections = [{ node = "maitred"; interface = "lan"; }];
       };
       nebula = {
         addresses = ["10.100.0.6/16"];
@@ -102,14 +92,12 @@ in {
 
   # --- Servers ---
   nodes.rich-evans = {
-    name = "rich-evans";
-    deviceType = "nixos";
     hardware.info = "HP ProDesk 600 G2 DM — General server, cameras, Buildbot";
     interfaces = {
       lan = {
         addresses = ["DHCP"];
         network = "lan";
-        physicalConnections = [{node = "maitred"; interface = "lan";}];
+        physicalConnections = [{ node = "maitred"; interface = "lan"; }];
       };
       nebula = {
         addresses = ["10.100.0.40/16"];
@@ -122,8 +110,6 @@ in {
 
   # --- Laptops / portables ---
   nodes.marshmallow = {
-    name = "marshmallow";
-    deviceType = "nixos";
     hardware.info = "ThinkPad T490 — Daily driver laptop";
     interfaces = {
       wifi = {
@@ -141,8 +127,6 @@ in {
   };
 
   nodes.bartleby = {
-    name = "bartleby";
-    deviceType = "nixos";
     hardware.info = "ThinkPad X131e — Beloved college laptop";
     interfaces = {
       wifi = {
@@ -160,8 +144,6 @@ in {
   };
 
   nodes.cheesecake = {
-    name = "cheesecake";
-    deviceType = "nixos";
     hardware.info = "Microsoft Surface Go 3 — Portable tablet";
     interfaces = {
       wifi = {
@@ -179,8 +161,6 @@ in {
   };
 
   nodes.donut = {
-    name = "donut";
-    deviceType = "nixos";
     hardware.info = "Valve Steam Deck — Portable gaming (Jovian NixOS)";
     interfaces = {
       wifi = {
@@ -197,15 +177,16 @@ in {
     };
   };
 
-  # --- External / non-NixOS devices on Nebula ---
+  # --- External / non-NixOS devices (no auto-detection, define everything) ---
   nodes.oracle = {
     name = "oracle";
-    deviceIcon = "icons.cloud";
+    deviceType = "cloud";
+    deviceIcon = "devices.cloud";
     hardware.info = "Oracle Cloud VM — Nebula lighthouse + relay";
     interfaces = {
       wan = {
         addresses = ["150.136.155.204"];
-        physicalConnections = [{node = "internet"; interface = "wan";}];
+        physicalConnections = [{ node = "internet"; interface = "wan"; }];
       };
       nebula = {
         addresses = ["10.100.0.2/16"];
@@ -218,13 +199,14 @@ in {
 
   nodes.tachikoma = {
     name = "tachikoma";
-    deviceIcon = "icons.robot";
+    deviceType = "iot";
+    deviceIcon = "devices.cloud-server";
     hardware.info = "Dreame vacuum (Valetudo) — Robot vacuum with camera";
     interfaces = {
       lan = {
         addresses = ["192.168.69.177"];
         network = "lan";
-        physicalConnections = [{node = "maitred"; interface = "lan";}];
+        physicalConnections = [{ node = "maitred"; interface = "lan"; }];
       };
       nebula = {
         addresses = ["10.100.0.60/16"];
@@ -237,7 +219,8 @@ in {
 
   nodes.mochi = {
     name = "mochi";
-    deviceIcon = "icons.smartphone";
+    deviceType = "mobile";
+    deviceIcon = "devices.laptop";
     hardware.info = "Google Pixel 9 Pro — AVF/Debian (system-manager)";
     interfaces = {
       nebula = {

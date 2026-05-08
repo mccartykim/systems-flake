@@ -495,8 +495,8 @@
   systemd.timers.rclone-putio-sync = {
     wantedBy = ["timers.target"];
     timerConfig = {
-      OnCalendar = "*:0/15"; # Every 15 minutes
-      RandomizedDelaySec = "2m";
+      OnCalendar = "*:0/3"; # Every 3 minutes
+      RandomizedDelaySec = "30s";
       Persistent = true;
     };
   };

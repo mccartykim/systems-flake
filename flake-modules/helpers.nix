@@ -27,7 +27,7 @@
         duckdb-engine = pyPrev.duckdb-engine.overridePythonAttrs (old: {
           doCheck = false;
         });
-      });
+      };
     };
   };
 
