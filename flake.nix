@@ -114,6 +114,10 @@
     # Firefox Nightly
     firefox-nightly.url = "github:nix-community/flake-firefox-nightly";
     firefox-nightly.inputs.nixpkgs.follows = "nixpkgs";
+
+    # Infrastructure/network diagram generator from NixOS configs
+    nix-topology.url = "github:oddlama/nix-topology";
+    nix-topology.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs = {
@@ -135,11 +139,13 @@
     nixos-facter-modules,
     system-manager,
     jovian-nixos,
+    nix-topology,
     ...
   } @ inputs:
     flake-parts.lib.mkFlake {inherit inputs;} {
       imports = [
         ./flake-modules # Modularized flake configuration
+        nix-topology.flakeModule
       ];
 
       systems = ["x86_64-linux" "aarch64-linux"];
@@ -154,6 +160,10 @@
       }: let
         inherit (nixpkgs) lib;
       in {
+        topology.modules = [
+          ./topology.nix
+        ];
+
         # Per-system packages
         packages = lib.optionalAttrs (system == "x86_64-linux" || system == "aarch64-linux") {
           # ESPHome firmware builds (exposed at top level for convenience)

@@ -4,7 +4,7 @@
   self,
   ...
 }: let
-  inherit (inputs) nixpkgs home-manager srvos nix-index-database firefox-nightly;
+  inherit (inputs) nixpkgs home-manager srvos nix-index-database firefox-nightly nix-topology;
 
   # Overlay to fix Python packages with build/test issues
   pythonFixesOverlay = final: prev: {
@@ -27,7 +27,7 @@
         duckdb-engine = pyPrev.duckdb-engine.overridePythonAttrs (old: {
           doCheck = false;
         });
-      };
+      });
     };
   };
 
@@ -52,6 +52,8 @@ in {
       (self + "/services/default.nix")
       # Fix Python packages with strict version bounds + Firefox Nightly
       {nixpkgs.overlays = [pythonFixesOverlay firefoxNightlyOverlay];}
+      # Infrastructure/network diagram generation
+      nix-topology.nixosModules.default
       # Static nebula host entries so hostname.nebula resolves without maitred DNS
       (_: let
         registry = import (self + "/hosts/nebula-registry.nix");
