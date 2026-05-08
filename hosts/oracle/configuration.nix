@@ -13,9 +13,19 @@ in {
     nixpkgs.hostPlatform = "x86_64-linux";
 
     environment = {
-      systemPackages = [pkgs.nebula pkgs.age pkgs.iptables];
+      systemPackages = [pkgs.nebula pkgs.age pkgs.iptables pkgs.prometheus-blackbox-exporter];
 
       etc = {
+        "blackbox/blackbox.yml".text = ''
+          modules:
+            http_2xx:
+              prober: http
+              timeout: 5s
+              http:
+                valid_status_codes:
+                  - 200
+                method: GET
+        '';
         "nebula/encrypted/ca.age".source = encryptedSecrets.ca;
         "nebula/encrypted/cert.age".source = encryptedSecrets.cert;
         "nebula/encrypted/key.age".source = encryptedSecrets.key;
@@ -60,6 +70,10 @@ in {
               - port: 22
                 proto: tcp
                 host: any
+              # Blackbox exporter for external HTTP probes from maitred
+              - port: 9115
+                proto: tcp
+                host: any
         '';
       };
     };
@@ -90,18 +104,32 @@ in {
     };
 
     # Oracle Cloud Ubuntu has restrictive default iptables rules; ensure 4242
-    # is open before nebula starts.
+    # and 9115 (blackbox exporter) are open before nebula starts.
     systemd.services.nebula-firewall = {
-      description = "Open firewall port for Nebula";
+      description = "Open firewall ports for Nebula and Blackbox Exporter";
       wantedBy = ["multi-user.target"];
       before = ["nebula.service"];
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
-        ExecStart = pkgs.writeShellScript "open-nebula-port" ''
+        ExecStart = pkgs.writeShellScript "open-firewall-ports" ''
           ${pkgs.iptables}/bin/iptables -C INPUT -p udp --dport 4242 -j ACCEPT 2>/dev/null || \
             ${pkgs.iptables}/bin/iptables -I INPUT 5 -p udp --dport 4242 -j ACCEPT
+          ${pkgs.iptables}/bin/iptables -C INPUT -p tcp --dport 9115 -j ACCEPT 2>/dev/null || \
+            ${pkgs.iptables}/bin/iptables -I INPUT 5 -p tcp --dport 9115 -j ACCEPT
         '';
+      };
+    };
+
+    # Blackbox exporter for external HTTP probes from maitred
+    systemd.services.blackbox-exporter = {
+      description = "Prometheus Blackbox Exporter";
+      wantedBy = ["multi-user.target"];
+      after = ["network.target"];
+      serviceConfig = {
+        ExecStart = "${pkgs.prometheus-blackbox-exporter}/bin/blackbox_exporter --config.file=/etc/blackbox/blackbox.yml --web.listen-address=:9115";
+        Restart = "always";
+        RestartSec = "5s";
       };
     };
 

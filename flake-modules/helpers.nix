@@ -47,6 +47,7 @@ in {
       (self + "/modules/distributed-builds.nix")
       {kimb.distributedBuilds.enable = true;}
       (self + "/modules/agenix.nix")
+      (self + "/modules/sre-agent.nix")
       # kimb.* option declarations + per-host service auto-injection
       (self + "/modules/kimb-services.nix")
       (self + "/services/default.nix")

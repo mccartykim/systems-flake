@@ -1,4 +1,5 @@
-# Migrated monitoring stack using kimb-services options
+# Monitoring stack with SRE observability (Phase 0)
+# Prometheus + Grafana + Alertmanager + blackbox + journal-remote
 {
   config,
   lib,
@@ -6,15 +7,24 @@
   ...
 }: let
   cfg = config.kimb;
+  textfileDir = "/var/lib/prometheus-node-exporter-textfiles";
 in {
+  imports = [./monitoring-probes.nix];
+
   # Prometheus monitoring (host service)
   services.prometheus = lib.mkIf cfg.services.prometheus.enable {
     enable = true;
     inherit (cfg.services.prometheus) port;
 
-    # Scrape configurations - map over enabled services
+    # Alertmanager integration
+    alertmanagers = [
+      {
+        static_configs = [{targets = ["localhost:9093"];}];
+      }
+    ];
+
+    # Scrape configurations
     scrapeConfigs = let
-      # Helper to create scrape config for a service
       mkServiceScrapeConfig = name: service: {
         job_name = name;
         static_configs = [
@@ -24,7 +34,7 @@ in {
                 if service.host == "maitred" && service.containerIP == null
                 then "localhost:${toString service.port}"
                 else if service.host == "maitred" && service.containerIP != null && name == "reverse-proxy"
-                then "${cfg.networks.reverseProxyIP}:2019" # Caddy metrics
+                then "${cfg.networks.reverseProxyIP}:2019"
                 else if service.host == "rich-evans"
                 then "10.100.0.40:${toString service.port}"
                 else "localhost:${toString service.port}"
@@ -34,26 +44,127 @@ in {
         ];
       };
 
-      # Get scrape configs for enabled services with metrics
       serviceScrapeConfigs = lib.mapAttrsToList mkServiceScrapeConfig (
         lib.filterAttrs (
           name: service:
             service.enable
-            && (name == "prometheus" || name == "reverse-proxy") # Services that expose metrics
+            && (name == "prometheus" || name == "reverse-proxy")
         )
         cfg.services
       );
 
-      # Always include node exporter
+      # All nebula hosts running node_exporter
       nodeExporterConfig = {
         job_name = "node-exporter";
-        static_configs = [{targets = ["localhost:9100"];}];
+        static_configs = [
+          {
+            targets = [
+              "localhost:9100" # maitred
+              "10.100.0.40:9100" # rich-evans
+              "10.100.0.10:9100" # historian
+              "10.100.0.6:9100" # total-eclipse
+            ];
+          }
+        ];
+      };
+
+      # Blog reachability from inside the network
+      blackboxBlogInternal = {
+        job_name = "blackbox-blog-internal";
+        metrics_path = "/probe";
+        params = {module = ["http_2xx"];};
+        static_configs = [{targets = ["https://blog.kimb.dev"];}];
+        relabel_configs = [
+          {source_labels = ["__address__"]; target_label = "__param_target";}
+          {source_labels = ["__param_target"]; target_label = "instance";}
+          {target_label = "__address__"; replacement = "localhost:9115";}
+        ];
+      };
+
+      # Blog reachability from outside (via oracle blackbox)
+      blackboxBlogExternal = {
+        job_name = "blackbox-blog-external";
+        metrics_path = "/probe";
+        params = {module = ["http_2xx"];};
+        static_configs = [{targets = ["https://blog.kimb.dev"];}];
+        relabel_configs = [
+          {source_labels = ["__address__"]; target_label = "__param_target";}
+          {source_labels = ["__param_target"]; target_label = "instance";}
+          {target_label = "__address__"; replacement = "10.100.0.2:9115";}
+        ];
       };
     in
-      [nodeExporterConfig] ++ serviceScrapeConfigs;
+      [nodeExporterConfig blackboxBlogInternal blackboxBlogExternal] ++ serviceScrapeConfigs;
 
-    # Rules and alerting can be added here
-    ruleFiles = [];
+    # Alert rules
+    ruleFiles = [
+      (pkgs.writeText "sre-alerts.yml" (
+        lib.generators.toYAML {} {
+          groups = [
+            {
+              name = "sre-blog";
+              rules = [
+                {
+                  alert = "BlogUnreachable";
+                  expr = ''probe_success{job="blackbox-blog-external"} == 0'';
+                  for = "2m";
+                  labels.severity = "critical";
+                  annotations.summary = "blog.kimb.dev unreachable from oracle (external probe)";
+                }
+              ];
+            }
+            {
+              name = "sre-ollama";
+              rules = [
+                {
+                  alert = "OllamaUnreachable";
+                  expr = ''ollama_up == 0'';
+                  for = "5m";
+                  labels.severity = "warning";
+                  annotations.summary = "Ollama on {{ $labels.host }} unreachable for 5m";
+                }
+              ];
+            }
+            {
+              name = "sre-lifecoach";
+              rules = [
+                {
+                  alert = "LifecoachStale";
+                  expr = ''lifecoach_last_run_staleness_seconds > 14400'';
+                  for = "0m";
+                  labels.severity = "warning";
+                  annotations.summary = "Lifecoach-organism has not run for {{ $value }}s (>4h)";
+                }
+              ];
+            }
+            {
+              name = "sre-node";
+              rules = [
+                {
+                  alert = "NodeExporterDown";
+                  expr = ''up{job="node-exporter"} == 0'';
+                  for = "5m";
+                  labels.severity = "critical";
+                  annotations.summary = "Node exporter on {{ $labels.instance }} down for 5m";
+                }
+              ];
+            }
+            {
+              name = "sre-systemd";
+              rules = [
+                {
+                  alert = "UnitFailed";
+                  expr = ''node_systemd_unit_state{state="failed"} == 1'';
+                  for = "10m";
+                  labels.severity = "warning";
+                  annotations.summary = "systemd unit {{ $labels.name }} failed on {{ $labels.instance }} for >10m";
+                }
+              ];
+            }
+          ];
+        }
+      ))
+    ];
 
     # Retention policy
     extraFlags = [
@@ -61,14 +172,91 @@ in {
       "--storage.tsdb.retention.size=10GB"
     ];
 
-    # Node exporter configuration
+    # Node exporter (local, with textfile collector)
     exporters.node = {
       enable = true;
       port = 9100;
       enabledCollectors = ["systemd" "processes"];
-      # Only listen on localhost and Nebula
       listenAddress = "0.0.0.0";
-      openFirewall = false; # Manually control access
+      openFirewall = false;
+      extraFlags = ["--collector.textfile.directory=${textfileDir}"];
+    };
+
+    # Blackbox exporter for HTTP probes
+    exporters.blackbox = {
+      enable = true;
+      port = 9115;
+      openFirewall = false;
+      configFile = pkgs.writeText "blackbox.yml" (
+        lib.generators.toYAML {} {
+          modules = {
+            http_2xx = {
+              prober = "http";
+              timeout = "5s";
+              http = {
+                valid_status_codes = [200];
+                method = "GET";
+              };
+            };
+          };
+        }
+      );
+    };
+
+    # Alertmanager — fires webhooks to SRE agent on rich-evans
+    alertmanager = {
+      enable = true;
+      port = 9093;
+      openFirewall = false;
+      configuration = {
+        global.resolve_timeout = "5m";
+        route = {
+          receiver = "sre-webhook";
+          group_by = ["alertname" "instance"];
+          group_wait = "30s";
+          group_interval = "5m";
+          repeat_interval = "4h";
+        };
+        receivers = [
+          {
+            name = "sre-webhook";
+            webhook_configs = [
+              {
+                url = "http://10.100.0.40:9095/webhook";
+                send_resolved = true;
+              }
+            ];
+          }
+        ];
+      };
+    };
+  };
+
+  # Journal remote sink — receives logs from all nebula hosts
+  users.users.systemd-journal-remote = {
+    isSystemUser = true;
+    group = "systemd-journal-remote";
+  };
+  users.groups.systemd-journal-remote = {};
+
+  systemd.tmpfiles.rules = [
+    "d /var/log/journal/remote 0755 systemd-journal-remote systemd-journal-remote -"
+  ];
+
+  systemd.sockets.systemd-journal-remote = {
+    description = "Journal Remote Sink";
+    listenStreams = ["19532"];
+    wantedBy = ["sockets.target"];
+  };
+
+  systemd.services.systemd-journal-remote = {
+    description = "Journal Remote Sink";
+    requires = ["systemd-journal-remote.socket"];
+    after = ["systemd-journal-remote.socket"];
+    serviceConfig = {
+      ExecStart = "${pkgs.systemd}/lib/systemd/systemd-journal-remote --output=/var/log/journal/remote/";
+      User = "systemd-journal-remote";
+      Group = "systemd-journal-remote";
     };
   };
 
@@ -79,7 +267,7 @@ in {
     settings = {
       server = {
         http_port = cfg.services.grafana.port;
-        http_addr = "0.0.0.0"; # Accept connections from reverse-proxy container
+        http_addr = "0.0.0.0";
         domain = "${cfg.services.grafana.subdomain}.${cfg.domain}";
         root_url = "https://${cfg.services.grafana.subdomain}.${cfg.domain}";
       };
@@ -130,16 +318,15 @@ in {
   # Firewall rules for monitoring services
   networking.firewall = {
     interfaces = {
-      # Allow monitoring services access from LAN and Nebula
       "br-lan".allowedTCPPorts = lib.flatten [
         (lib.optional cfg.services.grafana.enable cfg.services.grafana.port)
         (lib.optional cfg.services.prometheus.enable cfg.services.prometheus.port)
-        [9100] # node exporter
+        [9100 19532] # node exporter + journal-remote
       ];
       "nebula-kimb".allowedTCPPorts = lib.flatten [
         (lib.optional cfg.services.grafana.enable cfg.services.grafana.port)
         (lib.optional cfg.services.prometheus.enable cfg.services.prometheus.port)
-        [9100] # node exporter
+        [9100 19532] # node exporter + journal-remote
       ];
     };
   };

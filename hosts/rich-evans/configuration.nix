@@ -42,6 +42,9 @@ in {
 
     # Static networking
     ./networking.nix
+
+    # SRE agent (Phase 0: Alertmanager webhook stub)
+    ./sre-agent.nix
   ];
 
   # Restic backup to shared B2 repo
@@ -145,6 +148,12 @@ in {
         port = 6167;
         proto = "tcp";
         host = "any";
+      }
+      # SRE agent webhook (Alertmanager → rich-evans)
+      {
+        port = 9095;
+        proto = "tcp";
+        host = "maitred";
       }
     ];
   };
@@ -301,6 +310,71 @@ in {
     ];
   };
   networking.firewall.trustedInterfaces = ["nebula1" "lo"];
+
+  # === Observability (SRE Agent Phase 0) ===
+
+  # Node exporter for Prometheus scraping
+  services.prometheus.exporters.node = {
+    enable = true;
+    port = 9100;
+    enabledCollectors = ["systemd" "processes"];
+    listenAddress = "0.0.0.0";
+    extraFlags = ["--collector.textfile.directory=/var/lib/prometheus-node-exporter-textfiles"];
+  };
+
+  # Forward journal to maitred for central aggregation
+  systemd.services.systemd-journal-upload = {
+    description = "Upload journal to maitred";
+    after = ["network.target"];
+    wants = ["network.target"];
+    wantedBy = ["multi-user.target"];
+    serviceConfig = {
+      ExecStart = "${pkgs.systemd}/lib/systemd/systemd-journal-upload --url=http://10.100.0.50:19532";
+      User = "root";
+      Restart = "always";
+      RestartSec = "10s";
+    };
+  };
+
+  # Lifecoach freshness metric — how long since last successful organism cycle
+  systemd.services.lifecoach-freshness-probe = {
+    description = "Export lifecoach-organism staleness metric";
+    serviceConfig = {
+      Type = "oneshot";
+      User = "life-coach";
+      Group = "life-coach";
+    };
+    script = ''
+      DIR=/var/lib/prometheus-node-exporter-textfiles
+      OUT=$DIR/lifecoach_staleness.prom.tmp
+      FINAL=$DIR/lifecoach_staleness.prom
+      NOW=$(${pkgs.coreutils}/bin/date +%s)
+      if [ -f /var/lib/lifecoach-organism/.organism/last-run.json ]; then
+        LAST=$(${pkgs.jq}/bin/jq -r '.timestamp // 0' /var/lib/lifecoach-organism/.organism/last-run.json)
+        STALE=$(( NOW - LAST ))
+      else
+        STALE=999999
+      fi
+      cat > "$OUT" << EOF
+      # HELP lifecoach_last_run_staleness_seconds Seconds since last successful lifecoach cycle
+      # TYPE lifecoach_last_run_staleness_seconds gauge
+      lifecoach_last_run_staleness_seconds $STALE
+      EOF
+      mv "$OUT" "$FINAL"
+    '';
+  };
+
+  systemd.timers.lifecoach-freshness-probe = {
+    wantedBy = ["timers.target"];
+    timerConfig = {
+      OnCalendar = "*:0/2";
+      Persistent = true;
+    };
+  };
+
+  systemd.tmpfiles.rules = [
+    "d /var/lib/prometheus-node-exporter-textfiles 0755 life-coach life-coach -"
+  ];
 
   system.stateVersion = "23.11";
 }
