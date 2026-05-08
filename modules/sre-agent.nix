@@ -19,6 +19,7 @@ with lib; let
     cp ${pkgs.writeText "sre-agent-redaction.py" (builtins.readFile ./sre-agent/lib/redaction.py)} $out/redaction.py
     cp ${pkgs.writeText "sre-agent-llm_client.py" (builtins.readFile ./sre-agent/lib/llm_client.py)} $out/llm_client.py
     cp ${pkgs.writeText "sre-agent-github_client.py" (builtins.readFile ./sre-agent/lib/github_client.py)} $out/github_client.py
+    cp ${pkgs.writeText "sre-agent-discord_bot.py" (builtins.readFile ./sre-agent/lib/discord_bot.py)} $out/discord_bot.py
   '';
 in {
   options.kimb.sreAgent = {
@@ -169,7 +170,7 @@ in {
       path = with pkgs; [curl jq];
 
       serviceConfig = {
-        ExecStart = "${pkgs.python3}/bin/python3 ${sreAgentLib}/__main__.py discord";
+        ExecStart = "${pkgs.python3.withPackages (p: [p.discordpy])}/bin/python3 ${sreAgentLib}/__main__.py discord";
         User = cfg.user;
         Group = cfg.user;
         WorkingDirectory = cfg.stateDir;
