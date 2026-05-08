@@ -1,7 +1,6 @@
 # SRE Agent NixOS Module
-# Phase 0: observability foundation — stub webhook receiver that logs
-# Alertmanager alerts and posts summaries to Discord. No LLM, no GitHub
-# API calls yet (those arrive in Phase 1/2).
+# Phase 0→1: webhook receiver + LLM triage + redaction + GitHub issues
+# Phase 1.5: Discord bot (optional)
 {
   config,
   lib,
@@ -11,77 +10,15 @@
 with lib; let
   cfg = config.kimb.sreAgent;
 
-  webhookScript = pkgs.writeScript "sre-webhook" ''
-    #!${pkgs.python3}/bin/python3
-    import http.server, json, os, subprocess, sys, urllib.request
-    from datetime import datetime, timezone
-
-    STATE_DIR = os.environ["STATE_DIR"]
-    TOKEN_FILE = os.environ["DISCORD_TOKEN_FILE"]
-    CHANNEL_ID = os.environ["DISCORD_CHANNEL_ID"]
-    ALERTS_LOG = os.path.join(STATE_DIR, "alerts.jsonl")
-
-    def post_discord(msg):
-        if not CHANNEL_ID or CHANNEL_ID == "TODO":
-            print(f"discord: no channel id configured, skipping: {msg}", file=sys.stderr)
-            return
-        try:
-            with open(TOKEN_FILE) as f:
-                token = f.read().strip()
-            if not token or token.startswith("PLACEHOLDER"):
-                print("discord: token is placeholder, skipping", file=sys.stderr)
-                return
-            data = json.dumps({"content": msg[:2000]}).encode()
-            req = urllib.request.Request(
-                f"https://discord.com/api/v10/channels/{CHANNEL_ID}/messages",
-                data=data,
-                headers={"Authorization": f"Bot {token}", "Content-Type": "application/json"},
-            )
-            urllib.request.urlopen(req, timeout=10)
-        except Exception as e:
-            print(f"discord post failed: {e}", file=sys.stderr)
-
-    class Handler(http.server.BaseHTTPRequestHandler):
-        def do_POST(self):
-            length = int(self.headers.get("Content-Length", 0))
-            body = self.rfile.read(length)
-            try:
-                payload = json.loads(body)
-            except json.JSONDecodeError:
-                self.send_response(400)
-                self.end_headers()
-                return
-
-            # Append to log
-            with open(ALERTS_LOG, "a") as f:
-                f.write(json.dumps({"ts": datetime.now(timezone.utc).isoformat(), **payload}) + "\n")
-
-            # Format Discord message
-            status = payload.get("status", "unknown")
-            alerts = payload.get("alerts", [])
-            lines = [f"[{status.upper()}]"]
-            for a in alerts:
-                labels = a.get("labels", {})
-                annotations = a.get("annotations", {})
-                name = labels.get("alertname", "unknown")
-                instance = labels.get("instance", "?")
-                summary = annotations.get("summary", annotations.get("description", ""))
-                lines.append(f"**{name}** ({instance}): {summary}")
-            msg = "\n".join(lines)
-            print(msg)
-            post_discord(msg)
-
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json")
-            self.end_headers()
-            self.wfile.write(b'{"status":"ok"}')
-
-        def log_message(self, fmt, *args):
-            print(f"webhook: {fmt % args}")
-
-    server = http.server.HTTPServer(("0.0.0.0", ${toString cfg.webhookPort}), Handler)
-    print(f"sre-webhook listening on :${toString cfg.webhookPort}")
-    server.serve_forever()
+  # Assemble the sre_agent Python package as a directory in the Nix store.
+  # No setuptools/pyproject — pure stdlib, deployed via writeTextDir + PYTHONPATH.
+  sreAgentLib = pkgs.runCommand "sre-agent-lib" {} ''
+    mkdir -p $out
+    cp ${pkgs.writeText "sre-agent-__main__.py" (builtins.readFile ./sre-agent/lib/__main__.py)} $out/__main__.py
+    cp ${pkgs.writeText "sre-agent-webhook.py" (builtins.readFile ./sre-agent/lib/webhook.py)} $out/webhook.py
+    cp ${pkgs.writeText "sre-agent-redaction.py" (builtins.readFile ./sre-agent/lib/redaction.py)} $out/redaction.py
+    cp ${pkgs.writeText "sre-agent-llm_client.py" (builtins.readFile ./sre-agent/lib/llm_client.py)} $out/llm_client.py
+    cp ${pkgs.writeText "sre-agent-github_client.py" (builtins.readFile ./sre-agent/lib/github_client.py)} $out/github_client.py
   '';
 in {
   options.kimb.sreAgent = {
@@ -122,6 +59,53 @@ in {
       type = types.port;
       default = 9095;
     };
+
+    ollamaHost = mkOption {
+      type = types.str;
+      default = "http://total-eclipse.nebula:11434";
+      description = "Primary Ollama endpoint (local, supports format:json)";
+    };
+
+    ollamaModel = mkOption {
+      type = types.str;
+      default = "qwen3:14b";
+      description = "Primary Ollama model for triage";
+    };
+
+    ollamaCloudHost = mkOption {
+      type = types.str;
+      default = "https://ollama.com";
+      description = "Fallback Ollama Cloud endpoint";
+    };
+
+    ollamaCloudModel = mkOption {
+      type = types.str;
+      default = "glm-5";
+      description = "Fallback Ollama Cloud model (free-form only)";
+    };
+
+    ollamaCloudKeyFile = mkOption {
+      type = types.path;
+      description = "Agenix path to Ollama Cloud API key";
+    };
+
+    enableDiscordBot = mkOption {
+      type = types.bool;
+      default = false;
+      description = "Enable the Discord slash-command bot (/status, /investigate)";
+    };
+
+    enableLlmTriage = mkOption {
+      type = types.bool;
+      default = false;
+      description = "Enable LLM triage via Ollama (opt-in: alert text will be sent to LLM)";
+    };
+
+    prometheusUrl = mkOption {
+      type = types.str;
+      default = "http://10.100.0.50:9090";
+      description = "Prometheus URL for alert queries";
+    };
   };
 
   config = mkIf cfg.enable {
@@ -141,8 +125,10 @@ in {
       after = ["network.target"];
       wantedBy = ["multi-user.target"];
 
+      path = with pkgs; [curl jq];
+
       serviceConfig = {
-        ExecStart = webhookScript;
+        ExecStart = "${pkgs.python3}/bin/python3 ${sreAgentLib}/__main__.py webhook";
         User = cfg.user;
         Group = cfg.user;
         WorkingDirectory = cfg.stateDir;
@@ -150,9 +136,20 @@ in {
         RestartSec = "5s";
 
         Environment = [
+          "PYTHONPATH=${sreAgentLib}"
           "STATE_DIR=${cfg.stateDir}"
           "DISCORD_TOKEN_FILE=${cfg.discordTokenFile}"
           "DISCORD_CHANNEL_ID=${cfg.alertChannelId}"
+          "WEBHOOK_PORT=${toString cfg.webhookPort}"
+          "OLLAMA_HOST=${cfg.ollamaHost}"
+          "OLLAMA_MODEL=${cfg.ollamaModel}"
+          "OLLAMA_CLOUD_HOST=${cfg.ollamaCloudHost}"
+          "OLLAMA_CLOUD_MODEL=${cfg.ollamaCloudModel}"
+          "OLLAMA_CLOUD_KEY_FILE=${cfg.ollamaCloudKeyFile}"
+          "GITHUB_TOKEN_FILE=${cfg.githubTokenFile}"
+          "GITHUB_REPO=${cfg.githubRepo}"
+          "ENABLE_LLM_TRIAGE=${if cfg.enableLlmTriage then "true" else "false"}"
+          "PROMETHEUS_URL=${cfg.prometheusUrl}"
         ];
 
         # Security hardening
@@ -160,7 +157,47 @@ in {
         ProtectSystem = "strict";
         ProtectHome = true;
         ReadWritePaths = [cfg.stateDir];
-        ReadOnlyPaths = [cfg.discordTokenFile cfg.githubTokenFile];
+        ReadOnlyPaths = [cfg.discordTokenFile cfg.githubTokenFile cfg.ollamaCloudKeyFile];
+      };
+    };
+
+    systemd.services.sre-agent-discord = mkIf cfg.enableDiscordBot {
+      description = "SRE Agent Discord Bot";
+      after = ["network.target"];
+      wantedBy = ["multi-user.target"];
+
+      path = with pkgs; [curl jq];
+
+      serviceConfig = {
+        ExecStart = "${pkgs.python3}/bin/python3 ${sreAgentLib}/__main__.py discord";
+        User = cfg.user;
+        Group = cfg.user;
+        WorkingDirectory = cfg.stateDir;
+        Restart = "on-failure";
+        RestartSec = "5s";
+
+        Environment = [
+          "PYTHONPATH=${sreAgentLib}"
+          "STATE_DIR=${cfg.stateDir}"
+          "DISCORD_TOKEN_FILE=${cfg.discordTokenFile}"
+          "DISCORD_CHANNEL_ID=${cfg.alertChannelId}"
+          "OLLAMA_HOST=${cfg.ollamaHost}"
+          "OLLAMA_MODEL=${cfg.ollamaModel}"
+          "OLLAMA_CLOUD_HOST=${cfg.ollamaCloudHost}"
+          "OLLAMA_CLOUD_MODEL=${cfg.ollamaCloudModel}"
+          "OLLAMA_CLOUD_KEY_FILE=${cfg.ollamaCloudKeyFile}"
+          "GITHUB_TOKEN_FILE=${cfg.githubTokenFile}"
+          "GITHUB_REPO=${cfg.githubRepo}"
+          "ENABLE_LLM_TRIAGE=${if cfg.enableLlmTriage then "true" else "false"}"
+          "PROMETHEUS_URL=${cfg.prometheusUrl}"
+        ];
+
+        # Security hardening
+        NoNewPrivileges = true;
+        ProtectSystem = "strict";
+        ProtectHome = true;
+        ReadWritePaths = [cfg.stateDir];
+        ReadOnlyPaths = [cfg.discordTokenFile cfg.githubTokenFile cfg.ollamaCloudKeyFile];
       };
     };
   };
