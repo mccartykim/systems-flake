@@ -18,8 +18,8 @@ with lib; let
   totalEclipseIP = registry.nodes.total-eclipse.ip;
   totalEclipseKey = registry.nodes.total-eclipse.publicKey;
 
-  # Host keys from desktops/laptops that can use distributed builds
-  clientHostKeys = sshKeys.desktopList ++ sshKeys.laptopList;
+  # Host keys from all NixOS hosts that can use distributed builds
+  clientHostKeys = sshKeys.desktopList ++ sshKeys.laptopList ++ sshKeys.applianceList;
 in {
   options.kimb.distributedBuilds = {
     enable = mkEnableOption "distributed Nix builds via historian";
