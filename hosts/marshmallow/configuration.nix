@@ -233,6 +233,7 @@
       nh
       weylus
       orca-slicer
+      ollama
     ];
   };
 
