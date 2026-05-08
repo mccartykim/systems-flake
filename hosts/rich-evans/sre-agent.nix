@@ -1,13 +1,19 @@
 # SRE Agent host configuration
-# Phase 0: stub webhook receiver + agenix secrets
-{config, ...}: {
+# Phase 1: webhook + LLM triage + redaction + Discord bot + agenix secrets
+{config, lib, ...}: {
   kimb.sreAgent = {
     enable = true;
     discordTokenFile = config.age.secrets.discord-sre-token.path;
     githubTokenFile = config.age.secrets.gh-sre-token.path;
+    ollamaCloudKeyFile = config.age.secrets.ollama-cloud-key.path;
     githubRepo = "mccartykim/homelab-incidents";
     alertChannelId = "900242088434757662";
     webhookPort = 9095;
+    ollamaHost = "http://total-eclipse.nebula:11434";
+    ollamaModel = "qwen3:14b";
+    enableDiscordBot = true;
+    enableLlmTriage = lib.mkDefault false; # opt-in: review redaction rules first
+    prometheusUrl = "http://10.100.0.50:9090";
   };
 
   age.secrets.discord-sre-token = {
@@ -18,6 +24,12 @@
 
   age.secrets.gh-sre-token = {
     file = ../../secrets/gh-sre-token.age;
+    owner = "sre-agent";
+    mode = "0400";
+  };
+
+  age.secrets.ollama-cloud-key = {
+    file = ../../secrets/ollama-cloud-key.age;
     owner = "sre-agent";
     mode = "0400";
   };
