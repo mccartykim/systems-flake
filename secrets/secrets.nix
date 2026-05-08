@@ -109,5 +109,13 @@ in
     # z.ai serves a Claude-compatible endpoint; consumed by the claude-zai
     # wrapper in home/modules/ai-tools.nix. Owner is kimb (interactive user).
     "zai-api-key.age".publicKeys = [hostKeys.marshmallow hostKeys.historian hostKeys.rich-evans bootstrap];
+
+    # ===== SRE AGENT =====
+    # GitHub fine-grained PAT for filing issues in mccartykim/homelab-incidents
+    # (Issues: read/write on that repo only). Decrypted on rich-evans.
+    "gh-sre-token.age".publicKeys = [hostKeys.rich-evans bootstrap];
+    # Discord bot token for SRE alert notifications (#sre-alerts channel).
+    # Separate bot application from life-coach/vacuum/org-crm.
+    "discord-sre-token.age".publicKeys = [hostKeys.rich-evans bootstrap];
   }
   // allNebulaSecrets
