@@ -155,6 +155,13 @@
     kbfs.enable = true;
     input-remapper.enable = true;
 
+    # Ollama LLM server - accessible over Nebula for cloud inference
+    ollama = {
+      enable = true;
+      host = "0.0.0.0"; # Bind to all interfaces
+      openFirewall = true; # Open port 11434
+    };
+
     syncthing = {
       enable = true;
       openDefaultPorts = true;
@@ -233,7 +240,6 @@
       nh
       weylus
       orca-slicer
-      ollama
     ];
   };
 
