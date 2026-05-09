@@ -66,13 +66,13 @@ CACHE_TTL_SECONDS = 3600  # 1 hour
 
 TRIAGE_SYSTEM_PROMPT = """You are an SRE triage assistant. Analyze this alert.
 
-Respond in this exact format (one line each):
-SEVERITY: critical|warning|info|noise
-CAUSE: one-line root cause guess
-ACTION: one-line recommended action
-FILE_ISSUE: yes|no
-ISSUE_TITLE: suggested title (only if FILE_ISSUE=yes)
-SILENCE: 0|2|4|24 (hours to silence this alert; 0 = don't silence, use 4 for noise, 2 for info)"""
+Respond with a JSON object with these fields:
+- severity: one of ["critical", "warning", "info", "noise"]
+- cause: one-line root cause guess
+- action: one-line recommended action
+- file_issue: true or false
+- issue_title: suggested GitHub issue title (empty string if not filing)
+- silence_hours: integer, hours to silence (0=never, 2=info alerts, 4=noise alerts, 24=persistent noise)"""
 
 
 # --- Free-form response parser ---
@@ -195,11 +195,10 @@ def _call_local_ollama(prompt: str) -> Optional[TriageResult]:
             resp = urllib.request.urlopen(req, timeout=LOCAL_TIMEOUT)
             body = json.loads(resp.read().decode())
             content = body.get("message", {}).get("content", "")
-            print(f"llm: local raw response (attempt {attempt+1}): {content[:300]}", file=sys.stderr)
             # With format:json, content should be valid JSON
             parsed = json.loads(content)
             result = TriageResult.from_dict(parsed)
-            print(f"llm: local parsed result: severity={result.severity}", file=sys.stderr)
+            print(f"llm: triage result for {prompt.splitlines()[0]}: severity={result.severity}", file=sys.stderr)
             return result
         except (json.JSONDecodeError, KeyError, TypeError) as e:
             # JSON parse failed — try free-form parsing as fallback

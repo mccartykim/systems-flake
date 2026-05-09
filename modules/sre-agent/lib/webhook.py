@@ -140,8 +140,9 @@ class WebhookHandler(http.server.BaseHTTPRequestHandler):
             redacted = redact_alert(alert)
             result = run_triage(redacted)
             if result:
+                ts = datetime.now(timezone.utc).strftime("%H:%M UTC")
                 triage_msg = (
-                    f"**Triage:** {result.severity} | Cause: {result.cause} | Action: {result.action}"
+                    f"[{ts}] **Triage:** {result.severity} | Cause: {result.cause} | Action: {result.action}"
                 )
                 if result.file_issue:
                     triage_msg += f" | Filing issue: {result.issue_title or 'yes'}"
@@ -150,7 +151,8 @@ class WebhookHandler(http.server.BaseHTTPRequestHandler):
                 # Maybe create a GitHub issue
                 issue_url = maybe_file_issue(redacted, result)
                 if issue_url:
-                    post_discord(f"**Issue created:** {issue_url}")
+                    ts = datetime.now(timezone.utc).strftime("%H:%M UTC")
+                    post_discord(f"[{ts}] **Issue created:** {issue_url}")
 
                 # Maybe silence noise/info alerts
                 if result.silence_hours > 0 and result.severity in ("noise", "info"):
@@ -162,7 +164,8 @@ class WebhookHandler(http.server.BaseHTTPRequestHandler):
                         duration_hours=result.silence_hours,
                     )
                     if silence_id:
-                        post_discord(f"**Silenced:** {labels.get('alertname', 'unknown')} for {result.silence_hours}h (ID: {silence_id})")
+                        ts = datetime.now(timezone.utc).strftime("%H:%M UTC")
+                        post_discord(f"[{ts}] **Silenced:** {labels.get('alertname', 'unknown')} for {result.silence_hours}h (ID: {silence_id})")
 
         self.send_response(200)
         self.send_header("Content-Type", "application/json")
