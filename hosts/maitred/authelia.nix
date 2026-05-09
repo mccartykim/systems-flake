@@ -166,7 +166,7 @@ in {
       "br-lan".allowedTCPPorts = lib.mkIf cfg.services.authelia.enable [
         cfg.services.authelia.port
       ];
-      "nebula-kimb".allowedTCPPorts = lib.mkIf cfg.services.authelia.enable [
+      "nebula1".allowedTCPPorts = lib.mkIf cfg.services.authelia.enable [
         cfg.services.authelia.port
       ];
     };
