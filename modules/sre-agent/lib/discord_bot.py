@@ -18,7 +18,7 @@ from redaction import redact
 # discord.py is a runtime dependency — only needed when running as bot
 try:
     import discord
-    from discord.ext import app_commands
+    from discord import app_commands
 except ImportError:
     discord = None
     app_commands = None
