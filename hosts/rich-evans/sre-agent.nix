@@ -13,6 +13,9 @@
     ollamaModel = "qwen3:8b";
     enableDiscordBot = true;
     enableLlmTriage = true;
+    enablePrWorker = true;
+    githubSourceRepo = "mccartykim/systems-flake";
+    prWorkerModel = "qwen3:8b";
     prometheusUrl = "http://10.100.0.50:9090";
   };
 
