@@ -127,6 +127,7 @@ switch:
     id: task_pending
     name: "Task Pending"
     optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
     on_turn_on:
       # Only show yellow if not already priority (priority takes precedence)
       - if:
@@ -150,6 +151,7 @@ switch:
     id: task_priority
     name: "Task Priority"
     optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
     on_turn_on:
       # RED fast pulse - this is the priority task
       - light.turn_on:
@@ -178,6 +180,7 @@ switch:
     id: task_acknowledged
     name: "Task Acknowledged"
     optimistic: true
+    restore_mode: ALWAYS_OFF
     on_turn_on:
       # GREEN flash = acknowledged by agent
       - light.turn_on:
