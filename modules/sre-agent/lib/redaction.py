@@ -35,14 +35,6 @@ _REGEX_RULES = [
         "[REDACTED-IP]",
         "ip",
     ),
-    # Known hostnames
-    (
-        re.compile(
-            r"\b(?:maitred|rich-evans|historian|total-eclipse|oracle)\.?\b"
-        ),
-        "[REDACTED-HOST]",
-        "host",
-    ),
     # Email addresses
     (
         re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z0-9]{2,}\b"),
