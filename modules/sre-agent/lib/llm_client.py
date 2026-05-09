@@ -184,13 +184,16 @@ def _call_local_ollama(prompt: str) -> Optional[TriageResult]:
             resp = urllib.request.urlopen(req, timeout=LOCAL_TIMEOUT)
             body = json.loads(resp.read().decode())
             content = body.get("message", {}).get("content", "")
+            print(f"llm: local raw response (attempt {attempt+1}): {content[:300]}", file=sys.stderr)
             # With format:json, content should be valid JSON
             parsed = json.loads(content)
-            return TriageResult.from_dict(parsed)
+            result = TriageResult.from_dict(parsed)
+            print(f"llm: local parsed result: severity={result.severity}", file=sys.stderr)
+            return result
         except (json.JSONDecodeError, KeyError, TypeError) as e:
             # JSON parse failed — try free-form parsing as fallback
             print(f"llm: local parse error (attempt {attempt+1}): {e}", file=sys.stderr)
-            result = parse_freeform_response(content if 'content' in dir() else "")
+            result = parse_freeform_response(content)
             if result:
                 return result
         except (urllib.error.URLError, TimeoutError, ConnectionError, OSError) as e:
