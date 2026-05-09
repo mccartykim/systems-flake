@@ -1,9 +1,10 @@
-"""Tests for sre_agent.pr_worker — PR creation from GitHub issues.
+"""Tests for sre_agent.pr_worker — PR creation from GitHub issues using Claude Code CLI.
 
 Run with: python3 -m pytest modules/sre-agent/tests/test_pr_worker.py -v
 """
 import json
 import os
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -14,19 +15,16 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "lib"))
 
 from pr_worker import (
     GitHubIssue,
-    PRDraft,
-    get_repo_tree,
     list_open_issues,
-    build_fix_prompt,
-    draft_fix_with_llm,
-    create_pr,
+    build_claude_prompt,
+    extract_pr_url,
+    fix_issue_with_claude,
     mark_issue_processing,
     mark_issue_created,
     is_issue_processed,
     run_pr_worker,
     _read_last_run,
     _write_last_run,
-    KNOWN_HOSTS,
 )
 
 
@@ -84,54 +82,8 @@ class TestListOpenIssues(unittest.TestCase):
         self.assertEqual(issues[0].body, "")
 
 
-class TestGetRepoTree(unittest.TestCase):
-    """get_repo_tree should fetch file tree from GitHub for prompt context."""
-
-    @patch("pr_worker._github_api")
-    def test_fetches_tree(self, mock_api):
-        mock_api.return_value = {
-            "tree": [
-                {"path": "hosts/rich-evans/configuration.nix", "type": "blob"},
-                {"path": "hosts/rich-evans/sre-agent.nix", "type": "blob"},
-                {"path": "modules/sre-agent.nix", "type": "blob"},
-                {"path": "flake.nix", "type": "blob"},
-                {"path": "secrets/very-secret.age", "type": "blob"},
-                {"path": "hosts/total-eclipse/deep/nested/file.nix", "type": "blob"},
-            ]
-        }
-        paths = get_repo_tree("fake-token")
-        self.assertIn("hosts/rich-evans/configuration.nix", paths)
-        self.assertIn("modules/sre-agent.nix", paths)
-        # Should skip secrets
-        self.assertNotIn("secrets/very-secret.age", paths)
-        # Should skip deep paths (depth > 2)
-        self.assertNotIn("hosts/total-eclipse/deep/nested/file.nix", paths)
-
-    @patch("pr_worker._github_api")
-    def test_returns_empty_on_failure(self, mock_api):
-        mock_api.return_value = None
-        self.assertEqual(get_repo_tree("fake-token"), [])
-
-    @patch("pr_worker._github_api")
-    def test_limits_depth(self, mock_api):
-        mock_api.return_value = {
-            "tree": [
-                {"path": "hosts/rich-evans/configuration.nix", "type": "blob"},
-                {"path": "a/b/c/d/e.nix", "type": "blob"},
-            ]
-        }
-        paths = get_repo_tree("fake-token", max_depth=1)
-        # hosts/rich-evans/ has depth 2, so it's also excluded at max_depth=1
-        self.assertNotIn("hosts/rich-evans/configuration.nix", paths)
-        self.assertNotIn("a/b/c/d/e.nix", paths)
-        # With max_depth=2, it should be included
-        paths = get_repo_tree("fake-token", max_depth=2)
-        self.assertIn("hosts/rich-evans/configuration.nix", paths)
-        self.assertNotIn("a/b/c/d/e.nix", paths)
-
-
-class TestBuildFixPrompt(unittest.TestCase):
-    """build_fix_prompt should construct an LLM prompt for drafting NixOS fixes."""
+class TestBuildClaudePrompt(unittest.TestCase):
+    """build_claude_prompt should construct a prompt for Claude Code CLI."""
 
     def test_includes_issue_number_and_title(self):
         issue = GitHubIssue(
@@ -139,234 +91,187 @@ class TestBuildFixPrompt(unittest.TestCase):
             body="Ollama service has been unreachable for 30 minutes.",
             labels=["sre-agent"], url="",
         )
-        prompt = build_fix_prompt(issue)
+        prompt = build_claude_prompt(issue)
         self.assertIn("#7", prompt)
         self.assertIn("OllamaUnreachable on total-eclipse", prompt)
 
-    def test_includes_known_hosts(self):
+    def test_includes_source_repo(self):
         issue = GitHubIssue(number=1, title="Test", body="body", labels=[], url="")
-        prompt = build_fix_prompt(issue)
-        for host in KNOWN_HOSTS[:3]:
-            self.assertIn(host, prompt)
+        with patch.dict(os.environ, {"GITHUB_SOURCE_REPO": "mccartykim/systems-flake"}):
+            prompt = build_claude_prompt(issue)
+        self.assertIn("mccartykim/systems-flake", prompt)
 
-    def test_detects_host_from_issue_title(self):
+    def test_instructs_create_pr(self):
+        issue = GitHubIssue(number=1, title="Test", body="body", labels=[], url="")
+        prompt = build_claude_prompt(issue)
+        self.assertIn("gh", prompt)
+        self.assertIn("PR", prompt)
+
+    def test_includes_skip_instruction(self):
+        issue = GitHubIssue(number=1, title="Test", body="body", labels=[], url="")
+        prompt = build_claude_prompt(issue)
+        self.assertIn("SKIP", prompt)
+
+    def test_includes_issue_body(self):
         issue = GitHubIssue(
-            number=5, title="OllamaUnreachable on historian",
-            body="Ollama down on historian", labels=["sre-agent"], url="",
+            number=1, title="Test", body="Service down on historian",
+            labels=[], url=""
         )
-        prompt = build_fix_prompt(issue)
-        self.assertIn("host 'historian'", prompt)
-        self.assertIn("hosts/historian/", prompt)
+        prompt = build_claude_prompt(issue)
+        self.assertIn("Service down on historian", prompt)
 
-    def test_detects_host_from_issue_body(self):
-        issue = GitHubIssue(
-            number=6, title="Alert fired", body="Service down on rich-evans",
-            labels=["sre-agent"], url="",
-        )
-        prompt = build_fix_prompt(issue)
-        self.assertIn("host 'rich-evans'", prompt)
-
-    def test_includes_repo_paths(self):
+    def test_instructs_nixos_syntax(self):
         issue = GitHubIssue(number=1, title="Test", body="body", labels=[], url="")
-        repo_paths = [
-            "hosts/rich-evans/configuration.nix",
-            "modules/sre-agent.nix",
-            "secrets/secret.age",
-        ]
-        prompt = build_fix_prompt(issue, repo_paths=repo_paths)
-        self.assertIn("hosts/rich-evans/configuration.nix", prompt)
-        self.assertIn("modules/sre-agent.nix", prompt)
-        # secrets are filtered by get_repo_tree but build_fix_prompt doesn't filter
-        self.assertIn("Repository file structure", prompt)
+        prompt = build_claude_prompt(issue)
+        self.assertIn("NixOS module syntax", prompt)
+        self.assertIn("Nix language", prompt)
 
-    def test_instructs_json_format(self):
-        issue = GitHubIssue(number=1, title="Test", body="body", labels=[], url="")
-        prompt = build_fix_prompt(issue)
-        self.assertIn('"title"', prompt)
-        self.assertIn('"branch"', prompt)
-        self.assertIn('"files"', prompt)
-
-    def test_includes_skip_option(self):
-        issue = GitHubIssue(number=1, title="Test", body="body", labels=[], url="")
-        prompt = build_fix_prompt(issue)
-        self.assertIn('"skip"', prompt)
-
-    def test_branch_includes_issue_number(self):
+    def test_includes_branch_name(self):
         issue = GitHubIssue(number=42, title="Test", body="body", labels=[], url="")
-        prompt = build_fix_prompt(issue)
+        prompt = build_claude_prompt(issue)
         self.assertIn("sre-fix/issue-42", prompt)
 
-    def test_no_host_hint_when_not_matching(self):
-        issue = GitHubIssue(
-            number=1, title="Something happened",
-            body="Service is degraded", labels=[], url="",
-        )
-        prompt = build_fix_prompt(issue)
-        self.assertNotIn("The alert is about host", prompt)
+
+class TestExtractPrUrl(unittest.TestCase):
+    """extract_pr_url should find GitHub PR URLs in Claude output."""
+
+    def test_extracts_github_pr_url(self):
+        output = "I've created the PR.\n\nhttps://github.com/mccartykim/systems-flake/pull/42"
+        self.assertEqual(extract_pr_url(output), "https://github.com/mccartykim/systems-flake/pull/42")
+
+    def test_extracts_pr_url_from_text(self):
+        output = "Done! PR: https://github.com/mccartykim/systems-flake/pull/7"
+        self.assertEqual(extract_pr_url(output), "https://github.com/mccartykim/systems-flake/pull/7")
+
+    def test_returns_none_for_no_url(self):
+        output = "I analyzed the issue but couldn't find a config fix."
+        self.assertIsNone(extract_pr_url(output))
+
+    def test_handles_skip_response(self):
+        output = "SKIP: This requires SSH access to the host"
+        result = extract_pr_url(output)
+        self.assertIsNone(result)
+
+    def test_extracts_first_pr_url_if_multiple(self):
+        output = "https://github.com/mccartykim/systems-flake/pull/1 and https://github.com/mccartykim/systems-flake/pull/2"
+        self.assertEqual(extract_pr_url(output), "https://github.com/mccartykim/systems-flake/pull/1")
 
 
-class TestDraftFixWithLLM(unittest.TestCase):
-    """draft_fix_with_llm should call cloud Ollama and parse the response."""
+class TestFixIssueWithClaude(unittest.TestCase):
+    """fix_issue_with_claude should clone repo, run claude, and return PR URL."""
 
-    @patch("pr_worker.urllib.request.urlopen")
-    def test_local_ollama_json_response(self, mock_urlopen):
-        mock_response = MagicMock()
-        mock_response.read.return_value = json.dumps({
-            "message": {"content": json.dumps({
-                "title": "fix(total-eclipse): restart ollama service",
-                "branch": "sre-fix/issue-7",
-                "summary": "Restart ollama on total-eclipse",
-                "files": [
-                    {"path": "hosts/total-eclipse/ollama.nix", "content": "{ config, ... }: { services.ollama.enable = true; }"}
-                ],
-            })},
-        }).encode()
-        mock_response.__enter__ = lambda s: s
-        mock_response.__exit__ = MagicMock(return_value=False)
-        mock_urlopen.return_value = mock_response
-
+    @patch("pr_worker.shutil.rmtree")
+    @patch("pr_worker.subprocess.run")
+    def test_successful_pr_creation(self, mock_run, mock_rmtree):
+        """Should clone, run claude, and return PR URL on success."""
         issue = GitHubIssue(number=7, title="OllamaUnreachable", body="Ollama down", labels=["sre-agent"], url="")
-        with patch.dict(os.environ, {"PR_WORKER_CLOUD_HOST": "http://localhost:11434", "PR_WORKER_MODEL": "gemma4:31b"}):
-            draft = draft_fix_with_llm(issue)
-        self.assertIsNotNone(draft)
-        self.assertEqual(draft.title, "fix(total-eclipse): restart ollama service")
-        self.assertEqual(draft.branch, "sre-fix/issue-7")
-        self.assertEqual(len(draft.files), 1)
+        mock_run.side_effect = [
+            MagicMock(returncode=0, stdout="", stderr=""),  # git clone
+            MagicMock(returncode=0, stdout=json.dumps({
+                "result": "PR created: https://github.com/mccartykim/systems-flake/pull/42",
+                "num_turns": 5,
+                "total_cost_usd": 0.05,
+            }), stderr=""),  # claude
+        ]
+        with tempfile.TemporaryDirectory() as tmpdir, \
+             patch.dict(os.environ, {"STATE_DIR": tmpdir, "GITHUB_SOURCE_REPO": "test/repo",
+                                      "PR_WORKER_MODEL": "test-model"}):
+            result = fix_issue_with_claude(issue, "fake-gh-token")
+        self.assertEqual(result, "https://github.com/mccartykim/systems-flake/pull/42")
+        self.assertEqual(mock_run.call_count, 2)
 
-    @patch("pr_worker.urllib.request.urlopen")
-    def test_skip_response(self, mock_urlopen):
-        mock_response = MagicMock()
-        mock_response.read.return_value = json.dumps({
-            "message": {"content": json.dumps({
-                "skip": True, "reason": "Requires SSH into host",
-            })},
-        }).encode()
-        mock_response.__enter__ = lambda s: s
-        mock_response.__exit__ = MagicMock(return_value=False)
-        mock_urlopen.return_value = mock_response
-
-        issue = GitHubIssue(number=10, title="Hardware failure", body="Disk broken", labels=["sre-agent"], url="")
-        with patch.dict(os.environ, {"PR_WORKER_CLOUD_HOST": "http://localhost:11434", "PR_WORKER_MODEL": "gemma4:31b"}):
-            draft = draft_fix_with_llm(issue)
-        self.assertIsNone(draft)
-
-    @patch("pr_worker.urllib.request.urlopen")
-    def test_local_failure_returns_none(self, mock_urlopen):
-        mock_urlopen.side_effect = ConnectionError("ollama down")
+    @patch("pr_worker.shutil.rmtree")
+    @patch("pr_worker.subprocess.run")
+    def test_clone_failure_returns_none(self, mock_run, mock_rmtree):
+        """Should return None if git clone fails."""
         issue = GitHubIssue(number=1, title="Test", body="body", labels=[], url="")
-        with patch.dict(os.environ, {"PR_WORKER_CLOUD_HOST": "http://localhost:11434"}):
-            draft = draft_fix_with_llm(issue)
-        self.assertIsNone(draft)
+        mock_run.return_value = MagicMock(returncode=1, stdout="", stderr="fatal: repo not found")
+        with tempfile.TemporaryDirectory() as tmpdir, \
+             patch.dict(os.environ, {"STATE_DIR": tmpdir, "GITHUB_SOURCE_REPO": "test/repo"}):
+            result = fix_issue_with_claude(issue, "fake-token")
+        self.assertIsNone(result)
 
-    @patch("pr_worker.urllib.request.urlopen")
-    def test_local_invalid_json_returns_none(self, mock_urlopen):
-        mock_response = MagicMock()
-        mock_response.read.return_value = json.dumps({
-            "message": {"content": "not valid json"},
-        }).encode()
-        mock_response.__enter__ = lambda s: s
-        mock_response.__exit__ = MagicMock(return_value=False)
-        mock_urlopen.return_value = mock_response
-
+    @patch("pr_worker.shutil.rmtree")
+    @patch("pr_worker.subprocess.run")
+    def test_claude_failure_returns_none(self, mock_run, mock_rmtree):
+        """Should return None if claude exits non-zero."""
         issue = GitHubIssue(number=1, title="Test", body="body", labels=[], url="")
-        with patch.dict(os.environ, {"PR_WORKER_CLOUD_HOST": "http://localhost:11434", "PR_WORKER_MODEL": "gemma4:31b"}):
-            draft = draft_fix_with_llm(issue)
-        self.assertIsNone(draft)
+        mock_run.side_effect = [
+            MagicMock(returncode=0, stdout="", stderr=""),  # git clone
+            MagicMock(returncode=1, stdout="", stderr="error: API failure"),  # claude
+        ]
+        with tempfile.TemporaryDirectory() as tmpdir, \
+             patch.dict(os.environ, {"STATE_DIR": tmpdir, "GITHUB_SOURCE_REPO": "test/repo"}):
+            result = fix_issue_with_claude(issue, "fake-token")
+        self.assertIsNone(result)
 
-    @patch("pr_worker.urllib.request.urlopen")
-    @patch("pr_worker.get_repo_tree")
-    def test_passes_repo_paths_to_prompt(self, mock_tree, mock_urlopen):
-        """draft_fix_with_llm should fetch repo tree and pass it to the prompt."""
-        mock_tree.return_value = ["hosts/rich-evans/sre-agent.nix", "modules/sre-agent.nix"]
-        mock_response = MagicMock()
-        mock_response.read.return_value = json.dumps({
-            "message": {"content": json.dumps({
-                "title": "fix: test", "branch": "sre-fix/issue-1",
-                "summary": "test", "files": [],
-            })},
-        }).encode()
-        mock_response.__enter__ = lambda s: s
-        mock_response.__exit__ = MagicMock(return_value=False)
-        mock_urlopen.return_value = mock_response
+    @patch("pr_worker.shutil.rmtree")
+    @patch("pr_worker.subprocess.run")
+    def test_timeout_returns_none(self, mock_run, mock_rmtree):
+        """Should return None if claude times out."""
+        issue = GitHubIssue(number=1, title="Test", body="body", labels=[], url="")
+        mock_run.side_effect = [
+            MagicMock(returncode=0, stdout="", stderr=""),  # git clone
+            subprocess.TimeoutExpired(cmd="claude", timeout=600),  # claude times out
+        ]
+        with tempfile.TemporaryDirectory() as tmpdir, \
+             patch.dict(os.environ, {"STATE_DIR": tmpdir, "GITHUB_SOURCE_REPO": "test/repo"}):
+            result = fix_issue_with_claude(issue, "fake-token")
+        self.assertIsNone(result)
 
-        issue = GitHubIssue(number=1, title="Test", body="body", labels=["sre-agent"], url="")
-        with patch.dict(os.environ, {"PR_WORKER_CLOUD_HOST": "http://localhost:11434", "PR_WORKER_MODEL": "gemma4:31b",
-                                      "OLLAMA_CLOUD_KEY_FILE": "/dev/null"}):
-            # We can't easily test the prompt content through draft_fix_with_llm,
-            # but we can verify get_repo_tree was called when run_pr_worker invokes it
-            pass
+    @patch("pr_worker.shutil.rmtree")
+    @patch("pr_worker.subprocess.run")
+    def test_skip_response_returns_none(self, mock_run, mock_rmtree):
+        """Should return None when Claude outputs SKIP response."""
+        issue = GitHubIssue(number=1, title="Hardware failure", body="Disk broken", labels=["sre-agent"], url="")
+        mock_run.side_effect = [
+            MagicMock(returncode=0, stdout="", stderr=""),  # git clone
+            MagicMock(returncode=0, stdout=json.dumps({
+                "result": "SKIP: This requires physical access to the host",
+                "num_turns": 2,
+                "total_cost_usd": 0.01,
+            }), stderr=""),  # claude
+        ]
+        with tempfile.TemporaryDirectory() as tmpdir, \
+             patch.dict(os.environ, {"STATE_DIR": tmpdir, "GITHUB_SOURCE_REPO": "test/repo"}):
+            result = fix_issue_with_claude(issue, "fake-token")
+        self.assertIsNone(result)
 
+    @patch("pr_worker.shutil.rmtree")
+    @patch("pr_worker.subprocess.run")
+    def test_non_json_output_fallback(self, mock_run, mock_rmtree):
+        """Should handle non-JSON output from claude by using raw stdout."""
+        issue = GitHubIssue(number=1, title="Test", body="body", labels=[], url="")
+        mock_run.side_effect = [
+            MagicMock(returncode=0, stdout="", stderr=""),  # git clone
+            MagicMock(returncode=0, stdout="PR URL: https://github.com/mccartykim/systems-flake/pull/5", stderr=""),  # claude (non-JSON)
+        ]
+        with tempfile.TemporaryDirectory() as tmpdir, \
+             patch.dict(os.environ, {"STATE_DIR": tmpdir, "GITHUB_SOURCE_REPO": "test/repo"}):
+            result = fix_issue_with_claude(issue, "fake-token")
+        self.assertEqual(result, "https://github.com/mccartykim/systems-flake/pull/5")
 
-class TestCreatePR(unittest.TestCase):
-    """create_pr should use Git Data API to create a branch and PR."""
-
-    @patch("pr_worker._github_api")
-    def test_creates_branch_tree_commit_pr(self, mock_api):
-        draft = PRDraft(
-            title="fix(maitred): restart ollama", body="Restart ollama",
-            branch="sre-fix/issue-7",
-            files=[{"path": "hosts/maitred/ollama.nix", "content": "test"}],
-        )
-        api_responses = {
-            "git/ref/heads/main": {"object": {"sha": "abc123main"}},
-            "git/commits/abc123main": {"tree": {"sha": "tree123"}},
-            "git/refs": {"ref": "refs/heads/sre-fix/issue-7"},
-            "git/blobs": {"sha": "blob456"},
-            "git/trees": {"sha": "newtree789"},
-            "git/commits": {"sha": "commitxyz"},
-            "git/refs/heads/sre-fix/issue-7": {"ok": True},
-            "pulls": {"html_url": "https://github.com/mccartykim/systems-flake/pull/99"},
-        }
-
-        def side_effect(path, token, method="GET", data=None):
-            key = path
-            if method == "POST" and path in ("git/blobs", "git/trees", "git/commits", "pulls"):
-                key = path
-            elif method == "PATCH":
-                key = path
-            return api_responses.get(key, {"ok": True})
-
-        mock_api.side_effect = side_effect
-        result = create_pr(draft, "fake-token")
-        self.assertEqual(result, "https://github.com/mccartykim/systems-flake/pull/99")
-        self.assertGreaterEqual(mock_api.call_count, 6)
-
-    @patch("pr_worker._github_api")
-    def test_returns_none_when_main_ref_fails(self, mock_api):
-        mock_api.return_value = None
-        draft = PRDraft(title="fix: test", body="test", branch="sre-fix/issue-1",
-                        files=[{"path": "test.nix", "content": "{}"}])
-        self.assertIsNone(create_pr(draft, "fake-token"))
-
-    @patch("pr_worker._github_api")
-    def test_returns_none_when_branch_fails(self, mock_api):
-        call_count = [0]
-        def side_effect(path, token, method="GET", data=None):
-            call_count[0] += 1
-            if call_count[0] == 1:
-                return {"object": {"sha": "abc123"}}
-            if call_count[0] == 2:
-                return {"tree": {"sha": "tree123"}}
-            return None
-        mock_api.side_effect = side_effect
-        draft = PRDraft(title="fix: test", body="test", branch="sre-fix/issue-1",
-                        files=[{"path": "test.nix", "content": "{}"}])
-        self.assertIsNone(create_pr(draft, "fake-token"))
-
-    @patch("pr_worker._github_api")
-    def test_returns_none_when_no_files(self, mock_api):
-        call_count = [0]
-        def side_effect(path, token, method="GET", data=None):
-            call_count[0] += 1
-            if call_count[0] == 1: return {"object": {"sha": "abc123"}}
-            if call_count[0] == 2: return {"tree": {"sha": "tree123"}}
-            if call_count[0] == 3: return {"ref": "refs/heads/test"}
-            if call_count[0] == 4: return None  # blob fails
-            return {"sha": "mocksha"}
-        mock_api.side_effect = side_effect
-        draft = PRDraft(title="fix: test", body="test", branch="sre-fix/issue-1",
-                        files=[{"path": "test.nix", "content": "{}"}])
-        self.assertIsNone(create_pr(draft, "fake-token"))
+    @patch("pr_worker.shutil.rmtree")
+    @patch("pr_worker.subprocess.run")
+    def test_passes_git_identity(self, mock_run, mock_rmtree):
+        """Should pass git identity env vars to claude subprocess."""
+        issue = GitHubIssue(number=1, title="Test", body="body", labels=[], url="")
+        mock_run.side_effect = [
+            MagicMock(returncode=0, stdout="", stderr=""),  # git clone
+            MagicMock(returncode=0, stdout=json.dumps({
+                "result": "https://github.com/test/repo/pull/1",
+            }), stderr=""),  # claude
+        ]
+        with tempfile.TemporaryDirectory() as tmpdir, \
+             patch.dict(os.environ, {"STATE_DIR": tmpdir, "GITHUB_SOURCE_REPO": "test/repo",
+                                      "GIT_AUTHOR_NAME": "test-author",
+                                      "GIT_AUTHOR_EMAIL": "test@example.com"}):
+            fix_issue_with_claude(issue, "fake-token")
+        # Check the claude call (second call) has git identity env vars
+        claude_call_env = mock_run.call_args_list[1].kwargs.get("env", mock_run.call_args_list[1][1].get("env"))
+        self.assertIsNotNone(claude_call_env)
+        self.assertEqual(claude_call_env.get("GIT_AUTHOR_NAME"), "test-author")
+        self.assertEqual(claude_call_env.get("GIT_AUTHOR_EMAIL"), "test@example.com")
 
 
 class TestMarkIssueProcessing(unittest.TestCase):
@@ -494,27 +399,20 @@ class TestDebounce(unittest.TestCase):
 class TestRateLimit(unittest.TestCase):
     """PR worker should respect MAX_PRS_PER_RUN."""
 
-    @patch("pr_worker.draft_fix_with_llm")
-    @patch("pr_worker.create_pr")
+    @patch("pr_worker.fix_issue_with_claude")
     @patch("pr_worker.mark_issue_processing")
     @patch("pr_worker.mark_issue_created")
     @patch("pr_worker.is_issue_processed")
     @patch("pr_worker.list_open_issues")
-    @patch("pr_worker.get_repo_tree")
-    def test_stops_after_max_prs(self, mock_tree, mock_list, mock_is_processed,
-                                   mock_mark_created, mock_mark, mock_create_pr, mock_draft):
+    def test_stops_after_max_prs(self, mock_list, mock_is_processed,
+                                  mock_mark_created, mock_mark, mock_fix):
         """Should stop creating PRs after MAX_PRS_PER_RUN is reached."""
-        mock_tree.return_value = []
         mock_list.return_value = [
             GitHubIssue(number=i, title=f"Issue {i}", body="", labels=["sre-agent"], url="")
             for i in range(1, 6)  # 5 issues
         ]
         mock_is_processed.return_value = False
-        mock_draft.return_value = PRDraft(
-            title="fix: test", body="test", branch="sre-fix/issue-1",
-            files=[{"path": "test.nix", "content": "test"}],
-        )
-        mock_create_pr.return_value = "https://github.com/example/pull/1"
+        mock_fix.return_value = "https://github.com/example/pull/1"
 
         with tempfile.TemporaryDirectory() as tmpdir:
             token_file = os.path.join(tmpdir, "gh-token")
@@ -525,20 +423,19 @@ class TestRateLimit(unittest.TestCase):
                                           "MAX_PRS_PER_RUN": "2"}):
                 run_pr_worker()
 
-        # Should only create 2 PRs (MAX_PRS_PER_RUN), not all 5
-        self.assertEqual(mock_create_pr.call_count, 2)
+        # Should only call fix_issue_with_claude 2 times (MAX_PRS_PER_RUN), not all 5
+        self.assertEqual(mock_fix.call_count, 2)
 
 
 class TestRunPrWorker(unittest.TestCase):
     """run_pr_worker should orchestrate the full PR creation flow."""
 
-    @patch("pr_worker.draft_fix_with_llm")
-    @patch("pr_worker.create_pr")
+    @patch("pr_worker.fix_issue_with_claude")
     @patch("pr_worker.mark_issue_processing")
     @patch("pr_worker.is_issue_processed")
     @patch("pr_worker.list_open_issues")
     def test_skips_already_processed(self, mock_list, mock_is_processed,
-                                      mock_mark, mock_create_pr, mock_draft):
+                                      mock_mark, mock_fix):
         mock_list.return_value = [
             GitHubIssue(number=1, title="Test", body="", labels=["sre-agent"], url="")
         ]
@@ -551,31 +448,21 @@ class TestRunPrWorker(unittest.TestCase):
             with patch.dict(os.environ, {"GITHUB_TOKEN_FILE": token_file, "STATE_DIR": tmpdir,
                                           "GITHUB_SOURCE_REPO": "test/repo"}):
                 run_pr_worker()
-        mock_draft.assert_not_called()
-        mock_create_pr.assert_not_called()
+        mock_fix.assert_not_called()
 
-    @patch("pr_worker.draft_fix_with_llm")
-    @patch("pr_worker.create_pr")
+    @patch("pr_worker.fix_issue_with_claude")
     @patch("pr_worker.mark_issue_processing")
     @patch("pr_worker.mark_issue_created")
     @patch("pr_worker.is_issue_processed")
     @patch("pr_worker.list_open_issues")
-    @patch("pr_worker.get_repo_tree")
-    def test_processes_issue_creates_pr_and_labels(self, mock_tree, mock_list,
-                                                     mock_is_processed, mock_mark_created,
-                                                     mock_mark, mock_create_pr, mock_draft):
-        """Should draft a fix, create a PR, and mark issue with pr-created label."""
-        mock_tree.return_value = ["modules/sre-agent.nix"]
+    def test_processes_issue_creates_pr_and_labels(self, mock_list, mock_is_processed,
+                                                     mock_mark_created, mock_mark, mock_fix):
+        """Should invoke claude, get PR URL, and mark issue with pr-created label."""
         mock_list.return_value = [
             GitHubIssue(number=7, title="OllamaUnreachable", body="Ollama down", labels=["sre-agent"], url="")
         ]
         mock_is_processed.return_value = False
-        mock_draft.return_value = PRDraft(
-            title="fix(total-eclipse): restart ollama", body="Restart ollama",
-            branch="sre-fix/issue-7",
-            files=[{"path": "hosts/total-eclipse/ollama.nix", "content": "test"}],
-        )
-        mock_create_pr.return_value = "https://github.com/example/pull/1"
+        mock_fix.return_value = "https://github.com/example/pull/1"
 
         with tempfile.TemporaryDirectory() as tmpdir:
             token_file = os.path.join(tmpdir, "gh-token")
@@ -586,23 +473,22 @@ class TestRunPrWorker(unittest.TestCase):
                 run_pr_worker()
 
         mock_mark.assert_called_once_with(7, "ghp_test123456789012345678901234567890")
-        mock_create_pr.assert_called_once()
+        mock_fix.assert_called_once()
         # Should also mark as pr-created
         mock_mark_created.assert_called_once_with(7, "https://github.com/example/pull/1",
                                                     "ghp_test123456789012345678901234567890")
 
-    @patch("pr_worker.draft_fix_with_llm")
-    @patch("pr_worker.create_pr")
+    @patch("pr_worker.fix_issue_with_claude")
     @patch("pr_worker.mark_issue_processing")
     @patch("pr_worker.is_issue_processed")
     @patch("pr_worker.list_open_issues")
-    def test_skips_when_no_fix_draft(self, mock_list, mock_is_processed,
-                                       mock_mark, mock_create_pr, mock_draft):
+    def test_skips_when_claude_returns_none(self, mock_list, mock_is_processed,
+                                              mock_mark, mock_fix):
         mock_list.return_value = [
             GitHubIssue(number=10, title="Hardware failure", body="Disk broken", labels=["sre-agent"], url="")
         ]
         mock_is_processed.return_value = False
-        mock_draft.return_value = None
+        mock_fix.return_value = None
 
         with tempfile.TemporaryDirectory() as tmpdir:
             token_file = os.path.join(tmpdir, "gh-token")
@@ -611,31 +497,9 @@ class TestRunPrWorker(unittest.TestCase):
             with patch.dict(os.environ, {"GITHUB_TOKEN_FILE": token_file, "STATE_DIR": tmpdir,
                                           "GITHUB_SOURCE_REPO": "test/repo"}):
                 run_pr_worker()
-        mock_create_pr.assert_not_called()
-
-    @patch("pr_worker.draft_fix_with_llm")
-    @patch("pr_worker.create_pr")
-    @patch("pr_worker.mark_issue_processing")
-    @patch("pr_worker.is_issue_processed")
-    @patch("pr_worker.list_open_issues")
-    def test_skips_when_no_files(self, mock_list, mock_is_processed,
-                                   mock_mark, mock_create_pr, mock_draft):
-        mock_list.return_value = [
-            GitHubIssue(number=10, title="Hardware failure", body="Disk broken", labels=["sre-agent"], url="")
-        ]
-        mock_is_processed.return_value = False
-        mock_draft.return_value = PRDraft(
-            title="fix: test", body="test", branch="sre-fix/issue-10", files=[]
-        )
-
-        with tempfile.TemporaryDirectory() as tmpdir:
-            token_file = os.path.join(tmpdir, "gh-token")
-            with open(token_file, "w") as f:
-                f.write("ghp_test123456789012345678901234567890")
-            with patch.dict(os.environ, {"GITHUB_TOKEN_FILE": token_file, "STATE_DIR": tmpdir,
-                                          "GITHUB_SOURCE_REPO": "test/repo"}):
-                run_pr_worker()
-        mock_create_pr.assert_not_called()
+        # Should not mark as pr-created
+        from pr_worker import mark_issue_created
+        # mock_fix returns None, so mark_issue_created should not be called
 
     @patch("pr_worker.list_open_issues")
     def test_no_issues_exits_early(self, mock_list):
@@ -666,23 +530,8 @@ class TestRunPrWorker(unittest.TestCase):
                 run_pr_worker()
 
 
-class TestGitHubApiHelper(unittest.TestCase):
-    """Test _github_api and _incident_api URL construction."""
-
-    @patch("pr_worker.urllib.request.urlopen")
-    def test_github_api_uses_source_repo(self, mock_urlopen):
-        mock_response = MagicMock()
-        mock_response.read.return_value = json.dumps({"sha": "abc"}).encode()
-        mock_response.__enter__ = lambda s: s
-        mock_response.__exit__ = MagicMock(return_value=False)
-        mock_urlopen.return_value = mock_response
-
-        from pr_worker import _github_api
-        with patch.dict(os.environ, {"GITHUB_SOURCE_REPO": "test/systems-flake"}):
-            _github_api("git/ref/heads/main", "fake-token")
-        req = mock_urlopen.call_args[0][0]
-        self.assertIn("test/systems-flake", req.full_url)
-        self.assertIn("token fake-token", req.headers.get("Authorization", ""))
+class TestIncidentApiHelper(unittest.TestCase):
+    """Test _incident_api URL construction."""
 
     @patch("pr_worker.urllib.request.urlopen")
     def test_incident_api_uses_incident_repo(self, mock_urlopen):

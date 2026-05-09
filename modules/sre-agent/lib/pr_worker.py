@@ -1,14 +1,18 @@
 """SRE Agent PR Worker — reads GitHub issues, drafts fixes, creates PRs.
 
-Polls mccartykim/homelab-incidents for open sre-agent issues, uses an LLM
-to analyze the issue and draft a NixOS config fix, then creates a branch
-and opens a PR on the source repo (mccartykim/systems-flake).
+Polls mccartykim/homelab-incidents for open sre-agent issues, uses Claude Code
+CLI to analyze the issue and draft a NixOS config fix in a temporary clone of
+the source repo, then creates a branch and opens a PR via gh.
 
 The PR worker does NOT build — that's for CI to validate.
 """
 import json
 import os
+import re
+import shutil
+import subprocess
 import sys
+import urllib.error
 import urllib.request
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -26,53 +30,6 @@ class GitHubIssue:
     body: str
     labels: list
     url: str
-
-
-@dataclass
-class PRDraft:
-    title: str
-    body: str
-    branch: str
-    files: list  # [{"path": "...", "content": "..."}]
-
-
-# Known hosts in the systems-flake repo (from hosts/ directory)
-KNOWN_HOSTS = [
-    "bartleby", "cheesecake", "donut", "historian", "maitred",
-    "marshmallow", "mochi", "oracle", "rich-evans", "total-eclipse",
-]
-
-# Common config file patterns per host
-HOST_CONFIG_FILES = [
-    "configuration.nix", "hardware-configuration.nix", "networking.nix",
-    "services.nix", "monitoring.nix", "monitoring-probes.nix",
-]
-
-
-def _github_api(path, token, method="GET", data=None):
-    """Make a GitHub API request to the source repo. Returns parsed JSON or None."""
-    repo = _env("GITHUB_SOURCE_REPO", "mccartykim/systems-flake")
-    url = f"https://api.github.com/repos/{repo}/{path}"
-    headers = {
-        "Authorization": f"token {token}",
-        "Accept": "application/vnd.github.v3+json",
-        "User-Agent": "sre-agent/1.0",
-    }
-    payload = None
-    if data is not None:
-        payload = json.dumps(data).encode()
-        headers["Content-Type"] = "application/json"
-
-    req = urllib.request.Request(url, data=payload, headers=headers, method=method)
-    try:
-        resp = urllib.request.urlopen(req, timeout=30)
-        return json.loads(resp.read().decode())
-    except urllib.error.HTTPError as e:
-        print(f"pr-worker: github api error {e.code} on {method} {path}: {e.reason}", file=sys.stderr)
-        return None
-    except Exception as e:
-        print(f"pr-worker: github api failure: {e}", file=sys.stderr)
-        return None
 
 
 def _incident_api(path, token, method="GET", data=None):
@@ -101,28 +58,6 @@ def _incident_api(path, token, method="GET", data=None):
         return None
 
 
-def get_repo_tree(token, max_depth=2):
-    """Fetch the file tree from the source repo for LLM context.
-
-    Returns a list of file paths (truncated to max_depth depth) for prompt context.
-    """
-    data = _github_api("git/trees/main?recursive=1", token)
-    if not data or "tree" not in data:
-        return []
-    paths = []
-    for item in data["tree"]:
-        p = item["path"]
-        # Skip deep paths and hidden dirs
-        depth = p.count("/")
-        if depth > max_depth:
-            continue
-        if any(s in p for s in [".git", "secrets/", ".github/"]):
-            continue
-        if item["type"] == "blob":
-            paths.append(p)
-    return paths
-
-
 def list_open_issues(token):
     """List open issues with sre-agent label from the incidents repo."""
     data = _incident_api("issues?labels=sre-agent&state=open", token)
@@ -141,209 +76,162 @@ def list_open_issues(token):
     return issues
 
 
-def build_fix_prompt(issue: GitHubIssue, repo_paths=None):
-    """Build an LLM prompt for drafting a NixOS config fix."""
-    # Determine which host is relevant from the issue title/body
-    host_hint = ""
-    for host in KNOWN_HOSTS:
-        if host in issue.title.lower() or host in issue.body.lower():
-            host_hint = f"\nThe alert is about host '{host}'. Relevant files are in hosts/{host}/."
-            break
+def build_claude_prompt(issue: GitHubIssue) -> str:
+    """Build the prompt for Claude Code CLI to fix the issue."""
+    source_repo = _env("GITHUB_SOURCE_REPO", "mccartykim/systems-flake")
+    return f"""You are an SRE fix agent for a NixOS homelab. A monitoring alert has been filed as a GitHub issue.
 
-    # Build repo context section
-    repo_context = ""
-    if repo_paths:
-        # Filter to paths likely relevant to the issue
-        relevant = []
-        for p in repo_paths:
-            # Always include module definitions and host configs
-            if p.startswith("modules/") or p.startswith("hosts/") or p.startswith("flake.nix"):
-                relevant.append(p)
-        if relevant:
-            repo_context = "\n\nRepository file structure (relevant paths):\n" + "\n".join(f"  {p}" for p in relevant[:80])
-
-    return f"""You are an SRE fix agent for a NixOS homelab. Given this GitHub issue, draft a fix.
-
-Issue #{issue.number}: {issue.title}
+## Issue #{issue.number}: {issue.title}
 
 {issue.body}
-{host_hint}
-{repo_context}
 
-IMPORTANT RULES:
-- Only modify files that ALREADY EXIST in the repository. Do NOT create new host directories.
-- Valid hosts: {', '.join(KNOWN_HOSTS)}. File paths must use one of these host names.
-- All config must be valid NixOS module syntax (Nix language, NOT Python/JSON).
-- Only change what's necessary to fix the issue.
-- If you cannot fix this with a config change (e.g., requires SSH, hardware fix, manual intervention), respond with skip.
+## Your task
 
-Respond in this exact JSON format:
-{{
-  "title": "fix(hostname): short description",
-  "branch": "sre-fix/issue-{issue.number}",
-  "summary": "One-line summary of the fix for the PR body",
-  "files": [
-    {{
-      "path": "hosts/hostname/some-config.nix",
-      "description": "What this change does",
-      "content": "The FULL file content with the fix applied"
-    }}
-  ]
-}}
+1. Explore the repository structure to understand the codebase.
+2. Identify which host(s) and config file(s) are relevant to this alert.
+3. Make the MINIMAL config change needed to fix the issue. Do NOT create new host directories. Do NOT make unrelated changes.
+4. Valid hosts are listed in the hosts/ directory. Only modify files that already exist.
+5. All config must be valid NixOS module syntax (Nix language, NOT Python/JSON).
+6. Commit your changes with message: "fix: resolve issue #{issue.number} - {issue.title}"
+7. Push to branch "sre-fix/issue-{issue.number}" and create a PR against main on {source_repo}.
+8. If the issue cannot be fixed with a config change (requires SSH, hardware fix, manual intervention), say so and do NOT create a PR.
 
-If the issue cannot be fixed with a config change, respond with:
-{{"skip": true, "reason": "explanation of why no PR can fix this"}}"""
+## Important
+
+- Use `gh` for all GitHub operations (it is already authenticated via GH_TOKEN).
+- Use `git` for version control operations.
+- The PR body should reference issue #{issue.number} and include "Fixes #{issue.number}".
+- Output ONLY the PR URL as your final line if a PR was created, or "SKIP: <reason>" if no PR can fix this."""
 
 
-def draft_fix_with_llm(issue: GitHubIssue, repo_paths=None, model=None):
-    """Use cloud LLM to draft a fix for the issue. Returns PRDraft or None.
+def extract_pr_url(output: str) -> Optional[str]:
+    """Extract a GitHub PR URL from Claude Code output.
 
-    Uses a large coding-capable model (gemma4:31b on historian) via Ollama Cloud
-    rather than the small local model, since PR fixes need better code generation.
+    Looks for https://github.com/owner/repo/pull/N patterns.
+    Also handles SKIP responses.
+    Returns the PR URL, None if no URL found, or None with stderr message for SKIP.
     """
-    prompt = build_fix_prompt(issue, repo_paths)
+    skip_match = re.search(r"^SKIP:\s*(.+)$", output, re.MULTILINE)
+    if skip_match:
+        print(f"pr-worker: Claude determined no fix possible: {skip_match.group(1).strip()}", file=sys.stderr)
+        return None
 
-    cloud_host = os.environ.get("PR_WORKER_CLOUD_HOST", "http://historian.nebula:11434")
-    cloud_model = model or os.environ.get("PR_WORKER_MODEL", "gemma4:31b")
-    key_file = os.environ.get("OLLAMA_CLOUD_KEY_FILE", "")
-
-    url = f"{cloud_host}/api/chat"
-    headers = {"Content-Type": "application/json", "User-Agent": "sre-agent/1.0"}
-    if key_file and os.path.exists(key_file):
-        try:
-            with open(key_file) as f:
-                key = f.read().strip()
-            if key and not key.startswith("PLACEHOLDER"):
-                headers["Authorization"] = f"Bearer {key}"
-        except OSError:
-            pass
-
-    for attempt in range(2):
-        try:
-            payload = json.dumps({
-                "model": cloud_model,
-                "messages": [
-                    {"role": "system", "content": "You are an SRE fix agent for a NixOS homelab. Draft minimal, targeted config fixes. Only output valid JSON."},
-                    {"role": "user", "content": prompt},
-                ],
-                "stream": False,
-                "format": "json",
-                "options": {"temperature": 0.2},
-            }).encode()
-            req = urllib.request.Request(url, data=payload, headers=headers)
-            resp = urllib.request.urlopen(req, timeout=300)
-            body = json.loads(resp.read().decode())
-            content = body.get("message", {}).get("content", "")
-            try:
-                parsed = json.loads(content)
-            except json.JSONDecodeError:
-                print(f"pr-worker: cloud LLM returned invalid JSON (attempt {attempt+1}): {content[:200]}", file=sys.stderr)
-                continue
-            if parsed and not parsed.get("skip"):
-                return PRDraft(
-                    title=parsed.get("title", f"[SRE] Fix issue #{issue.number}"),
-                    body=parsed.get("summary", ""),
-                    branch=parsed.get("branch", f"sre-fix/issue-{issue.number}"),
-                    files=parsed.get("files", []),
-                )
-            elif parsed and parsed.get("skip"):
-                print(f"pr-worker: skipping issue #{issue.number}: {parsed.get('reason', 'no fix possible')}", file=sys.stderr)
-                return None
-        except Exception as e:
-            print(f"pr-worker: cloud LLM failed (attempt {attempt+1}): {e}", file=sys.stderr)
-            continue
+    url_match = re.search(r"https://github\.com/[^/]+/[^/]+/pull/\d+", output)
+    if url_match:
+        return url_match.group(0)
 
     return None
 
 
-def create_pr(draft: PRDraft, token):
-    """Create a branch and open a PR on the source repo using the Git Data API.
+def fix_issue_with_claude(issue: GitHubIssue, token: str) -> Optional[str]:
+    """Use Claude Code CLI to analyze an issue, edit config, and create a PR.
 
-    Uses the Git Data API (blobs, trees, commits) to create changes without
-    cloning the repo. Pure API, no local git needed.
+    Clones the source repo into a temp workspace, invokes Claude Code with
+    the issue context, and lets Claude explore, edit, commit, and create a PR.
+
+    Returns the PR URL on success, None on failure or skip.
     """
-    repo = _env("GITHUB_SOURCE_REPO", "mccartykim/systems-flake")
+    state_dir = _env("STATE_DIR", "/var/lib/sre-agent")
+    source_repo = _env("GITHUB_SOURCE_REPO", "mccartykim/systems-flake")
+    model = _env("PR_WORKER_MODEL", "glm-5:cloud")
 
-    # 1. Get the main branch SHA
-    ref = _github_api("git/ref/heads/main", token)
-    if not ref:
-        print("pr-worker: failed to get main branch ref", file=sys.stderr)
+    workspace = os.path.join(state_dir, "workspaces", f"issue-{issue.number}")
+
+    try:
+        # Clean up any previous workspace for this issue
+        if os.path.exists(workspace):
+            shutil.rmtree(workspace)
+        os.makedirs(workspace, exist_ok=True)
+
+        # Shallow clone the source repo
+        clone_url = f"https://x-access-token:{token}@github.com/{source_repo}.git"
+        clone_result = subprocess.run(
+            ["git", "clone", "--depth", "1", clone_url, workspace],
+            capture_output=True, text=True, timeout=120,
+            env={**os.environ, "GIT_TERMINAL_PROMPT": "0"},
+        )
+        if clone_result.returncode != 0:
+            print(f"pr-worker: git clone failed: {clone_result.stderr[:500]}", file=sys.stderr)
+            return None
+
+        # Build the prompt
+        prompt = build_claude_prompt(issue)
+
+        # Set up environment for Claude Code
+        claude_env = {
+            **os.environ,
+            "GH_TOKEN": token,
+            "GIT_AUTHOR_NAME": os.environ.get("GIT_AUTHOR_NAME", "sre-agent"),
+            "GIT_AUTHOR_EMAIL": os.environ.get("GIT_AUTHOR_EMAIL", "sre-agent@nebula"),
+            "GIT_COMMITTER_NAME": os.environ.get("GIT_COMMITTER_NAME", "sre-agent"),
+            "GIT_COMMITTER_EMAIL": os.environ.get("GIT_COMMITTER_EMAIL", "sre-agent@nebula"),
+            "GIT_TERMINAL_PROMPT": "0",
+        }
+
+        # Run Claude Code in the cloned workspace
+        cmd = [
+            "claude", "-p", prompt,
+            "--output-format", "json",
+            "--dangerously-skip-permissions",
+            "--max-turns", "15",
+            "--model", model,
+        ]
+
+        print(f"pr-worker: running claude for issue #{issue.number} (model={model})", file=sys.stderr)
+        result = subprocess.run(
+            cmd,
+            capture_output=True, text=True, timeout=600,
+            env=claude_env,
+            cwd=workspace,
+        )
+
+        if result.returncode != 0:
+            print(f"pr-worker: claude exited {result.returncode}: {result.stderr[:500]}", file=sys.stderr)
+            # Still try to parse stdout in case claude produced output before failing
+            if result.stdout:
+                try:
+                    output_data = json.loads(result.stdout)
+                    result_text = output_data.get("result", "")
+                    pr_url = extract_pr_url(result_text)
+                    if pr_url:
+                        return pr_url
+                except json.JSONDecodeError:
+                    pass
+            return None
+
+        # Parse JSON output from Claude Code
+        try:
+            output_data = json.loads(result.stdout)
+            result_text = output_data.get("result", "")
+            cost = output_data.get("total_cost_usd", 0)
+            turns = output_data.get("num_turns", 0)
+            print(f"pr-worker: claude completed in {turns} turns, cost ${cost:.4f}", file=sys.stderr)
+        except json.JSONDecodeError:
+            # If not JSON, use raw stdout
+            result_text = result.stdout
+
+        pr_url = extract_pr_url(result_text)
+        if pr_url:
+            print(f"pr-worker: created PR for issue #{issue.number}: {pr_url}", file=sys.stderr)
+        else:
+            print(f"pr-worker: no PR URL found in Claude output for issue #{issue.number}", file=sys.stderr)
+            print(f"pr-worker: claude output: {result_text[:200]}", file=sys.stderr)
+
+        return pr_url
+
+    except subprocess.TimeoutExpired:
+        print(f"pr-worker: claude timed out for issue #{issue.number}", file=sys.stderr)
         return None
-    main_sha = ref["object"]["sha"]
-
-    # 2. Get the tree SHA of the latest commit on main
-    commit = _github_api(f"git/commits/{main_sha}", token)
-    if not commit:
-        print("pr-worker: failed to get main commit", file=sys.stderr)
+    except Exception as e:
+        print(f"pr-worker: fix_issue_with_claude failed: {e}", file=sys.stderr)
         return None
-    base_tree_sha = commit["tree"]["sha"]
-
-    # 3. Create a new branch from main
-    branch_ref = _github_api("git/refs", token, method="POST", data={
-        "ref": f"refs/heads/{draft.branch}",
-        "sha": main_sha,
-    })
-    if not branch_ref:
-        print(f"pr-worker: failed to create branch {draft.branch}", file=sys.stderr)
-        return None
-
-    # 4. Create blobs for each file
-    tree_items = []
-    for f in draft.files:
-        blob = _github_api("git/blobs", token, method="POST", data={
-            "content": f["content"],
-            "encoding": "utf-8",
-        })
-        if not blob:
-            print(f"pr-worker: failed to create blob for {f['path']}", file=sys.stderr)
-            continue
-        tree_items.append({
-            "path": f["path"],
-            "mode": "100644",
-            "type": "blob",
-            "sha": blob["sha"],
-        })
-
-    if not tree_items:
-        print("pr-worker: no files to commit", file=sys.stderr)
-        return None
-
-    # 5. Create a new tree with the file changes
-    new_tree = _github_api("git/trees", token, method="POST", data={
-        "base_tree": base_tree_sha,
-        "tree": tree_items,
-    })
-    if not new_tree:
-        print("pr-worker: failed to create tree", file=sys.stderr)
-        return None
-
-    # 6. Create a commit
-    new_commit = _github_api("git/commits", token, method="POST", data={
-        "message": draft.title,
-        "tree": new_tree["sha"],
-        "parents": [main_sha],
-    })
-    if not new_commit:
-        print("pr-worker: failed to create commit", file=sys.stderr)
-        return None
-
-    # 7. Update the branch to point to the new commit
-    _github_api(f"git/refs/heads/{draft.branch}", token, method="PATCH", data={
-        "sha": new_commit["sha"],
-    })
-
-    # 8. Create the pull request
-    pr = _github_api("pulls", token, method="POST", data={
-        "title": draft.title,
-        "body": f"{draft.body}\n\nFixes #{draft.branch.split('-')[-1] if '-' in draft.branch else ''}\n\n🤖 Generated by sre-agent",
-        "head": draft.branch,
-        "base": "main",
-    })
-    if not pr:
-        print("pr-worker: failed to create PR", file=sys.stderr)
-        return None
-
-    return pr.get("html_url")
+    finally:
+        # Always clean up workspace
+        if os.path.exists(workspace):
+            try:
+                shutil.rmtree(workspace)
+            except OSError:
+                pass
 
 
 def mark_issue_processing(issue_number: int, token):
@@ -447,9 +335,6 @@ def run_pr_worker():
         _write_last_run(state_dir, 0, 0)
         return
 
-    # Fetch repo tree for LLM context (only if there are issues to process)
-    repo_paths = get_repo_tree(token)
-
     prs_created = 0
     for issue in issues:
         if prs_created >= max_prs:
@@ -463,18 +348,12 @@ def run_pr_worker():
         print(f"pr-worker: processing issue #{issue.number}: {issue.title}", file=sys.stderr)
         mark_issue_processing(issue.number, token)
 
-        draft = draft_fix_with_llm(issue, repo_paths=repo_paths)
-        if not draft or not draft.files:
-            print(f"pr-worker: no fix draft for issue #{issue.number}", file=sys.stderr)
-            continue
-
-        pr_url = create_pr(draft, token)
+        pr_url = fix_issue_with_claude(issue, token)
         if pr_url:
             mark_issue_created(issue.number, pr_url, token)
             prs_created += 1
-            print(f"pr-worker: created PR for issue #{issue.number}: {pr_url}", file=sys.stderr)
         else:
-            print(f"pr-worker: failed to create PR for issue #{issue.number}", file=sys.stderr)
+            print(f"pr-worker: no PR created for issue #{issue.number}", file=sys.stderr)
 
     _write_last_run(state_dir, prs_created, len(issues))
 
