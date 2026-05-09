@@ -52,11 +52,11 @@ class TriageResult:
 LOCAL_OLLAMA_HOST = os.environ.get(
     "OLLAMA_HOST", "http://total-eclipse.nebula:11434"
 )
-LOCAL_OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "qwen3:14b")
+LOCAL_OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "qwen3:8b")
 CLOUD_OLLAMA_HOST = os.environ.get(
-    "OLLAMA_CLOUD_HOST", "https://ollama.com"
+    "OLLAMA_CLOUD_HOST", "http://historian.nebula:11434"
 )
-CLOUD_OLLAMA_MODEL = os.environ.get("OLLAMA_CLOUD_MODEL", "glm-5")
+CLOUD_OLLAMA_MODEL = os.environ.get("OLLAMA_CLOUD_MODEL", "gemma4:31b")
 CLOUD_OLLAMA_KEY_FILE = os.environ.get("OLLAMA_CLOUD_KEY_FILE", "")
 
 LOCAL_TIMEOUT = 60

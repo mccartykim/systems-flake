@@ -220,8 +220,8 @@ class TestTriageCloudFallback(unittest.TestCase):
                 instance="host1:9090",
                 summary="test",
             )
-            # Find the cloud request (URL contains ollama.com)
-            cloud_reqs = [r for r in requests if "ollama.com" in r.full_url]
+            # Find the cloud request (URL contains /api/chat and is not local)
+            cloud_reqs = [r for r in requests if "ollama.com" in r.full_url or "historian" in r.full_url]
             self.assertGreaterEqual(len(cloud_reqs), 1, "No cloud request was made")
             req = cloud_reqs[0]
             self.assertIn("Authorization", req.headers)

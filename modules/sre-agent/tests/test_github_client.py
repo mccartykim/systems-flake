@@ -11,7 +11,7 @@ from unittest.mock import MagicMock, patch
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "lib"))
 
-from github_client import create_issue, _fingerprint, _check_existing
+from github_client import create_issue, close_issue, _fingerprint, _check_existing
 
 
 class TestFingerprint(unittest.TestCase):
@@ -181,6 +181,113 @@ class TestCreateIssue(unittest.TestCase):
                 instance="host:9090",
             )
             self.assertIsNone(result)
+
+
+class TestCloseIssue(unittest.TestCase):
+    """close_issue should PATCH GitHub API to close an issue and update local state."""
+
+    @patch("github_client.urllib.request.urlopen")
+    def test_close_issue_success(self, mock_urlopen):
+        """Should close issue via GitHub API and update local state."""
+        mock_response = MagicMock()
+        mock_response.read.return_value = json.dumps({"state": "closed"}).encode()
+        mock_response.__enter__ = lambda s: s
+        mock_response.__exit__ = MagicMock(return_value=False)
+        mock_urlopen.return_value = mock_response
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            issues_path = os.path.join(tmpdir, "issues.jsonl")
+            fp = _fingerprint("NodeExporterDown", "host:9100")
+            with open(issues_path, "w") as f:
+                f.write(json.dumps({
+                    "fingerprint": fp,
+                    "url": "https://github.com/mccartykim/homelab-incidents/issues/2",
+                    "state": "open",
+                }) + "\n")
+
+            token_file = os.path.join(tmpdir, "gh-token")
+            with open(token_file, "w") as f:
+                f.write("ghp_test123456789012345678901234567890")
+
+            os.environ["STATE_DIR"] = tmpdir
+            os.environ["GITHUB_TOKEN_FILE"] = token_file
+            os.environ["GITHUB_REPO"] = "mccartykim/homelab-incidents"
+
+            result = close_issue("NodeExporterDown", "host:9100")
+            self.assertEqual(result, "https://github.com/mccartykim/homelab-incidents/issues/2")
+
+            # Verify PATCH request
+            req = mock_urlopen.call_args[0][0]
+            self.assertEqual(req.get_method(), "PATCH")
+            self.assertIn("issues/2", req.full_url)
+
+            # Verify local state updated
+            with open(issues_path) as f:
+                entry = json.loads(f.readline())
+                self.assertEqual(entry["state"], "closed")
+                self.assertIn("closed_at", entry)
+
+    def test_close_issue_no_matching_issue(self):
+        """Should return None if no open issue exists."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            os.environ["STATE_DIR"] = tmpdir
+            os.environ["GITHUB_TOKEN_FILE"] = ""
+            os.environ["GITHUB_REPO"] = "mccartykim/homelab-incidents"
+
+            result = close_issue("NonExistentAlert", "host:9100")
+            self.assertIsNone(result)
+
+    @patch("github_client.urllib.request.urlopen")
+    def test_close_issue_api_failure(self, mock_urlopen):
+        """Should return None if GitHub API fails, without changing local state."""
+        mock_urlopen.side_effect = Exception("API error")
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            issues_path = os.path.join(tmpdir, "issues.jsonl")
+            fp = _fingerprint("NodeExporterDown", "host:9100")
+            with open(issues_path, "w") as f:
+                f.write(json.dumps({
+                    "fingerprint": fp,
+                    "url": "https://github.com/mccartykim/homelab-incidents/issues/2",
+                    "state": "open",
+                }) + "\n")
+
+            token_file = os.path.join(tmpdir, "gh-token")
+            with open(token_file, "w") as f:
+                f.write("ghp_test123456789012345678901234567890")
+
+            os.environ["STATE_DIR"] = tmpdir
+            os.environ["GITHUB_TOKEN_FILE"] = token_file
+            os.environ["GITHUB_REPO"] = "mccartykim/homelab-incidents"
+
+            result = close_issue("NodeExporterDown", "host:9100")
+            self.assertIsNone(result)
+
+            # Local state should still be open
+            with open(issues_path) as f:
+                entry = json.loads(f.readline())
+                self.assertEqual(entry["state"], "open")
+
+    @patch("github_client.urllib.request.urlopen")
+    def test_close_issue_already_closed_not_matched(self, mock_urlopen):
+        """Should return None if the issue is already closed locally."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            issues_path = os.path.join(tmpdir, "issues.jsonl")
+            fp = _fingerprint("NodeExporterDown", "host:9100")
+            with open(issues_path, "w") as f:
+                f.write(json.dumps({
+                    "fingerprint": fp,
+                    "url": "https://github.com/mccartykim/homelab-incidents/issues/2",
+                    "state": "closed",
+                }) + "\n")
+
+            os.environ["STATE_DIR"] = tmpdir
+            os.environ["GITHUB_TOKEN_FILE"] = ""
+            os.environ["GITHUB_REPO"] = "mccartykim/homelab-incidents"
+
+            result = close_issue("NodeExporterDown", "host:9100")
+            self.assertIsNone(result)
+            mock_urlopen.assert_not_called()
 
 
 if __name__ == "__main__":
