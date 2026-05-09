@@ -321,13 +321,12 @@ in {
       "br-lan".allowedTCPPorts = lib.flatten [
         (lib.optional cfg.services.grafana.enable cfg.services.grafana.port)
         (lib.optional cfg.services.prometheus.enable cfg.services.prometheus.port)
-        [9100 19532] # node exporter + journal-remote
+        [9093 9100 19532] # alertmanager + node exporter + journal-remote
       ];
       "nebula-kimb".allowedTCPPorts = lib.flatten [
         (lib.optional cfg.services.grafana.enable cfg.services.grafana.port)
         (lib.optional cfg.services.prometheus.enable cfg.services.prometheus.port)
-        (lib.optional cfg.services.alertmanager.enable cfg.services.alertmanager.port)
-        [9100 19532] # node exporter + journal-remote
+        [9093 9100 19532] # alertmanager + node exporter + journal-remote
       ];
     };
   };
