@@ -38,7 +38,7 @@ def post_discord(msg):
         req = urllib.request.Request(
             f"https://discord.com/api/v10/channels/{channel_id}/messages",
             data=data,
-            headers={"Authorization": f"Bot {token}", "Content-Type": "application/json"},
+            headers={"Authorization": f"Bot {token}", "Content-Type": "application/json", "User-Agent": "sre-agent/1.0"},
         )
         urllib.request.urlopen(req, timeout=10)
     except Exception as e:
