@@ -213,7 +213,7 @@ in {
       "br-lan".allowedTCPPorts = lib.mkIf cfg.services.homepage.enable [
         cfg.services.homepage.port
       ];
-      "nebula-kimb".allowedTCPPorts = lib.mkIf cfg.services.homepage.enable [
+      "nebula1".allowedTCPPorts = lib.mkIf cfg.services.homepage.enable [
         cfg.services.homepage.port
       ];
     };

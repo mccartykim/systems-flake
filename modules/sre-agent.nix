@@ -79,14 +79,14 @@ in {
 
     ollamaCloudHost = mkOption {
       type = types.str;
-      default = "https://ollama.com";
-      description = "Fallback Ollama Cloud endpoint";
+      default = "http://historian.nebula:11434";
+      description = "Fallback Ollama endpoint (historian for larger models)";
     };
 
     ollamaCloudModel = mkOption {
       type = types.str;
-      default = "glm-5";
-      description = "Fallback Ollama Cloud model (free-form only)";
+      default = "gemma4:31b";
+      description = "Fallback Ollama model on historian";
     };
 
     ollamaCloudKeyFile = mkOption {
@@ -114,7 +114,7 @@ in {
 
     silenceUrl = mkOption {
       type = types.str;
-      default = "http://10.100.0.1:9093/api/v2/silences";
+      default = "http://10.100.0.50:9093/api/v2/silences";
       description = "Alertmanager silences API URL";
     };
   };

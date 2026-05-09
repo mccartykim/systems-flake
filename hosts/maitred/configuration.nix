@@ -61,22 +61,22 @@ in {
       {
         port = 139;
         proto = "tcp";
-        groups = ["printing"];
+        group = "printing";
       }
       {
         port = 445;
         proto = "tcp";
-        groups = ["printing"];
+        group = "printing";
       }
       {
         port = 137;
         proto = "udp";
-        groups = ["printing"];
+        group = "printing";
       }
       {
         port = 138;
         proto = "udp";
-        groups = ["printing"];
+        group = "printing";
       }
     ];
   };
