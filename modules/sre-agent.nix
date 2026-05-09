@@ -20,6 +20,7 @@ with lib; let
     cp ${pkgs.writeText "sre-agent-llm_client.py" (builtins.readFile ./sre-agent/lib/llm_client.py)} $out/llm_client.py
     cp ${pkgs.writeText "sre-agent-github_client.py" (builtins.readFile ./sre-agent/lib/github_client.py)} $out/github_client.py
     cp ${pkgs.writeText "sre-agent-discord_bot.py" (builtins.readFile ./sre-agent/lib/discord_bot.py)} $out/discord_bot.py
+    cp ${pkgs.writeText "sre-agent-silence_client.py" (builtins.readFile ./sre-agent/lib/silence_client.py)} $out/silence_client.py
   '';
 
   # Python with discord.py for the Discord bot service
@@ -110,6 +111,12 @@ in {
       default = "http://10.100.0.50:9090";
       description = "Prometheus URL for alert queries";
     };
+
+    silenceUrl = mkOption {
+      type = types.str;
+      default = "http://10.100.0.1:9093/api/v2/silences";
+      description = "Alertmanager silences API URL";
+    };
   };
 
   config = mkIf cfg.enable {
@@ -154,6 +161,7 @@ in {
           "GITHUB_REPO=${cfg.githubRepo}"
           "ENABLE_LLM_TRIAGE=${if cfg.enableLlmTriage then "true" else "false"}"
           "PROMETHEUS_URL=${cfg.prometheusUrl}"
+          "SILENCE_URL=${cfg.silenceUrl}"
         ];
 
         # Security hardening
@@ -196,6 +204,7 @@ in {
           "GITHUB_REPO=${cfg.githubRepo}"
           "ENABLE_LLM_TRIAGE=${if cfg.enableLlmTriage then "true" else "false"}"
           "PROMETHEUS_URL=${cfg.prometheusUrl}"
+          "SILENCE_URL=${cfg.silenceUrl}"
         ];
 
         # Security hardening
