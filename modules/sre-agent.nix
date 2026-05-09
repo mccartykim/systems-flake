@@ -21,6 +21,7 @@ with lib; let
     cp ${pkgs.writeText "sre-agent-github_client.py" (builtins.readFile ./sre-agent/lib/github_client.py)} $out/github_client.py
     cp ${pkgs.writeText "sre-agent-discord_bot.py" (builtins.readFile ./sre-agent/lib/discord_bot.py)} $out/discord_bot.py
     cp ${pkgs.writeText "sre-agent-silence_client.py" (builtins.readFile ./sre-agent/lib/silence_client.py)} $out/silence_client.py
+    cp ${pkgs.writeText "sre-agent-pr_worker.py" (builtins.readFile ./sre-agent/lib/pr_worker.py)} $out/pr_worker.py
   '';
 
   # Python with discord.py for the Discord bot service
@@ -92,6 +93,24 @@ in {
     ollamaCloudKeyFile = mkOption {
       type = types.path;
       description = "Agenix path to Ollama Cloud API key";
+    };
+
+    enablePrWorker = mkOption {
+      type = types.bool;
+      default = false;
+      description = "Enable the PR worker that reads issues and drafts NixOS config fixes";
+    };
+
+    githubSourceRepo = mkOption {
+      type = types.str;
+      default = "mccartykim/systems-flake";
+      description = "GitHub repo where PRs are created (source repo)";
+    };
+
+    prWorkerModel = mkOption {
+      type = types.str;
+      default = "qwen3:8b";
+      description = "Ollama model for PR worker (drafting fixes)";
     };
 
     enableDiscordBot = mkOption {
@@ -213,6 +232,48 @@ in {
         ProtectHome = true;
         ReadWritePaths = [cfg.stateDir];
         ReadOnlyPaths = [cfg.discordTokenFile cfg.githubTokenFile cfg.ollamaCloudKeyFile];
+      };
+    };
+
+    systemd.services.sre-agent-pr-worker = mkIf cfg.enablePrWorker {
+      description = "SRE Agent PR Worker — reads issues, drafts fixes, creates PRs";
+      after = ["network.target"];
+      wantedBy = ["multi-user.target"];
+
+      serviceConfig = {
+        ExecStart = "${pkgs.python3}/bin/python3 ${sreAgentLib}/pr_worker.py";
+        User = cfg.user;
+        Group = cfg.user;
+        WorkingDirectory = cfg.stateDir;
+        Restart = "on-failure";
+        RestartSec = "30s";
+
+        Environment = [
+          "PYTHONPATH=${sreAgentLib}"
+          "STATE_DIR=${cfg.stateDir}"
+          "GITHUB_TOKEN_FILE=${cfg.githubTokenFile}"
+          "GITHUB_REPO=${cfg.githubRepo}"
+          "GITHUB_SOURCE_REPO=${cfg.githubSourceRepo}"
+          "OLLAMA_HOST=${cfg.ollamaHost}"
+          "OLLAMA_MODEL=${cfg.prWorkerModel}"
+          "PR_WORKER_MODEL=${cfg.prWorkerModel}"
+        ];
+
+        NoNewPrivileges = true;
+        ProtectSystem = "strict";
+        ProtectHome = true;
+        ReadWritePaths = [cfg.stateDir];
+        ReadOnlyPaths = [cfg.githubTokenFile];
+      };
+    };
+
+    systemd.timers.sre-agent-pr-worker = mkIf cfg.enablePrWorker {
+      description = "Run SRE Agent PR Worker every 5 minutes";
+      wantedBy = ["timers.target"];
+      timerConfig = {
+        OnBootSec = "5m";
+        OnUnitActiveSec = "5m";
+        AccuracySec = "1m";
       };
     };
   };
