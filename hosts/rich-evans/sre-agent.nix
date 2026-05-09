@@ -10,9 +10,9 @@
     alertChannelId = "900242088434757662";
     webhookPort = 9095;
     ollamaHost = "http://total-eclipse.nebula:11434";
-    ollamaModel = "qwen3:14b";
+    ollamaModel = "qwen3:8b";
     enableDiscordBot = true;
-    enableLlmTriage = true; # Phase 1: LLM triage enabled
+    enableLlmTriage = true;
     prometheusUrl = "http://10.100.0.50:9090";
   };
 
