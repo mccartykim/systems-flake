@@ -8,6 +8,7 @@ import hashlib
 import json
 import os
 import re
+import sys
 import urllib.request
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -176,7 +177,7 @@ def _call_local_ollama(prompt: str) -> Optional[TriageResult]:
         "options": {"temperature": 0.1},
     }).encode()
 
-    req = urllib.request.Request(url, data=payload, headers={"Content-Type": "application/json"})
+    req = urllib.request.Request(url, data=payload, headers={"Content-Type": "application/json", "User-Agent": "sre-agent/1.0"})
 
     for attempt in range(MAX_RETRIES):
         try:
@@ -186,23 +187,23 @@ def _call_local_ollama(prompt: str) -> Optional[TriageResult]:
             # With format:json, content should be valid JSON
             parsed = json.loads(content)
             return TriageResult.from_dict(parsed)
-        except (json.JSONDecodeError, KeyError, TypeError):
+        except (json.JSONDecodeError, KeyError, TypeError) as e:
             # JSON parse failed — try free-form parsing as fallback
+            print(f"llm: local parse error (attempt {attempt+1}): {e}", file=sys.stderr)
             result = parse_freeform_response(content if 'content' in dir() else "")
             if result:
                 return result
-            continue
-        except (urllib.error.URLError, TimeoutError, ConnectionError, OSError):
+        except (urllib.error.URLError, TimeoutError, ConnectionError, OSError) as e:
+            print(f"llm: local connection error (attempt {attempt+1}): {e}", file=sys.stderr)
             continue
     return None
 
 
 def _call_cloud_ollama(prompt: str) -> Optional[TriageResult]:
-    """Call Ollama Cloud (free-form) with Bearer auth."""
-    # Read key file at call time (not import time) so env vars can be set in tests
+    """Call fallback Ollama (historian) with free-form parsing."""
     key_file = os.environ.get("OLLAMA_CLOUD_KEY_FILE", CLOUD_OLLAMA_KEY_FILE)
     url = f"{_get_cloud_host()}/api/chat"
-    headers = {"Content-Type": "application/json"}
+    headers = {"Content-Type": "application/json", "User-Agent": "sre-agent/1.0"}
     if key_file and os.path.exists(key_file):
         try:
             with open(key_file) as f:
@@ -227,8 +228,12 @@ def _call_cloud_ollama(prompt: str) -> Optional[TriageResult]:
             resp = urllib.request.urlopen(req, timeout=CLOUD_TIMEOUT)
             body = json.loads(resp.read().decode())
             content = body.get("message", {}).get("content", "")
-            return parse_freeform_response(content)
-        except (urllib.error.URLError, TimeoutError, ConnectionError, OSError):
+            result = parse_freeform_response(content)
+            if result is None:
+                print(f"llm: cloud response unparseable (attempt {attempt+1}): {content[:200]}", file=sys.stderr)
+            return result
+        except (urllib.error.URLError, TimeoutError, ConnectionError, OSError) as e:
+            print(f"llm: cloud connection error (attempt {attempt+1}): {e}", file=sys.stderr)
             continue
     return None
 
@@ -262,7 +267,10 @@ Summary: {summary}"""
     # Try local Ollama first, then cloud
     result = _call_local_ollama(prompt)
     if result is None:
+        print(f"llm: local failed, trying cloud fallback for {alertname}", file=sys.stderr)
         result = _call_cloud_ollama(prompt)
+    else:
+        print(f"llm: local triage succeeded for {alertname}: {result.severity}", file=sys.stderr)
 
     if result:
         _write_cache(state_dir, key, result)
