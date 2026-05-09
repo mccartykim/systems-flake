@@ -206,7 +206,7 @@ class TestBuildFixPrompt(unittest.TestCase):
 
 
 class TestDraftFixWithLLM(unittest.TestCase):
-    """draft_fix_with_llm should call Ollama and parse the response."""
+    """draft_fix_with_llm should call cloud Ollama and parse the response."""
 
     @patch("pr_worker.urllib.request.urlopen")
     def test_local_ollama_json_response(self, mock_urlopen):
@@ -226,7 +226,7 @@ class TestDraftFixWithLLM(unittest.TestCase):
         mock_urlopen.return_value = mock_response
 
         issue = GitHubIssue(number=7, title="OllamaUnreachable", body="Ollama down", labels=["sre-agent"], url="")
-        with patch.dict(os.environ, {"OLLAMA_HOST": "http://localhost:11434", "PR_WORKER_MODEL": "qwen3:8b"}):
+        with patch.dict(os.environ, {"PR_WORKER_CLOUD_HOST": "http://localhost:11434", "PR_WORKER_MODEL": "gemma4:31b"}):
             draft = draft_fix_with_llm(issue)
         self.assertIsNotNone(draft)
         self.assertEqual(draft.title, "fix(total-eclipse): restart ollama service")
@@ -246,7 +246,7 @@ class TestDraftFixWithLLM(unittest.TestCase):
         mock_urlopen.return_value = mock_response
 
         issue = GitHubIssue(number=10, title="Hardware failure", body="Disk broken", labels=["sre-agent"], url="")
-        with patch.dict(os.environ, {"OLLAMA_HOST": "http://localhost:11434", "PR_WORKER_MODEL": "qwen3:8b"}):
+        with patch.dict(os.environ, {"PR_WORKER_CLOUD_HOST": "http://localhost:11434", "PR_WORKER_MODEL": "gemma4:31b"}):
             draft = draft_fix_with_llm(issue)
         self.assertIsNone(draft)
 
@@ -254,7 +254,7 @@ class TestDraftFixWithLLM(unittest.TestCase):
     def test_local_failure_returns_none(self, mock_urlopen):
         mock_urlopen.side_effect = ConnectionError("ollama down")
         issue = GitHubIssue(number=1, title="Test", body="body", labels=[], url="")
-        with patch.dict(os.environ, {"OLLAMA_HOST": "http://localhost:11434"}):
+        with patch.dict(os.environ, {"PR_WORKER_CLOUD_HOST": "http://localhost:11434"}):
             draft = draft_fix_with_llm(issue)
         self.assertIsNone(draft)
 
@@ -269,7 +269,7 @@ class TestDraftFixWithLLM(unittest.TestCase):
         mock_urlopen.return_value = mock_response
 
         issue = GitHubIssue(number=1, title="Test", body="body", labels=[], url="")
-        with patch.dict(os.environ, {"OLLAMA_HOST": "http://localhost:11434", "PR_WORKER_MODEL": "qwen3:8b"}):
+        with patch.dict(os.environ, {"PR_WORKER_CLOUD_HOST": "http://localhost:11434", "PR_WORKER_MODEL": "gemma4:31b"}):
             draft = draft_fix_with_llm(issue)
         self.assertIsNone(draft)
 
@@ -290,8 +290,8 @@ class TestDraftFixWithLLM(unittest.TestCase):
         mock_urlopen.return_value = mock_response
 
         issue = GitHubIssue(number=1, title="Test", body="body", labels=["sre-agent"], url="")
-        with patch.dict(os.environ, {"OLLAMA_HOST": "http://localhost:11434", "PR_WORKER_MODEL": "qwen3:8b",
-                                      "GITHUB_TOKEN_FILE": "/dev/null"}):
+        with patch.dict(os.environ, {"PR_WORKER_CLOUD_HOST": "http://localhost:11434", "PR_WORKER_MODEL": "gemma4:31b",
+                                      "OLLAMA_CLOUD_KEY_FILE": "/dev/null"}):
             # We can't easily test the prompt content through draft_fix_with_llm,
             # but we can verify get_repo_tree was called when run_pr_worker invokes it
             pass

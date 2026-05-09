@@ -196,65 +196,18 @@ If the issue cannot be fixed with a config change, respond with:
 
 
 def draft_fix_with_llm(issue: GitHubIssue, repo_paths=None, model=None):
-    """Use LLM to draft a fix for the issue. Returns PRDraft or None."""
+    """Use cloud LLM to draft a fix for the issue. Returns PRDraft or None.
+
+    Uses a large coding-capable model (gemma4:31b on historian) via Ollama Cloud
+    rather than the small local model, since PR fixes need better code generation.
+    """
     prompt = build_fix_prompt(issue, repo_paths)
 
-    # Try local Ollama first, then cloud fallback
-    result = None
-    for attempt in range(2):
-        try:
-            url = f"{os.environ.get('OLLAMA_HOST', 'http://total-eclipse.nebula:11434')}/api/chat"
-            payload = json.dumps({
-                "model": model or os.environ.get("PR_WORKER_MODEL", os.environ.get("OLLAMA_MODEL", "qwen3:8b")),
-                "messages": [
-                    {"role": "system", "content": "You are an SRE fix agent for a NixOS homelab. Draft minimal, targeted config fixes. Only output valid JSON."},
-                    {"role": "user", "content": prompt},
-                ],
-                "stream": False,
-                "format": "json",
-                "options": {"temperature": 0.2},
-            }).encode()
-            req = urllib.request.Request(url, data=payload, headers={"Content-Type": "application/json", "User-Agent": "sre-agent/1.0"})
-            resp = urllib.request.urlopen(req, timeout=120)
-            body = json.loads(resp.read().decode())
-            content = body.get("message", {}).get("content", "")
-            try:
-                parsed = json.loads(content)
-            except json.JSONDecodeError:
-                # Try free-form parsing as fallback
-                parsed = None
-            if parsed and not parsed.get("skip"):
-                return PRDraft(
-                    title=parsed.get("title", f"[SRE] Fix issue #{issue.number}"),
-                    body=parsed.get("summary", ""),
-                    branch=parsed.get("branch", f"sre-fix/issue-{issue.number}"),
-                    files=parsed.get("files", []),
-                )
-            elif parsed and parsed.get("skip"):
-                print(f"pr-worker: skipping issue #{issue.number}: {parsed.get('reason', 'no fix possible')}", file=sys.stderr)
-                return None
-            # If parsing failed, try cloud fallback
-            break
-        except Exception as e:
-            print(f"pr-worker: local LLM failed (attempt {attempt+1}): {e}", file=sys.stderr)
-            continue
-
-    # Cloud fallback
-    try:
-        result = _call_cloud_ollama(prompt)
-        if result:
-            pass
-    except Exception as e:
-        print(f"pr-worker: cloud LLM failed: {e}", file=sys.stderr)
-
-    return None
-
-
-def _call_cloud_ollama(prompt: str):
-    """Fallback to cloud Ollama (historian)."""
-    from llm_client import _get_cloud_host, _get_cloud_model, CLOUD_TIMEOUT
+    cloud_host = os.environ.get("PR_WORKER_CLOUD_HOST", "http://historian.nebula:11434")
+    cloud_model = model or os.environ.get("PR_WORKER_MODEL", "gemma4:31b")
     key_file = os.environ.get("OLLAMA_CLOUD_KEY_FILE", "")
-    url = f"{_get_cloud_host()}/api/chat"
+
+    url = f"{cloud_host}/api/chat"
     headers = {"Content-Type": "application/json", "User-Agent": "sre-agent/1.0"}
     if key_file and os.path.exists(key_file):
         try:
@@ -265,35 +218,42 @@ def _call_cloud_ollama(prompt: str):
         except OSError:
             pass
 
-    payload = json.dumps({
-        "model": _get_cloud_model(),
-        "messages": [
-            {"role": "system", "content": "You are an SRE fix agent. Output valid JSON only."},
-            {"role": "user", "content": prompt},
-        ],
-        "stream": False,
-    }).encode()
-
-    try:
-        req = urllib.request.Request(url, data=payload, headers=headers)
-        resp = urllib.request.urlopen(req, timeout=CLOUD_TIMEOUT)
-        body = json.loads(resp.read().decode())
-        content = body.get("message", {}).get("content", "")
+    for attempt in range(2):
         try:
-            parsed = json.loads(content)
+            payload = json.dumps({
+                "model": cloud_model,
+                "messages": [
+                    {"role": "system", "content": "You are an SRE fix agent for a NixOS homelab. Draft minimal, targeted config fixes. Only output valid JSON."},
+                    {"role": "user", "content": prompt},
+                ],
+                "stream": False,
+                "format": "json",
+                "options": {"temperature": 0.2},
+            }).encode()
+            req = urllib.request.Request(url, data=payload, headers=headers)
+            resp = urllib.request.urlopen(req, timeout=300)
+            body = json.loads(resp.read().decode())
+            content = body.get("message", {}).get("content", "")
+            try:
+                parsed = json.loads(content)
+            except json.JSONDecodeError:
+                print(f"pr-worker: cloud LLM returned invalid JSON (attempt {attempt+1}): {content[:200]}", file=sys.stderr)
+                continue
             if parsed and not parsed.get("skip"):
                 return PRDraft(
-                    title=parsed.get("title", ""),
+                    title=parsed.get("title", f"[SRE] Fix issue #{issue.number}"),
                     body=parsed.get("summary", ""),
-                    branch=parsed.get("branch", ""),
+                    branch=parsed.get("branch", f"sre-fix/issue-{issue.number}"),
                     files=parsed.get("files", []),
                 )
-        except json.JSONDecodeError:
-            pass
-        return None
-    except Exception as e:
-        print(f"pr-worker: cloud LLM error: {e}", file=sys.stderr)
-        return None
+            elif parsed and parsed.get("skip"):
+                print(f"pr-worker: skipping issue #{issue.number}: {parsed.get('reason', 'no fix possible')}", file=sys.stderr)
+                return None
+        except Exception as e:
+            print(f"pr-worker: cloud LLM failed (attempt {attempt+1}): {e}", file=sys.stderr)
+            continue
+
+    return None
 
 
 def create_pr(draft: PRDraft, token):

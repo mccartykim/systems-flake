@@ -109,8 +109,14 @@ in {
 
     prWorkerModel = mkOption {
       type = types.str;
-      default = "qwen3:8b";
-      description = "Ollama model for PR worker (drafting fixes)";
+      default = "gemma4:31b";
+      description = "Ollama model for PR worker (cloud-based, needs larger coding model)";
+    };
+
+    prWorkerCloudHost = mkOption {
+      type = types.str;
+      default = "http://historian.nebula:11434";
+      description = "Ollama host for PR worker (uses cloud model, not local)";
     };
 
     enableDiscordBot = mkOption {
@@ -254,9 +260,9 @@ in {
           "GITHUB_TOKEN_FILE=${cfg.githubTokenFile}"
           "GITHUB_REPO=${cfg.githubRepo}"
           "GITHUB_SOURCE_REPO=${cfg.githubSourceRepo}"
-          "OLLAMA_HOST=${cfg.ollamaHost}"
-          "OLLAMA_MODEL=${cfg.prWorkerModel}"
+          "PR_WORKER_CLOUD_HOST=${cfg.prWorkerCloudHost}"
           "PR_WORKER_MODEL=${cfg.prWorkerModel}"
+          "OLLAMA_CLOUD_KEY_FILE=${cfg.ollamaCloudKeyFile}"
         ];
 
         NoNewPrivileges = true;
@@ -268,12 +274,12 @@ in {
     };
 
     systemd.timers.sre-agent-pr-worker = mkIf cfg.enablePrWorker {
-      description = "Run SRE Agent PR Worker every 5 minutes";
+      description = "Run SRE Agent PR Worker every 15 minutes";
       wantedBy = ["timers.target"];
       timerConfig = {
         OnBootSec = "5m";
-        OnUnitActiveSec = "5m";
-        AccuracySec = "1m";
+        OnUnitActiveSec = "15m";
+        AccuracySec = "2m";
       };
     };
   };
