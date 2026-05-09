@@ -21,6 +21,7 @@ class TriageResult:
     action: str
     file_issue: bool = False
     issue_title: str = ""
+    silence_hours: int = 0  # 0 = don't silence, >0 = silence for N hours
 
     @classmethod
     def from_dict(cls, d: dict) -> "TriageResult":
@@ -30,6 +31,7 @@ class TriageResult:
             action=d.get("action", ""),
             file_issue=d.get("file_issue", False),
             issue_title=d.get("issue_title", ""),
+            silence_hours=int(d.get("silence_hours", 0)),
         )
 
 
@@ -57,13 +59,14 @@ SEVERITY: critical|warning|info|noise
 CAUSE: one-line root cause guess
 ACTION: one-line recommended action
 FILE_ISSUE: yes|no
-ISSUE_TITLE: suggested title (only if FILE_ISSUE=yes)"""
+ISSUE_TITLE: suggested title (only if FILE_ISSUE=yes)
+SILENCE: 0|2|4|24 (hours to silence this alert; 0 = don't silence, use 4 for noise, 2 for info)"""
 
 
 # --- Free-form response parser ---
 
 def parse_freeform_response(text: str) -> Optional[TriageResult]:
-    """Parse free-form LLM response for SEVERITY/CAUSE/ACTION/FILE_ISSUE/ISSUE_TITLE lines."""
+    """Parse free-form LLM response for SEVERITY/CAUSE/ACTION/FILE_ISSUE/ISSUE_TITLE/SILENCE lines."""
     if not text.strip():
         return None
 
@@ -72,7 +75,7 @@ def parse_freeform_response(text: str) -> Optional[TriageResult]:
     for line in lines:
         line = line.strip()
         # Case-insensitive match for key: value
-        match = re.match(r"(SEVERITY|CAUSE|ACTION|FILE_ISSUE|ISSUE_TITLE)\s*:\s*(.+)", line, re.IGNORECASE)
+        match = re.match(r"(SEVERITY|CAUSE|ACTION|FILE_ISSUE|ISSUE_TITLE|SILENCE)\s*:\s*(.+)", line, re.IGNORECASE)
         if match:
             key = match.group(1).upper()
             value = match.group(2).strip()
@@ -81,12 +84,18 @@ def parse_freeform_response(text: str) -> Optional[TriageResult]:
     if "SEVERITY" not in data:
         return None
 
+    try:
+        silence_hours = int(data.get("SILENCE", "0"))
+    except ValueError:
+        silence_hours = 0
+
     return TriageResult(
         severity=data.get("SEVERITY", "unknown"),
         cause=data.get("CAUSE", ""),
         action=data.get("ACTION", ""),
         file_issue=data.get("FILE_ISSUE", "no").lower() in ("yes", "true", "1"),
         issue_title=data.get("ISSUE_TITLE", ""),
+        silence_hours=silence_hours,
     )
 
 

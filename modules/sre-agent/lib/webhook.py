@@ -152,6 +152,18 @@ class WebhookHandler(http.server.BaseHTTPRequestHandler):
                 if issue_url:
                     post_discord(f"**Issue created:** {issue_url}")
 
+                # Maybe silence noise/info alerts
+                if result.silence_hours > 0 and result.severity in ("noise", "info"):
+                    from silence_client import maybe_silence
+                    labels = alert.get("labels", {})
+                    silence_id = maybe_silence(
+                        alertname=labels.get("alertname", "unknown"),
+                        instance=labels.get("instance", ""),
+                        duration_hours=result.silence_hours,
+                    )
+                    if silence_id:
+                        post_discord(f"**Silenced:** {labels.get('alertname', 'unknown')} for {result.silence_hours}h (ID: {silence_id})")
+
         self.send_response(200)
         self.send_header("Content-Type", "application/json")
         self.end_headers()
