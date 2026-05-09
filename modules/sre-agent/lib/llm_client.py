@@ -138,6 +138,7 @@ def _write_cache(state_dir: str, key: str, result: TriageResult):
                 "action": result.action,
                 "file_issue": result.file_issue,
                 "issue_title": result.issue_title,
+                "silence_hours": result.silence_hours,
             },
         }
         with open(cache_path, "a") as f:

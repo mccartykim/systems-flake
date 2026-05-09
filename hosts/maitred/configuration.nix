@@ -51,6 +51,12 @@ in {
     enable = true;
     openToPersonalDevices = true;
     extraInboundRules = [
+      # Alertmanager API for SRE agent silencing
+      {
+        port = 9093;
+        proto = "tcp";
+        host = "any";
+      }
       # SMB for printing group only
       {
         port = 139;
