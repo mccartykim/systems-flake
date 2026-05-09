@@ -63,6 +63,19 @@ def format_alert(payload):
     return "\n".join(lines)
 
 
+def format_resolved(payload):
+    """Format a resolved alert for Discord."""
+    alerts = payload.get("alerts", [])
+    lines = ["[RESOLVED]"]
+    for a in alerts:
+        labels = a.get("labels", {})
+        name = labels.get("alertname", "unknown")
+        instance = labels.get("instance", "?")
+        instance = redact(instance, context="alert instance")
+        lines.append(f"**{name}** ({instance}) resolved")
+    return "\n".join(lines)
+
+
 def run_triage(alert):
     """Run LLM triage on a single alert dict. Returns TriageResult or None."""
     enable_llm = _env("ENABLE_LLM_TRIAGE", "false").lower() in ("true", "1", "yes")
@@ -134,6 +147,26 @@ class WebhookHandler(http.server.BaseHTTPRequestHandler):
         msg = format_alert(payload)
         print(msg)
         post_discord(msg)
+
+        # Handle resolved alerts — close GitHub issues
+        if payload.get("status") == "resolved":
+            for alert in payload.get("alerts", []):
+                labels = alert.get("labels", {})
+                alertname = labels.get("alertname", "unknown")
+                instance = labels.get("instance", "")
+                from github_client import close_issue
+                closed_url = close_issue(alertname, instance)
+                if closed_url:
+                    ts = datetime.now(timezone.utc).strftime("%H:%M UTC")
+                    post_discord(f"[{ts}] **Issue closed:** {closed_url}")
+            # Also post resolved message
+            resolved_msg = format_resolved(payload)
+            post_discord(resolved_msg)
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(b'{"status":"ok"}')
+            return
 
         # Optional LLM triage
         for alert in payload.get("alerts", []):
