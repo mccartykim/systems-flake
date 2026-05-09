@@ -117,5 +117,8 @@ in
     # Discord bot token for SRE alert notifications (#sre-alerts channel).
     # Separate bot application from life-coach/vacuum/org-crm.
     "discord-sre-token.age".publicKeys = [hostKeys.rich-evans bootstrap];
+    # Ollama Cloud API key for LLM inference on rich-evans.
+    # Get key from https://ollama.com/settings/api-keys
+    "ollama-cloud-key.age".publicKeys = [hostKeys.rich-evans bootstrap];
   }
   // allNebulaSecrets
