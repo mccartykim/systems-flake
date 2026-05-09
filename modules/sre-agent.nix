@@ -21,6 +21,9 @@ with lib; let
     cp ${pkgs.writeText "sre-agent-github_client.py" (builtins.readFile ./sre-agent/lib/github_client.py)} $out/github_client.py
     cp ${pkgs.writeText "sre-agent-discord_bot.py" (builtins.readFile ./sre-agent/lib/discord_bot.py)} $out/discord_bot.py
   '';
+
+  # Python with discord.py for the Discord bot service
+  discordPython = pkgs.python3.withPackages (p: [p.discordpy]);
 in {
   options.kimb.sreAgent = {
     enable = mkEnableOption "SRE agent (home observability)";
@@ -170,7 +173,10 @@ in {
       path = with pkgs; [curl jq];
 
       serviceConfig = {
-        ExecStart = "${pkgs.python3.withPackages (p: [p.discordpy])}/bin/python3 ${sreAgentLib}/__main__.py discord";
+        ExecStart = "${pkgs.writeShellScript "sre-agent-discord" ''
+          export PYTHONPATH="${sreAgentLib}:$PYTHONPATH"
+          exec ${discordPython}/bin/python3 ${sreAgentLib}/__main__.py discord
+        ''}";
         User = cfg.user;
         Group = cfg.user;
         WorkingDirectory = cfg.stateDir;
@@ -178,7 +184,6 @@ in {
         RestartSec = "5s";
 
         Environment = [
-          "PYTHONPATH=${sreAgentLib}"
           "STATE_DIR=${cfg.stateDir}"
           "DISCORD_TOKEN_FILE=${cfg.discordTokenFile}"
           "DISCORD_CHANNEL_ID=${cfg.alertChannelId}"
