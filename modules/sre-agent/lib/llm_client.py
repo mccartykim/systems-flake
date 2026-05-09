@@ -26,11 +26,22 @@ class TriageResult:
 
     @classmethod
     def from_dict(cls, d: dict) -> "TriageResult":
+        # Normalize keys to lowercase (LLM may return SEVERITY or severity)
+        d = {k.lower(): v for k, v in d.items()}
+        # Map SILENCE key to silence_hours
+        if "silence" in d and "silence_hours" not in d:
+            d["silence_hours"] = d["silence"]
+        # Normalize file_issue: may be bool or string ("yes"/"no"/"true"/"1")
+        fi = d.get("file_issue", False)
+        if isinstance(fi, bool):
+            file_issue = fi
+        else:
+            file_issue = str(fi).lower() in ("yes", "true", "1")
         return cls(
             severity=d.get("severity", "unknown"),
             cause=d.get("cause", ""),
             action=d.get("action", ""),
-            file_issue=d.get("file_issue", False),
+            file_issue=file_issue,
             issue_title=d.get("issue_title", ""),
             silence_hours=int(d.get("silence_hours", 0)),
         )
