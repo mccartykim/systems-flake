@@ -12,7 +12,7 @@
     ollamaHost = "http://total-eclipse.nebula:11434";
     ollamaModel = "qwen3:14b";
     enableDiscordBot = true;
-    enableLlmTriage = lib.mkDefault false; # opt-in: review redaction rules first
+    enableLlmTriage = true; # Phase 1: LLM triage enabled
     prometheusUrl = "http://10.100.0.50:9090";
   };
 
