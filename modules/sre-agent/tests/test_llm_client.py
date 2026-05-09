@@ -38,6 +38,35 @@ class TestTriageResult(unittest.TestCase):
         self.assertFalse(result.file_issue)
         self.assertEqual(result.issue_title, "")
 
+    def test_uppercase_keys(self):
+        """LLM with format:json returns uppercase keys (SEVERITY, CAUSE, etc.)."""
+        data = {
+            "SEVERITY": "noise",
+            "CAUSE": "Test alert",
+            "ACTION": "Acknowledge",
+            "FILE_ISSUE": "no",
+            "ISSUE_TITLE": "",
+            "SILENCE": "4",
+        }
+        result = TriageResult.from_dict(data)
+        self.assertEqual(result.severity, "noise")
+        self.assertEqual(result.cause, "Test alert")
+        self.assertEqual(result.action, "Acknowledge")
+        self.assertFalse(result.file_issue)
+        self.assertEqual(result.silence_hours, 4)
+
+    def test_file_issue_string_yes(self):
+        """file_issue may come as string 'yes'/'no' from LLM."""
+        data = {"severity": "critical", "cause": "", "action": "", "FILE_ISSUE": "yes"}
+        result = TriageResult.from_dict(data)
+        self.assertTrue(result.file_issue)
+
+    def test_silence_hours_mapping(self):
+        """SILENCE key should map to silence_hours."""
+        data = {"severity": "info", "cause": "", "action": "", "silence": 2}
+        result = TriageResult.from_dict(data)
+        self.assertEqual(result.silence_hours, 2)
+
 
 class TestParseFreeformResponse(unittest.TestCase):
     """Free-form text parsing extracts SEVERITY/CAUSE/ACTION/FILE_ISSUE/ISSUE_TITLE lines."""
