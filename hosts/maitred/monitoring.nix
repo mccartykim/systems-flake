@@ -326,6 +326,7 @@ in {
       "nebula-kimb".allowedTCPPorts = lib.flatten [
         (lib.optional cfg.services.grafana.enable cfg.services.grafana.port)
         (lib.optional cfg.services.prometheus.enable cfg.services.prometheus.port)
+        (lib.optional cfg.services.alertmanager.enable cfg.services.alertmanager.port)
         [9100 19532] # node exporter + journal-remote
       ];
     };
