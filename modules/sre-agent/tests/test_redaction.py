@@ -53,27 +53,24 @@ class TestIPRedaction(unittest.TestCase):
 
 
 class TestHostnameRedaction(unittest.TestCase):
-    """Known hostnames in the nebula mesh must be replaced."""
+    """Hostnames are NOT redacted — they're needed for SRE alert readability."""
 
-    def test_nebula_hostnames(self):
+    def test_hostnames_preserved(self):
         for host in ["maitred", "rich-evans", "historian", "total-eclipse", "oracle"]:
             with self.subTest(host=host):
                 result = redact(f"Service on {host} failed")
-                self.assertNotIn(host, result)
-                self.assertIn("[REDACTED-HOST]", result)
+                self.assertIn(host, result)
 
-    def test_hostname_with_domain(self):
+    def test_hostname_with_domain_preserved(self):
         text = "SSH to maitred.nebula timed out"
         result = redact(text)
-        self.assertNotIn("maitred", result)
-        self.assertIn("[REDACTED-HOST]", result)
+        self.assertIn("maitred", result)
 
-    def test_hostname_partial_match_not_redacted(self):
-        """'history' should NOT match 'historian'."""
+    def test_hostname_partial_match_not_confused(self):
+        """'history' should still not match 'historian' in IP/context redaction."""
         text = "Check the history log"
         result = redact(text)
         self.assertIn("history", result)
-        self.assertNotIn("[REDACTED-HOST]", result)
 
 
 class TestEmailRedaction(unittest.TestCase):
@@ -225,16 +222,16 @@ class TestRedactAlert(unittest.TestCase):
         self.assertIn("[REDACTED-IP]", result["annotations"]["summary"])
 
     def test_nested_redaction(self):
-        """All string values in the dict should be redacted recursively."""
+        """IPs redacted, hostnames preserved in nested dicts."""
         alert = {
             "labels": {"instance": "maitred:9093"},
-            "annotations": {"description": "Alertmanager at maitred is down"},
+            "annotations": {"description": "Alertmanager at maitred (10.100.0.1) is down"},
         }
         result = redact_alert(alert)
-        self.assertNotIn("maitred", result["labels"]["instance"])
-        self.assertNotIn("maitred", result["annotations"]["description"])
-        self.assertIn("[REDACTED-HOST]", result["labels"]["instance"])
-        self.assertIn("[REDACTED-HOST]", result["annotations"]["description"])
+        self.assertIn("maitred", result["labels"]["instance"])
+        self.assertIn("maitred", result["annotations"]["description"])
+        self.assertNotIn("10.100.0.1", result["annotations"]["description"])
+        self.assertIn("[REDACTED-IP]", result["annotations"]["description"])
 
 
 class TestAuditLog(unittest.TestCase):
