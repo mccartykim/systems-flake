@@ -7,6 +7,8 @@ import http.server
 import json
 import os
 import sys
+import time
+import urllib.error
 import urllib.request
 from datetime import datetime, timezone
 
@@ -15,13 +17,22 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from redaction import redact, redact_alert
 
+# --- Discord rate limiter state ---
+_last_discord_post = 0
+_DISCORD_MIN_INTERVAL = 1.0  # seconds between posts
+
 
 def _env(key, default=""):
     return os.environ.get(key, default)
 
 
 def post_discord(msg):
-    """Post a message to the configured Discord channel."""
+    """Post a message to the configured Discord channel.
+
+    Implements rate limiting: enforces a minimum interval between posts and
+    retries on HTTP 429 (Discord rate limit) using the retry_after hint.
+    """
+    global _last_discord_post
     channel_id = _env("DISCORD_CHANNEL_ID")
     token_file = _env("DISCORD_TOKEN_FILE")
 
@@ -34,27 +45,56 @@ def post_discord(msg):
         if not token or token.startswith("PLACEHOLDER"):
             print("discord: token is placeholder, skipping", file=sys.stderr)
             return
+        # Rate limit: ensure minimum interval between posts
+        now = time.monotonic()
+        wait = _DISCORD_MIN_INTERVAL - (now - _last_discord_post)
+        if wait > 0:
+            time.sleep(wait)
         data = json.dumps({"content": msg[:2000]}).encode()
         req = urllib.request.Request(
             f"https://discord.com/api/v10/channels/{channel_id}/messages",
             data=data,
             headers={"Authorization": f"Bot {token}", "Content-Type": "application/json", "User-Agent": "sre-agent/1.0"},
         )
-        urllib.request.urlopen(req, timeout=10)
+        try:
+            urllib.request.urlopen(req, timeout=10)
+        except urllib.error.HTTPError as e:
+            if e.code == 429:
+                # Discord rate limit — extract retry_after and wait
+                try:
+                    body = json.loads(e.read().decode())
+                    retry_after = body.get("retry_after", 5)
+                except (json.JSONDecodeError, AttributeError):
+                    retry_after = 5
+                print(f"discord: rate limited, retrying after {retry_after}s", file=sys.stderr)
+                time.sleep(retry_after)
+                urllib.request.urlopen(req, timeout=10)
+            else:
+                raise
+        _last_discord_post = time.monotonic()
     except Exception as e:
         print(f"discord post failed: {e}", file=sys.stderr)
 
 
 def format_alert(payload):
-    """Format an Alertmanager webhook payload into a Discord-ready message."""
+    """Format an Alertmanager webhook payload into a Discord-ready message.
+
+    Deduplicates alerts by (alertname, instance) so repeated firings of the
+    same alert within a group don't produce duplicate lines.
+    """
     status = payload.get("status", "unknown")
     alerts = payload.get("alerts", [])
+    seen = set()
     lines = [f"[{status.upper()}]"]
     for a in alerts:
         labels = a.get("labels", {})
+        key = (labels.get("alertname", "unknown"), labels.get("instance", "?"))
+        if key in seen:
+            continue
+        seen.add(key)
         annotations = a.get("annotations", {})
-        name = labels.get("alertname", "unknown")
-        instance = labels.get("instance", "?")
+        name = key[0]
+        instance = key[1]
         summary = annotations.get("summary", annotations.get("description", ""))
         # Redact PII before sending to Discord
         instance = redact(instance, context="alert instance")
@@ -94,9 +134,13 @@ def run_triage(alert):
 
 
 def maybe_file_issue(alert, triage_result):
-    """Create a GitHub issue if triage recommends it. Returns issue URL or None."""
+    """Create a GitHub issue if triage recommends it.
+
+    Returns (issue_url, was_created) — was_created is True if a new issue was
+    created, False if an existing issue was found. Returns (None, False) on failure.
+    """
     if triage_result is None or not triage_result.file_issue:
-        return None
+        return (None, False)
 
     from github_client import create_issue
     from redaction import redact
@@ -117,12 +161,13 @@ def maybe_file_issue(alert, triage_result):
         f"- **Action:** {triage_result.action}",
     ]
 
-    return create_issue(
+    result = create_issue(
         title=title,
         body="\n".join(body_parts),
         alertname=labels.get("alertname", "unknown"),
         instance=labels.get("instance", "?"),
     )
+    return (result[0], result[1]) if result[0] else (None, False)
 
 
 class WebhookHandler(http.server.BaseHTTPRequestHandler):
@@ -182,13 +227,16 @@ class WebhookHandler(http.server.BaseHTTPRequestHandler):
                 post_discord(triage_msg)
 
                 # Maybe create a GitHub issue
-                issue_url = maybe_file_issue(redacted, result)
+                issue_url, was_created = maybe_file_issue(redacted, result)
                 if issue_url:
                     ts = datetime.now(timezone.utc).strftime("%H:%M UTC")
-                    post_discord(f"[{ts}] **Issue created:** {issue_url}")
+                    if was_created:
+                        post_discord(f"[{ts}] Issue created: {issue_url}")
+                    else:
+                        post_discord(f"[{ts}] Issue already tracked: {issue_url}")
 
-                # Maybe silence noise/info alerts
-                if result.silence_hours > 0 and result.severity in ("noise", "info"):
+                # Maybe silence noise/info/warning alerts
+                if result.silence_hours > 0 and result.severity in ("noise", "info", "warning"):
                     from silence_client import maybe_silence
                     labels = alert.get("labels", {})
                     silence_id = maybe_silence(

@@ -6,14 +6,33 @@ fingerprint before creating. Falls back gracefully on API failures.
 import hashlib
 import json
 import os
+import re
 import urllib.request
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Optional, Tuple
+
+
+def _canonicalize_instance(instance: str) -> str:
+    """Normalize instance labels for stable fingerprints.
+
+    Strips port numbers and redacts known internal IP patterns
+    so that fingerprints match regardless of whether the alert
+    was redacted before filing.
+    """
+    # Strip port suffix (:9100, :9090, etc.)
+    host = instance.rsplit(":", 1)[0] if ":" in instance else instance
+    # Redact known internal IP ranges
+    host = re.sub(
+        r"\b(?:10\.100\.\d+\.\d+|192\.168\.\d+\.\d+|100\.64\.\d+\.\d+)\b",
+        "[REDACTED-IP]",
+        host,
+    )
+    return host
 
 
 def _fingerprint(alertname: str, instance: str) -> str:
-    """Generate a stable fingerprint from alertname + instance."""
-    raw = f"{alertname}|{instance}"
+    """Generate a stable fingerprint from alertname + canonicalized instance."""
+    raw = f"{alertname}|{_canonicalize_instance(instance)}"
     return hashlib.sha256(raw.encode()).hexdigest()[:16]
 
 
@@ -55,8 +74,13 @@ def create_issue(
     body: str,
     alertname: str,
     instance: str,
-) -> Optional[str]:
-    """Create a GitHub issue if one doesn't already exist. Returns issue URL or None on failure."""
+) -> Tuple[Optional[str], bool]:
+    """Create a GitHub issue if one doesn't already exist.
+
+    Returns (issue_url, was_created) — was_created is True if a new issue
+    was created, False if an existing open issue was found. Returns
+    (None, False) on failure.
+    """
     state_dir = os.environ.get("STATE_DIR", "/var/lib/sre-agent")
     token_file = os.environ.get("GITHUB_TOKEN_FILE", "")
     repo = os.environ.get("GITHUB_REPO", "mccartykim/homelab-incidents")
@@ -64,18 +88,18 @@ def create_issue(
     # Check for existing open issue (idempotency)
     existing = _check_existing(state_dir, alertname, instance)
     if existing:
-        return existing
+        return (existing, False)
 
     # Read GitHub token
     if not token_file or not os.path.exists(token_file):
-        return None
+        return (None, False)
     try:
         with open(token_file) as f:
             token = f.read().strip()
     except OSError:
-        return None
+        return (None, False)
     if not token or token.startswith("PLACEHOLDER"):
-        return None
+        return (None, False)
 
     # Create issue via GitHub API
     url = f"https://api.github.com/repos/{repo}/issues"
@@ -101,9 +125,9 @@ def create_issue(
         issue_url = data.get("html_url", "")
         if issue_url:
             _record_issue(state_dir, alertname, instance, issue_url)
-        return issue_url or None
+        return (issue_url or None, True) if issue_url else (None, False)
     except Exception:
-        return None
+        return (None, False)
 
 
 def close_issue(alertname: str, instance: str) -> Optional[str]:
