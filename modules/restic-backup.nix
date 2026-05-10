@@ -44,11 +44,17 @@ in {
       type = types.bool;
       default = true;
       description = ''
-        Enable a staleness probe that checks how long since the last
-        successful restic backup and exports
-        restic_backup_staleness_seconds via the Prometheus
-        node_exporter textfile collector.  Requires
-        kimb.observability to be enabled on the host.
+        Enable a staleness probe that exports two metrics via the
+        Prometheus node_exporter textfile collector:
+
+        - restic_backup_staleness_seconds: seconds since the last
+          backup completed (999999 = never ran)
+        - restic_backup_last_exit_code: exit code of the last backup
+          (0 = success, >0 = failure, -1 = never ran)
+
+        Together these distinguish "backup succeeded long ago" from
+        "backup keeps failing".  Requires kimb.observability to be
+        enabled on the host.
       '';
     };
   };
@@ -153,6 +159,7 @@ in {
         FINAL=${textfileDir}/restic_staleness.prom
         NOW=$(${pkgs.coreutils}/bin/date +%s)
         staleness=999999
+        exit_code=-1
 
         # Check when the backup service last completed.
         # ExecMainExitTimestamp is empty until the service has run at least once.
@@ -164,12 +171,18 @@ in {
             # Clamp to non-negative (clock skew)
             [ "$staleness" -lt 0 ] && staleness=0
           fi
+          # Capture the exit code: 0 = success, >0 = failure.
+          exit_code=$(${pkgs.systemd}/bin/systemctl show ${serviceName} --property=ExecMainStatus --value 2>/dev/null || echo "-1")
+          [ -z "$exit_code" ] || [ "$exit_code" = "n/a" ] && exit_code=-1
         fi
 
         cat > "$OUT" << EOF
         # HELP restic_backup_staleness_seconds Seconds since the last restic backup completed (999999 = never)
         # TYPE restic_backup_staleness_seconds gauge
         restic_backup_staleness_seconds $staleness
+        # HELP restic_backup_last_exit_code Exit code of the last restic backup (0=success, >0=failure, -1=never ran)
+        # TYPE restic_backup_last_exit_code gauge
+        restic_backup_last_exit_code $exit_code
         EOF
         mv "$OUT" "$FINAL"
       '';
