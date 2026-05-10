@@ -198,11 +198,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1778366459,
-        "narHash": "sha256-Xn5i4WckPAIRhJSiAgY2brb2mj+obojPZKEq8IO3g0g=",
+        "lastModified": 1778418994,
+        "narHash": "sha256-HLECyZz3lKWbOJ4ZjM4ZPuLwC1OkRUHC4IFPhiKj/L8=",
         "owner": "nix-community",
         "repo": "flake-firefox-nightly",
-        "rev": "78ea42dfc23428d486a2d5e4bae2a39a10a4313a",
+        "rev": "0e57ea9490bb49cbf6f77059901758418c633b60",
         "type": "github"
       },
       "original": {
@@ -641,11 +641,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1778365864,
-        "narHash": "sha256-ImoT/wqmgMImf2dAC+E0MverAdA4QXsedOeES9B7Ezw=",
+        "lastModified": 1778444552,
+        "narHash": "sha256-f18pIiR9q/p1vHY93gmAum7aHhQOG49oGvAB9+lptRo=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "2f419037039a152448c5f4ae9494154753d1b399",
+        "rev": "dcebe66f958673729896eec2de4abfd86ef22d21",
         "type": "github"
       },
       "original": {
@@ -662,11 +662,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1778172518,
-        "narHash": "sha256-YE8qTqnGTcnFUAvRi8XTM3pHWebrK6GLy9Os4iOJPko=",
+        "lastModified": 1778408709,
+        "narHash": "sha256-DKIuvXXnv4+2wN+AY1qGfQ4uv/2dsOluMCCDEJCJ00g=",
         "owner": "Jovian-Experiments",
         "repo": "Jovian-NixOS",
-        "rev": "3251531a37b09db4b03f48fbf1bc9348ea9ac045",
+        "rev": "6d7bfd32efacd9a06c36df65f47c875395547977",
         "type": "github"
       },
       "original": {
@@ -903,11 +903,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1777808420,
-        "narHash": "sha256-hh9XBz0K1ypZ+neezgIPCSsnWFKEq8VfV/1aUSPu3OA=",
+        "lastModified": 1778407980,
+        "narHash": "sha256-r980BhsReZQe6FkmyNZkwCZpvzARo5jZgTl8HxjAssY=",
         "owner": "oddlama",
         "repo": "nix-topology",
-        "rev": "28e9dc901ff38a8fa2d24bccd5f89511d6d8324e",
+        "rev": "ca0a602f650306d00d6f3e3c76d0f4c48a5c5adc",
         "type": "github"
       },
       "original": {
@@ -1462,11 +1462,11 @@
     },
     "restic-b2-backup": {
       "locked": {
-        "lastModified": 1778041033,
-        "narHash": "sha256-WEiq9zgIOdNVcv4ioV+UKtP8mO8ZPfHnuUzJ9TcSlP4=",
+        "lastModified": 1778455647,
+        "narHash": "sha256-6lEA+fZUXVu0pLPDJpf+Xv1Wn0Cs3I3BuB8QID8Kt1Y=",
         "ref": "refs/heads/master",
-        "rev": "20b688579ed2b93c18d387aeb803a2c15bb36f13",
-        "revCount": 1,
+        "rev": "59d9190887d686ea6b3e2c8731d57becab52c045",
+        "revCount": 2,
         "type": "git",
         "url": "https://github.com/mccartykim/restic-b2-backup-flake.git"
       },
