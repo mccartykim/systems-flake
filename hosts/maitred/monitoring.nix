@@ -11,6 +11,14 @@
 in {
   imports = [./monitoring-probes.nix];
 
+  # Agenix secret for Grafana secret key
+  age.secrets.grafana-secret-key = {
+    file = ../../secrets/grafana-secret-key.age;
+    mode = "0400";
+    owner = "grafana";
+    group = "grafana";
+  };
+
   # Prometheus monitoring (host service)
   services.prometheus = lib.mkIf cfg.services.prometheus.enable {
     enable = true;
@@ -220,10 +228,17 @@ in {
             {
               match = {severity = "critical";};
               receiver = "sre-webhook";
-              repeat_interval = "1h";
+              repeat_interval = "4h";
             }
           ];
         };
+        inhibit_rules = [
+          {
+            source_match = {alertname = "NodeExporterDown";};
+            target_match = {alertname = "OllamaUnreachable";};
+            equal = [];
+          }
+        ];
         receivers = [
           {
             name = "sre-webhook";
@@ -282,7 +297,7 @@ in {
       security = {
         admin_user = cfg.admin.name;
         admin_password = "admin"; # TODO: Change default password
-        secret_key = "$__file{/run/secrets/grafana-secret-key}";
+        secret_key = "$__file{${config.age.secrets.grafana-secret-key.path}}";
       };
 
       database = {

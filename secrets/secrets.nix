@@ -30,6 +30,8 @@ in
 
     # Cloudflare API token - only maitred needs this
     "cloudflare-api-token.age".publicKeys = [hostKeys.maitred bootstrap];
+    # Grafana secret key - only maitred needs this
+    "grafana-secret-key.age".publicKeys = [hostKeys.maitred bootstrap];
 
     # Authelia secrets - maitred and historian
     "authelia-jwt-secret.age".publicKeys = [hostKeys.maitred hostKeys.historian bootstrap];
