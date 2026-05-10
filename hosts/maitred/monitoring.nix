@@ -169,6 +169,18 @@ in {
                 }
               ];
             }
+            {
+              name = "sre-restic";
+              rules = [
+                {
+                  alert = "ResticBackupStale";
+                  expr = ''restic_backup_staleness_seconds > 86400'';
+                  for = "0m";
+                  labels.severity = "warning";
+                  annotations.summary = "Restic backup on {{ $labels.instance }} has not completed in {{ $value }}s (>24h)";
+                }
+              ];
+            }
           ];
         }
       ))
