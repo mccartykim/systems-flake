@@ -102,6 +102,8 @@ in
     # ===== MEDIA PIPELINE (historian) =====
     # rclone config with put.io OAuth token
     "rclone-config.age".publicKeys = [hostKeys.historian bootstrap];
+    # Jellyfin API key for media-classifier library rescan trigger
+    "jellyfin-api-key.age".publicKeys = [hostKeys.historian bootstrap];
     # ===== RESTIC BACKUPS (Backblaze B2) =====
     # All hosts can decrypt for deduplication across syncthing-replicated data
     "restic-password.age".publicKeys = workingMachines;

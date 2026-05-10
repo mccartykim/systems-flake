@@ -456,6 +456,13 @@
     mode = "0400";
   };
 
+  # Jellyfin API key for media-classifier library rescan trigger
+  age.secrets.jellyfin-api-key = {
+    file = ../../secrets/jellyfin-api-key.age;
+    group = "media";
+    mode = "0440";
+  };
+
   # === Media pipeline systemd services ===
 
   # rclone sync from put.io (every 15 minutes)
@@ -519,10 +526,23 @@
     ];
     ollamaHost = "http://total-eclipse.nebula:11434";
     ollamaModel = "qwen3:8b";
-    jellyfinApiKey = "REDACTED_JELLYFIN_API_KEY";
     user = "kimb";
     group = "media";
   };
+
+  # Override ExecStartPost to read Jellyfin API key from agenix secret
+  # (the module's jellyfinApiKey option embeds the key in the Nix store,
+  # so we leave it empty and supply our own file-based implementation)
+  systemd.services.media-classifier.serviceConfig.ExecStartPost =
+    let
+      jellyfinApiKeyFile = config.age.secrets.jellyfin-api-key.path;
+    in
+    pkgs.writeShellScript "trigger-jellyfin-scan" ''
+      API_KEY="$(cat ${jellyfinApiKeyFile})"
+      ${pkgs.curl}/bin/curl -sf -X POST \
+        "http://localhost:8096/Library/Refresh?api_key=$API_KEY" \
+        || echo "Warning: Jellyfin scan trigger failed (non-fatal)"
+    '';
 
   system.stateVersion = "23.11";
 }
