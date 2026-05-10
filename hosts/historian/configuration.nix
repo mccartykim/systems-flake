@@ -55,6 +55,9 @@
       "/home/kimb/.gradle"
     ];
 
+    # Centralized observability (node_exporter + journal-upload + Nebula rule)
+    observability.enable = true;
+
     # Nebula configuration (certs generated via `nix run .#generate-nebula-certs`)
     nebula = {
       enable = true;
@@ -68,6 +71,12 @@
         }
         {
           port = 8096;
+          proto = "tcp";
+          host = "maitred";
+        }
+        # Journal-remote sink (maitred → historian for log aggregation)
+        {
+          port = 19532;
           proto = "tcp";
           host = "maitred";
         }
@@ -513,31 +522,6 @@
     jellyfinApiKey = "REDACTED_JELLYFIN_API_KEY";
     user = "kimb";
     group = "media";
-  };
-
-  # === Observability (SRE Agent Phase 0) ===
-
-  # Node exporter for Prometheus scraping
-  services.prometheus.exporters.node = {
-    enable = true;
-    port = 9100;
-    enabledCollectors = ["systemd" "processes"];
-    listenAddress = "0.0.0.0";
-    extraFlags = ["--collector.textfile.directory=/var/lib/prometheus-node-exporter-textfiles"];
-  };
-
-  # Forward journal to maitred for central aggregation
-  systemd.services.systemd-journal-upload = {
-    description = "Upload journal to maitred";
-    after = ["network.target"];
-    wants = ["network.target"];
-    wantedBy = ["multi-user.target"];
-    serviceConfig = {
-      ExecStart = "${pkgs.systemd}/lib/systemd/systemd-journal-upload --url=http://10.100.0.50:19532";
-      User = "root";
-      Restart = "always";
-      RestartSec = "10s";
-    };
   };
 
   system.stateVersion = "23.11";
