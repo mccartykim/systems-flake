@@ -440,6 +440,16 @@ age.secrets.api-token = {
 - **Homepage**: Service portal on port 8082
 - **Access**: All monitoring services behind Caddy with access control
 
+### Restic Backup Monitoring
+All hosts with `kimb.restic.enable = true` get a preemptive `restic unlock` as the first `ExecStartPre` to clear stale locks before the repo-init check. Hosts that also have `kimb.observability.enable = true` get a `restic-staleness-probe` timer (every 5 min) that exports two metrics via the node_exporter textfile collector:
+
+- `restic_backup_staleness_seconds` — seconds since last backup completion (999999 = never ran)
+- `restic_backup_last_exit_code` — exit code of last run (0=success, >0=failure, -1=never ran)
+
+Alert `ResticBackupStale` fires on maitred when `staleness_seconds > 86400` (24h).
+
+The preemptive unlock and staleness probe both live in `modules/restic-backup.nix`, with the upstream `restic unlock` now also in `restic-b2-backup-flake/module.nix`.
+
 ### Service Discovery
 ```nix
 services.prometheus = {
@@ -484,6 +494,8 @@ secrets/secrets.nix            # Derives from registry, auto-generates nebula se
 modules/nebula-node.nix        # Consolidated nebula config module
 modules/distributed-builds.nix # Remote builds via historian
 modules/kimb-services.nix      # Service topology options
+modules/restic-backup.nix      # Restic B2 backup personalization (unlock, staleness probe)
+modules/observability.nix      # node_exporter + journal-upload (textfile collector)
 flake.nix                      # Uses mkDesktop/mkServer helpers + systemConfigs
 ```
 
