@@ -162,9 +162,18 @@ in {
         exit_code=-1
 
         # Check when the backup service last completed.
-        # ExecMainExitTimestamp is empty until the service has run at least once.
-        last_exit=$(${pkgs.systemd}/bin/systemctl show ${serviceName} --property=ExecMainExitTimestamp --value 2>/dev/null || echo "")
-        if [ -n "$last_exit" ] && [ "$last_exit" != "n/a" ] && [ "$last_exit" != "" ]; then
+        # Try ExecMainExitTimestamp first; fall back to ActiveExitTimestamp
+        # (some systemd versions / service states populate one but not the other).
+        last_exit=""
+        for prop in ExecMainExitTimestamp ActiveExitTimestamp; do
+          val=$(${pkgs.systemd}/bin/systemctl show ${serviceName} --property="$prop" --value 2>/dev/null || true)
+          if [ -n "$val" ] && [ "$val" != "n/a" ]; then
+            last_exit="$val"
+            break
+          fi
+        done
+
+        if [ -n "$last_exit" ]; then
           last_epoch=$(${pkgs.coreutils}/bin/date -d "$last_exit" +%s 2>/dev/null || echo 0)
           if [ "$last_epoch" -gt 0 ]; then
             staleness=$(( NOW - last_epoch ))
@@ -173,17 +182,21 @@ in {
           fi
           # Capture the exit code: 0 = success, >0 = failure.
           exit_code=$(${pkgs.systemd}/bin/systemctl show ${serviceName} --property=ExecMainStatus --value 2>/dev/null || echo "-1")
-          [ -z "$exit_code" ] || [ "$exit_code" = "n/a" ] && exit_code=-1
+          if [ -z "$exit_code" ] || [ "$exit_code" = "n/a" ]; then
+            exit_code=-1
+          fi
         fi
 
-        cat > "$OUT" << EOF
-        # HELP restic_backup_staleness_seconds Seconds since the last restic backup completed (999999 = never)
-        # TYPE restic_backup_staleness_seconds gauge
-        restic_backup_staleness_seconds $staleness
-        # HELP restic_backup_last_exit_code Exit code of the last restic backup (0=success, >0=failure, -1=never ran)
-        # TYPE restic_backup_last_exit_code gauge
-        restic_backup_last_exit_code $exit_code
-        EOF
+        # Write metrics — no leading whitespace (Prometheus textfile
+        # format rejects indented HELP/TYPE/metric lines).
+        {
+          echo "# HELP restic_backup_staleness_seconds Seconds since the last restic backup completed (999999 = never)"
+          echo "# TYPE restic_backup_staleness_seconds gauge"
+          echo "restic_backup_staleness_seconds $staleness"
+          echo "# HELP restic_backup_last_exit_code Exit code of the last restic backup (0=success, >0=failure, -1=never ran)"
+          echo "# TYPE restic_backup_last_exit_code gauge"
+          echo "restic_backup_last_exit_code $exit_code"
+        } > "$OUT"
         mv "$OUT" "$FINAL"
       '';
     };
