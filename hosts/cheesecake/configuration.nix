@@ -1,4 +1,8 @@
-{pkgs, ...}: {
+{
+  config,
+  pkgs,
+  ...
+}: {
   imports = [
     ./hardware-configuration.nix
     ../profiles/base.nix
@@ -217,6 +221,21 @@
 
   # Enable the OpenSSH daemon.
   services.openssh.enable = true;
+
+  # Ollama LLM server - accessible over Nebula for cloud inference
+  services.ollama = {
+    enable = true;
+    host = "0.0.0.0";
+    openFirewall = true;
+  };
+
+  # z.ai API key for the claude-zai wrapper (home/modules/ai-tools.nix).
+  # Read at exec-time by the wrapper from /run/agenix/zai-api-key.
+  age.secrets.zai-api-key = {
+    file = ../../secrets/zai-api-key.age;
+    owner = "kimb";
+    mode = "0400";
+  };
 
   # Open ports in the firewall.
   # networking.firewall.allowedTCPPorts = [ ... ];

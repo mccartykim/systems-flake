@@ -112,7 +112,7 @@ in
     # ===== Z.AI API (claude-zai wrapper) =====
     # z.ai serves a Claude-compatible endpoint; consumed by the claude-zai
     # wrapper in home/modules/ai-tools.nix. Owner is kimb (interactive user).
-    "zai-api-key.age".publicKeys = [hostKeys.marshmallow hostKeys.historian hostKeys.rich-evans bootstrap];
+    "zai-api-key.age".publicKeys = [hostKeys.marshmallow hostKeys.historian hostKeys.rich-evans hostKeys.cheesecake bootstrap];
 
     # ===== SRE AGENT =====
     # GitHub fine-grained PAT for filing issues in mccartykim/homelab-incidents
@@ -123,6 +123,6 @@ in
     "discord-sre-token.age".publicKeys = [hostKeys.rich-evans bootstrap];
     # Ollama Cloud API key for LLM inference on rich-evans.
     # Get key from https://ollama.com/settings/api-keys
-    "ollama-cloud-key.age".publicKeys = [hostKeys.rich-evans bootstrap];
+    "ollama-cloud-key.age".publicKeys = [hostKeys.rich-evans hostKeys.cheesecake hostKeys.marshmallow bootstrap];
   }
   // allNebulaSecrets

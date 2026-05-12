@@ -1,4 +1,8 @@
-{pkgs, ...}: {
+{
+  pkgs,
+  lib,
+  ...
+}: {
   home.packages = with pkgs; [
     neovim
     firefox
@@ -20,7 +24,10 @@
       enable = true;
       kitty = true;
     };
-    ai-tools.enable = true;
+    ai-tools = {
+      enable = true;
+      claudeZai = true;
+    };
   };
 
   home.stateVersion = "23.05";
@@ -31,4 +38,5 @@
   programs.atuin = {
     enable = true;
   };
+  programs.zed-editor.enable = lib.mkForce true;
 }
