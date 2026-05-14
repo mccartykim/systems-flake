@@ -49,9 +49,8 @@
   programs.firefox = {
     enable = true;
     preferences = {
-      # Hardware video decoding (VA-API)
-      "media.ffmpeg.vaapi.enabled" = true;
-      "media.hardware-video-decoding.enabled" = true;
+      # Hardware video decoding (force-enable to override Linux blocklist)
+      "media.hardware-video-decoding.force-enabled" = true;
       # GPU-accelerated rendering (WebRender)
       "gfx.webrender.all" = true;
     };
