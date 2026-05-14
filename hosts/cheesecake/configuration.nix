@@ -25,6 +25,25 @@
   # Intel microcode updates for better thermal management
   hardware.cpu.intel.updateMicrocode = true;
 
+  # VA-API hardware video decoding for Intel HD Graphics 615
+  hardware.graphics = {
+    enable = true;
+    extraPackages = with pkgs; [
+      intel-vaapi-driver
+      libva-vdpau-driver
+      libvdpau-va-gl
+    ];
+  };
+
+  # Firefox hardware video decoding (Linux blocklist override)
+  programs.firefox = {
+    enable = true;
+    preferences = {
+      "media.hardware-video-decoding.force-enabled" = true;
+      "gfx.webrender.all" = true;
+    };
+  };
+
   # Consider linux-surface kernel for better Surface Go 3 support
   # boot.kernelPackages = pkgs.linuxKernel.packages.linux_surface;
 
