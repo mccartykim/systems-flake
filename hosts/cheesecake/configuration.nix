@@ -47,12 +47,9 @@
   # Consider linux-surface kernel for better Surface Go 3 support
   # boot.kernelPackages = pkgs.linuxKernel.packages.linux_surface;
 
-  # Kernel parameters for better thermal management
+  # Let intel_pstate and the thermal governor handle throttling
   boot.kernelParams = [
-    "intel_pstate=passive" # Let thermal subsystem control frequency
-    "thermal.tzp=100" # Poll thermal zones every 1000ms
-    "thermal.off=0" # Ensure thermal is enabled
-    "processor.max_cstate=2" # Limit C-states to reduce heat
+    "intel_pstate=passive"
   ];
 
   environment.systemPackages = with pkgs; [
@@ -89,11 +86,11 @@
   services.tlp = {
     enable = true;
     settings = {
-      # CPU scaling - safe burst performance with thermal limits
-      CPU_SCALING_GOVERNOR_ON_AC = "schedutil"; # Responsive but thermal-aware
+      # CPU scaling - trust the thermal governor to throttle when hot
+      CPU_SCALING_GOVERNOR_ON_AC = "schedutil";
       CPU_SCALING_GOVERNOR_ON_BAT = "powersave";
-      CPU_MIN_PERF_ON_AC = 20; # Higher minimum for responsiveness
-      CPU_MAX_PERF_ON_AC = 70; # Conservative max to prevent 100°C spikes
+      CPU_MIN_PERF_ON_AC = 20;
+      CPU_MAX_PERF_ON_AC = 100; # Let intel_pstate throttle on temperature, not a hard cap
       CPU_MIN_PERF_ON_BAT = 20;
       CPU_MAX_PERF_ON_BAT = 70;
 
