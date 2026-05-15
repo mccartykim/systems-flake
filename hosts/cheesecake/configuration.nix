@@ -25,14 +25,21 @@
   # Intel microcode updates for better thermal management
   hardware.cpu.intel.updateMicrocode = true;
 
-  # VA-API hardware video decoding for Intel HD Graphics 615
+  # VA-API hardware video decoding for Intel UHD Graphics 615 (Amber Lake, Gen 9.5)
+  # intel-media-driver (iHD) is the current driver; i965 was discontinued Oct 2024
   hardware.graphics = {
     enable = true;
     extraPackages = with pkgs; [
-      intel-vaapi-driver
+      intel-media-driver
+      intel-gmmlib
       libva-vdpau-driver
       libvdpau-va-gl
     ];
+  };
+
+  environment.sessionVariables = {
+    LIBVA_DRIVER_NAME = "iHD";
+    VDPAU_DRIVER = "va_gl";
   };
 
   # Firefox hardware video decoding (Linux blocklist override)
@@ -47,9 +54,12 @@
   # Consider linux-surface kernel for better Surface Go 3 support
   # boot.kernelPackages = pkgs.linuxKernel.packages.linux_surface;
 
-  # Let intel_pstate and the thermal governor handle throttling
   boot.kernelParams = [
     "intel_pstate=passive"
+    # Fix i915 atomic update failures: PSR/DC state race condition causes
+    # display register corruption and frame drops on Amber Lake
+    "i915.enable_psr=0"
+    "i915.enable_dc=0"
   ];
 
   environment.systemPackages = with pkgs; [
