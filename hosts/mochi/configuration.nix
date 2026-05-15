@@ -17,7 +17,8 @@ in {
       systemPackages = with pkgs; [
         nebula
         age
-        # Dev tools
+        # Dev tools (system-manager-managed nix layer; XFCE + zed come
+        # in via apt + zed.dev installer respectively — see hosts/mochi/README.md).
         helix
         btop
         htop
@@ -25,6 +26,14 @@ in {
         fd
         jq
         git
+        gh
+        bat
+        eza
+        zoxide
+        starship
+        tmux
+        kitty
+        wezterm
         # Claude Code
         claude-code
       ];
