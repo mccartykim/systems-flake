@@ -254,6 +254,23 @@
           network-test = import ./tests/network-test.nix {inherit pkgs;};
           working-vm-test = import ./tests/working-vm-test.nix {inherit pkgs;};
 
+          # Security regression tests — each pins one HIGH-severity finding
+          # from docs/security-audit.md (sf-h30). Designed to FAIL on main
+          # until the corresponding fix lands. See tests/security-regressions/
+          # README for the finding → test mapping.
+          security-webcam-hardening =
+            import ./tests/security-regressions/webcam-hardening.nix {inherit pkgs;};
+          security-vacuum-ip-restriction = import ./tests/security-regressions/vacuum-ip-restriction.nix {
+            inherit pkgs;
+            maitredCfg = self.nixosConfigurations.maitred.config;
+          };
+          security-buildbot-ip-restriction = import ./tests/security-regressions/buildbot-ip-restriction.nix {
+            inherit pkgs;
+            maitredCfg = self.nixosConfigurations.maitred.config;
+          };
+          security-auth-none-guard =
+            import ./tests/security-regressions/auth-none-guard.nix {inherit pkgs lib;};
+
           # Configuration evaluation tests (fast - no VM)
           # buildbot-nix builds every .#checks attr on each commit, so adding a
           # host's toplevel here means CI will catch breakage for that host.
