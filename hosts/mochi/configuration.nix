@@ -34,11 +34,36 @@ in {
         tmux
         kitty
         wezterm
-        # Claude Code
+        # Claude Code + z.ai-backed wrapper. claude-zai expects an ANTHROPIC
+        # auth token at /run/agenix/zai-api-key; mochi is not part of the
+        # agenix recipient set today, so the wrapper will refuse to launch
+        # until the user populates that file out-of-band (see README).
         claude-code
+        (pkgs.callPackage ../../pkgs/claude-zai.nix {})
+        # CPU-only LLM inference (AVF doesn't expose GPU)
+        ollama
       ];
 
       etc = {
+        # sshd hardening: bind to nebula address only, key-only auth, no root.
+        # Mochi is reachable via the nebula mesh as `kimb@mochi.nebula`.
+        "ssh/sshd_config.d/10-mochi-hardening.conf".text = ''
+          ListenAddress 10.100.0.8
+          AddressFamily inet
+          PasswordAuthentication no
+          PermitRootLogin no
+          PubkeyAuthentication yes
+          KbdInteractiveAuthentication no
+        '';
+
+        # ssh.service must wait for nebula0 to come up, otherwise the
+        # ListenAddress=10.100.0.8 bind will fail at boot.
+        "systemd/system/ssh.service.d/10-after-nebula.conf".text = ''
+          [Unit]
+          After=nebula-mainnet.service
+          Requires=nebula-mainnet.service
+        '';
+
         # Encrypted secrets in /etc
         "nebula/mainnet/encrypted/ca.age".source = encryptedSecrets.mainnet.ca;
         "nebula/mainnet/encrypted/cert.age".source = encryptedSecrets.mainnet.cert;

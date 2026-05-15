@@ -75,6 +75,30 @@ Then in `systems-flake` on a workstation:
 
 The follow-up bead **sf-dnx** tracks the rotation lifecycle.
 
+## Reaching mochi after first switch
+
+Once `system-manager switch --flake .#mochi` lands the hardening drop-in
+(`/etc/ssh/sshd_config.d/10-mochi-hardening.conf`), sshd is bound to
+`10.100.0.8` only — no LAN, no localhost, no password auth, no root.
+Mochi is reachable exclusively over the nebula mesh:
+
+```bash
+ssh kimb@mochi.nebula
+```
+
+`ssh.service` is wired `Requires=/After=nebula-mainnet.service` via a
+drop-in, so it won't try to bind before nebula0 exists.
+
+## Local AI tooling
+
+The system layer ships `claude-code` (Anthropic), the `claude-zai` wrapper
+(Anthropic-compatible z.ai endpoint), and `ollama` (CPU-only inference;
+AVF doesn't expose the GPU). `claude-zai` reads its API token from
+`/run/agenix/zai-api-key` at exec time; mochi isn't an agenix recipient
+today, so populate that file manually (`mkdir -p /run/agenix && install
+-m 0400 /path/to/key /run/agenix/zai-api-key`) or override `keyFile` if
+you actually want to use the wrapper. `ollama serve` runs on demand.
+
 ## Why XFCE + zed go outside system-manager
 
 - **XFCE / lightdm via apt**: system-manager doesn't manage display
