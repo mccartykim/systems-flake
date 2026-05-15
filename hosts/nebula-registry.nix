@@ -179,11 +179,7 @@ let
       ip = "10.100.0.8";
       role = "mobile";
       groups = ["mobile" "system-manager"];
-      # TODO(sf-6cf): this pubkey is almost certainly stale — mochi's AVF
-      # image was wiped and the bootstrap installer regenerates SSH host
-      # keys. Kept in place so agenix-rekey can still decrypt to it; swap
-      # after the VM rebuilds (follow-up bead tracks the rotation).
-      publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHBSIfvPHC+UmMq6pghmdsjCTje/lOeiTVo2vDmyoNbf";
+      publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMi0uyA/29dqB1Rbayv/AHyzKjDP4+URs/dhRwffI3rC";
       meta = {
         hardware = "Google Pixel 9 Pro (AVF/Debian)";
         purpose = "Mobile phone with AVF Linux terminal";
