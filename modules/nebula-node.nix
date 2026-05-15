@@ -13,13 +13,14 @@
 # `settings`, so we inline them here instead.
 {
   config,
+  inputs,
   lib,
   ...
 }:
 with lib; let
   cfg = config.kimb.nebula;
   hostname = config.networking.hostName;
-  registry = import ../hosts/nebula-registry.nix;
+  registry = import ../hosts/nebula-registry.nix {secretsFlake = inputs.secretsFlake;};
 
   hostConfig = registry.nodes.${hostname} or {};
   isLighthouse = hostConfig.isLighthouse or false;
@@ -94,7 +95,7 @@ in {
   config = mkIf cfg.enable {
     age.secrets = {
       nebula-ca = {
-        file = ../secrets/nebula-ca.age;
+        file = "${inputs.secretsFlake}/secrets/nebula-ca.age";
         path = "/etc/nebula/ca.crt";
         owner = "nebula-mesh";
         group = "nebula-mesh";
@@ -102,7 +103,7 @@ in {
       };
 
       nebula-cert = {
-        file = ../secrets/nebula-${hostname}-cert.age;
+        file = "${inputs.secretsFlake}/secrets/nebula-${hostname}-cert.age";
         path = "/etc/nebula/${hostname}.crt";
         owner = "nebula-mesh";
         group = "nebula-mesh";
@@ -110,7 +111,7 @@ in {
       };
 
       nebula-key = {
-        file = ../secrets/nebula-${hostname}-key.age;
+        file = "${inputs.secretsFlake}/secrets/nebula-${hostname}-key.age";
         path = "/etc/nebula/${hostname}.key";
         owner = "nebula-mesh";
         group = "nebula-mesh";

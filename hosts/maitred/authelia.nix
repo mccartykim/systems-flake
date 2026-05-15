@@ -1,6 +1,7 @@
 # Authelia authentication service using kimb-services options
 {
   config,
+  inputs,
   lib,
   pkgs,
   ...
@@ -10,28 +11,28 @@ in {
   # Agenix secrets for Authelia
   age.secrets = lib.mkIf cfg.services.authelia.enable {
     authelia-jwt-secret = {
-      file = ../../secrets/authelia-jwt-secret.age;
+      file = "${inputs.secretsFlake}/secrets/authelia-jwt-secret.age";
       mode = "0400";
       owner = "authelia-main";
       group = "authelia-main";
     };
 
     authelia-session-secret = {
-      file = ../../secrets/authelia-session-secret.age;
+      file = "${inputs.secretsFlake}/secrets/authelia-session-secret.age";
       mode = "0400";
       owner = "authelia-main";
       group = "authelia-main";
     };
 
     authelia-storage-key = {
-      file = ../../secrets/authelia-storage-key.age;
+      file = "${inputs.secretsFlake}/secrets/authelia-storage-key.age";
       mode = "0400";
       owner = "authelia-main";
       group = "authelia-main";
     };
 
     authelia-smtp-password = {
-      file = ../../secrets/authelia-smtp-password.age;
+      file = "${inputs.secretsFlake}/secrets/authelia-smtp-password.age";
       mode = "0400";
       owner = "authelia-main";
       group = "authelia-main";

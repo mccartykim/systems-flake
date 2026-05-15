@@ -1,7 +1,8 @@
 # SSH Keys Registry
-# Derives host keys from nebula-registry.nix, adds user keys
-let
-  registry = import ./nebula-registry.nix;
+# Derives host keys from nebula-registry.nix (which itself sources pubkeys
+# from the systems-flake-secrets flake), adds user keys.
+{secretsFlake}: let
+  registry = import ./nebula-registry.nix {inherit secretsFlake;};
 
   # User keys (personal SSH keys for authorized_keys)
   userKeys = {

@@ -5,6 +5,7 @@
 # To remove entirely: delete this file and its import in nixos-configurations.nix
 {
   config,
+  inputs,
   lib,
   pkgs,
   claude_yapper,
@@ -12,7 +13,7 @@
 }: {
   # Agenix secret for HA token (shared with org-life-coach)
   age.secrets.ha-life-coach-token = {
-    file = ../../secrets/ha-life-coach-token.age;
+    file = "${inputs.secretsFlake}/secrets/ha-life-coach-token.age";
     owner = "life-coach";
     mode = "0400";
   };
@@ -24,28 +25,28 @@
   # minting a new HA long-lived token while still respecting the
   # one-user-per-decrypted-secret model.
   age.secrets.ha-vacuum-token = {
-    file = ../../secrets/ha-life-coach-token.age;
+    file = "${inputs.secretsFlake}/secrets/ha-life-coach-token.age";
     owner = "vacuum-organism";
     mode = "0400";
   };
 
   # Matrix access token for life-coach chatbot
   age.secrets.matrix-life-coach-token = {
-    file = ../../secrets/matrix-life-coach-token.age;
+    file = "${inputs.secretsFlake}/secrets/matrix-life-coach-token.age";
     owner = "life-coach";
     mode = "0400";
   };
 
   # Discord bot token for life-coach chatbot
   age.secrets.discord-life-coach-token = {
-    file = ../../secrets/discord-life-coach-token.age;
+    file = "${inputs.secretsFlake}/secrets/discord-life-coach-token.age";
     owner = "life-coach";
     mode = "0400";
   };
 
   # Gemini API key for life-coach vision
   age.secrets.gemini-life-coach-key = {
-    file = ../../secrets/gemini-life-coach-key.age;
+    file = "${inputs.secretsFlake}/secrets/gemini-life-coach-key.age";
     owner = "life-coach";
     mode = "0400";
   };

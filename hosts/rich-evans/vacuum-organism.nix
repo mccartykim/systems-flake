@@ -40,7 +40,7 @@
   # Discord bot token for the vacuum-organism sidecar. Separate Discord
   # application from life-coach / org-crm; encrypted to rich-evans only.
   age.secrets.discord-vacuum-bot-token = {
-    file = ../../secrets/discord-vacuum-bot-token.age;
+    file = "${inputs.secretsFlake}/secrets/discord-vacuum-bot-token.age";
     owner = "vacuum-organism";
     mode = "0400";
   };

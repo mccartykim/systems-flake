@@ -1,11 +1,12 @@
 # Base configuration for all NixOS hosts
 {
   config,
+  inputs,
   lib,
   pkgs,
   ...
 }: let
-  sshKeys = import ../ssh-keys.nix;
+  sshKeys = import ../ssh-keys.nix {secretsFlake = inputs.secretsFlake;};
 in {
   # Boot configuration
   boot = {

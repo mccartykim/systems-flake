@@ -1,12 +1,20 @@
 # Authoritative Host Registry
-# Single source of truth for all host configuration
-# All other files should reference this for IPs, SSH keys, roles, and groups
+# Single source of truth for HOST TOPOLOGY (IPs, roles, groups, hardware).
+# All other files should reference this for IPs, roles, and groups.
+#
+# Pubkeys (host SSH keys + bootstrap user key) are NOT defined here — they
+# live in the systems-flake-secrets flake at host-keys.nix and are injected
+# via the `secretsFlake` argument so the recipient set for agenix and the
+# pubkey table here can never drift apart.
 #
 # Naming conventions:
 #   - Portables: sweets (marshmallow, cheesecake, cronut) *bartleby predates this
 #   - Desktops/servers: references/puns (historian, total-eclipse, rich-evans)
 #   - Infrastructure: roles (maitred, lighthouse)
-let
+{secretsFlake}: let
+  hostKeyData = import (secretsFlake + "/host-keys.nix");
+  inherit (hostKeyData) hostKeys systemManagerKeys bootstrap;
+
   # Network infrastructure (not hosts)
   networks = {
     nebula = {
@@ -33,7 +41,9 @@ let
     tailscale.subnet = "100.64.0.0/10";
   };
 
-  # All managed hosts with complete configuration
+  # All managed hosts with complete configuration. publicKey is sourced
+  # from the secrets flake so there's exactly one place to update it on
+  # rotation.
   hosts = {
     # GCE lighthouse (10.100.0.1) retired due to egress costs
 
@@ -45,7 +55,7 @@ let
       role = "lighthouse";
       groups = ["lighthouse" "system-manager"];
       # SSH key for agenix secrets (system-manager uses host SSH key, not NixOS)
-      publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHmEv+X3EL+6PswZN3yPAz+eUkRGAqcxfeJl+UY9Fsxy";
+      publicKey = systemManagerKeys.oracle;
       meta = {
         hardware = "Oracle Cloud VM (x86_64)";
         purpose = "External Nebula lighthouse + relay for redundancy";
@@ -58,7 +68,7 @@ let
       ip = "10.100.0.10";
       role = "desktop";
       groups = ["desktops" "nixos" "printing"];
-      publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBXpuMSA1RXsYs6cEhvNqzhWpbIe2NB0ya1MUte87SD+";
+      publicKey = hostKeys.historian;
       meta = {
         hardware = "Beelink SER5 Max (Ryzen 7 5800H APU)";
         purpose = "Daily driver desktop, future local AI inference";
@@ -71,7 +81,7 @@ let
       ip = "10.100.0.6";
       role = "desktop";
       groups = ["desktops" "nixos" "printing"];
-      publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAII25uGB19xLNzpzOFKUHp93EtNPxHXgeKotRDsdqdWa7";
+      publicKey = hostKeys.total-eclipse;
       meta = {
         hardware = "Costco gaming PC (Nvidia RTX 4060 6GB)";
         purpose = "Gaming rig, GPU compute";
@@ -84,7 +94,7 @@ let
       ip = "10.100.0.4";
       role = "laptop";
       groups = ["laptops" "nixos" "printing"];
-      publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILlKSgkr7eXGq9Lcg/5TfH9eudHLEP1q4zAvA8zhq9wh";
+      publicKey = hostKeys.marshmallow;
       meta = {
         hardware = "ThinkPad T490";
         purpose = "Favorite daily driver laptop";
@@ -97,7 +107,7 @@ let
       ip = "10.100.0.3";
       role = "laptop";
       groups = ["laptops" "nixos" "printing"];
-      publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGCZ/lfNz+FcRNwbRMeT658YOH0YdCgLRBn/bcegj7pi";
+      publicKey = hostKeys.bartleby;
       meta = {
         hardware = "ThinkPad E131";
         purpose = "Beloved college laptop, light tasks";
@@ -114,7 +124,7 @@ let
       external = "kimb.dev:4242";
       role = "router";
       groups = ["routers" "nixos"];
-      publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGXJ4JeYtJiV8ltScewAu+N8KYLy+muo+mP07XznOzjX";
+      publicKey = hostKeys.maitred;
       meta = {
         hardware = "Datto 1000 (repurposed MSP appliance)";
         purpose = "Edge router, reverse proxy, services host";
@@ -127,7 +137,7 @@ let
       ip = "10.100.0.40";
       role = "server";
       groups = ["servers" "cameras" "nixos"];
-      publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOCXEs7zN0NNdWyZ9MJ4pI0R8RAPH6EFj3E2Qp2Xzc1k";
+      publicKey = hostKeys.rich-evans;
       meta = {
         hardware = "HP Mini PC";
         purpose = "General server, camera host";
@@ -140,7 +150,7 @@ let
       ip = "10.100.0.5";
       role = "laptop";
       groups = ["laptops" "nixos" "printing"];
-      publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAUR3569JGhcZTUeq0DGswOAikxDEe47QVm8JlgvGrY9";
+      publicKey = hostKeys.cheesecake;
       meta = {
         hardware = "Microsoft Surface Go 3";
         purpose = "Portable tablet/laptop";
@@ -153,7 +163,7 @@ let
       ip = "10.100.0.7";
       role = "laptop";
       groups = ["laptops" "nixos" "gaming"];
-      publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIACE7zBUEKURYTBMlod/8LMnfZ2xkq0x/iSnLGXQlFTP";
+      publicKey = hostKeys.donut;
       meta = {
         hardware = "Steam Deck (Valve handheld)";
         purpose = "Portable gaming device with NixOS";
@@ -179,7 +189,7 @@ let
       ip = "10.100.0.8";
       role = "mobile";
       groups = ["mobile" "system-manager"];
-      publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMi0uyA/29dqB1Rbayv/AHyzKjDP4+URs/dhRwffI3rC";
+      publicKey = systemManagerKeys.mochi;
       meta = {
         hardware = "Google Pixel 9 Pro (AVF/Debian)";
         purpose = "Mobile phone with AVF Linux terminal";
@@ -189,22 +199,8 @@ let
     };
   };
 
-  # Helper: filter hosts by role
-  byRole = role: builtins.filter (h: h.role == role) (builtins.attrValues hosts);
-
   # Helper: get all NixOS hosts (exclude lighthouse)
   nixosHosts = builtins.removeAttrs hosts ["lighthouse"];
-
-  # Helper: extract public keys from hosts with non-null keys
-  getPublicKeys = hostSet:
-    builtins.listToAttrs (
-      builtins.filter (x: x.value != null)
-      (map (name: {
-          inherit name;
-          value = hostSet.${name}.publicKey;
-        })
-        (builtins.attrNames hostSet))
-    );
 in {
   # Network configuration
   network = networks.nebula;
@@ -219,9 +215,7 @@ in {
   laptops = builtins.filter (n: hosts.${n}.role == "laptop") (builtins.attrNames hosts);
   servers = builtins.filter (n: hosts.${n}.role == "server") (builtins.attrNames hosts);
 
-  # SSH host keys (for agenix)
-  hostKeys = getPublicKeys nixosHosts;
-
-  # Bootstrap key for agenix re-encryption (cheesecake user key)
-  bootstrap = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKQgFzMg37QTeFE2ybQRHfVEQwW/Wz7lK6jPPmctFd/U";
+  # SSH host keys (for agenix) — re-exported from the secrets flake so
+  # callers that already use registry.hostKeys keep working.
+  inherit hostKeys bootstrap;
 }

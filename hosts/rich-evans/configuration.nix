@@ -1,12 +1,13 @@
 # Rich Evans - HP Mini PC home server
 {
   config,
+  inputs,
   lib,
   copyparty,
   pkgs,
   ...
 }: let
-  sshKeys = import ../ssh-keys.nix;
+  sshKeys = import ../ssh-keys.nix {secretsFlake = inputs.secretsFlake;};
 in {
   imports = [
     # Hardware configuration
@@ -250,7 +251,7 @@ in {
 
   # z.ai API key for the claude-zai wrapper.
   age.secrets.zai-api-key = {
-    file = ../../secrets/zai-api-key.age;
+    file = "${inputs.secretsFlake}/secrets/zai-api-key.age";
     owner = "kimb";
     mode = "0400";
   };
@@ -281,7 +282,7 @@ in {
   # Firewall configuration
   #
   networking.nameservers = let
-    registry = import ../nebula-registry.nix;
+    registry = import ../nebula-registry.nix {secretsFlake = inputs.secretsFlake;};
   in [
     registry.nodes.maitred.ip # maitred router via Nebula
     "1.1.1.1" # Fallback

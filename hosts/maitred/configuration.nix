@@ -6,7 +6,7 @@
   inputs,
   ...
 }: let
-  sshKeys = import ../ssh-keys.nix;
+  sshKeys = import ../ssh-keys.nix {secretsFlake = inputs.secretsFlake;};
 in {
   imports = [
     # Hardware configuration will be generated during install
@@ -300,7 +300,7 @@ in {
   # Dynamic service proxies for enabled services on remote hosts
   systemd.services = let
     cfg = config.kimb;
-    registry = import ../nebula-registry.nix;
+    registry = import ../nebula-registry.nix {secretsFlake = inputs.secretsFlake;};
 
     # Create proxy services for enabled remote services
     mkProxyService = serviceName: service: let
@@ -388,7 +388,7 @@ in {
           ];
           # Local DNS entries for Nebula hosts and enabled services
           local-data = let
-            registry = import ../nebula-registry.nix;
+            registry = import ../nebula-registry.nix {secretsFlake = inputs.secretsFlake;};
             cfg = config.kimb;
 
             # Nebula host entries

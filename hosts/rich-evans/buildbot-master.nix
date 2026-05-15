@@ -32,22 +32,22 @@
 
   age.secrets = {
     buildbot-github-app-key = {
-      file = ../../secrets/buildbot-github-app-key.age;
+      file = "${inputs.secretsFlake}/secrets/buildbot-github-app-key.age";
       owner = "buildbot";
       group = "buildbot";
     };
     buildbot-webhook-secret = {
-      file = ../../secrets/buildbot-webhook-secret.age;
+      file = "${inputs.secretsFlake}/secrets/buildbot-webhook-secret.age";
       owner = "buildbot";
       group = "buildbot";
     };
     buildbot-oauth-secret = {
-      file = ../../secrets/buildbot-oauth-secret.age;
+      file = "${inputs.secretsFlake}/secrets/buildbot-oauth-secret.age";
       owner = "buildbot";
       group = "buildbot";
     };
     buildbot-workers = {
-      file = ../../secrets/buildbot-workers.age;
+      file = "${inputs.secretsFlake}/secrets/buildbot-workers.age";
       owner = "buildbot";
       group = "buildbot";
     };

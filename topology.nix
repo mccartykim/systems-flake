@@ -1,5 +1,5 @@
-{ config, lib, ... }: let
-  registry = import ./hosts/nebula-registry.nix;
+{ config, lib, inputs, ... }: let
+  registry = import ./hosts/nebula-registry.nix { secretsFlake = inputs.secretsFlake; };
 in {
   # --- Networks ---
   networks = {

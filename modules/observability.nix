@@ -4,6 +4,7 @@
 # for port number, collectors, and textfile directory path.
 {
   config,
+  inputs,
   lib,
   pkgs,
   ...
@@ -17,7 +18,7 @@ with lib; let
   textfileDir = "/var/lib/prometheus-node-exporter-textfiles";
   enabledCollectors = ["systemd" "processes"];
 
-  registry = import ../hosts/nebula-registry.nix;
+  registry = import ../hosts/nebula-registry.nix {secretsFlake = inputs.secretsFlake;};
   maitredIp = registry.nodes.maitred.ip;
 in {
   options.kimb.observability = {

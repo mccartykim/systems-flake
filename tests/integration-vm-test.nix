@@ -8,6 +8,10 @@
   pkgs ? import <nixpkgs> {},
   lib ? pkgs.lib,
   agenix ? null,
+  # Path to the systems-flake-secrets flake (or any dir with
+  # secrets/<name>.age). This test isn't wired into `nix flake check`
+  # today, so callers must pass this explicitly via --arg.
+  inputs ? {secretsFlake = throw "integration-vm-test.nix needs inputs.secretsFlake passed in";},
 }: let
   # Test network configuration
   testNetwork = {
@@ -219,7 +223,7 @@
 
     # Test agenix secret decryption
     age.secrets.test-nebula-router-cert = {
-      file = ../secrets/test-nebula-router-cert.age;
+      file = "${inputs.secretsFlake}/secrets/test-nebula-router-cert.age";
       mode = "0444";
       owner = "test";
     };
@@ -318,7 +322,7 @@
 
     # Test agenix secret decryption
     age.secrets.test-nebula-server-cert = {
-      file = ../secrets/test-nebula-server-cert.age;
+      file = "${inputs.secretsFlake}/secrets/test-nebula-server-cert.age";
       mode = "0444";
       owner = "test";
     };
@@ -394,7 +398,7 @@
 
     # Test agenix secret decryption
     age.secrets.test-nebula-desktop-cert = {
-      file = ../secrets/test-nebula-desktop-cert.age;
+      file = "${inputs.secretsFlake}/secrets/test-nebula-desktop-cert.age";
       mode = "0444";
       owner = "test";
     };

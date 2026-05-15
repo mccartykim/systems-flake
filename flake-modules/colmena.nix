@@ -5,7 +5,7 @@
   ...
 }: let
   inherit (inputs) nixpkgs copyparty claude_yapper kokoro media-classifier;
-  registry = import (self + "/hosts/nebula-registry.nix");
+  registry = import (self + "/hosts/nebula-registry.nix") {secretsFlake = inputs.secretsFlake;};
 
   # Only include hosts that have a nixosConfiguration (auto-filters non-NixOS hosts)
   nixosHosts = builtins.intersectAttrs self.nixosConfigurations registry.nodes;

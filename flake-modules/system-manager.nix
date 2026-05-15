@@ -9,9 +9,11 @@ in {
   flake.systemConfigs = {
     oracle = system-manager.lib.makeSystemConfig {
       modules = [(self + "/hosts/oracle/configuration.nix")];
+      specialArgs = {inherit inputs;};
     };
     mochi = system-manager.lib.makeSystemConfig {
       modules = [(self + "/hosts/mochi/configuration.nix")];
+      specialArgs = {inherit inputs;};
     };
   };
 }

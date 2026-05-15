@@ -18,7 +18,7 @@
   };
 
   age.secrets.buildbot-worker-password = {
-    file = ../../secrets/buildbot-worker-password.age;
+    file = "${inputs.secretsFlake}/secrets/buildbot-worker-password.age";
     owner = "buildbot-worker";
     group = "buildbot-worker";
   };
@@ -31,7 +31,7 @@
   # nix-daemon runs as root, so root:root 0400 (the agenix default)
   # is what we need.
   age.secrets.buildbot-worker-github-token = {
-    file = ../../secrets/buildbot-worker-github-token.age;
+    file = "${inputs.secretsFlake}/secrets/buildbot-worker-github-token.age";
   };
 
   # Same PAT in .netrc format, decrypted to the buildbot-worker user's
@@ -42,7 +42,7 @@
   # still read this file via the bypass-permissions rule, so any
   # daemon-side fetches also work — single decryption serves both.
   age.secrets.buildbot-worker-git-netrc = {
-    file = ../../secrets/buildbot-worker-git-netrc.age;
+    file = "${inputs.secretsFlake}/secrets/buildbot-worker-git-netrc.age";
     path = "/var/lib/buildbot-worker/.netrc";
     owner = "buildbot-worker";
     group = "buildbot-worker";

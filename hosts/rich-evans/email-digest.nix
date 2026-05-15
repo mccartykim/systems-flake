@@ -5,6 +5,7 @@
 # sends via Discord bot API.
 {
   config,
+  inputs,
   lib,
   pkgs,
   ...
@@ -323,22 +324,22 @@ in {
   # Agenix secrets
   age.secrets = {
     mail-zoho-password = {
-      file = ../../secrets/mail-zoho-password.age;
+      file = "${inputs.secretsFlake}/secrets/mail-zoho-password.age";
       owner = "email-digest";
       mode = "0400";
     };
     mail-gmail-password = {
-      file = ../../secrets/mail-gmail-password.age;
+      file = "${inputs.secretsFlake}/secrets/mail-gmail-password.age";
       owner = "email-digest";
       mode = "0400";
     };
     mail-fastmail-password = {
-      file = ../../secrets/mail-fastmail-password.age;
+      file = "${inputs.secretsFlake}/secrets/mail-fastmail-password.age";
       owner = "email-digest";
       mode = "0400";
     };
     discord-email-digest-token = {
-      file = ../../secrets/discord-life-coach-token.age;
+      file = "${inputs.secretsFlake}/secrets/discord-life-coach-token.age";
       owner = "email-digest";
       mode = "0400";
     };

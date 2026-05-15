@@ -3,6 +3,7 @@
 # Auto-OCR, rotation correction, blank page handling, full-text search
 {
   config,
+  inputs,
   lib,
   pkgs,
   ...
@@ -63,8 +64,8 @@
 
   # Allow maitred to rsync scans as kimb
   users.users.kimb.openssh.authorizedKeys.keys = let
-    sshKeys = import ../ssh-keys.nix;
-    registry = import ../nebula-registry.nix;
+    sshKeys = import ../ssh-keys.nix {secretsFlake = inputs.secretsFlake;};
+    registry = import ../nebula-registry.nix {secretsFlake = inputs.secretsFlake;};
   in
     sshKeys.authorizedKeys
     ++ [registry.nodes.maitred.publicKey];

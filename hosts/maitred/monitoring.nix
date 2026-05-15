@@ -2,6 +2,7 @@
 # Prometheus + Grafana + Alertmanager + blackbox + journal-remote
 {
   config,
+  inputs,
   lib,
   pkgs,
   ...
@@ -13,7 +14,7 @@ in {
 
   # Agenix secret for Grafana secret key
   age.secrets.grafana-secret-key = {
-    file = ../../secrets/grafana-secret-key.age;
+    file = "${inputs.secretsFlake}/secrets/grafana-secret-key.age";
     mode = "0400";
     owner = "grafana";
     group = "grafana";

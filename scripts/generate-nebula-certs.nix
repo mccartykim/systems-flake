@@ -8,13 +8,27 @@
   lib,
   hostData,
   bootstrapKey,
+  # systems-flake-secrets flake source (supplied by flake.nix). Holds the
+  # YubiKey identity pubkeys under secrets/identities/ and is also where
+  # the script expects to write/read the .age files at runtime — invoke
+  # this app from inside a checkout of that flake.
+  secretsFlake,
 }:
 let
-  yubikeyIdentity1 = builtins.toString ../secrets/identities/yubikey-1.pub;
-  yubikeyIdentity2 = builtins.toString ../secrets/identities/yubikey-2.pub;
+  yubikeyIdentity1 = builtins.toString (secretsFlake + "/secrets/identities/yubikey-1.pub");
+  yubikeyIdentity2 = builtins.toString (secretsFlake + "/secrets/identities/yubikey-2.pub");
 in
   pkgs.writeShellScript "generate-nebula-certs" ''
     set -e
+
+    # This script reads/writes secrets/*.age in the current working directory.
+    # Run it from inside a checkout of mccartykim/systems-flake-secrets, not
+    # from systems-flake itself (where the secrets/ tree no longer exists).
+    if [ ! -d "secrets" ]; then
+      echo "Error: no ./secrets directory in $(pwd)." >&2
+      echo "Run this from inside a checkout of mccartykim/systems-flake-secrets." >&2
+      exit 1
+    fi
 
     # Parse arguments
     DRY_RUN=false

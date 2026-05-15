@@ -2,13 +2,14 @@
 # Defines all service options for kimb.dev infrastructure
 {
   config,
+  inputs,
   lib,
   pkgs,
   ...
 }:
 with lib; let
   cfg = config.kimb;
-  sshKeys = import ../hosts/ssh-keys.nix;
+  sshKeys = import ../hosts/ssh-keys.nix {secretsFlake = inputs.secretsFlake;};
 
   # Helper types
   serviceType = types.submodule ({
@@ -215,7 +216,7 @@ in {
 
     # Services with resolved host IP addresses
     servicesWithIPs = let
-      registry = import ../hosts/nebula-registry.nix;
+      registry = import ../hosts/nebula-registry.nix {secretsFlake = inputs.secretsFlake;};
       addIP = name: service:
         service
         // {

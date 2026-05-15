@@ -1,11 +1,15 @@
 # Mochi - Pixel 9 Pro AVF terminal
 # Managed via system-manager (Debian/AVF, not NixOS)
-{pkgs, ...}: let
+{
+  pkgs,
+  inputs,
+  ...
+}: let
   encryptedSecrets = {
     mainnet = {
-      ca = ../../secrets/nebula-ca.age;
-      cert = ../../secrets/nebula-mochi-cert.age;
-      key = ../../secrets/nebula-mochi-key.age;
+      ca = "${inputs.secretsFlake}/secrets/nebula-ca.age";
+      cert = "${inputs.secretsFlake}/secrets/nebula-mochi-cert.age";
+      key = "${inputs.secretsFlake}/secrets/nebula-mochi-key.age";
     };
   };
 in {

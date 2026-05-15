@@ -58,7 +58,7 @@ in {
       nix-topology.nixosModules.default
       # Static nebula host entries so hostname.nebula resolves without maitred DNS
       (_: let
-        registry = import (self + "/hosts/nebula-registry.nix");
+        registry = import (self + "/hosts/nebula-registry.nix") {secretsFlake = inputs.secretsFlake;};
         names = builtins.attrNames registry.nodes;
       in {
         networking.extraHosts =

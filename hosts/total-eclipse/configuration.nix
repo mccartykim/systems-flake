@@ -91,7 +91,7 @@
 
     # Use maitred router for DNS
     nameservers = let
-      registry = import ../nebula-registry.nix;
+      registry = import ../nebula-registry.nix {secretsFlake = inputs.secretsFlake;};
     in [
       registry.nodes.maitred.ip # maitred router via Nebula
       "1.1.1.1" # Fallback

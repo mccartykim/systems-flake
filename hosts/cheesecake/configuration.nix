@@ -1,5 +1,6 @@
 {
   config,
+  inputs,
   pkgs,
   ...
 }: {
@@ -258,7 +259,7 @@
   # z.ai API key for the claude-zai wrapper (home/modules/ai-tools.nix).
   # Read at exec-time by the wrapper from /run/agenix/zai-api-key.
   age.secrets.zai-api-key = {
-    file = ../../secrets/zai-api-key.age;
+    file = "${inputs.secretsFlake}/secrets/zai-api-key.age";
     owner = "kimb";
     mode = "0400";
   };

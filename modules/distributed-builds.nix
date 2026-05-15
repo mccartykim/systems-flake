@@ -2,6 +2,7 @@
 # Clients offload builds to builders when reachable over nebula
 {
   config,
+  inputs,
   lib,
   pkgs,
   ...
@@ -9,8 +10,8 @@
 with lib; let
   cfg = config.kimb.distributedBuilds;
   hostname = config.networking.hostName;
-  registry = import ../hosts/nebula-registry.nix;
-  sshKeys = import ../hosts/ssh-keys.nix;
+  registry = import ../hosts/nebula-registry.nix {secretsFlake = inputs.secretsFlake;};
+  sshKeys = import ../hosts/ssh-keys.nix {secretsFlake = inputs.secretsFlake;};
 
   # Builder configs
   historianIP = registry.nodes.historian.ip;

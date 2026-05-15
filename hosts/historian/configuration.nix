@@ -124,7 +124,7 @@
 
     # Use maitred router for DNS
     nameservers = let
-      registry = import ../nebula-registry.nix;
+      registry = import ../nebula-registry.nix {secretsFlake = inputs.secretsFlake;};
     in [
       registry.nodes.maitred.ip # maitred router via Nebula
       "1.1.1.1" # Fallback
@@ -443,7 +443,7 @@
 
   # === Agenix secrets for media pipeline ===
   age.secrets.rclone-config = {
-    file = ../../secrets/rclone-config.age;
+    file = "${inputs.secretsFlake}/secrets/rclone-config.age";
     path = "/run/agenix/rclone-config";
     mode = "0400";
     owner = "kimb";
@@ -451,14 +451,14 @@
 
   # z.ai API key for the claude-zai wrapper (home/modules/ai-tools.nix).
   age.secrets.zai-api-key = {
-    file = ../../secrets/zai-api-key.age;
+    file = "${inputs.secretsFlake}/secrets/zai-api-key.age";
     owner = "kimb";
     mode = "0400";
   };
 
   # Jellyfin API key for media-classifier library rescan trigger
   age.secrets.jellyfin-api-key = {
-    file = ../../secrets/jellyfin-api-key.age;
+    file = "${inputs.secretsFlake}/secrets/jellyfin-api-key.age";
     group = "media";
     mode = "0440";
   };

@@ -62,11 +62,11 @@ in {
   config = mkIf cfg.enable {
     age.secrets = {
       restic-password = {
-        file = ../secrets/restic-password.age;
+        file = "${inputs.secretsFlake}/secrets/restic-password.age";
         mode = "0400";
       };
       restic-b2-env = {
-        file = ../secrets/restic-b2-env.age;
+        file = "${inputs.secretsFlake}/secrets/restic-b2-env.age";
         mode = "0400";
       };
     };

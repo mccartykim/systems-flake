@@ -42,6 +42,13 @@
     agenix-rekey.url = "github:oddlama/agenix-rekey";
     agenix-rekey.inputs.nixpkgs.follows = "nixpkgs";
 
+    # Encrypted secrets live in a separate private flake. Pubkeys, the
+    # agenix recipient map, and the .age blobs all come from here. See
+    # https://github.com/mccartykim/systems-flake-secrets. git+https://
+    # so the buildbot worker's PAT-via-netrc auth can fetch it.
+    secretsFlake.url = "git+https://github.com/mccartykim/systems-flake-secrets.git";
+    secretsFlake.inputs.nixpkgs.follows = "nixpkgs";
+
     # buildbot-nix for CI (master on rich-evans, worker on historian)
     buildbot-nix.url = "github:nix-community/buildbot-nix";
     buildbot-nix.inputs.nixpkgs.follows = "nixpkgs";
@@ -219,7 +226,7 @@
 
           # Generate nebula certificates from YubiKey-encrypted CA
           generate-nebula-certs = let
-            registry = import ./hosts/nebula-registry.nix;
+            registry = import ./hosts/nebula-registry.nix {secretsFlake = inputs.secretsFlake;};
             # Hosts with both IP and publicKey can have certs generated
             # (includes oracle now that its key is in the registry)
             nebulaHosts =
@@ -242,6 +249,7 @@
             program = toString (
               import ./scripts/generate-nebula-certs.nix {
                 inherit pkgs lib hostData bootstrapKey;
+                secretsFlake = inputs.secretsFlake;
               }
             );
           };

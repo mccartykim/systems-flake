@@ -1,6 +1,11 @@
 # SRE Agent host configuration
 # Phase 1: webhook + LLM triage + redaction + Discord bot + agenix secrets
-{config, lib, ...}: {
+{
+  config,
+  inputs,
+  lib,
+  ...
+}: {
   kimb.sreAgent = {
     enable = true;
     discordTokenFile = config.age.secrets.discord-sre-token.path;
@@ -23,19 +28,19 @@
   };
 
   age.secrets.discord-sre-token = {
-    file = ../../secrets/discord-sre-token.age;
+    file = "${inputs.secretsFlake}/secrets/discord-sre-token.age";
     owner = "sre-agent";
     mode = "0400";
   };
 
   age.secrets.gh-sre-token = {
-    file = ../../secrets/gh-sre-token.age;
+    file = "${inputs.secretsFlake}/secrets/gh-sre-token.age";
     owner = "sre-agent";
     mode = "0400";
   };
 
   age.secrets.ollama-cloud-key = {
-    file = ../../secrets/ollama-cloud-key.age;
+    file = "${inputs.secretsFlake}/secrets/ollama-cloud-key.age";
     owner = "sre-agent";
     mode = "0400";
   };

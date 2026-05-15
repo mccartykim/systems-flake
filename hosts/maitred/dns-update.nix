@@ -17,7 +17,7 @@ in {
   ];
 
   age.secrets.cloudflare-api-token = {
-    file = ../../secrets/cloudflare-api-token.age;
+    file = "${inputs.secretsFlake}/secrets/cloudflare-api-token.age";
     mode = "0400";
   };
 

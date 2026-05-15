@@ -6,6 +6,7 @@
 # Dedicated Discord bot app (Secretary) for DMs and slash commands.
 {
   config,
+  inputs,
   lib,
   pkgs,
   ...
@@ -39,24 +40,24 @@
   age.secrets = {
     # Mail secrets (same .age files as email-digest, but owned by org-crm user)
     org-crm-mail-zoho = {
-      file = ../../secrets/mail-zoho-password.age;
+      file = "${inputs.secretsFlake}/secrets/mail-zoho-password.age";
       owner = "org-crm";
       mode = "0400";
     };
     org-crm-mail-gmail = {
-      file = ../../secrets/mail-gmail-password.age;
+      file = "${inputs.secretsFlake}/secrets/mail-gmail-password.age";
       owner = "org-crm";
       mode = "0400";
     };
     org-crm-mail-fastmail = {
-      file = ../../secrets/mail-fastmail-password.age;
+      file = "${inputs.secretsFlake}/secrets/mail-fastmail-password.age";
       owner = "org-crm";
       mode = "0400";
     };
 
     # Dedicated Discord bot token (Secretary app)
     discord-org-crm-token = {
-      file = ../../secrets/discord-org-crm-token.age;
+      file = "${inputs.secretsFlake}/secrets/discord-org-crm-token.age";
       owner = "org-crm";
       mode = "0400";
     };

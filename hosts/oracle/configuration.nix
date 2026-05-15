@@ -1,11 +1,15 @@
 # Oracle Cloud VM - Nebula lighthouse configuration
 # Managed via system-manager (not NixOS)
-{pkgs, ...}: let
-  # Encrypted secrets from the repo (in Nix store, safe - they're encrypted)
+{
+  pkgs,
+  inputs,
+  ...
+}: let
+  # Encrypted secrets from the systems-flake-secrets flake input.
   encryptedSecrets = {
-    ca = ../../secrets/nebula-ca.age;
-    cert = ../../secrets/nebula-oracle-cert.age;
-    key = ../../secrets/nebula-oracle-key.age;
+    ca = "${inputs.secretsFlake}/secrets/nebula-ca.age";
+    cert = "${inputs.secretsFlake}/secrets/nebula-oracle-cert.age";
+    key = "${inputs.secretsFlake}/secrets/nebula-oracle-key.age";
   };
 in {
   config = {
