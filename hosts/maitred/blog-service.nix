@@ -50,6 +50,12 @@ in {
         contentDir = "${inputs.kimb-blog-content}/content";
         port = blogService.port;
         host = "0.0.0.0";
+        title = "kimb.dev";
+        description = "The personal blog of Kimberly McCarty";
+        author = "Kimberly McCarty";
+        email = "mccartykim@zoho.com";
+        baseUrl = "https://kimb.dev";
+        copyright = "Kimberly McCarty (CC BY 4.0)";
       };
 
       networking.firewall.allowedTCPPorts = [blogService.port];
