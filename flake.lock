@@ -800,11 +800,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779734019,
-        "narHash": "sha256-30V95Dg9JG3QrgJava39aIYf2M5JPgAd1HPPzYxCpNQ=",
+        "lastModified": 1779735996,
+        "narHash": "sha256-HNjmsC1njKfoF+JgP98F48wvZ35mvTSBPEKLrhRm4xQ=",
         "ref": "refs/heads/main",
-        "rev": "9cbef183941b22a2fb535b7f76a8ff0e8adf046e",
-        "revCount": 25,
+        "rev": "2d191cd0260dce601727872b4a84a37796482866",
+        "revCount": 27,
         "type": "git",
         "url": "https://github.com/mccartykim/mist-blog.git"
       },
