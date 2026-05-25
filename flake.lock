@@ -1180,13 +1180,10 @@
         ]
       },
       "locked": {
-        "lastModified": 1775057834,
-        "narHash": "sha256-cHXpHLmiRrMpRhLeGvxkbAWSNcMvVpDxlLc18NW87bE=",
-        "ref": "refs/heads/main",
-        "rev": "17462deb90c80acfb5c432d6ee6551997fb10ebd",
-        "revCount": 12,
-        "type": "git",
-        "url": "https://github.com/mccartykim/org-agent.git"
+        "lastModified": 1779679629,
+        "narHash": "sha256-k9/2LoKfNJMKVssSiepaud/o07zMIt58z6STV8mODBQ=",
+        "path": "/home/kimb/shared_projects/org_agent",
+        "type": "path"
       },
       "original": {
         "type": "git",
