@@ -63,10 +63,9 @@ in {
     cameraBedUrl = "http://127.0.0.1:8554/cam0";
     cameraDeskUrl = "http://127.0.0.1:8554/cam1";
 
-    # Dashboard runs on 8586. The old org-life-coach dashboard on
-    # 8585 is mkForce-disabled (see below), so coach.kimb.dev was
-    # broken until the reverse-proxy entry in
-    # flake-modules/nixos-configurations.nix was repointed to 8586.
+    # Dashboard runs on 8586 (the old org-life-coach dashboard on
+    # 8585 is mkForce-disabled below). No public reverse-proxy
+    # entry exists for it — access is LAN/Nebula only.
     dashboard = {
       enable = true;
       port = 8586;
