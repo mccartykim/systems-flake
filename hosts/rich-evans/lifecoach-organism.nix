@@ -83,13 +83,19 @@ in {
       alertChannelId = "";
     };
 
-    # Keep the agent LLM (qwen3.6:35b-a3b) resident on historian.
-    # Without this, every Discord trigger pays the 35B cold-load cost
-    # and silently fails (organic gets empty stdout from the timeout).
-    # 25-min interval < 30-min keep_alive so the model never falls
-    # out of memory.
+    # DISABLED 2026-05-25 (lo-eq1): this warmup pinned qwen3.6:35b-a3b
+    # (~26GB) on historian's AMD iGPU, starving gemma4:e4b (~10GB) which
+    # the mechanical/judgment/vision hot path actually uses. Result was a
+    # silent wake-up failure on the morning of 2026-05-25 (user slept
+    # until 13:00). Tradeoff: Discord/organic triggers now pay the ~73s
+    # qwen cold-load on the first call after qwen evicts. Wake-up
+    # reliability is safety-critical and wins.
+    # If Discord latency becomes painful, revisit: either run a smaller
+    # qwen quant alongside gemma4 (math says both fit in 57GB GTT but
+    # ollama doesn't co-load them in practice), or warm qwen on a
+    # different host.
     ollamaWarmup = {
-      enable = true;
+      enable = false;
       model = "qwen3.6:35b-a3b";
       interval = "25min";
       keepAlive = "30m";
