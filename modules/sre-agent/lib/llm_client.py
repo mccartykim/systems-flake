@@ -275,7 +275,7 @@ Severity: {severity}
 Instance: {instance}
 Summary: {summary}"""
     if journal_tail:
-        prompt += f"\nRecent journal (last 20 lines, redacted):\n{journal_tail}"
+        prompt += f"\nRecent journal (last 20 lines):\n{journal_tail}"
 
     # Try local Ollama first, then cloud
     result = _call_local_ollama(prompt)

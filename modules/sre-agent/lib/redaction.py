@@ -1,8 +1,9 @@
-"""SRE Agent redaction module.
+"""SRE Agent redaction module — DEPRECATED.
 
-Every string that could contain PII, tokens, IP addresses, or hostnames
-is passed through redact() before reaching the LLM or Discord.
-An audit log records every redaction.
+No longer called from any production code path. IPs/hostnames are now sent
+to Discord and the LLM unredacted (overseer rolled back the paranoia — the
+filtered output was useless for observability). Retained so call sites can
+be re-enabled quickly if the policy reverses.
 """
 import json
 import os

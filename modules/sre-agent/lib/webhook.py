@@ -1,7 +1,7 @@
 """SRE Agent Webhook Receiver — Alertmanager webhook HTTP server.
 
-Receives alerts from Alertmanager, redacts PII, optionally runs LLM triage,
-posts to Discord, and creates GitHub issues when appropriate.
+Receives alerts from Alertmanager, optionally runs LLM triage, posts to
+Discord, and creates GitHub issues when appropriate.
 """
 import http.server
 import json
@@ -14,8 +14,6 @@ from datetime import datetime, timezone
 
 # Add lib directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-
-from redaction import redact, redact_alert
 
 # --- Discord rate limiter state ---
 _last_discord_post = 0
@@ -96,9 +94,6 @@ def format_alert(payload):
         name = key[0]
         instance = key[1]
         summary = annotations.get("summary", annotations.get("description", ""))
-        # Redact PII before sending to Discord
-        instance = redact(instance, context="alert instance")
-        summary = redact(summary, context="alert annotation summary")
         lines.append(f"**{name}** ({instance}): {summary}")
     return "\n".join(lines)
 
@@ -111,7 +106,6 @@ def format_resolved(payload):
         labels = a.get("labels", {})
         name = labels.get("alertname", "unknown")
         instance = labels.get("instance", "?")
-        instance = redact(instance, context="alert instance")
         lines.append(f"**{name}** ({instance}) resolved")
     return "\n".join(lines)
 
@@ -143,18 +137,16 @@ def maybe_file_issue(alert, triage_result):
         return (None, False)
 
     from github_client import create_issue
-    from redaction import redact
 
     labels = alert.get("labels", {})
     title = triage_result.issue_title or f"[SRE] {labels.get('alertname', 'unknown')}"
-    title = redact(title, context="issue title")
 
     annotations = alert.get("annotations", {})
     body_parts = [
         f"## Alert: {labels.get('alertname', 'unknown')}",
         f"**Severity:** {triage_result.severity}",
-        f"**Instance:** {redact(labels.get('instance', '?'), context='issue instance')}",
-        f"**Summary:** {redact(annotations.get('summary', ''), context='issue summary')}",
+        f"**Instance:** {labels.get('instance', '?')}",
+        f"**Summary:** {annotations.get('summary', '')}",
         "",
         "### LLM Triage",
         f"- **Cause:** {triage_result.cause}",
@@ -188,7 +180,7 @@ class WebhookHandler(http.server.BaseHTTPRequestHandler):
         with open(alerts_log, "a") as f:
             f.write(json.dumps({"ts": datetime.now(timezone.utc).isoformat(), **payload}) + "\n")
 
-        # Format and redact for Discord
+        # Format for Discord
         msg = format_alert(payload)
         print(msg)
         post_discord(msg)
@@ -215,8 +207,7 @@ class WebhookHandler(http.server.BaseHTTPRequestHandler):
 
         # Optional LLM triage
         for alert in payload.get("alerts", []):
-            redacted = redact_alert(alert)
-            result = run_triage(redacted)
+            result = run_triage(alert)
             if result:
                 ts = datetime.now(timezone.utc).strftime("%H:%M UTC")
                 triage_msg = (
@@ -227,7 +218,7 @@ class WebhookHandler(http.server.BaseHTTPRequestHandler):
                 post_discord(triage_msg)
 
                 # Maybe create a GitHub issue
-                issue_url, was_created = maybe_file_issue(redacted, result)
+                issue_url, was_created = maybe_file_issue(alert, result)
                 if issue_url:
                     ts = datetime.now(timezone.utc).strftime("%H:%M UTC")
                     if was_created:

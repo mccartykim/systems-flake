@@ -42,8 +42,8 @@ class TestFormatAlertEmbed(unittest.TestCase):
         self.assertEqual(embed["title"], "SRE Alerts")
         self.assertIn("No active alerts", embed["description"])
 
-    def test_redaction_in_embed(self):
-        """IPs should be redacted in embeds; hostnames preserved for readability."""
+    def test_embed_preserves_ip_and_hostname(self):
+        """IPs and hostnames must reach Discord intact — no redaction."""
         alerts = [
             {
                 "labels": {"alertname": "TestAlert", "instance": "10.100.0.50:9090"},
@@ -52,10 +52,9 @@ class TestFormatAlertEmbed(unittest.TestCase):
             }
         ]
         embed = format_alert_embed(alerts)
-        # IPs should be redacted
-        for field in embed["fields"]:
-            self.assertNotIn("10.100.0.50", field.get("value", ""))
-        # Hostnames should be preserved for SRE readability
+        self.assertTrue(
+            any("10.100.0.50" in field.get("value", "") for field in embed["fields"])
+        )
         self.assertTrue(
             any("maitred" in field.get("value", "") for field in embed["fields"])
         )

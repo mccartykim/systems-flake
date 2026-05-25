@@ -13,8 +13,6 @@ import urllib.request
 # Ensure lib directory is on path for imports
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from redaction import redact
-
 # discord.py is a runtime dependency — only needed when running as bot
 try:
     import discord
@@ -43,10 +41,7 @@ def fetch_alerts(prometheus_url: str) -> list:
 
 
 def format_alert_embed(alerts: list) -> dict:
-    """Format Prometheus alerts into a Discord embed dict.
-
-    Redacts PII before including in the embed.
-    """
+    """Format Prometheus alerts into a Discord embed dict."""
     if not alerts:
         return {
             "title": "SRE Alerts",
@@ -63,8 +58,8 @@ def format_alert_embed(alerts: list) -> dict:
         state = alert.get("state", "unknown")
         name = labels.get("alertname", "unknown")
         severity = labels.get("severity", "unknown")
-        instance = redact(labels.get("instance", "?"), context="discord alert instance")
-        summary = redact(annotations.get("summary", annotations.get("description", "")), context="discord alert summary")
+        instance = labels.get("instance", "?")
+        summary = annotations.get("summary", annotations.get("description", ""))
 
         emoji = {"firing": "🔴", "pending": "🟡", "inactive": "⚪"}.get(state, "❓")
         field_value = f"{emoji} **{severity}** | {instance}\n{summary}"

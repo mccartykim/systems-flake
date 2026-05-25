@@ -49,7 +49,7 @@ class TestFormatResolved(unittest.TestCase):
         self.assertIn("NodeExporterDown", result)
         self.assertIn("OllamaUnreachable", result)
 
-    def test_resolved_alert_redacts_ips(self):
+    def test_resolved_alert_preserves_instance(self):
         payload = {
             "status": "resolved",
             "alerts": [{
@@ -58,9 +58,9 @@ class TestFormatResolved(unittest.TestCase):
             }],
         }
         result = format_resolved(payload)
-        # IPs should be redacted, alertname should be preserved
+        # Instance IP must reach Discord intact — no redaction
         self.assertIn("TestAlert", result)
-        self.assertNotIn("192.168.1.100", result)
+        self.assertIn("192.168.1.100", result)
 
 
 if __name__ == "__main__":
