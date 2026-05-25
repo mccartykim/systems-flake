@@ -12,8 +12,8 @@
 
     # Role-based profiles
     ../profiles/base.nix
-    ../profiles/desktop.nix
-    ../profiles/gaming.nix
+    # ../profiles/desktop.nix
+    # ../profiles/gaming.nix
 
     # Nebula mesh network (consolidated module)
     ../../modules/nebula-node.nix
