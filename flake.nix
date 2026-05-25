@@ -59,6 +59,11 @@
     mist-blog.url = "git+https://github.com/mccartykim/mist-blog.git";
     mist-blog.inputs.nixpkgs.follows = "nixpkgs";
 
+    # Private blog content tree (not a flake — just markdown sources).
+    # Consumed by services.mist-blog via BLOG_CONTENT_DIR.
+    kimb-blog-content.url = "git+https://github.com/mccartykim/kimb-blog-content.git";
+    kimb-blog-content.flake = false;
+
     claude_yapper.url = "git+https://github.com/mccartykim/claude-alarmclock-agent.git";
     claude_yapper.inputs.nixpkgs.follows = "nixpkgs";
 

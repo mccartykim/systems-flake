@@ -675,6 +675,22 @@
         "type": "github"
       }
     },
+    "kimb-blog-content": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1779698785,
+        "narHash": "sha256-+Uwbz0L6nnMISvcPDpuXoV3W+Ccg24Gr+xhCQCT4/M4=",
+        "ref": "refs/heads/main",
+        "rev": "3b8dad3254c81df5994d7a0adebe25418fe8923f",
+        "revCount": 1,
+        "type": "git",
+        "url": "https://github.com/mccartykim/kimb-blog-content.git"
+      },
+      "original": {
+        "type": "git",
+        "url": "https://github.com/mccartykim/kimb-blog-content.git"
+      }
+    },
     "kokoro": {
       "inputs": {
         "flake-utils": "flake-utils_4",
@@ -1488,6 +1504,7 @@
         "flake-parts": "flake-parts_2",
         "home-manager": "home-manager_2",
         "jovian-nixos": "jovian-nixos",
+        "kimb-blog-content": "kimb-blog-content",
         "kokoro": "kokoro",
         "lifecoach-organism": "lifecoach-organism",
         "media-classifier": "media-classifier",

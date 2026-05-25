@@ -37,18 +37,19 @@ in {
         nameserver ${hostVeth}
       '';
 
+      imports = [inputs.mist-blog.nixosModules.default];
+
+      # mist-blog's module references `self.packages.${pkgs.system}.default`
+      # to find the binary; pass its flake in as a module arg.
+      _module.args.self = inputs.mist-blog;
+
       environment.systemPackages = [inputs.mist-blog.packages.x86_64-linux.default];
 
-      systemd.services.mist-blog = {
-        description = "Mist Blog Service";
-        after = ["network.target"];
-        wantedBy = ["multi-user.target"];
-        serviceConfig = {
-          ExecStart = "${inputs.mist-blog.packages.x86_64-linux.default}/bin/mist_blog";
-          Restart = "always";
-          User = "nobody";
-          WorkingDirectory = "/tmp";
-        };
+      services.mist-blog = {
+        enable = true;
+        contentDir = "${inputs.kimb-blog-content}/content";
+        port = blogService.port;
+        host = "0.0.0.0";
       };
 
       networking.firewall.allowedTCPPorts = [blogService.port];
