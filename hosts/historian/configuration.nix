@@ -221,7 +221,7 @@
       python3Packages.torchWithRocm
       # Historian specific packages
       legendary-gl
-      sunshine
+      # sunshine
       toolbox
       cachix
       lmstudio
