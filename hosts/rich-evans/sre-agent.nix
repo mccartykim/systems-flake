@@ -1,6 +1,10 @@
 # SRE Agent host configuration
-# Phase 1: webhook + LLM triage + redaction + Discord bot + agenix secrets
-{config, lib, ...}: {
+# Phase 1: webhook + LLM triage + Discord bot + agenix secrets
+{
+  config,
+  lib,
+  ...
+}: {
   kimb.sreAgent = {
     enable = true;
     discordTokenFile = config.age.secrets.discord-sre-token.path;

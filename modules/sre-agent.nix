@@ -1,5 +1,5 @@
 # SRE Agent NixOS Module
-# Phase 0→1: webhook receiver + LLM triage + redaction + GitHub issues
+# Phase 0→1: webhook receiver + LLM triage + GitHub issues
 # Phase 1.5: Discord bot (optional)
 {
   config,
@@ -16,7 +16,6 @@ with lib; let
     mkdir -p $out
     cp ${pkgs.writeText "sre-agent-__main__.py" (builtins.readFile ./sre-agent/lib/__main__.py)} $out/__main__.py
     cp ${pkgs.writeText "sre-agent-webhook.py" (builtins.readFile ./sre-agent/lib/webhook.py)} $out/webhook.py
-    cp ${pkgs.writeText "sre-agent-redaction.py" (builtins.readFile ./sre-agent/lib/redaction.py)} $out/redaction.py
     cp ${pkgs.writeText "sre-agent-llm_client.py" (builtins.readFile ./sre-agent/lib/llm_client.py)} $out/llm_client.py
     cp ${pkgs.writeText "sre-agent-github_client.py" (builtins.readFile ./sre-agent/lib/github_client.py)} $out/github_client.py
     cp ${pkgs.writeText "sre-agent-discord_bot.py" (builtins.readFile ./sre-agent/lib/discord_bot.py)} $out/discord_bot.py
@@ -196,7 +195,11 @@ in {
           "OLLAMA_CLOUD_KEY_FILE=${cfg.ollamaCloudKeyFile}"
           "GITHUB_TOKEN_FILE=${cfg.githubTokenFile}"
           "GITHUB_REPO=${cfg.githubRepo}"
-          "ENABLE_LLM_TRIAGE=${if cfg.enableLlmTriage then "true" else "false"}"
+          "ENABLE_LLM_TRIAGE=${
+            if cfg.enableLlmTriage
+            then "true"
+            else "false"
+          }"
           "PROMETHEUS_URL=${cfg.prometheusUrl}"
           "SILENCE_URL=${cfg.silenceUrl}"
         ];
@@ -239,7 +242,11 @@ in {
           "OLLAMA_CLOUD_KEY_FILE=${cfg.ollamaCloudKeyFile}"
           "GITHUB_TOKEN_FILE=${cfg.githubTokenFile}"
           "GITHUB_REPO=${cfg.githubRepo}"
-          "ENABLE_LLM_TRIAGE=${if cfg.enableLlmTriage then "true" else "false"}"
+          "ENABLE_LLM_TRIAGE=${
+            if cfg.enableLlmTriage
+            then "true"
+            else "false"
+          }"
           "PROMETHEUS_URL=${cfg.prometheusUrl}"
           "SILENCE_URL=${cfg.silenceUrl}"
         ];
