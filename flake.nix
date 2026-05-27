@@ -173,6 +173,12 @@
         packages = lib.optionalAttrs (system == "x86_64-linux" || system == "aarch64-linux") {
           # ESPHome firmware builds (exposed at top level for convenience)
           esp32-cam-01-firmware = pkgs.callPackage ./pkgs/esp32-firmware.nix {};
+
+          # Warewoolf: minimalist Electron novel-writing app.
+          # Uses nixpkgs's default `electron` (latest stable) — upstream's
+          # `electron ^18` constraint in package.json is long EOL and we
+          # skip the bundled download via ELECTRON_SKIP_BINARY_DOWNLOAD.
+          warewoolf = pkgs.callPackage ./pkgs/warewoolf {};
         };
 
         # Formatter
