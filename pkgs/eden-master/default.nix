@@ -81,8 +81,8 @@
   tzdata,
   profile ? "generic",
 }: let
-  commit = "44fa2805d6c6d2b1a7e838d27d7d6eafb9c57420";
-  srcHash = "sha256-PF16gdsg5/AfG0pA8ybV0j6gwrT1YbDjrrWoaAiPFzU=";
+  commit = "02521882e788223f357af8e777eb322735afbf1d";
+  srcHash = "sha256-jxra6VaEEaRS0VSwGSsVRpT9fctU3oTsEE0Dv6Z4By0=";
   shortSha = builtins.substring 0 10 commit;
 
   # Eden's externals/nx_tzdb/CMakeLists.txt fetches tzdb_to_nx via CPM
@@ -208,7 +208,7 @@
 in
   stdenv.mkDerivation (finalAttrs: {
     pname = "eden-master";
-    version = "unstable-2026-05-03-${shortSha}-${profile}";
+    version = "unstable-2026-05-18-${shortSha}-${profile}";
 
     src = fetchFromGitea {
       domain = "git.eden-emu.dev";
@@ -308,7 +308,7 @@ in
     '';
 
     postInstall = ''
-      install -Dm444 $src/dist/72-yuzu-input.rules $out/lib/udev/rules.d/72-yuzu-input.rules
+      install -Dm444 $src/dist/72-eden-input.rules $out/lib/udev/rules.d/72-eden-input.rules
     '';
 
     preFixup = ''
