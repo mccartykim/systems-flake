@@ -8,6 +8,7 @@
   claude-zai = pkgs.callPackage ./claude-zai.nix {};
   esp32-firmware = pkgs.callPackage ./esp32-firmware.nix {};
   eden-master = pkgs.callPackage ./eden-master/default.nix {};
+  warewoolf = pkgs.callPackage ./warewoolf {};
 in {
-  inherit claude-zai esp32-firmware eden-master;
+  inherit claude-zai esp32-firmware eden-master warewoolf;
 }
