@@ -44,6 +44,17 @@ buildNpmPackage (finalAttrs: {
     ELECTRON_SKIP_BINARY_DOWNLOAD = "1";
   };
 
+  # Upstream src/index.js unconditionally calls `openDevTools()` on the
+  # main window. Because we launch the unpacked tree via electron rather
+  # than a packaged build, `app.isPackaged` is false and the
+  # `devTools: !app.isPackaged` guard above also resolves true, so the
+  # inspector pops open on every launch. Drop the auto-open call; the
+  # devtools API remains reachable via the menu/keybinding.
+  postPatch = ''
+    substituteInPlace src/index.js \
+      --replace-fail "mainWindow.webContents.openDevTools();" ""
+  '';
+
   # buildNpmPackage's default install copies the source tree (sans dev
   # deps) into $out/lib/node_modules/warewoolf and any bin entries from
   # package.json into $out/bin. warewoolf declares no bin entries, so
