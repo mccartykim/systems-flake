@@ -76,15 +76,26 @@ in {
         ];
       };
 
-      # Blog reachability from inside the network
-      blackboxBlogInternal = {
+      # Blog reachability from inside the network — probes the blog container
+      # directly via HTTP to avoid DNS hairpin (unbound resolves blog.kimb.dev to
+      # maitred's own LAN IP, but DNAT only applies to LAN-originated traffic,
+      # not locally-originated traffic from the blackbox_exporter).
+      # TLS reachability is covered by blackbox-blog-external (probes from oracle).
+      blackboxBlogInternal = let
+        blog = cfg.services.blog;
+      in {
         job_name = "blackbox-blog-internal";
         metrics_path = "/probe";
         params = {module = ["http_2xx"];};
-        static_configs = [{targets = ["https://blog.kimb.dev"];}];
+        static_configs = [
+          {
+            targets = ["http://${blog.containerIP}:${toString blog.port}/"];
+            labels = {probe = "internal";};
+          }
+        ];
         relabel_configs = [
           {source_labels = ["__address__"]; target_label = "__param_target";}
-          {source_labels = ["__param_target"]; target_label = "instance";}
+          {target_label = "instance"; replacement = "blog.kimb.dev";}
           {target_label = "__address__"; replacement = "localhost:9115";}
         ];
       };
