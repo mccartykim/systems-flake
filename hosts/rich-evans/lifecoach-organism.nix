@@ -66,8 +66,16 @@ in {
     # Dashboard runs on 8586 (the old org-life-coach dashboard on
     # 8585 is mkForce-disabled below). No public reverse-proxy
     # entry exists for it — access is LAN/Nebula only.
+    #
+    # host = "0.0.0.0": the upstream module defaults to "127.0.0.1"
+    # (loopback-only, since the dashboard has no auth and serves
+    # agent.org). Override here to preserve mesh access from
+    # phone/laptop — the trust boundary is the nebula firewall
+    # (port 8586 rule in configuration.nix:144-148), not in-app auth.
+    # If you ever want ssh-tunnel-only access, drop this line.
     dashboard = {
       enable = true;
+      host = "0.0.0.0";
       port = 8586;
       openFirewall = true;
     };
