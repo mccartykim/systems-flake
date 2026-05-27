@@ -1,0 +1,9 @@
+5/27/2026, 9:51:08 AM
+Error: EROFS: read-only file system, open '/nix/store/3qjdgw5pqpx6p492s5amf4n480rhvlva-warewoolf-2.2.1/lib/node_modules/warewoolf/src/examples/Frankenstein/Frankenstein.woolf'
+    at Object.writeFileSync (node:fs:2414:20)
+    at Object.saveFile (/nix/store/3qjdgw5pqpx6p492s5amf4n480rhvlva-warewoolf-2.2.1/lib/node_modules/warewoolf/src/components/models/project.js:108:14)
+    at convertLegacyProject (file:///nix/store/3qjdgw5pqpx6p492s5amf4n480rhvlva-warewoolf-2.2.1/lib/node_modules/warewoolf/src/render.js:147:11)
+    at setProject (file:///nix/store/3qjdgw5pqpx6p492s5amf4n480rhvlva-warewoolf-2.2.1/lib/node_modules/warewoolf/src/render.js:125:7)
+    at loadInitialProject (file:///nix/store/3qjdgw5pqpx6p492s5amf4n480rhvlva-warewoolf-2.2.1/lib/node_modules/warewoolf/src/render.js:60:5)
+    at initialize (file:///nix/store/3qjdgw5pqpx6p492s5amf4n480rhvlva-warewoolf-2.2.1/lib/node_modules/warewoolf/src/render.js:46:3)
+    at file:///nix/store/3qjdgw5pqpx6p492s5amf4n480rhvlva-warewoolf-2.2.1/lib/node_modules/warewoolf/src/render.js:41:1
