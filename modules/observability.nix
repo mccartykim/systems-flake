@@ -19,6 +19,7 @@ with lib; let
 
   registry = import ../hosts/nebula-registry.nix;
   maitredIp = registry.nodes.maitred.ip;
+  journalSinkIp = registry.nodes.rich-evans.ip;
 in {
   options.kimb.observability = {
     enable = mkEnableOption "observability stack (node_exporter + journal-upload)";
@@ -34,14 +35,16 @@ in {
       extraFlags = ["--collector.textfile.directory=${textfileDir}"];
     };
 
-    # Forward journal to maitred for central aggregation
-    systemd.services.systemd-journal-upload = {
-      description = "Upload journal to maitred";
+    # Forward journal to the central sink (rich-evans). Skipped on the sink
+    # itself — rich-evans hosts kimb.journalRemote and would otherwise loop
+    # uploads to itself.
+    systemd.services.systemd-journal-upload = mkIf (config.networking.hostName != "rich-evans") {
+      description = "Upload journal to central sink";
       after = ["network.target"];
       wants = ["network.target"];
       wantedBy = ["multi-user.target"];
       serviceConfig = {
-        ExecStart = "${pkgs.systemd}/lib/systemd/systemd-journal-upload --url=http://${maitredIp}:${toString journalRemotePort}";
+        ExecStart = "${pkgs.systemd}/lib/systemd/systemd-journal-upload --url=http://${journalSinkIp}:${toString journalRemotePort}";
         User = "root";
         Restart = "always";
         RestartSec = "10s";

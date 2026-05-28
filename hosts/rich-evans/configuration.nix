@@ -34,6 +34,9 @@ in {
     # Restic backups to Backblaze B2
     ../../modules/restic-backup.nix
 
+    # Journal-remote receiver (sink for systemd-journal-upload from other hosts)
+    ../../modules/journal-remote-sink.nix
+
     # Matrix homeserver (Tuwunel) + Discord bridge
     ./matrix.nix
 
@@ -52,6 +55,9 @@ in {
 
   # Centralized observability (node_exporter + journal-upload + Nebula rule)
   kimb.observability.enable = true;
+
+  # Receive journal uploads from other observability hosts
+  kimb.journalRemote.enable = true;
 
   # Nebula configuration with server-specific firewall rules
   kimb.nebula = {

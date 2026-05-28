@@ -277,34 +277,6 @@ in {
     };
   };
 
-  # Journal remote sink — receives logs from all nebula hosts
-  users.users.systemd-journal-remote = {
-    isSystemUser = true;
-    group = "systemd-journal-remote";
-  };
-  users.groups.systemd-journal-remote = {};
-
-  systemd.tmpfiles.rules = [
-    "d /var/log/journal/remote 0755 systemd-journal-remote systemd-journal-remote -"
-  ];
-
-  systemd.sockets.systemd-journal-remote = {
-    description = "Journal Remote Sink";
-    listenStreams = ["19532"];
-    wantedBy = ["sockets.target"];
-  };
-
-  systemd.services.systemd-journal-remote = {
-    description = "Journal Remote Sink";
-    requires = ["systemd-journal-remote.socket"];
-    after = ["systemd-journal-remote.socket"];
-    serviceConfig = {
-      ExecStart = "${pkgs.systemd}/lib/systemd/systemd-journal-remote --output=/var/log/journal/remote/";
-      User = "systemd-journal-remote";
-      Group = "systemd-journal-remote";
-    };
-  };
-
   # Grafana visualization (host service)
   services.grafana = lib.mkIf cfg.services.grafana.enable {
     enable = true;
@@ -366,12 +338,12 @@ in {
       "br-lan".allowedTCPPorts = lib.flatten [
         (lib.optional cfg.services.grafana.enable cfg.services.grafana.port)
         (lib.optional cfg.services.prometheus.enable cfg.services.prometheus.port)
-        [9093 9100 19532] # alertmanager + node exporter + journal-remote
+        [9093 9100] # alertmanager + node exporter
       ];
       "nebula1".allowedTCPPorts = lib.flatten [
         (lib.optional cfg.services.grafana.enable cfg.services.grafana.port)
         (lib.optional cfg.services.prometheus.enable cfg.services.prometheus.port)
-        [9093 9100 19532] # alertmanager + node exporter + journal-remote
+        [9093 9100] # alertmanager + node exporter
       ];
     };
   };

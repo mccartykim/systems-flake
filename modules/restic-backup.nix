@@ -125,6 +125,9 @@ in {
         # === System-wide cache/temp ===
         "/var/cache"
         "/var/tmp"
+
+        # Journal sink — large, regenerable from senders
+        "/var/log/journal/remote"
       ];
     };
 
