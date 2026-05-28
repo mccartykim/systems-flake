@@ -328,7 +328,7 @@ in {
       FINAL=$DIR/lifecoach_staleness.prom
       NOW=$(${pkgs.coreutils}/bin/date +%s)
       if [ -f /var/lib/lifecoach-organism/.organism/last-run.json ]; then
-        LAST=$(${pkgs.jq}/bin/jq -r '.timestamp // 0' /var/lib/lifecoach-organism/.organism/last-run.json)
+        LAST=$(${pkgs.jq}/bin/jq -r '.epoch // 0' /var/lib/lifecoach-organism/.organism/last-run.json)
         STALE=$(( NOW - LAST ))
       else
         STALE=999999
