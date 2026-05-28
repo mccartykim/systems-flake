@@ -16,10 +16,7 @@
     ];
   };
 
-  programs.gamescope = {
-    enable = true;
-    capSysNice = true;
-  };
+  programs.gamescope.enable = true;
 
   # Virtualization for gaming
   virtualisation = {
