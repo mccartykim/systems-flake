@@ -36,22 +36,9 @@
   # Allow kimb to push closures via `nixos-rebuild --target-host`
   nix.settings.trusted-users = ["root" "kimb"];
 
-  # Writerdeck console: kmscon replaces the kernel VT for custom fonts
-  # and >16 colors. Required since this box has no X/Wayland.
-  services.kmscon = {
-    enable = true;
-    hwRender = true;
-    fonts = [
-      {
-        name = "BlexMono Nerd Font Mono";
-        package = pkgs.nerd-fonts.blex-mono;
-      }
-    ];
-    extraConfig = ''
-      font-size=14
-      xkb-layout=us
-    '';
-  };
+  # No kmscon. We run X on tty1 with emacs as the only client, so the
+  # kernel VT doesn't need the fancy font treatment. tty2-6 stay as
+  # plain getty (16 colors, kernel font) for the rare console use.
 
   # Syncthing for syncing writing across devices.
   # First-run: web UI on http://creme.nebula:8384 to pair folders/devices.
@@ -85,15 +72,26 @@
   # gpg-agent for mbsync PassCmd (decrypts ~/.authinfo.gpg).
   programs.gnupg.agent.enable = true;
 
-  # Bare X server for ad-hoc GUI apps via `startx`. No display manager,
-  # no window manager — `startx /run/current-system/sw/bin/emacs` (or a
-  # ~/.xinitrc that does `exec emacs`) launches a single fullscreen app.
+  # X server with `startx` only — no display manager, no window manager.
+  # emacs is the sole X client; vterm/eat host any shells you want.
   # Deliberate: no WM means no easy browser-tab goofing.
   services.xserver = {
     enable = true;
     displayManager.startx.enable = true;
     xkb.layout = "us";
   };
+
+  # After logging in on tty1, fish auto-execs startx → emacs fullscreen.
+  # tty2-6 stay as plain login prompts for the occasional console need.
+  # Override by writing your own ~/.xinitrc on creme (startx prefers that).
+  environment.etc."X11/xinit/xinitrc".text = ''
+    exec ${pkgs.emacs}/bin/emacs
+  '';
+  programs.fish.loginShellInit = ''
+    if test -z "$DISPLAY"; and test (tty) = /dev/tty1
+      exec startx
+    end
+  '';
 
   # Emacs daemon so `emacsclient -c` opens instantly. Starts on login.
   services.emacs.enable = true;
