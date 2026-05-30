@@ -72,6 +72,9 @@
 
   environment.systemPackages = with pkgs; [
     tmux
+    ncmpcpp
+    mpc
+    alsa-utils
     # acpi + brightnessctl already provided by laptop profile
   ];
 
@@ -85,10 +88,8 @@
     xkb.layout = "us";
   };
 
-  # Emacs daemon so `emacsclient -c` opens instantly.
-  # Linger keeps the daemon alive across logouts and starts it at boot.
+  # Emacs daemon so `emacsclient -c` opens instantly. Starts on login.
   services.emacs.enable = true;
-  users.users.kimb.linger = true;
 
   # Fonts. Blex Mono Nerd Font as primary; Google monochrome emoji noto
   # so emoji render cleanly without dragging in colored fallback bitmaps.
@@ -100,6 +101,48 @@
     monospace = ["BlexMono Nerd Font Mono"];
     emoji = ["Noto Emoji"];
   };
+
+  # Sound — pipewire with alsa+pulse compat. Skipping rtkit (low-latency
+  # RT priority is irrelevant for a music-player-only use case).
+  services.pipewire = {
+    enable = true;
+    alsa.enable = true;
+    pulse.enable = true;
+  };
+
+  # MPD runs as user kimb so the music dir can live in $HOME (where
+  # syncthing drops files from shared_music / compressed_music).
+  # Change musicDirectory after syncthing is set up if the path differs.
+  services.mpd = {
+    enable = true;
+    user = "kimb";
+    musicDirectory = "/home/kimb/Music";
+    dataDir = "/home/kimb/.local/share/mpd";
+    network.listenAddress = "127.0.0.1";
+  };
+
+  # Media + brightness keys via actkbd. Works in TTY and X — no WM needed.
+  # actkbd runs as root, so brightnessctl + amixer + mpc all work without
+  # user-session perms. Pipewire respects ALSA Master, so amixer keys do
+  # what you'd expect.
+  services.actkbd = {
+    enable = true;
+    bindings = [
+      # Brightness (Fn keys → /sys/class/backlight)
+      {keys = [224]; events = ["key"]; command = "${pkgs.brightnessctl}/bin/brightnessctl set 10%-";}
+      {keys = [225]; events = ["key"]; command = "${pkgs.brightnessctl}/bin/brightnessctl set +10%";}
+      # Volume (ALSA Master — pipewire honors it)
+      {keys = [113]; events = ["key"]; command = "${pkgs.alsa-utils}/bin/amixer -q set Master toggle";}
+      {keys = [114]; events = ["key"]; command = "${pkgs.alsa-utils}/bin/amixer -q set Master 5%-";}
+      {keys = [115]; events = ["key"]; command = "${pkgs.alsa-utils}/bin/amixer -q set Master 5%+";}
+      # Media (mpc → mpd on localhost:6600)
+      {keys = [164]; events = ["key"]; command = "${pkgs.mpc}/bin/mpc toggle";}
+      {keys = [163]; events = ["key"]; command = "${pkgs.mpc}/bin/mpc next";}
+      {keys = [165]; events = ["key"]; command = "${pkgs.mpc}/bin/mpc prev";}
+    ];
+  };
+
+  users.users.kimb.extraGroups = ["audio" "video"];
 
   system.stateVersion = "25.11";
 }
