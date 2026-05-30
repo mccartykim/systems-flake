@@ -75,8 +75,15 @@
     ncmpcpp
     mpc
     alsa-utils
+    # mu4e stack — `mu` provides both the binary and emacsPackages.mu4e
+    mu
+    isync
+    gnupg
     # acpi + brightnessctl already provided by laptop profile
   ];
+
+  # gpg-agent for mbsync PassCmd (decrypts ~/.authinfo.gpg).
+  programs.gnupg.agent.enable = true;
 
   # Bare X server for ad-hoc GUI apps via `startx`. No display manager,
   # no window manager — `startx /run/current-system/sw/bin/emacs` (or a
@@ -152,7 +159,10 @@
     ];
   };
 
-  users.users.kimb.extraGroups = ["audio" "video"];
+  # tty: lets `startx` open /dev/tty0 without setuid Xorg.
+  # NOTE: start X from a non-kmscon VT (Ctrl+Alt+F2 → login → `startx`),
+  # otherwise kmscon@tty1 holds the DRM device.
+  users.users.kimb.extraGroups = ["audio" "video" "tty"];
 
   system.stateVersion = "25.11";
 }
