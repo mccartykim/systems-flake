@@ -9,7 +9,7 @@
   inherit (config.flake.lib) mkDesktop mkServer mkHomeManager commonModules;
 in {
   flake.nixosConfigurations = {
-    # Dell E6400 ARG writerdeck — headless network appliance
+    # Dell E6400 ATG writerdeck — console-only network appliance
     creme = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
       specialArgs = {

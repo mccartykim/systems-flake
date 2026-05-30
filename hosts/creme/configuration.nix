@@ -1,4 +1,4 @@
-# creme - Dell Latitude E6400 ARG writerdeck
+# creme - Dell Latitude E6400 ATG writerdeck
 # Console-only network appliance — no X/Wayland; syncthing will sync text later.
 {
   config,
