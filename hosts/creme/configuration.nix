@@ -14,6 +14,7 @@
   ];
 
   networking.hostName = "creme";
+  networking.networkmanager.enable = true;
 
   # BIOS boot on /dev/sda (no EFI on the E6400)
   boot.loader.systemd-boot.enable = lib.mkForce false;
@@ -67,6 +68,10 @@
     isync
     gnupg
     # acpi + brightnessctl already provided by laptop profile
+    git
+    gh
+    jujutsu
+    helix
   ];
 
   # gpg-agent for mbsync PassCmd (decrypts ~/.authinfo.gpg).
