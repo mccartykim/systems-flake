@@ -41,7 +41,12 @@
   services.kmscon = {
     enable = true;
     hwRender = true;
-    fonts = [{name = "Iosevka"; package = pkgs.iosevka;}];
+    fonts = [
+      {
+        name = "BlexMono Nerd Font Mono";
+        package = pkgs.nerd-fonts.blex-mono;
+      }
+    ];
     extraConfig = ''
       font-size=14
       xkb-layout=us
@@ -81,7 +86,20 @@
   };
 
   # Emacs daemon so `emacsclient -c` opens instantly.
+  # Linger keeps the daemon alive across logouts and starts it at boot.
   services.emacs.enable = true;
+  users.users.kimb.linger = true;
+
+  # Fonts. Blex Mono Nerd Font as primary; Google monochrome emoji noto
+  # so emoji render cleanly without dragging in colored fallback bitmaps.
+  fonts.packages = with pkgs; [
+    nerd-fonts.blex-mono
+    noto-fonts-monochrome-emoji
+  ];
+  fonts.fontconfig.defaultFonts = {
+    monospace = ["BlexMono Nerd Font Mono"];
+    emoji = ["Noto Emoji"];
+  };
 
   system.stateVersion = "25.11";
 }
