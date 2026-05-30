@@ -1,8 +1,8 @@
 """SRE Agent LLM client — hybrid local Ollama + Ollama Cloud fallback.
 
-Primary: local Ollama on total-eclipse with format:json for structured output.
-Fallback: Ollama Cloud with free-form text parsing when local is unavailable.
-Cache: responses cached in STATE_DIR/llm-cache.jsonl keyed by alert fingerprint.
+Both paths use Ollama's JSON Schema structured-output mode (TRIAGE_SCHEMA)
+so even small models reliably emit valid output. Cache: responses cached in
+STATE_DIR/llm-cache.jsonl keyed by alert fingerprint.
 """
 import hashlib
 import json
@@ -59,9 +59,9 @@ CLOUD_OLLAMA_HOST = os.environ.get(
 CLOUD_OLLAMA_MODEL = os.environ.get("OLLAMA_CLOUD_MODEL", "gemma4:31b")
 CLOUD_OLLAMA_KEY_FILE = os.environ.get("OLLAMA_CLOUD_KEY_FILE", "")
 
-LOCAL_TIMEOUT = 60
-CLOUD_TIMEOUT = 120
-MAX_RETRIES = 2
+LOCAL_TIMEOUT = 180
+CLOUD_TIMEOUT = 300
+MAX_RETRIES = 1
 CACHE_TTL_SECONDS = 3600  # 1 hour
 
 TRIAGE_SYSTEM_PROMPT = """You are an SRE triage assistant. Analyze this alert.
@@ -73,6 +73,21 @@ Respond with a JSON object with these fields:
 - file_issue: true or false
 - issue_title: suggested GitHub issue title (empty string if not filing)
 - silence_hours: integer, hours to silence (0=never, 2=info alerts, 4=noise alerts, 24=persistent noise)"""
+
+# JSON Schema for Ollama's structured-output mode — constrains decoding so
+# small models (e.g. gemma4:e4b) reliably emit valid output.
+TRIAGE_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "severity": {"type": "string", "enum": ["critical", "warning", "info", "noise"]},
+        "cause": {"type": "string"},
+        "action": {"type": "string"},
+        "file_issue": {"type": "boolean"},
+        "issue_title": {"type": "string"},
+        "silence_hours": {"type": "integer"},
+    },
+    "required": ["severity", "cause", "action", "file_issue", "issue_title", "silence_hours"],
+}
 
 
 # --- Free-form response parser ---
@@ -175,7 +190,7 @@ def _get_cloud_model():
 
 
 def _call_local_ollama(prompt: str) -> Optional[TriageResult]:
-    """Call local Ollama with format:json for structured output."""
+    """Call local Ollama with JSON Schema structured output."""
     url = f"{_get_local_host()}/api/chat"
     payload = json.dumps({
         "model": _get_local_model(),
@@ -184,7 +199,7 @@ def _call_local_ollama(prompt: str) -> Optional[TriageResult]:
             {"role": "user", "content": prompt},
         ],
         "stream": False,
-        "format": "json",
+        "format": TRIAGE_SCHEMA,
         "options": {"temperature": 0.1},
     }).encode()
 
@@ -213,7 +228,7 @@ def _call_local_ollama(prompt: str) -> Optional[TriageResult]:
 
 
 def _call_cloud_ollama(prompt: str) -> Optional[TriageResult]:
-    """Call fallback Ollama (historian) with free-form parsing."""
+    """Call fallback Ollama (historian) with JSON Schema structured output."""
     key_file = os.environ.get("OLLAMA_CLOUD_KEY_FILE", CLOUD_OLLAMA_KEY_FILE)
     url = f"{_get_cloud_host()}/api/chat"
     headers = {"Content-Type": "application/json", "User-Agent": "sre-agent/1.0"}
@@ -233,18 +248,25 @@ def _call_cloud_ollama(prompt: str) -> Optional[TriageResult]:
             {"role": "user", "content": prompt},
         ],
         "stream": False,
+        "format": TRIAGE_SCHEMA,
+        "options": {"temperature": 0.1},
     }).encode()
 
     for attempt in range(MAX_RETRIES):
+        content = ""
         try:
             req = urllib.request.Request(url, data=payload, headers=headers)
             resp = urllib.request.urlopen(req, timeout=CLOUD_TIMEOUT)
             body = json.loads(resp.read().decode())
             content = body.get("message", {}).get("content", "")
+            parsed = json.loads(content)
+            return TriageResult.from_dict(parsed)
+        except (json.JSONDecodeError, KeyError, TypeError) as e:
+            # Schema-constrained output should always parse; fall back to free-form just in case.
+            print(f"llm: cloud parse error (attempt {attempt+1}): {e}", file=sys.stderr)
             result = parse_freeform_response(content)
-            if result is None:
-                print(f"llm: cloud response unparseable (attempt {attempt+1}): {content[:200]}", file=sys.stderr)
-            return result
+            if result:
+                return result
         except (urllib.error.URLError, TimeoutError, ConnectionError, OSError) as e:
             print(f"llm: cloud connection error (attempt {attempt+1}): {e}", file=sys.stderr)
             continue

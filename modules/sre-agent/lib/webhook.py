@@ -19,6 +19,16 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 _last_discord_post = 0
 _DISCORD_MIN_INTERVAL = 1.0  # seconds between posts
 
+# Per-alertname dedupe: drop repeated fire/triage posts for the same alertname
+# within this window. alertmanager's repeat_interval is 4h, so anything shorter
+# is a burst from the agent itself (retries, triage cascades) and worth squashing.
+_alertname_last_post = {}
+_ALERTNAME_DEDUPE_SECONDS = 600  # 10 minutes
+
+# Alerts that should never be triaged via LLM — including alerts about the LLM
+# itself (recursive loop: agent can't reach ollama → triage call to ollama → ...)
+SKIP_TRIAGE_ALERTS = {"OllamaUnreachable", "NodeExporterDown"}
+
 
 def _env(key, default=""):
     return os.environ.get(key, default)
@@ -74,6 +84,22 @@ def post_discord(msg):
         print(f"discord post failed: {e}", file=sys.stderr)
 
 
+def post_discord_for_alert(alertname, msg):
+    """Post to Discord, dropping bursts of the same alertname.
+
+    Used for fire/triage messages where alertmanager re-fires + agent retries
+    can flood the channel. One-shot messages (resolved, issue created,
+    silenced) should call post_discord() directly.
+    """
+    now = time.monotonic()
+    last = _alertname_last_post.get(alertname, 0)
+    if now - last < _ALERTNAME_DEDUPE_SECONDS:
+        print(f"discord: deduped {alertname} (last post {int(now - last)}s ago)", file=sys.stderr)
+        return
+    _alertname_last_post[alertname] = now
+    post_discord(msg)
+
+
 def format_alert(payload):
     """Format an Alertmanager webhook payload into a Discord-ready message.
 
@@ -116,11 +142,16 @@ def run_triage(alert):
     if not enable_llm:
         return None
 
-    from llm_client import triage
     labels = alert.get("labels", {})
+    alertname = labels.get("alertname", "unknown")
+    if alertname in SKIP_TRIAGE_ALERTS:
+        print(f"triage: skipping {alertname} (in SKIP_TRIAGE_ALERTS)", file=sys.stderr)
+        return None
+
+    from llm_client import triage
     annotations = alert.get("annotations", {})
     return triage(
-        alertname=labels.get("alertname", "unknown"),
+        alertname=alertname,
         severity=labels.get("severity", "unknown"),
         instance=labels.get("instance", "?"),
         summary=annotations.get("summary", annotations.get("description", "")),
@@ -180,10 +211,12 @@ class WebhookHandler(http.server.BaseHTTPRequestHandler):
         with open(alerts_log, "a") as f:
             f.write(json.dumps({"ts": datetime.now(timezone.utc).isoformat(), **payload}) + "\n")
 
-        # Format for Discord
+        # Format for Discord — dedupe per alertname (alertmanager groups by alertname+instance)
         msg = format_alert(payload)
         print(msg)
-        post_discord(msg)
+        alerts = payload.get("alerts", [])
+        primary_alertname = alerts[0].get("labels", {}).get("alertname", "unknown") if alerts else "unknown"
+        post_discord_for_alert(primary_alertname, msg)
 
         # Handle resolved alerts — close GitHub issues
         if payload.get("status") == "resolved":
@@ -215,7 +248,8 @@ class WebhookHandler(http.server.BaseHTTPRequestHandler):
                 )
                 if result.file_issue:
                     triage_msg += f" | Filing issue: {result.issue_title or 'yes'}"
-                post_discord(triage_msg)
+                alertname = alert.get("labels", {}).get("alertname", "unknown")
+                post_discord_for_alert(f"{alertname}:triage", triage_msg)
 
                 # Maybe create a GitHub issue
                 issue_url, was_created = maybe_file_issue(alert, result)
