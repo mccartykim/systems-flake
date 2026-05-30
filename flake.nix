@@ -276,6 +276,7 @@
           eval-rich-evans = self.nixosConfigurations.rich-evans.config.system.build.toplevel;
           eval-cheesecake = self.nixosConfigurations.cheesecake.config.system.build.toplevel;
           eval-donut = self.nixosConfigurations.donut.config.system.build.toplevel;
+          eval-creme = self.nixosConfigurations.creme.config.system.build.toplevel;
         };
       };
 

@@ -9,16 +9,16 @@
   inherit (config.flake.lib) mkDesktop mkServer mkHomeManager commonModules;
 in {
   flake.nixosConfigurations = {
-    # Dell E6400 ARG laptop
+    # Dell E6400 ARG writerdeck — headless network appliance
     creme = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
       specialArgs = {
         inherit inputs;
         outputs = self;
       };
-      modules = [
-       (self + "/hosts/creme/configuration.nix")
-      ];
+      modules =
+        commonModules
+        ++ [(self + "/hosts/creme/configuration.nix")];
     };
 
     # Surface 3 Go tablet

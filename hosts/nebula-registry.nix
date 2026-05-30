@@ -162,6 +162,19 @@ let
       };
     };
 
+    creme = {
+      ip = "10.100.0.9";
+      role = "laptop";
+      groups = ["laptops" "nixos"];
+      publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEtDhYwQgY20zQCb+pInMZBOIBJQ/AGN23Q6SjrzENGM";
+      meta = {
+        hardware = "Dell Latitude E6400 ARG (Core 2 Duo)";
+        purpose = "Writerdeck appliance — console-only, syncthing for text sync";
+        name = "Sweets naming theme - creme";
+        notes = "Console device, no X/Wayland. BIOS boot, GRUB on /dev/sda.";
+      };
+    };
+
     tachikoma = {
       ip = "10.100.0.60";
       role = "iot";
