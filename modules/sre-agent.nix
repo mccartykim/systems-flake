@@ -85,7 +85,7 @@ in {
 
     ollamaCloudModel = mkOption {
       type = types.str;
-      default = "gemma4:31b";
+      default = "gemma4:e4b";
       description = "Fallback Ollama model on historian";
     };
 
