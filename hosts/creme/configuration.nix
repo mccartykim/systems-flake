@@ -121,6 +121,16 @@
     network.listenAddress = "127.0.0.1";
   };
 
+  # MPD as a user-owned service needs its dirs to exist; systemd won't
+  # create paths under /home automatically.
+  systemd.tmpfiles.rules = [
+    "d /home/kimb/Music                 0755 kimb users -"
+    "d /home/kimb/.local                0755 kimb users -"
+    "d /home/kimb/.local/share          0755 kimb users -"
+    "d /home/kimb/.local/share/mpd      0755 kimb users -"
+    "d /home/kimb/.local/share/mpd/playlists 0755 kimb users -"
+  ];
+
   # Media + brightness keys via actkbd. Works in TTY and X — no WM needed.
   # actkbd runs as root, so brightnessctl + amixer + mpc all work without
   # user-session perms. Pipewire respects ALSA Master, so amixer keys do
