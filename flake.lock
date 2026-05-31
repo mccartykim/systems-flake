@@ -717,11 +717,11 @@
     "kimb-blog-content": {
       "flake": false,
       "locked": {
-        "lastModified": 1780184737,
-        "narHash": "sha256-4+TQU8iKJi6Btorjd09CeO+sGqPOwS3JmpFR7+HALSI=",
+        "lastModified": 1780197478,
+        "narHash": "sha256-pUEtF13U9cEOrQyLYP4rhrjkd9lwxPe2tx1T1rMh8o4=",
         "ref": "refs/heads/main",
-        "rev": "9b1b0c3137c05a216eb96944762296c457920406",
-        "revCount": 6,
+        "rev": "78ee299185d6d6965d673e6da765c77f02d6f3b0",
+        "revCount": 9,
         "type": "git",
         "url": "https://github.com/mccartykim/kimb-blog-content.git"
       },
