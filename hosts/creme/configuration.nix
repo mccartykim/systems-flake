@@ -122,13 +122,15 @@
     set $mod Mod4
     font pango:BlexMono Nerd Font Mono 10
 
-    # Autostart on first launch
-    exec --no-startup-id emacsclient -c -a "emacs"
-    exec --no-startup-id alacritty -e tmux new-session -A -s main
+    # Autostart on first launch. emacsclient polls until the systemd-managed
+    # emacs daemon is up — we DON'T use -a fallback because that'd race-spawn
+    # a standalone emacs that steals the server socket from the daemon.
+    exec --no-startup-id sh -c 'while ! emacsclient -e t >/dev/null 2>&1; do sleep 1; done; emacsclient -c'
+    exec --no-startup-id alacritty --config-file /etc/alacritty.toml -e tmux new-session -A -s main
 
-    # Launchers
-    bindsym $mod+Return exec alacritty -e tmux new-session -A -s main
-    bindsym $mod+e exec emacsclient -c -a "emacs"
+    # Launchers (daemon is guaranteed up by the time these fire post-login)
+    bindsym $mod+Return exec alacritty --config-file /etc/alacritty.toml -e tmux new-session -A -s main
+    bindsym $mod+e exec emacsclient -c
     bindsym $mod+d exec dmenu_run -fn 'BlexMono Nerd Font Mono-10'
 
     # Window management
@@ -179,6 +181,42 @@
       position top
       font pango:BlexMono Nerd Font Mono 9
     }
+  '';
+
+  # Alacritty theme — Nord palette, muted dark for less eye strain than
+  # the default white-on-black. Alacritty doesn't read /etc/xdg, so we
+  # have to point each i3 launcher at this with --config-file.
+  environment.etc."alacritty.toml".text = ''
+    [font]
+    normal = { family = "BlexMono Nerd Font Mono", style = "Regular" }
+    size = 11.0
+
+    [window]
+    padding = { x = 4, y = 4 }
+
+    [colors.primary]
+    background = "#2e3440"
+    foreground = "#d8dee9"
+
+    [colors.normal]
+    black   = "#3b4252"
+    red     = "#bf616a"
+    green   = "#a3be8c"
+    yellow  = "#ebcb8b"
+    blue    = "#81a1c1"
+    magenta = "#b48ead"
+    cyan    = "#88c0d0"
+    white   = "#e5e9f0"
+
+    [colors.bright]
+    black   = "#4c566a"
+    red     = "#bf616a"
+    green   = "#a3be8c"
+    yellow  = "#ebcb8b"
+    blue    = "#81a1c1"
+    magenta = "#b48ead"
+    cyan    = "#8fbcbb"
+    white   = "#eceff4"
   '';
 
   # i3status config with battery / volume / clock
