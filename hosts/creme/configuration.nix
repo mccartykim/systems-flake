@@ -217,8 +217,15 @@
   # build time from the in-flake hosts/creme/doom.d/, so M-x customize Save
   # silently fails (the dir is in /nix/store, read-only). Runtime state
   # lives in $XDG_DATA_HOME/nix-doom (default), which IS writable.
+  #
+  # startWithGraphical=false because we use bare startx (no display manager);
+  # graphical-session.target never fires under PAM, so it'd never start the
+  # daemon. With default.target, the daemon starts at user login regardless
+  # of X — emacsclient -c passes DISPLAY at request time so GUI frames still
+  # work fine when called from inside i3.
   services.emacs = {
     enable = true;
+    startWithGraphical = false;
     package = pkgs.emacsWithDoom {
       doomDir = ./doom.d;
       doomLocalDir = "~/.local/share/nix-doom";
