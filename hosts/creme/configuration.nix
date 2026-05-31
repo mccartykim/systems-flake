@@ -282,10 +282,14 @@
     emoji = ["Noto Emoji"];
   };
 
-  # Sound — pipewire with alsa+pulse compat. Skipping rtkit (low-latency
-  # RT priority is irrelevant for a music-player-only use case).
+  # Sound — pipewire SYSTEM-WIDE so the system mpd service can reach it.
+  # Per-user pipewire would be cleaner on a multi-user desktop, but creme
+  # is a single-user writerdeck and the system mpd needs an audio socket
+  # that doesn't depend on a user session. Discouraged-but-supported per
+  # the NixOS pipewire.nix docs. kimb needs to be in `pipewire` group.
   services.pipewire = {
     enable = true;
+    systemWide = true;
     alsa.enable = true;
     pulse.enable = true;
   };
@@ -299,6 +303,17 @@
     musicDirectory = "/home/kimb/Music";
     dataDir = "/home/kimb/.local/share/mpd";
     network.listenAddress = "127.0.0.1";
+    # Explicit pulse output → routed through systemWide pipewire-pulse.
+    # Without this mpd auto-detects JACK first (binary has libjack linked)
+    # and fails to connect to a non-existent JACK server.
+    settings = {
+      audio_output = [
+        {
+          type = "pulse";
+          name = "pipewire (pulse)";
+        }
+      ];
+    };
   };
 
   # MPD as a user-owned service needs its dirs to exist; systemd won't
@@ -335,7 +350,7 @@
   # tty: lets `startx` open /dev/tty0 without setuid Xorg.
   # NOTE: start X from a non-kmscon VT (Ctrl+Alt+F2 → login → `startx`),
   # otherwise kmscon@tty1 holds the DRM device.
-  users.users.kimb.extraGroups = ["audio" "video" "tty"];
+  users.users.kimb.extraGroups = ["audio" "video" "tty" "pipewire"];
 
   system.stateVersion = "25.11";
 }
