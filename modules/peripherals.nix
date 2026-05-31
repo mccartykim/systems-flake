@@ -12,11 +12,9 @@
         ids = ["0853:0200"];
         settings = {
           main = {
-            muhenkan = "backspace";
-            henkan = "rightcontrol";
-            katakanahiragana = "layer(hyper)";
+            muhenkan = "backspace"; # left of space
+            henkan = "esc"; # right of space — pairs with bksp
           };
-          "hyper:C-S-M-A" = {};
         };
       };
     };
