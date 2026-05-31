@@ -9,6 +9,7 @@
 }: {
   imports = [
     ./hardware-configuration.nix
+    ./disk-encryption.nix
     ../profiles/base.nix
     ../profiles/laptop.nix
     ../../modules/nebula-node.nix
@@ -26,6 +27,15 @@
 
   networking.hostName = "creme";
   networking.networkmanager.enable = true;
+
+  # Hide factory MAC (Dell OUI 00:24:e8) — static random in the locally-
+  # administered range so DHCP/mDNS stay coherent on the home LAN.
+  networking.interfaces.enp0s25.macAddress = "02:de:ad:be:ef:01";
+
+  # WiFi: per-AP randomization. Mostly meaningful when the writerdeck
+  # leaves the house.
+  networking.networkmanager.wifi.macAddress = "random";
+  networking.networkmanager.wifi.scanRandMacAddress = true;
 
   # BIOS boot on /dev/sda (no EFI on the E6400)
   boot.loader.systemd-boot.enable = lib.mkForce false;
