@@ -39,6 +39,10 @@
   # Use latest kernel for hardware compat on this old box
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
+  # TEMP: relax /dev/mem checks so flashprog can do internal SPI flashing
+  # for libreboot install. Remove after flashing.
+  boot.kernelParams = ["iomem=relaxed"];
+
   # Nebula mesh - reachable from your other personal devices
   kimb.nebula = {
     enable = true;
