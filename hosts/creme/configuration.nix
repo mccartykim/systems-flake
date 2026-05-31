@@ -77,25 +77,129 @@
   # gpg-agent for mbsync PassCmd (decrypts ~/.authinfo.gpg).
   programs.gnupg.agent.enable = true;
 
-  # X server with `startx` only — no display manager, no window manager.
-  # emacs is the sole X client; vterm/eat host any shells you want.
-  # Deliberate: no WM means no easy browser-tab goofing.
+  # X server with `startx` only — no display manager.
+  # i3 is the WM; auto-launches emacsclient + alacritty(tmux) on workspace 1.
   services.xserver = {
     enable = true;
     displayManager.startx.enable = true;
     xkb.layout = "us";
+    windowManager.i3 = {
+      enable = true;
+      extraPackages = with pkgs; [
+        dmenu
+        i3status
+        alacritty
+      ];
+    };
   };
 
-  # After logging in on tty1, fish auto-execs startx → emacs fullscreen.
+  # After logging in on tty1, fish auto-execs startx → i3.
   # tty2-6 stay as plain login prompts for the occasional console need.
-  # Override by writing your own ~/.xinitrc on creme (startx prefers that).
+  # Override by writing your own ~/.xinitrc / ~/.config/i3/config on creme.
   environment.etc."X11/xinit/xinitrc".text = ''
-    exec ${pkgs.emacs}/bin/emacs
+    exec i3
   '';
   programs.fish.loginShellInit = ''
     if test -z "$DISPLAY"; and test (tty) = /dev/tty1
       exec startx
     end
+  '';
+
+  # Default i3 config — emacsclient + alacritty(tmux) auto-spawn on
+  # workspace 1, vim-style focus keys, BlexMono font. User can override
+  # via ~/.config/i3/config (i3 prefers $XDG_CONFIG_HOME).
+  environment.etc."i3/config".text = ''
+    set $mod Mod4
+    font pango:BlexMono Nerd Font Mono 10
+
+    # Autostart on first launch
+    exec --no-startup-id emacsclient -c -a "emacs"
+    exec --no-startup-id alacritty -e tmux new-session -A -s main
+
+    # Launchers
+    bindsym $mod+Return exec alacritty -e tmux new-session -A -s main
+    bindsym $mod+e exec emacsclient -c -a "emacs"
+    bindsym $mod+d exec dmenu_run -fn 'BlexMono Nerd Font Mono-10'
+
+    # Window management
+    bindsym $mod+Shift+q kill
+    bindsym $mod+f fullscreen toggle
+    bindsym $mod+s split h
+    bindsym $mod+v split v
+
+    # Focus (vim keys)
+    bindsym $mod+h focus left
+    bindsym $mod+j focus down
+    bindsym $mod+k focus up
+    bindsym $mod+l focus right
+
+    # Move (vim keys + shift)
+    bindsym $mod+Shift+h move left
+    bindsym $mod+Shift+j move down
+    bindsym $mod+Shift+k move up
+    bindsym $mod+Shift+l move right
+
+    # Workspaces 1-9
+    bindsym $mod+1 workspace number 1
+    bindsym $mod+2 workspace number 2
+    bindsym $mod+3 workspace number 3
+    bindsym $mod+4 workspace number 4
+    bindsym $mod+5 workspace number 5
+    bindsym $mod+6 workspace number 6
+    bindsym $mod+7 workspace number 7
+    bindsym $mod+8 workspace number 8
+    bindsym $mod+9 workspace number 9
+    bindsym $mod+Shift+1 move container to workspace number 1
+    bindsym $mod+Shift+2 move container to workspace number 2
+    bindsym $mod+Shift+3 move container to workspace number 3
+    bindsym $mod+Shift+4 move container to workspace number 4
+    bindsym $mod+Shift+5 move container to workspace number 5
+    bindsym $mod+Shift+6 move container to workspace number 6
+    bindsym $mod+Shift+7 move container to workspace number 7
+    bindsym $mod+Shift+8 move container to workspace number 8
+    bindsym $mod+Shift+9 move container to workspace number 9
+
+    # Reload / restart
+    bindsym $mod+Shift+c reload
+    bindsym $mod+Shift+r restart
+
+    # Statusbar: battery + volume + clock + workspaces
+    bar {
+      status_command i3status
+      position top
+      font pango:BlexMono Nerd Font Mono 9
+    }
+  '';
+
+  # i3status config with battery / volume / clock
+  environment.etc."i3status.conf".text = ''
+    general {
+      colors = true
+      interval = 5
+    }
+
+    order += "battery 0"
+    order += "volume master"
+    order += "tztime local"
+
+    battery 0 {
+      format = "%status %percentage %remaining"
+      format_down = ""
+      path = "/sys/class/power_supply/BAT%d/uevent"
+      low_threshold = 10
+    }
+
+    volume master {
+      format = "♪ %volume"
+      format_muted = "♪ muted"
+      device = "default"
+      mixer = "Master"
+      mixer_idx = 0
+    }
+
+    tztime local {
+      format = "%Y-%m-%d %H:%M"
+    }
   '';
 
   # Emacs daemon so `emacsclient -c` opens instantly. Starts on login.
