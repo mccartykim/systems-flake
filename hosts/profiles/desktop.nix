@@ -5,6 +5,8 @@
   pkgs,
   ...
 }: {
+  imports = [../../modules/peripherals.nix];
+
   # Services configuration
   services = {
     # X11 and display manager
@@ -49,29 +51,8 @@
     # Flatpak support
     flatpak.enable = true;
 
-    # Key remapping daemon (works on X11 and Wayland)
-    keyd = {
-      enable = true;
-      keyboards = {
-        # Realforce JIS keyboard - remap Asian character keys
-        # Find ID with: keyd -m (or lsusb | grep -i topre)
-        realforce = {
-          ids = ["0853:0200"]; # Topre RealForce Compact
-          settings = {
-            main = {
-              # Muhenkan (left of space) → Backspace
-              muhenkan = "backspace";
-              # Henkan (right of space) → Right Ctrl
-              henkan = "rightcontrol";
-              # Katakanahiragana (further right) → Hyper (all mods when held)
-              katakanahiragana = "layer(hyper)";
-            };
-            # Hyper layer: any key pressed while held gets all modifiers
-            "hyper:C-S-M-A" = {};
-          };
-        };
-      };
-    };
+    # Key remapping (Topre Realforce etc.) lives in modules/peripherals.nix
+    # so non-desktop hosts (like the creme writerdeck) can pick it up too.
   };
 
   # Security configuration

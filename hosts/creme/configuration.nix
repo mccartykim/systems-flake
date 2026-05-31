@@ -12,6 +12,7 @@
     ../profiles/base.nix
     ../profiles/laptop.nix
     ../../modules/nebula-node.nix
+    ../../modules/peripherals.nix
   ];
 
   # Doom Emacs as a Nix derivation. Built once (on marshmallow/historian
@@ -77,6 +78,8 @@
     mu
     isync
     gnupg
+    # Spellcheck for doom's :checkers spell module
+    (hunspellWithDicts [hunspellDicts.en_US])
     # acpi + brightnessctl already provided by laptop profile
     git
     gh
