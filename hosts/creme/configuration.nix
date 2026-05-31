@@ -4,6 +4,7 @@
   config,
   lib,
   pkgs,
+  inputs,
   ...
 }: {
   imports = [
@@ -11,6 +12,15 @@
     ../profiles/base.nix
     ../profiles/laptop.nix
     ../../modules/nebula-node.nix
+  ];
+
+  # Doom Emacs as a Nix derivation. Built once (on marshmallow/historian
+  # or substituted from the cachix), no per-host doom sync needed.
+  nixpkgs.overlays = [inputs.nix-doom-emacs-unstraightened.overlays.default];
+
+  nix.settings.substituters = ["https://doom-emacs-unstraightened.cachix.org/"];
+  nix.settings.trusted-public-keys = [
+    "doom-emacs-unstraightened.cachix.org-1:O5oOlRPnmQEvVaFyuMTmthCEooHbrg54WgSLR07tmg4="
   ];
 
   networking.hostName = "creme";
@@ -202,8 +212,19 @@
     }
   '';
 
-  # Emacs daemon so `emacsclient -c` opens instantly. Starts on login.
-  services.emacs.enable = true;
+  # Emacs daemon (services.emacs creates user systemd unit, fires on login).
+  # Uses the nix-doom-emacs-unstraightened wrapper — doomDir is read at
+  # build time from the in-flake hosts/creme/doom.d/, so M-x customize Save
+  # silently fails (the dir is in /nix/store, read-only). Runtime state
+  # lives in $XDG_DATA_HOME/nix-doom (default), which IS writable.
+  services.emacs = {
+    enable = true;
+    package = pkgs.emacsWithDoom {
+      doomDir = ./doom.d;
+      doomLocalDir = "~/.local/share/nix-doom";
+      extraPackages = epkgs: [epkgs.treesit-grammars.with-all-grammars];
+    };
+  };
 
   # Fonts. Blex Mono Nerd Font as primary; Google monochrome emoji noto
   # so emoji render cleanly without dragging in colored fallback bitmaps.

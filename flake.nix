@@ -123,6 +123,13 @@
     # Infrastructure/network diagram generator from NixOS configs
     nix-topology.url = "github:oddlama/nix-topology";
     nix-topology.inputs.nixpkgs.follows = "nixpkgs";
+
+    # Doom Emacs as a Nix derivation — built once on historian/marshmallow,
+    # creme substitutes from binary cache. Eliminates per-host doom sync.
+    # Cachix substituter (doom-emacs-unstraightened.cachix.org) is wired in
+    # creme's config; user doomdir lives at hosts/creme/doom.d/.
+    nix-doom-emacs-unstraightened.url = "github:marienz/nix-doom-emacs-unstraightened";
+    nix-doom-emacs-unstraightened.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs = {
