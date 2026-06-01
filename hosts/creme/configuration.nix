@@ -107,13 +107,17 @@
     helix
     # Three st variants from mccartykim/st (multi-fork-packaging branch).
     # All three forks' upstream Makefiles install the binary as `st`, so
-    # exposing all three system-wide creates a collision. We let vanilla
-    # `st` win the bare `st` command, and symlink-rename the other two so
-    # they're callable as `st-snazzy` and `st-luke` distinct commands.
-    #   st           — vanilla 0.9.3, cleanest kerning, no scrollback
-    #   st-snazzy    — siduck/st, gruvbox, harfbuzz ligatures, alpha=1.0
-    #   st-luke      — LukeSmithxyz/st, gruvbox, alpha=0.8 + scrollback +
-    #                  font2 emoji fallback + boxdraw
+    # exposing all three creates a collision. We let vanilla `st` win the
+    # bare `st` command, and symlink-rename the other two so they're
+    # callable as `st-snazzy` and `st-luke` distinct commands.
+    #   st           — vanilla 0.9.3, cleanest kerning, no scrollback,
+    #                  opaque (no alpha patch in this fork)
+    #   st-snazzy    — siduck/st, gruvbox, harfbuzz ligatures; opaque
+    #                  default (alpha=1.0) via the schema
+    #   st-luke      — LukeSmithxyz/st, gruvbox + scrollback + font2 emoji
+    #                  fallback + boxdraw + alpha. Explicitly tuned below
+    #                  so the PDX-carpet wallpaper shows through cells
+    #                  without harming text legibility.
     inputs.st.packages.${pkgs.system}.st
     (pkgs.runCommand "st-snazzy-renamed" { } ''
       mkdir -p $out/bin
@@ -121,7 +125,26 @@
     '')
     (pkgs.runCommand "st-luke-renamed" { } ''
       mkdir -p $out/bin
-      ln -s ${inputs.st.packages.${pkgs.system}.st-luke}/bin/st $out/bin/st-luke
+      ln -s ${
+        (inputs.st.packages.${pkgs.system}.st-luke).override {
+          config = {
+            # Bigger default so it's readable on the E6400's 1440×900 panel.
+            font  = "mono:pixelsize=18:antialias=true:autohint=true";
+            # Monochrome line-drawn emoji — Noto Color Emoji's blobby SVG
+            # glyphs look terrible against cell text. Noto Emoji is the
+            # plain-glyph sibling, treats emoji as ordinary monospace
+            # glyphs that share baseline/metrics with the primary font.
+            font2 = [ "Noto Emoji:pixelsize=14:antialias=true:autohint=true" ];
+            # Lower alpha = more carpet visible through cells. 0.85 lets
+            # the wallpaper bleed through enough to feel intentional
+            # without washing the text. Tune live with Alt+s/Alt+a to find
+            # what works on this exact display, then pin here.
+            alpha = 0.85;
+            # Slightly dimmer when the window loses focus (Luke-only knob).
+            alphaUnfocus = 0.7;
+          };
+        }
+      }/bin/st $out/bin/st-luke
     '')
   ];
 
@@ -180,10 +203,16 @@
     polarity = "dark";
     # Keep the existing BlexMono Nerd Font choice for the i3 bar /
     # alacritty rather than letting stylix pick a different monospace.
+    # Pin emoji to the monochrome Noto sibling — Noto Color Emoji's
+    # blobby SVG glyphs look terrible in cell terminals.
     fonts = {
       monospace = {
         package = pkgs.nerd-fonts.blex-mono;
         name = "BlexMono Nerd Font Mono";
+      };
+      emoji = {
+        package = pkgs.noto-fonts;
+        name = "Noto Emoji";
       };
     };
   };
