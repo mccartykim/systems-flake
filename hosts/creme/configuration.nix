@@ -1,5 +1,5 @@
 # creme - Dell Latitude E6400 ATG writerdeck
-# Console-only network appliance — no X/Wayland; syncthing will sync text later.
+# i3 + emacs writerdeck; libreboot 26.01rev1 firmware. Syncthing for text sync.
 {
   config,
   lib,
@@ -28,12 +28,9 @@
   networking.hostName = "creme";
   networking.networkmanager.enable = true;
 
-  # Hide factory MAC (Dell OUI 00:24:e8) — static random in the locally-
-  # administered range so DHCP/mDNS stay coherent on the home LAN.
-  networking.interfaces.enp0s25.macAddress = "02:de:ad:be:ef:01";
-
   # WiFi: per-AP randomization. Mostly meaningful when the writerdeck
-  # leaves the house.
+  # leaves the house. (Ethernet MAC is handled by libreboot's GbE region —
+  # set at flash time with nvmutil to a locally-administered random value.)
   networking.networkmanager.wifi.macAddress = "random";
   networking.networkmanager.wifi.scanRandMacAddress = true;
 
@@ -48,10 +45,6 @@
 
   # Use latest kernel for hardware compat on this old box
   boot.kernelPackages = pkgs.linuxPackages_latest;
-
-  # TEMP: relax /dev/mem checks so flashprog can do internal SPI flashing
-  # for libreboot install. Remove after flashing.
-  boot.kernelParams = ["iomem=relaxed"];
 
   # Nebula mesh - reachable from your other personal devices
   kimb.nebula = {

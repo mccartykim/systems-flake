@@ -169,9 +169,9 @@ let
       publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEtDhYwQgY20zQCb+pInMZBOIBJQ/AGN23Q6SjrzENGM";
       meta = {
         hardware = "Dell Latitude E6400 ATG (Core 2 Duo)";
-        purpose = "Writerdeck appliance — console-only, syncthing for text sync";
+        purpose = "i3 + emacs writerdeck, syncthing for text sync";
         name = "Sweets naming theme - creme";
-        notes = "Console device, no X/Wayland. BIOS boot, GRUB on /dev/sda.";
+        notes = "i3wm + doom emacs. Libreboot 26.01rev1 firmware (BIOS-mode SeaBIOS+GRUB chainload); GRUB on /dev/sda.";
       };
     };
 
