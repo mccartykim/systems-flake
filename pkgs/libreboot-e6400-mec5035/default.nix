@@ -43,6 +43,7 @@
   gettext,
   autoconf-archive,
   help2man,
+  gnat14,
 }:
 stdenv.mkDerivation (finalAttrs: {
   pname = "libreboot-e6400-mec5035";
@@ -89,6 +90,7 @@ stdenv.mkDerivation (finalAttrs: {
     gettext
     autoconf-archive
     help2man
+    gnat14  # Ada compiler — coreboot's libgfxinit
   ];
 
   buildInputs = [zlib openssl];
