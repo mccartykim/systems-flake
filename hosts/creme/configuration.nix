@@ -135,13 +135,12 @@
             # plain-glyph sibling, treats emoji as ordinary monospace
             # glyphs that share baseline/metrics with the primary font.
             font2 = [ "Noto Emoji:pixelsize=14:antialias=true:autohint=true" ];
-            # Lower alpha = more carpet visible through cells. 0.85 lets
-            # the wallpaper bleed through enough to feel intentional
-            # without washing the text. Tune live with Alt+s/Alt+a to find
-            # what works on this exact display, then pin here.
-            alpha = 0.85;
+            # Carpet bleeds through cells. 0.9 = subtle hint of pattern
+            # without softening text. Tune live with Alt+s / Alt+a, then
+            # pin here. Requires a compositor (we enable picom below).
+            alpha = 0.9;
             # Slightly dimmer when the window loses focus (Luke-only knob).
-            alphaUnfocus = 0.7;
+            alphaUnfocus = 0.8;
           };
         }
       }/bin/st $out/bin/st-luke
@@ -219,6 +218,26 @@
 
   # gpg-agent for mbsync PassCmd (decrypts ~/.authinfo.gpg).
   programs.gnupg.agent.enable = true;
+
+  # Minimal X compositor — required for the alpha patch in st-luke (and
+  # any other ARGB-visual app) to actually blend. xrender backend has no
+  # GL dependency and stays cheap on the E6400's GMA 4500MHD. No shadow,
+  # no fade, no vsync — those are real perf knobs on old hw and we don't
+  # need any of them here, just compositing for transparency.
+  services.picom = {
+    enable = true;
+    backend = "xrender";
+    vSync = false;
+    fade = false;
+    shadow = false;
+    settings = {
+      detect-rounded-corners = true;
+      detect-client-opacity = true;
+      use-ewmh-active-win = true;
+      unredir-if-possible = true;  # disable comp when a fullscreen app
+                                   # is up (e.g. mpv) — saves CPU
+    };
+  };
 
   # X server with `startx` only — no display manager.
   # i3 is the WM; auto-launches emacsclient + alacritty(tmux) on workspace 1.
