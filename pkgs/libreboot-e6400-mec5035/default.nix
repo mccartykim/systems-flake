@@ -106,6 +106,14 @@ stdenv.mkDerivation (finalAttrs: {
     # lbmk's scripts use #!/usr/bin/env sh and similar shebangs that
     # don't exist in the build sandbox.
     patchShebangs --build mk include script util
+
+    # Skip the GRUB payload — lbmk's bootstrapping of upstream GRUB's
+    # autotools chain fails in the sandbox (Makefile.util.am isn't
+    # generated before autoreconf runs automake on it). SeaBIOS alone
+    # is sufficient for creme's chainload-to-disk-GRUB flow.
+    # The resulting ROM is `seabios_e6400_4mb_libgfxinit_corebootfb.rom`.
+    sed -i 's/^payload_grub="y"/payload_grub="n"/' \
+      config/coreboot/e6400_4mb/target.cfg
   '';
 
   # Point coreboot's makefile at the nixpkgs-built crossgcc instead of
@@ -131,12 +139,12 @@ stdenv.mkDerivation (finalAttrs: {
   installPhase = ''
     runHook preInstall
     mkdir -p $out
-    # Pick the seagrub corebootfb usqwerty variant (matches what's currently
-    # flashed on creme). The DO_NOT_FLASH prefix is stripped at this stage.
+    # SeaBIOS-only variant (GRUB disabled above). SeaBIOS itself can
+    # iterate boot devices and chainload the disk's bootloader, so
+    # the libreboot-internal GRUB layer is not needed for creme.
     install -Dm644 \
-      bin/e6400_4mb/*seagrub_e6400_4mb_libgfxinit_corebootfb_usqwerty.rom \
-      $out/seagrub_e6400_4mb_libgfxinit_corebootfb_usqwerty.rom
-    # Also keep the rest of the e6400_4mb output tree for inspection.
+      bin/e6400_4mb/*seabios_e6400_4mb_libgfxinit_corebootfb.rom \
+      $out/seabios_e6400_4mb_libgfxinit_corebootfb.rom
     cp -r bin/e6400_4mb $out/bin-tree
     runHook postInstall
   '';
