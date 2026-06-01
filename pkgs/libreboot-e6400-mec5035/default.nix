@@ -47,6 +47,7 @@
   innoextract,
   p7zip,
   unzip,
+  ccache,
 }:
 stdenv.mkDerivation (finalAttrs: {
   pname = "libreboot-e6400-mec5035";
@@ -107,6 +108,7 @@ stdenv.mkDerivation (finalAttrs: {
     innoextract  # Dell BIOS update is an Inno Setup archive
     p7zip
     unzip
+    ccache  # lbmk's cook_coreboot_config appends CONFIG_CCACHE=y
   ];
 
   buildInputs = [zlib openssl];
