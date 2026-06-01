@@ -57,7 +57,7 @@ stdenv.mkDerivation (finalAttrs: {
   patchFlags = ["-p1" "-d" "src/coreboot/default"];
 
   nativeBuildInputs = [
-    coreboot-toolchain.i386-elf
+    coreboot-toolchain.i386
     autoconf
     automake
     libtool
@@ -96,7 +96,7 @@ stdenv.mkDerivation (finalAttrs: {
 
   # Point coreboot's makefile at the nixpkgs-built crossgcc instead of
   # rebuilding the toolchain (which is hours of work).
-  XGCCPATH = "${coreboot-toolchain.i386-elf}/bin";
+  XGCCPATH = "${coreboot-toolchain.i386}/bin";
 
   enableParallelBuilding = true;
 
