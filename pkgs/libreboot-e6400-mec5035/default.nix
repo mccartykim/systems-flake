@@ -117,7 +117,13 @@ stdenv.mkDerivation (finalAttrs: {
     #   2. Global mkhelper build_depend list which pulls grub unconditionally
     sed -i 's/^payload_grub="y"/payload_grub="n"/' \
       config/coreboot/e6400_4mb/target.cfg
-    sed -i 's| grub/default||' config/data/coreboot/mkhelper.cfg
+    sed -i 's/^payload_uboot=.*/payload_uboot=""/' \
+      config/coreboot/e6400_4mb/target.cfg
+    # Also kill grub + u-boot from the global build_depend list.
+    # U-Boot needs Python setuptools at build time; not worth the dep
+    # since SeaBIOS handles disk boot fine on this hardware anyway.
+    sed -i 's| grub/default||; s| u-boot/amd64coreboot||' \
+      config/data/coreboot/mkhelper.cfg
   '';
 
   # Point coreboot's makefile at the nixpkgs-built crossgcc instead of
