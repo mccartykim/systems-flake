@@ -58,7 +58,9 @@ stdenv.mkDerivation (finalAttrs: {
   # Intel GMA 4500 VBIOS (mod_21.bin at offset 274451) from it for
   # the e6400 vendor blob inject. Sandbox has no network, so prefetch.
   dellA34 = fetchurl {
-    url = "https://dl.dell.com/FOLDER01530530M/1/E6400A34.exe";
+    # Dell's direct dl.dell.com URL returns 403 to nix-fetch user-agents.
+    # Use the archive.org mirror that libreboot itself lists as backup.
+    url = "https://web.archive.org/web/20230506014903/https://dl.dell.com/FOLDER01530530M/1/E6400A34.exe";
     hash = "sha512-YhfV/OIpHRW7Bkn9L6rreOTEiWKweivqavYEZr/cXyM68NB3wsbnHdlgR727H2EjJM7wpecoupqexcaaQCLNjQ==";
   };
 
