@@ -50,11 +50,13 @@ stdenv.mkDerivation (finalAttrs: {
     hash = "sha512-3fyK6lM2TdWFWJyEgcQRrMA+8c6mZLCM89JVXSEzWp6NDM61i0yeRUKfoG575sQYint5g/KS/ABS0Nn33jUZ4Q==";
   };
 
-  patches = lib.filesystem.listFilesRecursive ./patches;
-  # All 13 patches were formatted against coreboot's tree root, so they
-  # need to be applied inside src/coreboot/default rather than the
-  # mkDerivation src root.
-  patchFlags = ["-p1" "-d" "src/coreboot/default"];
+  # We do NOT use the standard `patches` attribute because nic3-14159's
+  # branch was based on pristine upstream coreboot, while lbmk's release
+  # tarball ships coreboot with ~40 of lbmk's own patches already applied.
+  # Plain `patch -p1` can't reconcile the drift. Instead we use git am
+  # --3way in postPatch, which uses the patch's blob hashes to find the
+  # original content and merge intelligently.
+  mec5035Patches = ./patches;
 
   nativeBuildInputs = [
     coreboot-toolchain.i386
@@ -85,13 +87,31 @@ stdenv.mkDerivation (finalAttrs: {
   # lbmk's mk script wants:
   #   - a writable tree (the source tarball ships a read-only `lock` file)
   #   - a git identity (it auto-inits a git repo for change tracking)
-  #   - a working PATH that includes its bundled util/ binaries after build
+  #
+  # Also: apply nic3-14159's mec5035-acpi patches via `git am --3way`
+  # inside src/coreboot/default. The 3-way merge resolves the drift
+  # between his branch base and lbmk's modified coreboot.
   postPatch = ''
     chmod -R u+w .
     rm -f lock
     export HOME=$NIX_BUILD_TOP
     git config --global user.email "nix@build.local"
     git config --global user.name "nix-build"
+
+    pushd src/coreboot/default
+    git init -q -b main .
+    git add -A
+    git commit -q -m "lbmk vendored coreboot baseline"
+    for p in ${finalAttrs.mec5035Patches}/*.patch; do
+      echo "==> git am --3way $(basename "$p")"
+      git am --3way --keep-non-patch "$p" || {
+        echo "FAILED: $p"
+        echo "---- conflict files ----"
+        git status
+        exit 1
+      }
+    done
+    popd
   '';
 
   # Point coreboot's makefile at the nixpkgs-built crossgcc instead of
