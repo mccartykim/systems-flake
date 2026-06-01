@@ -54,6 +54,14 @@ stdenv.mkDerivation (finalAttrs: {
     hash = "sha512-3fyK6lM2TdWFWJyEgcQRrMA+8c6mZLCM89JVXSEzWp6NDM61i0yeRUKfoG575sQYint5g/KS/ABS0Nn33jUZ4Q==";
   };
 
+  # Dell E6400 BIOS A34 update package — lbmk's build extracts the
+  # Intel GMA 4500 VBIOS (mod_21.bin at offset 274451) from it for
+  # the e6400 vendor blob inject. Sandbox has no network, so prefetch.
+  dellA34 = fetchurl {
+    url = "https://dl.dell.com/FOLDER01530530M/1/E6400A34.exe";
+    hash = "sha512-YhfV/OIpHRW7Bkn9L6rreOTEiWKweivqavYEZr/cXyM68NB3wsbnHdlgR727H2EjJM7wpecoupqexcaaQCLNjQ==";
+  };
+
   # A single consolidated diff between lbmk's coreboot tree (as shipped
   # in 26.01rev1) and nic3-14159's `mec5035-acpi` branch tip
   # (9e3a7e58dd194a34cc86bca4cc0a11305c62b157), restricted to the
@@ -138,6 +146,13 @@ stdenv.mkDerivation (finalAttrs: {
     touch elf/coreboot/default/xgcc_i386_was_compiled
     # Same for the "default" tree which u-boot/grub may also reference.
     touch elf/coreboot/default/xgcc_x64_was_compiled || true
+
+    # Pre-populate lbmk's download cache with the Dell A34 BIOS update.
+    # lbmk's xbget reads cache/file/<sha512>; if the file exists, skip the
+    # actual download.
+    mkdir -p cache/file
+    cp ${finalAttrs.dellA34} \
+       cache/file/6217d5fce2291d15bb0649fd2faaeb78e4c48962b07a2bea6af60466bfdc5f233af0d077c2c6e71dd96047bdbb1f612324cef0a5e728ba9a9ec5c69a4022cd8d
   '';
 
   # Point coreboot's makefile at the nixpkgs-built crossgcc instead of
