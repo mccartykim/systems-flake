@@ -17,7 +17,11 @@ Previous agent finished installing libreboot 26.01rev1 on creme (Dell Latitude E
 
 ## Open follow-ups, in priority order
 
-### 1. Battery investigation (high-priority — user-reported pain)
+### ~~1. Battery investigation~~ — RESOLVED in this session
+
+Root cause turned out to be the empty `ec.asl` in coreboot's E6400 port, fixed by building a custom libreboot ROM with nic3-14159's mec5035-acpi branch patches. New Nix derivation at `pkgs/libreboot-e6400-mec5035/` builds the patched ROM. Flashed; `/sys/class/power_supply/{AC,BAT0}` now populated correctly. Brightness Fn keys still don't work (nic3-14159's branch didn't fix that part) — workaround is Mod+Up/Down and Mod+F8/F9 bindings in `~/.config/i3/config`. The original s2idle sleep-drain investigation idea below is now mostly moot since the battery cannot drain in a closed bag with no ACPI battery support running.
+
+### 1. (old) Battery investigation (kept for reference)
 
 User reports: "creme looked like it was sleeping properly in my bag but was dead when i took it to the park". User's own suspicion: probably `s2idle` instead of S3 deep sleep.
 
