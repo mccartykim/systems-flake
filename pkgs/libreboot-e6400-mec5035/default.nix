@@ -96,6 +96,10 @@ stdenv.mkDerivation (finalAttrs: {
     export HOME=$NIX_BUILD_TOP
     git config --global user.email "nix@build.local"
     git config --global user.name "nix-build"
+
+    # lbmk's scripts use #!/usr/bin/env sh and similar shebangs that
+    # don't exist in the build sandbox.
+    patchShebangs --build mk include script util
   '';
 
   # Point coreboot's makefile at the nixpkgs-built crossgcc instead of
