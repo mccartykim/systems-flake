@@ -9,6 +9,7 @@
   esp32-firmware = pkgs.callPackage ./esp32-firmware.nix {};
   eden-master = pkgs.callPackage ./eden-master/default.nix {};
   warewoolf = pkgs.callPackage ./warewoolf {};
+  libreboot-e6400-mec5035 = pkgs.callPackage ./libreboot-e6400-mec5035/default.nix {};
 in {
-  inherit claude-zai esp32-firmware eden-master warewoolf;
+  inherit claude-zai esp32-firmware eden-master warewoolf libreboot-e6400-mec5035;
 }

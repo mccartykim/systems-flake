@@ -1,0 +1,209 @@
+From 2a81c4ef6ac7c19cb019df832070b67aa795a6c7 Mon Sep 17 00:00:00 2001
+From: Nicholas Chin <nic.c3.14@gmail.com>
+Date: Sun, 6 Apr 2025 09:54:43 -0600
+Subject: ec/dell/mec5035/acpi: Add battery device and methods
+
+Change-Id: If1e191ffe033779812c8c1c227df1877013dc72a
+Signed-off-by: Nicholas Chin <nic.c3.14@gmail.com>
+---
+ src/ec/dell/mec5035/acpi/battery.asl | 151 +++++++++++++++++++++++++++
+ src/ec/dell/mec5035/acpi/ec.asl      |  18 ++++
+ 2 files changed, 169 insertions(+)
+ create mode 100644 src/ec/dell/mec5035/acpi/battery.asl
+
+diff --git a/src/ec/dell/mec5035/acpi/battery.asl b/src/ec/dell/mec5035/acpi/battery.asl
+new file mode 100644
+index 00000000..59e9cb35
+--- /dev/null
++++ b/src/ec/dell/mec5035/acpi/battery.asl
+@@ -0,0 +1,151 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
++Field(ERAM, ByteAcc, NoLock, Preserve)
++{
++	Offset (0x03),
++			BIDX, 8, /* Battery Index, 1 based */
++			BSTI, 8, /* Battery String Index */
++	Offset (0x10),
++			BAST, 8, /* Battery State */
++	Offset (0x12),
++			BAPR, 16, /* Battery Present Rate */
++			BAVO, 16, /* Battery Present Voltage */
++			BARC, 16, /* Battery Remaining Capacity */
++	Offset (0x1E),
++			BAFC, 16, /* Last Full Charge Capacity */
++			BADC, 16, /* Design Capacity */
++			BADV, 16, /* Design Voltage */
++	Offset (0x26),
++			BASN, 16, /* 16 bit numberic Serial Number */
++			BAOE, 8, /* OEM Information Enum */
++			BATP, 8, /* Battery Type Enum */
++	Offset (0x2A),
++			BSTR, 8, /* String output port */
++}
++
++
++/* Package for _BST */
++Name (BSTP, Package (4)
++{
++	0, /* Battery State */
++	1, /* Battery Present Rate */
++	0, /* Battery, Remaining Capacity */
++	0 /* Battery Present Voltage */
++})
++
++/* Package for _BIF */
++Name (BBFP, Package (13)
++{
++	1,		/*  0: Power Unit, always 1 = mA, mAh */
++	0xFFFFFFFF,	/*  1: Design Capacity */
++	0xFFFFFFFF,	/*  2: Last Full Charge Capacity */
++	1,		/*  3: Battery Technology, always 1 = Rechargable */
++	0xFFFFFFFF,	/*  4: Design Voltage */
++	0,		/*  5: Design capacity of warning */
++	0,		/*  6: Design capacity of low */
++	0,		/*  7: Battery capacity granularity 1 */
++	0,		/*  8: Battery capacity granularity 2 */
++	"",		/*  9: Model Number */
++	"",		/* 10: Serial Number */
++	"",		/* 11: Battery Type */
++	""		/* 12: OEM Information */
++})
++
++/* Arg0: String index
++ * 1: Battery Model Number */
++Method(RSTR, 1, NotSerialized)
++{
++	BSTI = Arg0
++	Local0 = 1 /* character variable */
++	Local1 = Buffer (32) {}
++	Local2 = 0 /* Buffer index */
++
++	/* Loop until Null terminator */
++	While (Local0 && Local2 < 32)
++	{
++		Local0 = BSTR
++		Local1[Local2] = Local0
++		Local2++
++	}
++
++	Return(ToString (Local1, 32))
++
++}
++
++/* Battery _BST
++ * Arg0: Battery Index, 1 based
++ */
++Method(BBST, 1, NotSerialized)
++{
++	Acquire (ECLK, 0xffff)
++	Local0 = BSTP
++	BIDX = Arg0
++
++	If (!BPRT)
++	{
++		Release (ECLK)
++		Return (Local0)
++	}
++
++	Local0[0] = BAST
++
++	Local1 = BAST && 1
++	If (!Local1) // Discharging
++	{
++		// Negate present rate
++		Local0[1] = 0x10000 - BAPR
++	}
++	Else
++	{
++		Local0[1] = BAPR
++	}
++
++	Local0[2] = BARC
++	Local0[3] = BAVO
++	Release (ECLK)
++	Return (Local0)
++}
++
++/* Battery _BIF
++ * Arg0: Battery Index, 1 based
++ */
++Method(BBIF, 1, NotSerialized)
++{
++	Acquire (ECLK, 0xffff)
++	Local0 = BBFP
++	BIDX = Arg0
++	Local0[1] = BADC
++	Local0[2] = BAFC
++	Local0[4] = BADV
++	Local0[9] = RSTR(1)
++	ToDecimalString(BASN, Local0[10])
++
++	Release (ECLK)
++	Return (Local0)
++}
++
++Device (BAT0)
++{
++	Name (_HID, EisaID ("PNP0C0A"))
++	Name (STAT, Zero)
++
++	Method (_BIF, 0, NotSerialized)
++	{
++		Return (BBIF (1))
++	}
++
++	Method (_BST, 0, NotSerialized)
++	{
++		Return (BBST (1))
++	}
++
++	Method (_STA, 0, NotSerialized)
++	{
++		if (BPRT) {
++			Return (0x1f)
++		} else {
++			Return (0x0f)
++		}
++	}
++}
++
+diff --git a/src/ec/dell/mec5035/acpi/ec.asl b/src/ec/dell/mec5035/acpi/ec.asl
+index 13cf1ccf..7a1544d4 100644
+--- a/src/ec/dell/mec5035/acpi/ec.asl
++++ b/src/ec/dell/mec5035/acpi/ec.asl
+@@ -27,13 +27,31 @@ Device (EC)
+ 	OperationRegion(ERAM, EmbeddedControl, 0, 256)
+ 	Field(ERAM, ByteAcc, NoLock, Preserve)
+ 	{
++		Offset (0x00),
++				ACPR, 1, /* AC Present */
++				BPRT, 1, /* Battery Present */
+ 		Offset (0x05),
+ 				/* SCI Enable */
+ 				SCIE, 8,
+ 	}
+ 
++	/* Last Battery Present State */
++	Name (BPRS, 0)
++
++	/* Last Battery Status State */
++	Name (BSTL, 0)
++
+ 	Method (_Q66)
+ 	{
++		if (BPRT != BPRS) {
++			BPRS = BPRT
++			Notify(BAT0, 0x81)
++		}
++		if (BSTL != BAST) {
++			BSTL = BAST
++			Notify(BAT0, 0x80)
++		}
+ 	}
+ 
++	#include "battery.asl"
+ }
+-- 
+2.54.0
+

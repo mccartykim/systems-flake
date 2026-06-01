@@ -1,0 +1,55 @@
+From 0f1d44643a6e4266f0022ccfafea9cb2cff041ec Mon Sep 17 00:00:00 2001
+From: Nicholas Chin <nic.c3.14@gmail.com>
+Date: Sat, 12 Apr 2025 19:55:40 -0600
+Subject: ec/dell/mec5035/acpi/ec.asl: Handle wireless switch
+
+Bit 0 of register 5 in the EC ACPI register space seems to report the
+state of the wireless switch. When the switch is toggled, the system
+also seems to issue an SCI. Add a handler to set the state of the radios
+when an SCI is received from the EC.
+
+Change-Id: Ib8eedaae8978f554cfdce67545aac69460e1d5c7
+Signed-off-by: Nicholas Chin <nic.c3.14@gmail.com>
+---
+ src/ec/dell/mec5035/acpi/ec.asl | 18 ++++++++++++++++++
+ 1 file changed, 18 insertions(+)
+
+diff --git a/src/ec/dell/mec5035/acpi/ec.asl b/src/ec/dell/mec5035/acpi/ec.asl
+index fcf3ea46..e3c1318c 100644
+--- a/src/ec/dell/mec5035/acpi/ec.asl
++++ b/src/ec/dell/mec5035/acpi/ec.asl
+@@ -24,6 +24,23 @@ Device (EC)
+ 	/* EmbeddedControl Mutex */
+ 	Mutex (ECLK, 0)
+ 
++	/* Radio Control */
++	Method (RADC, 1)
++	{
++		EMXW(2, 0) /* WLAN */
++		EMXW(3, 2) /* Set state */
++		EMXW(4, Arg0)
++		EMXC(0x2b)
++		EMXW(2, 1) /* WWAN */
++		EMXW(3, 2) /* Set state */
++		EMXW(4, Arg0)
++		EMXC(0x2b)
++		EMXW(2, 2) /* Bluetooth */
++		EMXW(3, 2) /* Set state */
++		EMXW(4, Arg0)
++		EMXC(0x2b)
++	}
++
+ 	OperationRegion(ERAM, EmbeddedControl, 0, 256)
+ 	Field(ERAM, ByteAcc, NoLock, Preserve)
+ 	{
+@@ -60,6 +77,7 @@ Device (EC)
+ 			LIDL = LIDS
+ 			Notify(LID, 0x80)
+ 		}
++		RADC(SCIE & 1)
+ 	}
+ 
+ 	#include "ec_mailbox.asl"
+-- 
+2.54.0
+

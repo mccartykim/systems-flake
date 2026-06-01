@@ -1,0 +1,142 @@
+From 115a2728025607c58b3e57359acf3b31661b0902 Mon Sep 17 00:00:00 2001
+From: Nicholas Chin <nic.c3.14@gmail.com>
+Date: Sun, 6 Apr 2025 09:48:40 -0600
+Subject: ec/dell/mec5035: Add initial ACPI support
+
+Add code to tell the EC to enable ACPI, and define the EC in ACPI code.
+
+Change-Id: Ibb4c821b11a6eb92250887f7605ae02b521f5d72
+Signed-off-by: Nicholas Chin <nic.c3.14@gmail.com>
+---
+ src/ec/dell/mec5035/Makefile.mk |  1 +
+ src/ec/dell/mec5035/acpi/ec.asl | 39 +++++++++++++++++++++++++++++++++
+ src/ec/dell/mec5035/mec5035.c   | 35 +++++++++++++++++++++++++++++
+ src/ec/dell/mec5035/mec5035.h   |  2 ++
+ 4 files changed, 77 insertions(+)
+ create mode 100644 src/ec/dell/mec5035/acpi/ec.asl
+
+diff --git a/src/ec/dell/mec5035/Makefile.mk b/src/ec/dell/mec5035/Makefile.mk
+index 4ebdd811..d985b68d 100644
+--- a/src/ec/dell/mec5035/Makefile.mk
++++ b/src/ec/dell/mec5035/Makefile.mk
+@@ -5,5 +5,6 @@ ifeq ($(CONFIG_EC_DELL_MEC5035),y)
+ bootblock-y += mec5035.c
+ romstage-y += mec5035.c
+ ramstage-y += mec5035.c
++smm-y += mec5035.c
+ 
+ endif
+diff --git a/src/ec/dell/mec5035/acpi/ec.asl b/src/ec/dell/mec5035/acpi/ec.asl
+new file mode 100644
+index 00000000..13cf1ccf
+--- /dev/null
++++ b/src/ec/dell/mec5035/acpi/ec.asl
+@@ -0,0 +1,39 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
++Device (EC)
++{
++	Name (_HID, EisaId("PNP0C09"))
++
++	Name (_CRS, ResourceTemplate()
++	{
++		IO (Decode16, 0x930, 0x930, 0, 1)
++		IO (Decode16, 0x934, 0x934, 0, 1)
++	})
++
++	/* Mainboard must define MEC5035_EC_GPE with the GPE number
++	 * corresponding to the GPIO the EC SCI is routed to */
++	Name (_GPE, MEC5035_EC_GPE)
++
++	Method (_REG, 2, NotSerialized)
++	{
++		if (Arg1 == 1) {
++			SCIE = 1
++		}
++	}
++
++	/* EmbeddedControl Mutex */
++	Mutex (ECLK, 0)
++
++	OperationRegion(ERAM, EmbeddedControl, 0, 256)
++	Field(ERAM, ByteAcc, NoLock, Preserve)
++	{
++		Offset (0x05),
++				/* SCI Enable */
++				SCIE, 8,
++	}
++
++	Method (_Q66)
++	{
++	}
++
++}
+diff --git a/src/ec/dell/mec5035/mec5035.c b/src/ec/dell/mec5035/mec5035.c
+index 6c19d1f5..945a75d8 100644
+--- a/src/ec/dell/mec5035/mec5035.c
++++ b/src/ec/dell/mec5035/mec5035.c
+@@ -94,6 +94,41 @@ void mec5035_control_radio(enum ec_radio_dev dev, enum ec_radio_state state)
+ 	ec_command(CMD_RADIO_CTRL);
+ }
+ 
++void mec5035_acpi_enable(void)
++{
++	u8 buf[1] = {0};
++	/*
++	write_mailbox_regs(buf, 2, 1);
++	ec_command(0x85);
++	*/
++	buf[0] = 1;
++	write_mailbox_regs(buf, 2, 1);
++	ec_command(CMD_ACPI);
++	/*
++	buf[0] = 1;
++	write_mailbox_regs(buf, 2, 1);
++	ec_command(0xa0);
++	buf[0] = 1;
++	write_mailbox_regs(buf, 2, 1);
++	ec_command(0x9e);
++	buf[0] = 1;
++	write_mailbox_regs(buf, 2, 1);
++	ec_command(0x9f);
++	buf[0] = 2;
++	write_mailbox_regs(buf, 2, 1);
++	ec_command(0x9f);
++	buf[0] = 2;
++	write_mailbox_regs(buf, 2, 1);
++	ec_command(0xa0);
++	buf[0] = 2;
++	write_mailbox_regs(buf, 2, 1);
++	ec_command(0x9e);
++	buf[0] = 0;
++	write_mailbox_regs(buf, 2, 1);
++	ec_command(0x63);
++	*/
++}
++
+ void mec5035_cmd_bf(u8 i)
+ {
+ 	/*
+diff --git a/src/ec/dell/mec5035/mec5035.h b/src/ec/dell/mec5035/mec5035.h
+index e2000c45..0502cf29 100644
+--- a/src/ec/dell/mec5035/mec5035.h
++++ b/src/ec/dell/mec5035/mec5035.h
+@@ -10,6 +10,7 @@
+ enum mec5035_cmd {
+ 	CMD_MOUSE_TP = 0x1a,
+ 	CMD_RADIO_CTRL = 0x2b,
++	CMD_ACPI = 0x3a,
+ 	CMD_BF = 0xbf,
+ 	CMD_CPU_OK = 0xc2,
+ };
+@@ -38,6 +39,7 @@ u8 mec5035_mouse_touchpad(enum ec_mouse_setting setting);
+ void mec5035_cpu_ok(void);
+ void mec5035_early_init(void);
+ void mec5035_control_radio(enum ec_radio_dev device, enum ec_radio_state state);
++void mec5035_acpi_enable(void);
+ void mec5035_cmd_bf(u8 i);
+ 
+ #endif /* _EC_DELL_MEC5035_H_ */
+-- 
+2.54.0
+

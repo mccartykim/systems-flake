@@ -1,0 +1,69 @@
+From 10fdb191dbd7b2cfbdd59133114c742ff39b5a6b Mon Sep 17 00:00:00 2001
+From: Nicholas Chin <nic.c3.14@gmail.com>
+Date: Sun, 6 Apr 2025 09:57:20 -0600
+Subject: mb/dell/gm45-latitude: Integrate MEC5035 ACPI support
+
+Change-Id: I2f480748ccbb831cec68861750d02ac45981a57f
+Signed-off-by: Nicholas Chin <nic.c3.14@gmail.com>
+---
+ src/mainboard/dell/gm45_latitude/acpi/ec.asl   |  7 +++++--
+ src/mainboard/dell/gm45_latitude/devicetree.cb |  6 +++---
+ src/mainboard/dell/gm45_latitude/smihandler.c  | 16 ++++++++++++++++
+ 3 files changed, 24 insertions(+), 5 deletions(-)
+ create mode 100644 src/mainboard/dell/gm45_latitude/smihandler.c
+
+diff --git a/src/mainboard/dell/gm45_latitude/acpi/ec.asl b/src/mainboard/dell/gm45_latitude/acpi/ec.asl
+index 16990d45..e4b89c33 100644
+--- a/src/mainboard/dell/gm45_latitude/acpi/ec.asl
++++ b/src/mainboard/dell/gm45_latitude/acpi/ec.asl
+@@ -1,3 +1,6 @@
+-/* SPDX-License-Identifier: CC-PDDC */
++/* SPDX-License-Identifier: GPL-2.0-only */
+ 
+-/* Please update the license if adding licensable material. */
++/* GPIO 1 is used for the EC SCI */
++#define MEC5035_EC_GPE 17
++
++#include <ec/dell/mec5035/acpi/ec.asl>
+diff --git a/src/mainboard/dell/gm45_latitude/devicetree.cb b/src/mainboard/dell/gm45_latitude/devicetree.cb
+index 5919803b..8666d0ba 100644
+--- a/src/mainboard/dell/gm45_latitude/devicetree.cb
++++ b/src/mainboard/dell/gm45_latitude/devicetree.cb
+@@ -35,9 +35,9 @@ chip northbridge/intel/gm45
+ 			register "pirqg_routing" = "0x80"
+ 			register "pirqh_routing" = "0x80"
+ 
+-			register "gpi8_routing"  = "2"
+-			register "gpe0_en" = "0x01000000"
+-			register "gpi1_routing"  = "2"
++			register "gpi1_routing"  = "2" # SCI
++			# register "gpi8_routing"  = "1" # SMI
++			register "gpe0_en" = "0x00020000"
+ 
+ 			# Set AHCI mode, enable ports 1 and 2.
+ 			register "sata_port_map"		= "0x03"
+diff --git a/src/mainboard/dell/gm45_latitude/smihandler.c b/src/mainboard/dell/gm45_latitude/smihandler.c
+new file mode 100644
+index 00000000..7670601b
+--- /dev/null
++++ b/src/mainboard/dell/gm45_latitude/smihandler.c
+@@ -0,0 +1,16 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
++#include <cpu/x86/smm.h>
++#include <ec/dell/mec5035/mec5035.h>
++#include <stdint.h>
++
++int mainboard_smi_apmc(u8 data)
++{
++	switch (data) {
++	case APM_CNT_ACPI_ENABLE:
++		mec5035_acpi_enable();
++	default:
++		break;
++	}
++	return 0;
++}
+-- 
+2.54.0
+

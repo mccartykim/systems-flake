@@ -186,6 +186,11 @@
           # `electron ^18` constraint in package.json is long EOL and we
           # skip the bundled download via ELECTRON_SKIP_BINARY_DOWNLOAD.
           warewoolf = pkgs.callPackage ./pkgs/warewoolf {};
+
+          # Custom-patched libreboot for Dell Latitude E6400 with nic3-14159's
+          # mec5035-acpi commits (battery + AC + brightness Fn keys). See
+          # pkgs/libreboot-e6400-mec5035/default.nix for the full story.
+          libreboot-e6400-mec5035 = pkgs.callPackage ./pkgs/libreboot-e6400-mec5035 {};
         };
 
         # Formatter
