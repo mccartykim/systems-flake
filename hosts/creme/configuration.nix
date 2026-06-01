@@ -14,6 +14,9 @@
     ../profiles/laptop.nix
     ../../modules/nebula-node.nix
     ../../modules/peripherals.nix
+    # Stylix derives a base16 colorscheme from the PDX-carpet wallpaper
+    # and applies it across the desktop (gtk, qt, terminals, vim, etc.).
+    inputs.stylix.nixosModules.stylix
   ];
 
   # Doom Emacs as a Nix derivation. Built once (on marshmallow/historian
@@ -92,7 +95,45 @@
     gh
     jujutsu
     helix
+    # Three st variants from mccartykim/st (multi-fork-packaging branch).
+    # Run one at a time interactively to compare:
+    #   st           — vanilla 0.9.3, cleanest kerning, no scrollback
+    #   st-snazzy    — siduck/st, gruvbox, harfbuzz ligatures, alpha=1.0
+    #   st-luke      — LukeSmithxyz/st, gruvbox, alpha=0.8 + scrollback +
+    #                  font2 emoji fallback + boxdraw. Heaviest but
+    #                  feature-complete; alpha can be lowered to 0.0 to
+    #                  disable blending if old HW struggles.
+    inputs.st.packages.${pkgs.system}.st
+    inputs.st.packages.${pkgs.system}.st-snazzy
+    inputs.st.packages.${pkgs.system}.st-luke
   ];
+
+  # ─── Stylix: derive desktop colors from the PDX-carpet wallpaper ────
+  #
+  # The wallpaper itself is built from the SVG via pkgs/pdx-wallpaper
+  # (rsvg-convert → PNG). `scale` controls tile size; the SVG is 490×490
+  # at scale=1 and tiles seamlessly, so bumping scale just makes each
+  # tile take up more screen real estate. On a 1440×900 panel (E6400
+  # native) scale=1 fits roughly 3×2 visible tiles — the classic PDX
+  # carpet density.
+  stylix = {
+    enable = true;
+    image = pkgs.callPackage ../../pkgs/pdx-wallpaper { scale = 1; };
+    # Wallpaper is a tiled pattern, not a single-frame image.
+    imageScalingMode = "tile";
+    # Carpet is bright/saturated; pick a dark colorscheme so terminal
+    # text stays readable. Switch to "either" if you want stylix to
+    # auto-pick based on the image's overall lightness.
+    polarity = "dark";
+    # Keep the existing BlexMono Nerd Font choice for the i3 bar /
+    # alacritty rather than letting stylix pick a different monospace.
+    fonts = {
+      monospace = {
+        package = pkgs.nerd-fonts.blex-mono;
+        name = "BlexMono Nerd Font Mono";
+      };
+    };
+  };
 
   # gpg-agent for mbsync PassCmd (decrypts ~/.authinfo.gpg).
   programs.gnupg.agent.enable = true;
@@ -116,7 +157,13 @@
   # After logging in on tty1, fish auto-execs startx → i3.
   # tty2-6 stay as plain login prompts for the occasional console need.
   # Override by writing your own ~/.xinitrc / ~/.config/i3/config on creme.
+  #
+  # We paint the wallpaper before i3 starts (with `&` so it doesn't block).
+  # Stylix would normally do this via a display manager hook, but creme runs
+  # startx so we wire feh directly. `config.stylix.image` resolves to the
+  # PDX-carpet PNG derivation defined in the stylix block below.
   environment.etc."X11/xinit/xinitrc".text = ''
+    ${pkgs.feh}/bin/feh --no-fehbg --bg-tile ${config.stylix.image} &
     exec i3
   '';
   programs.fish.loginShellInit = ''

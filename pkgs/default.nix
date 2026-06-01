@@ -10,6 +10,7 @@
   eden-master = pkgs.callPackage ./eden-master/default.nix {};
   warewoolf = pkgs.callPackage ./warewoolf {};
   libreboot-e6400-mec5035 = pkgs.callPackage ./libreboot-e6400-mec5035/default.nix {};
+  pdx-wallpaper = pkgs.callPackage ./pdx-wallpaper {};
 in {
-  inherit claude-zai esp32-firmware eden-master warewoolf libreboot-e6400-mec5035;
+  inherit claude-zai esp32-firmware eden-master warewoolf libreboot-e6400-mec5035 pdx-wallpaper;
 }

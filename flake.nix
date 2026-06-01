@@ -130,6 +130,20 @@
     # creme's config; user doomdir lives at hosts/creme/doom.d/.
     nix-doom-emacs-unstraightened.url = "github:marienz/nix-doom-emacs-unstraightened";
     nix-doom-emacs-unstraightened.inputs.nixpkgs.follows = "nixpkgs";
+
+    # Multi-fork suckless st (vanilla 0.9.3 + siduck-snazzy + LukeSmithxyz)
+    # with typed Nix configuration. Exposes packages.{st,st-snazzy,st-luke}
+    # and matching nixosModules / homeManagerModules.
+    st.url = "github:mccartykim/st/multi-fork-packaging";
+    st.inputs.nixpkgs.follows = "nixpkgs";
+
+    # Stylix: derives a base16 colorscheme from a wallpaper image and
+    # applies it across the desktop (gtk, qt, terminals, vim, etc.).
+    # Wallpaper itself is built locally from the PDX-carpet SVG via
+    # pkgs/pdx-wallpaper.
+    stylix.url = "github:danth/stylix";
+    stylix.inputs.nixpkgs.follows = "nixpkgs";
+    stylix.inputs.home-manager.follows = "home-manager";
   };
 
   outputs = {
