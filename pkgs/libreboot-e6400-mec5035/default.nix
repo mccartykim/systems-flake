@@ -126,6 +126,18 @@ stdenv.mkDerivation (finalAttrs: {
     # since SeaBIOS handles disk boot fine on this hardware anyway.
     sed -i 's| grub/default||; s| u-boot/amd64coreboot||' \
       config/data/coreboot/mkhelper.cfg
+
+    # Pre-populate the coreboot cross-toolchain location so lbmk's
+    # tree.sh skips the `make crossgcc-i386` step (which would try to
+    # download + build gcc from scratch, hours of work + needs network).
+    # The marker file tells lbmk "already compiled".
+    mkdir -p src/coreboot/default/util/crossgcc/xgcc
+    cp -rs ${coreboot-toolchain.i386}/. \
+           src/coreboot/default/util/crossgcc/xgcc/
+    mkdir -p elf/coreboot/default
+    touch elf/coreboot/default/xgcc_i386_was_compiled
+    # Same for the "default" tree which u-boot/grub may also reference.
+    touch elf/coreboot/default/xgcc_x64_was_compiled || true
   '';
 
   # Point coreboot's makefile at the nixpkgs-built crossgcc instead of
