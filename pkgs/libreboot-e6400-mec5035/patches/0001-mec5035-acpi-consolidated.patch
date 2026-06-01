@@ -1,0 +1,870 @@
+diff -ruN a/src/ec/dell/mec5035/acpi/ac.asl b/src/ec/dell/mec5035/acpi/ac.asl
+--- a/src/ec/dell/mec5035/acpi/ac.asl	1969-12-31 19:00:00.000000000 -0500
++++ b/src/ec/dell/mec5035/acpi/ac.asl	2026-05-31 22:17:53.383658371 -0400
+@@ -0,0 +1,11 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
++Device (AC)
++{
++	Name (_HID, "ACPI0003")
++	Name(_PCL, Package() { \_SB } )
++	Method (_PSR, 0, NotSerialized)
++	{
++		Return (ACPR)
++	}
++}
+diff -ruN a/src/ec/dell/mec5035/acpi/battery.asl b/src/ec/dell/mec5035/acpi/battery.asl
+--- a/src/ec/dell/mec5035/acpi/battery.asl	1969-12-31 19:00:00.000000000 -0500
++++ b/src/ec/dell/mec5035/acpi/battery.asl	2026-05-31 22:17:53.384571698 -0400
+@@ -0,0 +1,151 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
++Field(ERAM, ByteAcc, NoLock, Preserve)
++{
++	Offset (0x03),
++			BIDX, 8, /* Battery Index, 1 based */
++			BSTI, 8, /* Battery String Index */
++	Offset (0x10),
++			BAST, 8, /* Battery State */
++	Offset (0x12),
++			BAPR, 16, /* Battery Present Rate */
++			BAVO, 16, /* Battery Present Voltage */
++			BARC, 16, /* Battery Remaining Capacity */
++	Offset (0x1E),
++			BAFC, 16, /* Last Full Charge Capacity */
++			BADC, 16, /* Design Capacity */
++			BADV, 16, /* Design Voltage */
++	Offset (0x26),
++			BASN, 16, /* 16 bit numberic Serial Number */
++			BAOE, 8, /* OEM Information Enum */
++			BATP, 8, /* Battery Type Enum */
++	Offset (0x2A),
++			BSTR, 8, /* String output port */
++}
++
++
++/* Package for _BST */
++Name (BSTP, Package (4)
++{
++	0, /* Battery State */
++	1, /* Battery Present Rate */
++	0, /* Battery, Remaining Capacity */
++	0 /* Battery Present Voltage */
++})
++
++/* Package for _BIF */
++Name (BBFP, Package (13)
++{
++	1,		/*  0: Power Unit, always 1 = mA, mAh */
++	0xFFFFFFFF,	/*  1: Design Capacity */
++	0xFFFFFFFF,	/*  2: Last Full Charge Capacity */
++	1,		/*  3: Battery Technology, always 1 = Rechargable */
++	0xFFFFFFFF,	/*  4: Design Voltage */
++	0,		/*  5: Design capacity of warning */
++	0,		/*  6: Design capacity of low */
++	0,		/*  7: Battery capacity granularity 1 */
++	0,		/*  8: Battery capacity granularity 2 */
++	"",		/*  9: Model Number */
++	"",		/* 10: Serial Number */
++	"",		/* 11: Battery Type */
++	""		/* 12: OEM Information */
++})
++
++/* Arg0: String index
++ * 1: Battery Model Number */
++Method(RSTR, 1, NotSerialized)
++{
++	BSTI = Arg0
++	Local0 = 1 /* character variable */
++	Local1 = Buffer (32) {}
++	Local2 = 0 /* Buffer index */
++
++	/* Loop until Null terminator */
++	While (Local0 && Local2 < 32)
++	{
++		Local0 = BSTR
++		Local1[Local2] = Local0
++		Local2++
++	}
++
++	Return(ToString (Local1, 32))
++
++}
++
++/* Battery _BST
++ * Arg0: Battery Index, 1 based
++ */
++Method(BBST, 1, NotSerialized)
++{
++	Acquire (ECLK, 0xffff)
++	Local0 = BSTP
++	BIDX = Arg0
++
++	If (!BPRT)
++	{
++		Release (ECLK)
++		Return (Local0)
++	}
++
++	Local0[0] = BAST
++
++	Local1 = BAST && 1
++	If (!Local1) // Discharging
++	{
++		// Negate present rate
++		Local0[1] = 0x10000 - BAPR
++	}
++	Else
++	{
++		Local0[1] = BAPR
++	}
++
++	Local0[2] = BARC
++	Local0[3] = BAVO
++	Release (ECLK)
++	Return (Local0)
++}
++
++/* Battery _BIF
++ * Arg0: Battery Index, 1 based
++ */
++Method(BBIF, 1, NotSerialized)
++{
++	Acquire (ECLK, 0xffff)
++	Local0 = BBFP
++	BIDX = Arg0
++	Local0[1] = BADC
++	Local0[2] = BAFC
++	Local0[4] = BADV
++	Local0[9] = RSTR(1)
++	ToDecimalString(BASN, Local0[10])
++
++	Release (ECLK)
++	Return (Local0)
++}
++
++Device (BAT0)
++{
++	Name (_HID, EisaID ("PNP0C0A"))
++	Name (STAT, Zero)
++
++	Method (_BIF, 0, NotSerialized)
++	{
++		Return (BBIF (1))
++	}
++
++	Method (_BST, 0, NotSerialized)
++	{
++		Return (BBST (1))
++	}
++
++	Method (_STA, 0, NotSerialized)
++	{
++		if (BPRT) {
++			Return (0x1f)
++		} else {
++			Return (0x0f)
++		}
++	}
++}
++
+diff -ruN a/src/ec/dell/mec5035/acpi/ec.asl b/src/ec/dell/mec5035/acpi/ec.asl
+--- a/src/ec/dell/mec5035/acpi/ec.asl	1969-12-31 19:00:00.000000000 -0500
++++ b/src/ec/dell/mec5035/acpi/ec.asl	2026-05-31 22:17:53.384571698 -0400
+@@ -0,0 +1,97 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
++Device (EC)
++{
++	Name (_HID, EisaId("PNP0C09"))
++
++	Name (_CRS, ResourceTemplate()
++	{
++		IO (Decode16, 0x930, 0x930, 0, 1)
++		IO (Decode16, 0x934, 0x934, 0, 1)
++	})
++
++	/* Mainboard must define MEC5035_EC_GPE with the GPE number
++	 * corresponding to the GPIO the EC SCI is routed to */
++	Name (_GPE, MEC5035_EC_GPE)
++
++	Method (_REG, 2, NotSerialized)
++	{
++		if (Arg1 == 1) {
++			SCIE = 1
++		}
++	}
++
++	Method (EPTS, 1)
++	{
++		if (Arg0 == 3) {
++			EMXW(2, 3)
++			EMXW(3, 0)
++			EMXC(0x64)
++		}
++	}
++
++	/* EmbeddedControl Mutex */
++	Mutex (ECLK, 0)
++
++	/* Radio Control */
++	Method (RADC, 1)
++	{
++		EMXW(2, 0) /* WLAN */
++		EMXW(3, 2) /* Set state */
++		EMXW(4, Arg0)
++		EMXC(0x2b)
++		EMXW(2, 1) /* WWAN */
++		EMXW(3, 2) /* Set state */
++		EMXW(4, Arg0)
++		EMXC(0x2b)
++		EMXW(2, 2) /* Bluetooth */
++		EMXW(3, 2) /* Set state */
++		EMXW(4, Arg0)
++		EMXC(0x2b)
++	}
++
++	OperationRegion(ERAM, EmbeddedControl, 0, 256)
++	Field(ERAM, ByteAcc, NoLock, Preserve)
++	{
++		Offset (0x00),
++				ACPR, 1, /* AC Present */
++				BPRT, 1, /* Battery Present */
++				    , 2,
++				LIDS, 1, /* Lid State */
++		Offset (0x05),
++				/* SCI Enable */
++				SCIE, 8,
++	}
++
++	/* Last Lid State */
++	Name (LIDL, 1)
++
++	/* Last Battery Present State */
++	Name (BPRS, 0)
++
++	/* Last Battery Status State */
++	Name (BSTL, 0)
++
++	Method (_Q66)
++	{
++		if (BPRT != BPRS) {
++			BPRS = BPRT
++			Notify(BAT0, 0x81)
++		}
++		if (BSTL != BAST) {
++			BSTL = BAST
++			Notify(BAT0, 0x80)
++		}
++		if (LIDS != LIDL) {
++			LIDL = LIDS
++			Notify(LID, 0x80)
++		}
++		RADC(SCIE & 1)
++	}
++
++	#include "ec_mailbox.asl"
++	#include "ac.asl"
++	#include "battery.asl"
++	#include "lid.asl"
++	#include "thermal.asl"
++}
+diff -ruN a/src/ec/dell/mec5035/acpi/ec_mailbox.asl b/src/ec/dell/mec5035/acpi/ec_mailbox.asl
+--- a/src/ec/dell/mec5035/acpi/ec_mailbox.asl	1969-12-31 19:00:00.000000000 -0500
++++ b/src/ec/dell/mec5035/acpi/ec_mailbox.asl	2026-05-31 22:17:53.384571698 -0400
+@@ -0,0 +1,40 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
++/* Mailbox Interface Mutex */
++Mutex (MLCK, 0)
++
++/* EC Mailbox Interface */
++OperationRegion(EMBX, SystemIO, 0x910, 2)
++Field(EMBX, ByteAcc, NoLock, Preserve)
++{
++	EMXI, 8,
++	EMXD, 8,
++}
++
++/* EC Mailbox Read */
++Method (EMXR, 1)
++{
++	EMXI = Arg0 + 0x10
++	Return (EMXD)
++}
++
++/* EC Mailbox Write */
++Method (EMXW, 2)
++{
++	EMXI = Arg0 + 0x10
++	EMXD = Arg1
++}
++
++/* EC Mailbox Command */
++Method (EMXC, 1)
++{
++	EMXI = 0
++	EMXD = Arg0
++
++	/* Wait for EC */
++	Local0 = 1
++	while (Local0) {
++		EMXI = 0
++		Local0 = EMXD
++	}
++}
+diff -ruN a/src/ec/dell/mec5035/acpi/lid.asl b/src/ec/dell/mec5035/acpi/lid.asl
+--- a/src/ec/dell/mec5035/acpi/lid.asl	1969-12-31 19:00:00.000000000 -0500
++++ b/src/ec/dell/mec5035/acpi/lid.asl	2026-05-31 22:17:53.384571698 -0400
+@@ -0,0 +1,13 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
++Device(LID)
++{
++	Name(_HID, "PNP0C0D")
++
++	Name(_PRW, Package () {24, 3})
++
++	Method(_LID, 0, NotSerialized)
++	{
++		return (LIDS)
++	}
++}
+diff -ruN a/src/ec/dell/mec5035/acpi/thermal.asl b/src/ec/dell/mec5035/acpi/thermal.asl
+--- a/src/ec/dell/mec5035/acpi/thermal.asl	1969-12-31 19:00:00.000000000 -0500
++++ b/src/ec/dell/mec5035/acpi/thermal.asl	2026-05-31 22:17:53.384571698 -0400
+@@ -0,0 +1,51 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++
++Device (FAN)
++{
++	Name (_HID, EISAID ("PNP0C0B"))
++
++	Name (_FIF, Package ()
++	{
++		0,	// Revision
++		1,
++		2,
++		0
++	})
++
++	Name (_FPS, Package ()
++	{
++		0, /* Revision */
++		Package ()
++		{
++			50,
++			0xFFFFFFFF,
++			3000,
++			0xFFFFFFFF,
++			0xFFFFFFFF
++		}
++	})
++
++	Method (_FSL, 1, NotSerialized)
++	{
++	}
++
++	Name (FSTP, Package(){
++		0, /* Revision */
++		50, /* Control */
++		0x00, /* Speed */
++	})
++
++	Method (_FST, 0, NotSerialized)
++	{
++		EMXW(2, 0x02)
++		EMXW(3, 0)
++		EMXW(4, 0)
++		EMXW(5, 0)
++		EMXW(6, 0)
++		EMXC(0x2e)
++		Local0 = EMXR(2)
++		Local0 = (EMXR(3) << 8) | Local0
++		FSTP[2] = Local0
++		Return (FSTP)
++	}
++}
+diff -ruN a/src/ec/dell/mec5035/Makefile.mk b/src/ec/dell/mec5035/Makefile.mk
+--- a/src/ec/dell/mec5035/Makefile.mk	2026-02-25 20:42:49.000000000 -0500
++++ b/src/ec/dell/mec5035/Makefile.mk	2026-05-31 22:17:53.383658371 -0400
+@@ -5,6 +5,6 @@
+ bootblock-y += mec5035.c
+ romstage-y += mec5035.c
+ ramstage-y += mec5035.c
+-smm-y += mec5035.c smihandler.c
++smm-y += mec5035.c
+ 
+ endif
+diff -ruN a/src/ec/dell/mec5035/mec5035.c b/src/ec/dell/mec5035/mec5035.c
+--- a/src/ec/dell/mec5035/mec5035.c	2026-02-25 20:42:53.000000000 -0500
++++ b/src/ec/dell/mec5035/mec5035.c	2026-05-31 22:17:53.384571698 -0400
+@@ -94,24 +94,39 @@
+ 	ec_command(CMD_RADIO_CTRL);
+ }
+ 
+-static void mec5035_power_button_route(enum ec_power_button_route target)
++void mec5035_acpi_enable(void)
+ {
+-	u8 buf = (u8)target;
+-	write_mailbox_regs(&buf, 2, 1);
+-	ec_command(CMD_POWER_BUTTON_TO_HOST);
+-}
+-void mec5035_change_wake(u8 source, enum ec_wake_change change)
+-{
+-	u8 buf[ACPI_WAKEUP_NUM_ARGS] = {change, source, 0, 0x40};
+-	write_mailbox_regs(buf, 2, ACPI_WAKEUP_NUM_ARGS);
+-	ec_command(CMD_ACPI_WAKEUP_CHANGE);
+-}
+-
+-void mec5035_sleep_enable(void)
+-{
+-	u8 buf[SLEEP_EN_NUM_ARGS] = {3, 0};
+-	write_mailbox_regs(buf, 2, SLEEP_EN_NUM_ARGS);
+-	ec_command(CMD_SLEEP_ENABLE);
++	u8 buf[1] = {0};
++	/*
++	write_mailbox_regs(buf, 2, 1);
++	ec_command(0x85);
++	*/
++	buf[0] = 1;
++	write_mailbox_regs(buf, 2, 1);
++	ec_command(CMD_ACPI);
++	/*
++	buf[0] = 1;
++	write_mailbox_regs(buf, 2, 1);
++	ec_command(0xa0);
++	buf[0] = 1;
++	write_mailbox_regs(buf, 2, 1);
++	ec_command(0x9e);
++	buf[0] = 1;
++	write_mailbox_regs(buf, 2, 1);
++	ec_command(0x9f);
++	buf[0] = 2;
++	write_mailbox_regs(buf, 2, 1);
++	ec_command(0x9f);
++	buf[0] = 2;
++	write_mailbox_regs(buf, 2, 1);
++	ec_command(0xa0);
++	buf[0] = 2;
++	write_mailbox_regs(buf, 2, 1);
++	ec_command(0x9e);
++	buf[0] = 0;
++	write_mailbox_regs(buf, 2, 1);
++	ec_command(0x63);
++	*/
+ }
+ 
+ void mec5035_cmd_bf(u8 i)
+@@ -146,7 +161,6 @@
+ 	/* Unconditionally use this argument for now as this setting
+ 	   is probably the most sensible default out of the 3 choices. */
+ 	mec5035_mouse_touchpad(TP_PS2_MOUSE);
+-	mec5035_power_button_route(HOST);
+ 
+ 	pc_keyboard_init(NO_AUX_DEVICE);
+ 
+diff -ruN a/src/ec/dell/mec5035/mec5035.h b/src/ec/dell/mec5035/mec5035.h
+--- a/src/ec/dell/mec5035/mec5035.h	2026-02-25 20:42:53.000000000 -0500
++++ b/src/ec/dell/mec5035/mec5035.h	2026-05-31 22:17:53.384658375 -0400
+@@ -4,16 +4,13 @@
+ #define _EC_DELL_MEC5035_H_
+ 
+ #include <stdint.h>
+-#include <types.h>
+ 
+ #define NUM_REGISTERS	32
+ 
+ enum mec5035_cmd {
+ 	CMD_MOUSE_TP = 0x1a,
+ 	CMD_RADIO_CTRL = 0x2b,
+-	CMD_POWER_BUTTON_TO_HOST = 0x3e,
+-	CMD_ACPI_WAKEUP_CHANGE = 0x4a,
+-	CMD_SLEEP_ENABLE = 0x64,
++	CMD_ACPI = 0x3a,
+ 	CMD_BF = 0xbf,
+ 	CMD_CPU_OK = 0xc2,
+ };
+@@ -38,34 +35,11 @@
+ 	RADIO_ON
+ };
+ 
+-enum ec_power_button_route {
+-	EC = 0,
+-	HOST
+-};
+-
+-#define ACPI_WAKEUP_NUM_ARGS 4
+-enum ec_wake_change {
+-	WAKE_OFF = 0,
+-	WAKE_ON
+-};
+-
+-/* Copied from ec/google/wilco/commands.h. Not sure if these all apply */
+-enum ec_acpi_wake_events {
+-	EC_ACPI_WAKE_PWRB = BIT(0),     /* Wake up by power button */
+-	EC_ACPI_WAKE_LID = BIT(1),      /* Wake up by lid switch */
+-	EC_ACPI_WAKE_RTC = BIT(5),      /* Wake up by RTC */
+-};
+-
+-#define SLEEP_EN_NUM_ARGS 2
+-
+ u8 mec5035_mouse_touchpad(enum ec_mouse_setting setting);
+ void mec5035_cpu_ok(void);
+ void mec5035_early_init(void);
+ void mec5035_control_radio(enum ec_radio_dev device, enum ec_radio_state state);
+-void mec5035_change_wake(u8 source, enum ec_wake_change change);
+-void mec5035_sleep_enable(void);
+-
+-void mec5035_smi_sleep(int slp_type);
++void mec5035_acpi_enable(void);
+ void mec5035_cmd_bf(u8 i);
+ 
+ #endif /* _EC_DELL_MEC5035_H_ */
+diff -ruN a/src/ec/dell/mec5035/smihandler.c b/src/ec/dell/mec5035/smihandler.c
+--- a/src/ec/dell/mec5035/smihandler.c	2026-02-25 20:42:49.000000000 -0500
++++ b/src/ec/dell/mec5035/smihandler.c	1969-12-31 19:00:00.000000000 -0500
+@@ -1,17 +0,0 @@
+-/* SPDX-License-Identifier: GPL-2.0-only */
+-
+-#include <acpi/acpi.h>
+-#include <console/console.h>
+-#include <ec/acpi/ec.h>
+-#include "mec5035.h"
+-
+-void mec5035_smi_sleep(int slp_type)
+-{
+-	switch (slp_type) {
+-	case ACPI_S3:
+-		/* System does not yet resume properly if woken by lid */
+-		mec5035_change_wake(EC_ACPI_WAKE_LID, WAKE_OFF);
+-		mec5035_sleep_enable();
+-		break;
+-	}
+-}
+diff -ruN a/src/mainboard/dell/gm45_latitude/acpi/ec.asl b/src/mainboard/dell/gm45_latitude/acpi/ec.asl
+--- a/src/mainboard/dell/gm45_latitude/acpi/ec.asl	2026-02-25 20:42:45.000000000 -0500
++++ b/src/mainboard/dell/gm45_latitude/acpi/ec.asl	2026-05-31 22:17:53.384658375 -0400
+@@ -1,3 +1,6 @@
+-/* SPDX-License-Identifier: CC-PDDC */
++/* SPDX-License-Identifier: GPL-2.0-only */
+ 
+-/* Please update the license if adding licensable material. */
++/* GPIO 1 is used for the EC SCI */
++#define MEC5035_EC_GPE 17
++
++#include <ec/dell/mec5035/acpi/ec.asl>
+diff -ruN a/src/mainboard/dell/gm45_latitude/devicetree.cb b/src/mainboard/dell/gm45_latitude/devicetree.cb
+--- a/src/mainboard/dell/gm45_latitude/devicetree.cb	2026-02-25 20:42:48.000000000 -0500
++++ b/src/mainboard/dell/gm45_latitude/devicetree.cb	2026-05-31 22:17:53.384658375 -0400
+@@ -18,7 +18,7 @@
+ 		ops gm45_pci_domain_ops
+ 
+ 		device pci 00.0 on end # host bridge
+-		device pci 01.0 on end
++		device pci 01.0 off end
+ 		device pci 02.0 on end # VGA
+ 		device pci 02.1 on end # Display
+ 		device pci 03.0 on end # ME
+@@ -35,9 +35,9 @@
+ 			register "pirqg_routing" = "0x80"
+ 			register "pirqh_routing" = "0x80"
+ 
+-			register "gpi8_routing"  = "2"
+-			register "gpe0_en" = "0x01000000"
+-			register "gpi1_routing"  = "2"
++			register "gpi1_routing"  = "2" # SCI
++			# register "gpi8_routing"  = "1" # SMI
++			register "gpe0_en" = "0x00020000"
+ 
+ 			# Set AHCI mode, enable ports 1 and 2.
+ 			register "sata_port_map"		= "0x03"
+diff -ruN a/src/mainboard/dell/gm45_latitude/Kconfig b/src/mainboard/dell/gm45_latitude/Kconfig
+--- a/src/mainboard/dell/gm45_latitude/Kconfig	2026-02-25 20:42:50.000000000 -0500
++++ b/src/mainboard/dell/gm45_latitude/Kconfig	2026-05-31 22:17:40.104490840 -0400
+@@ -2,7 +2,6 @@
+ 
+ config BOARD_DELL_GM45_LATITUDE_COMMON
+ 	def_bool n
+-	select AZALIA_USE_LEGACY_VERB_TABLE
+ 	select SYSTEM_TYPE_LAPTOP
+ 	select CPU_INTEL_SOCKET_P
+ 	select NORTHBRIDGE_INTEL_GM45
+@@ -21,26 +20,19 @@
+ config BOARD_DELL_E6400
+ 	select BOARD_DELL_GM45_LATITUDE_COMMON
+ 
+-config BOARD_DELL_E4300
+-	select BOARD_DELL_GM45_LATITUDE_COMMON
+-
+ if BOARD_DELL_GM45_LATITUDE_COMMON
+-config INTEL_GMA_DPLL_REF_FREQ
+-	default 100000000
+ 
+ config MAINBOARD_DIR
+ 	default "dell/gm45_latitude"
+ 
+ config MAINBOARD_PART_NUMBER
+ 	default "Latitude E6400" if BOARD_DELL_E6400
+-	default "Latitude E4300" if BOARD_DELL_E4300
+ 
+ config OVERRIDE_DEVICETREE
+ 	default "variants/\$(CONFIG_VARIANT_DIR)/overridetree.cb"
+ 
+ config VARIANT_DIR
+ 	default "e6400" if BOARD_DELL_E6400
+-	default "e4300" if BOARD_DELL_E4300
+ 
+ config USBDEBUG_HCD_INDEX
+ 	default 1
+diff -ruN a/src/mainboard/dell/gm45_latitude/Kconfig.name b/src/mainboard/dell/gm45_latitude/Kconfig.name
+--- a/src/mainboard/dell/gm45_latitude/Kconfig.name	2026-02-25 20:42:50.000000000 -0500
++++ b/src/mainboard/dell/gm45_latitude/Kconfig.name	2026-05-31 22:17:40.104581705 -0400
+@@ -1,7 +1,4 @@
+ ## SPDX-License-Identifier: GPL-2.0-only
+ 
+-config BOARD_DELL_E4300
+-	bool "Latitude E4300"
+-
+ config BOARD_DELL_E6400
+ 	bool "Latitude E6400"
+diff -ruN a/src/mainboard/dell/gm45_latitude/smihandler.c b/src/mainboard/dell/gm45_latitude/smihandler.c
+--- a/src/mainboard/dell/gm45_latitude/smihandler.c	2026-02-25 20:42:50.000000000 -0500
++++ b/src/mainboard/dell/gm45_latitude/smihandler.c	2026-05-31 22:17:53.384658375 -0400
+@@ -2,8 +2,15 @@
+ 
+ #include <cpu/x86/smm.h>
+ #include <ec/dell/mec5035/mec5035.h>
++#include <stdint.h>
+ 
+-void mainboard_smi_sleep(u8 slp_typ)
++int mainboard_smi_apmc(u8 data)
+ {
+-	mec5035_smi_sleep(slp_typ);
++	switch (data) {
++	case APM_CNT_ACPI_ENABLE:
++		mec5035_acpi_enable();
++	default:
++		break;
++	}
++	return 0;
+ }
+Binary files /tmp/lbmk-gm45/variants/e4300/data.vbt and /tmp/coreboot-mec5035/src/mainboard/dell/gm45_latitude/variants/e4300/data.vbt differ
+diff -ruN a/src/mainboard/dell/gm45_latitude/variants/e4300/gma-mainboard.ads b/src/mainboard/dell/gm45_latitude/variants/e4300/gma-mainboard.ads
+--- a/src/mainboard/dell/gm45_latitude/variants/e4300/gma-mainboard.ads	2026-02-25 20:42:50.000000000 -0500
++++ b/src/mainboard/dell/gm45_latitude/variants/e4300/gma-mainboard.ads	1969-12-31 19:00:00.000000000 -0500
+@@ -1,17 +0,0 @@
+--- SPDX-License-Identifier: GPL-2.0-or-later
+-
+-with HW.GFX.GMA;
+-with HW.GFX.GMA.Display_Probing;
+-
+-use HW.GFX.GMA;
+-use HW.GFX.GMA.Display_Probing;
+-
+-private package GMA.Mainboard is
+-
+-   ports : constant Port_List :=
+-     (DP2, -- dock DP
+-      Analog, -- mainboard VGA
+-      LVDS,
+-      others => Disabled);
+-
+-end GMA.Mainboard;
+diff -ruN a/src/mainboard/dell/gm45_latitude/variants/e4300/gpio.c b/src/mainboard/dell/gm45_latitude/variants/e4300/gpio.c
+--- a/src/mainboard/dell/gm45_latitude/variants/e4300/gpio.c	2026-02-25 20:42:50.000000000 -0500
++++ b/src/mainboard/dell/gm45_latitude/variants/e4300/gpio.c	1969-12-31 19:00:00.000000000 -0500
+@@ -1,138 +0,0 @@
+-/* SPDX-License-Identifier: GPL-2.0-only */
+-
+-#include <southbridge/intel/common/gpio.h>
+-
+-static const struct pch_gpio_set1 pch_gpio_set1_mode = {
+-	.gpio0  = GPIO_MODE_NATIVE,
+-	.gpio1  = GPIO_MODE_GPIO,
+-	.gpio2  = GPIO_MODE_GPIO,
+-	.gpio3  = GPIO_MODE_GPIO,
+-	.gpio4  = GPIO_MODE_GPIO,
+-	.gpio5  = GPIO_MODE_GPIO,
+-	.gpio6  = GPIO_MODE_GPIO,
+-	.gpio7  = GPIO_MODE_GPIO,
+-	.gpio8  = GPIO_MODE_GPIO,
+-	.gpio9  = GPIO_MODE_NATIVE,
+-	.gpio10 = GPIO_MODE_NATIVE,
+-	.gpio11 = GPIO_MODE_NATIVE,
+-	.gpio12 = GPIO_MODE_NATIVE,
+-	.gpio13 = GPIO_MODE_GPIO,
+-	.gpio14 = GPIO_MODE_GPIO,
+-	.gpio15 = GPIO_MODE_NATIVE,
+-	.gpio16 = GPIO_MODE_NATIVE,
+-	.gpio17 = GPIO_MODE_GPIO,
+-	.gpio18 = GPIO_MODE_GPIO,
+-	.gpio19 = GPIO_MODE_GPIO,
+-	.gpio20 = GPIO_MODE_GPIO,
+-	.gpio21 = GPIO_MODE_GPIO,
+-	.gpio22 = GPIO_MODE_GPIO,
+-	.gpio23 = GPIO_MODE_NATIVE,
+-	.gpio24 = GPIO_MODE_GPIO,
+-	.gpio25 = GPIO_MODE_NATIVE,
+-	.gpio26 = GPIO_MODE_NATIVE,
+-	.gpio27 = GPIO_MODE_GPIO,
+-	.gpio28 = GPIO_MODE_GPIO,
+-	.gpio29 = GPIO_MODE_NATIVE,
+-	.gpio30 = GPIO_MODE_NATIVE,
+-	.gpio31 = GPIO_MODE_NATIVE,
+-};
+-
+-static const struct pch_gpio_set1 pch_gpio_set1_direction = {
+-	.gpio1  = GPIO_DIR_INPUT,
+-	.gpio2  = GPIO_DIR_INPUT,
+-	.gpio3  = GPIO_DIR_INPUT,
+-	.gpio4  = GPIO_DIR_INPUT,
+-	.gpio5  = GPIO_DIR_INPUT,
+-	.gpio6  = GPIO_DIR_INPUT,
+-	.gpio7  = GPIO_DIR_INPUT,
+-	.gpio8  = GPIO_DIR_INPUT,
+-	.gpio13 = GPIO_DIR_INPUT,
+-	.gpio14 = GPIO_DIR_INPUT,
+-	.gpio17 = GPIO_DIR_INPUT,
+-	.gpio18 = GPIO_DIR_INPUT,
+-	.gpio19 = GPIO_DIR_INPUT,
+-	.gpio20 = GPIO_DIR_INPUT,
+-	.gpio21 = GPIO_DIR_INPUT,
+-	.gpio22 = GPIO_DIR_INPUT,
+-	.gpio24 = GPIO_DIR_INPUT,
+-	.gpio27 = GPIO_DIR_INPUT,
+-	.gpio28 = GPIO_DIR_INPUT,
+-};
+-
+-static const struct pch_gpio_set1 pch_gpio_set1_level = {
+-};
+-
+-static const struct pch_gpio_set1 pch_gpio_set1_blink = {
+-};
+-
+-static const struct pch_gpio_set1 pch_gpio_set1_invert = {
+-	.gpio1  = GPIO_INVERT,
+-	.gpio7  = GPIO_INVERT,
+-	.gpio8  = GPIO_INVERT,
+-};
+-
+-static const struct pch_gpio_set2 pch_gpio_set2_mode = {
+-	.gpio32 = GPIO_MODE_NATIVE,
+-	.gpio33 = GPIO_MODE_GPIO,
+-	.gpio34 = GPIO_MODE_GPIO,
+-	.gpio35 = GPIO_MODE_NATIVE,
+-	.gpio36 = GPIO_MODE_GPIO,
+-	.gpio37 = GPIO_MODE_GPIO,
+-	.gpio38 = GPIO_MODE_GPIO,
+-	.gpio39 = GPIO_MODE_GPIO,
+-	.gpio40 = GPIO_MODE_NATIVE,
+-	.gpio41 = GPIO_MODE_NATIVE,
+-	.gpio42 = GPIO_MODE_NATIVE,
+-	.gpio43 = GPIO_MODE_NATIVE,
+-	.gpio44 = GPIO_MODE_NATIVE,
+-	.gpio45 = GPIO_MODE_NATIVE,
+-	.gpio46 = GPIO_MODE_NATIVE,
+-	.gpio47 = GPIO_MODE_NATIVE,
+-	.gpio48 = GPIO_MODE_GPIO,
+-	.gpio49 = GPIO_MODE_GPIO,
+-	.gpio50 = GPIO_MODE_NATIVE,
+-	.gpio51 = GPIO_MODE_NATIVE,
+-	.gpio52 = GPIO_MODE_GPIO,
+-	.gpio53 = GPIO_MODE_GPIO,
+-	.gpio54 = GPIO_MODE_NATIVE,
+-	.gpio55 = GPIO_MODE_NATIVE,
+-	.gpio56 = GPIO_MODE_GPIO,
+-	.gpio57 = GPIO_MODE_GPIO,
+-	.gpio58 = GPIO_MODE_NATIVE,
+-	.gpio59 = GPIO_MODE_NATIVE,
+-	.gpio60 = GPIO_MODE_GPIO,
+-};
+-
+-static const struct pch_gpio_set2 pch_gpio_set2_direction = {
+-	.gpio33 = GPIO_DIR_INPUT,
+-	.gpio34 = GPIO_DIR_INPUT,
+-	.gpio36 = GPIO_DIR_INPUT,
+-	.gpio37 = GPIO_DIR_INPUT,
+-	.gpio38 = GPIO_DIR_INPUT,
+-	.gpio39 = GPIO_DIR_INPUT,
+-	.gpio48 = GPIO_DIR_INPUT,
+-	.gpio49 = GPIO_DIR_INPUT,
+-	.gpio52 = GPIO_DIR_INPUT,
+-	.gpio53 = GPIO_DIR_INPUT,
+-	.gpio56 = GPIO_DIR_INPUT,
+-	.gpio57 = GPIO_DIR_INPUT,
+-	.gpio60 = GPIO_DIR_INPUT,
+-};
+-
+-static const struct pch_gpio_set2 pch_gpio_set2_level = {
+-};
+-
+-const struct pch_gpio_map mainboard_gpio_map = {
+-	.set1 = {
+-		.mode      = &pch_gpio_set1_mode,
+-		.direction = &pch_gpio_set1_direction,
+-		.level     = &pch_gpio_set1_level,
+-		.blink     = &pch_gpio_set1_blink,
+-		.invert    = &pch_gpio_set1_invert,
+-	},
+-	.set2 = {
+-		.mode      = &pch_gpio_set2_mode,
+-		.direction = &pch_gpio_set2_direction,
+-		.level     = &pch_gpio_set2_level,
+-	},
+-};
+diff -ruN a/src/mainboard/dell/gm45_latitude/variants/e4300/hda_verb.c b/src/mainboard/dell/gm45_latitude/variants/e4300/hda_verb.c
+--- a/src/mainboard/dell/gm45_latitude/variants/e4300/hda_verb.c	2026-02-25 20:42:50.000000000 -0500
++++ b/src/mainboard/dell/gm45_latitude/variants/e4300/hda_verb.c	1969-12-31 19:00:00.000000000 -0500
+@@ -1,37 +0,0 @@
+-/* SPDX-License-Identifier: GPL-2.0-only */
+-
+-#include <device/azalia_device.h>
+-
+-const u32 cim_verb_data[] = {
+-	/* coreboot specific header */
+-	0x111d76b2, /* IDT 92HD71B7X */
+-	0x1028024d, /* Subsystem ID */
+-	13,	    /* Number of entries */
+-
+-	/* Pin Widget Verb Table */
+-
+-	AZALIA_PIN_CFG(0, 0x0a, 0x0421101f),
+-	AZALIA_PIN_CFG(0, 0x0b, 0x04a11021),
+-	AZALIA_PIN_CFG(0, 0x0c, 0x40f000f0),
+-	AZALIA_PIN_CFG(0, 0x0d, 0x90170110),
+-	AZALIA_PIN_CFG(0, 0x0e, 0x23a1102e),
+-	AZALIA_PIN_CFG(0, 0x0f, 0x23011050),
+-	AZALIA_PIN_CFG(0, 0x14, 0x40f000f2),
+-	AZALIA_PIN_CFG(0, 0x18, 0x90a601a0),
+-	AZALIA_PIN_CFG(0, 0x19, 0x40f000f4),
+-	AZALIA_PIN_CFG(0, 0x1e, 0x40f000f5),
+-	AZALIA_PIN_CFG(0, 0x1f, 0x40f000f6),
+-	AZALIA_PIN_CFG(0, 0x20, 0x40f000f7),
+-	AZALIA_PIN_CFG(0, 0x27, 0x40f000f0),
+-};
+-
+-const u32 pc_beep_verbs[] = {
+-	0x00170500, /* power up codec */
+-	0x00d70500, /* power up speakers */
+-	0x00d70102, /* select mixer (input 0x2) for speakers */
+-	0x00d70740, /* enable speakers output */
+-	0x02770720, /* enable beep input */
+-	0x01737217, /* unmute beep (mixer's input 0x2), set amp 0dB */
+-	0x00d37000, /* unmute speakers */
+-};
+-AZALIA_ARRAY_SIZES;
+diff -ruN a/src/mainboard/dell/gm45_latitude/variants/e4300/overridetree.cb b/src/mainboard/dell/gm45_latitude/variants/e4300/overridetree.cb
+--- a/src/mainboard/dell/gm45_latitude/variants/e4300/overridetree.cb	2026-02-25 20:42:50.000000000 -0500
++++ b/src/mainboard/dell/gm45_latitude/variants/e4300/overridetree.cb	1969-12-31 19:00:00.000000000 -0500
+@@ -1,10 +0,0 @@
+-## SPDX-License-Identifier: GPL-2.0-or-later
+-
+-chip northbridge/intel/gm45
+-	device domain 0 on
+-		subsystemid 0x1028 0x024d inherit
+-		chip southbridge/intel/i82801ix
+-			device pci 1c.2 off end # PCIe Port #3
+-		end
+-	end
+-end

@@ -50,13 +50,16 @@ stdenv.mkDerivation (finalAttrs: {
     hash = "sha512-3fyK6lM2TdWFWJyEgcQRrMA+8c6mZLCM89JVXSEzWp6NDM61i0yeRUKfoG575sQYint5g/KS/ABS0Nn33jUZ4Q==";
   };
 
-  # We do NOT use the standard `patches` attribute because nic3-14159's
-  # branch was based on pristine upstream coreboot, while lbmk's release
-  # tarball ships coreboot with ~40 of lbmk's own patches already applied.
-  # Plain `patch -p1` can't reconcile the drift. Instead we use git am
-  # --3way in postPatch, which uses the patch's blob hashes to find the
-  # original content and merge intelligently.
-  mec5035Patches = ./patches;
+  # A single consolidated diff between lbmk's coreboot tree (as shipped
+  # in 26.01rev1) and nic3-14159's `mec5035-acpi` branch tip
+  # (9e3a7e58dd194a34cc86bca4cc0a11305c62b157), restricted to the
+  # src/ec/dell/mec5035/** and src/mainboard/dell/gm45_latitude/**
+  # subtrees that matter for E6400. Replaces the 13 separate format-patch
+  # commits because lbmk's coreboot has drifted enough (lbmk-side patches
+  # like 0014/0021/0038/0039 already apply some of the same changes) that
+  # the upstream commits no longer apply cleanly.
+  patches = [./patches/0001-mec5035-acpi-consolidated.patch];
+  patchFlags = ["-p1" "-d" "src/coreboot/default"];
 
   nativeBuildInputs = [
     coreboot-toolchain.i386
@@ -87,31 +90,12 @@ stdenv.mkDerivation (finalAttrs: {
   # lbmk's mk script wants:
   #   - a writable tree (the source tarball ships a read-only `lock` file)
   #   - a git identity (it auto-inits a git repo for change tracking)
-  #
-  # Also: apply nic3-14159's mec5035-acpi patches via `git am --3way`
-  # inside src/coreboot/default. The 3-way merge resolves the drift
-  # between his branch base and lbmk's modified coreboot.
   postPatch = ''
     chmod -R u+w .
     rm -f lock
     export HOME=$NIX_BUILD_TOP
     git config --global user.email "nix@build.local"
     git config --global user.name "nix-build"
-
-    pushd src/coreboot/default
-    git init -q -b main .
-    git add -A
-    git commit -q -m "lbmk vendored coreboot baseline"
-    for p in ${finalAttrs.mec5035Patches}/*.patch; do
-      echo "==> git am --3way $(basename "$p")"
-      git am --3way --keep-non-patch "$p" || {
-        echo "FAILED: $p"
-        echo "---- conflict files ----"
-        git status
-        exit 1
-      }
-    done
-    popd
   '';
 
   # Point coreboot's makefile at the nixpkgs-built crossgcc instead of
