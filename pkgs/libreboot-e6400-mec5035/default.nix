@@ -104,6 +104,12 @@ stdenv.mkDerivation (finalAttrs: {
 
   enableParallelBuilding = true;
 
+  # lbmk is its own build orchestrator. mkDerivation's stdenv would
+  # otherwise auto-run cmake (because cmake is in nativeBuildInputs for
+  # lbmk's uefitool subdep) and try to configure us — skip that.
+  dontUseCmakeConfigure = true;
+  dontConfigure = true;
+
   buildPhase = ''
     runHook preBuild
     # lbmk's -b flag triggers a build; second arg is the project, third is
