@@ -579,55 +579,6 @@ diff -ruN a/src/mainboard/dell/gm45_latitude/devicetree.cb b/src/mainboard/dell/
  
  			# Set AHCI mode, enable ports 1 and 2.
  			register "sata_port_map"		= "0x03"
-diff -ruN a/src/mainboard/dell/gm45_latitude/Kconfig b/src/mainboard/dell/gm45_latitude/Kconfig
---- a/src/mainboard/dell/gm45_latitude/Kconfig	2026-02-25 20:42:50.000000000 -0500
-+++ b/src/mainboard/dell/gm45_latitude/Kconfig	2026-05-31 22:17:40.104490840 -0400
-@@ -2,7 +2,6 @@
- 
- config BOARD_DELL_GM45_LATITUDE_COMMON
- 	def_bool n
--	select AZALIA_USE_LEGACY_VERB_TABLE
- 	select SYSTEM_TYPE_LAPTOP
- 	select CPU_INTEL_SOCKET_P
- 	select NORTHBRIDGE_INTEL_GM45
-@@ -21,26 +20,19 @@
- config BOARD_DELL_E6400
- 	select BOARD_DELL_GM45_LATITUDE_COMMON
- 
--config BOARD_DELL_E4300
--	select BOARD_DELL_GM45_LATITUDE_COMMON
--
- if BOARD_DELL_GM45_LATITUDE_COMMON
--config INTEL_GMA_DPLL_REF_FREQ
--	default 100000000
- 
- config MAINBOARD_DIR
- 	default "dell/gm45_latitude"
- 
- config MAINBOARD_PART_NUMBER
- 	default "Latitude E6400" if BOARD_DELL_E6400
--	default "Latitude E4300" if BOARD_DELL_E4300
- 
- config OVERRIDE_DEVICETREE
- 	default "variants/\$(CONFIG_VARIANT_DIR)/overridetree.cb"
- 
- config VARIANT_DIR
- 	default "e6400" if BOARD_DELL_E6400
--	default "e4300" if BOARD_DELL_E4300
- 
- config USBDEBUG_HCD_INDEX
- 	default 1
-diff -ruN a/src/mainboard/dell/gm45_latitude/Kconfig.name b/src/mainboard/dell/gm45_latitude/Kconfig.name
---- a/src/mainboard/dell/gm45_latitude/Kconfig.name	2026-02-25 20:42:50.000000000 -0500
-+++ b/src/mainboard/dell/gm45_latitude/Kconfig.name	2026-05-31 22:17:40.104581705 -0400
-@@ -1,7 +1,4 @@
- ## SPDX-License-Identifier: GPL-2.0-only
- 
--config BOARD_DELL_E4300
--	bool "Latitude E4300"
--
- config BOARD_DELL_E6400
- 	bool "Latitude E6400"
 diff -ruN a/src/mainboard/dell/gm45_latitude/smihandler.c b/src/mainboard/dell/gm45_latitude/smihandler.c
 --- a/src/mainboard/dell/gm45_latitude/smihandler.c	2026-02-25 20:42:50.000000000 -0500
 +++ b/src/mainboard/dell/gm45_latitude/smihandler.c	2026-05-31 22:17:53.384658375 -0400
