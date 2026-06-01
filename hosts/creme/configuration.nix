@@ -46,11 +46,6 @@
   # Use latest kernel for hardware compat on this old box
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
-  # TEMP: relax /dev/mem checks for dell-flash-unlock + flashprog.
-  # Re-flashing libreboot with the mec5035-acpi patches. Drop again
-  # after the flash completes.
-  boot.kernelParams = ["iomem=relaxed"];
-
   # Nebula mesh - reachable from your other personal devices
   kimb.nebula = {
     enable = true;
