@@ -49,6 +49,16 @@
   # Use latest kernel for hardware compat on this old box
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
+  # Plymouth boot splash. Hides the kernel/systemd-boot scrollback wall
+  # behind a clean spinner from kernel handoff onward. Plymouth needs the
+  # systemd-based initrd to coordinate with the spinner; libreboot's
+  # SeaBIOS+GRUB chainload still scrolls a bit before kernel takeover,
+  # but everything from there to login is quiet.
+  boot.plymouth.enable = true;
+  boot.initrd.systemd.enable = true;
+  boot.kernelParams = [ "quiet" "splash" "loglevel=3" "rd.systemd.show_status=auto" "rd.udev.log_level=3" ];
+  boot.consoleLogLevel = 3;
+
   # Nebula mesh - reachable from your other personal devices
   kimb.nebula = {
     enable = true;
@@ -96,16 +106,23 @@
     jujutsu
     helix
     # Three st variants from mccartykim/st (multi-fork-packaging branch).
-    # Run one at a time interactively to compare:
+    # All three forks' upstream Makefiles install the binary as `st`, so
+    # exposing all three system-wide creates a collision. We let vanilla
+    # `st` win the bare `st` command, and symlink-rename the other two so
+    # they're callable as `st-snazzy` and `st-luke` distinct commands.
     #   st           — vanilla 0.9.3, cleanest kerning, no scrollback
     #   st-snazzy    — siduck/st, gruvbox, harfbuzz ligatures, alpha=1.0
     #   st-luke      — LukeSmithxyz/st, gruvbox, alpha=0.8 + scrollback +
-    #                  font2 emoji fallback + boxdraw. Heaviest but
-    #                  feature-complete; alpha can be lowered to 0.0 to
-    #                  disable blending if old HW struggles.
+    #                  font2 emoji fallback + boxdraw
     inputs.st.packages.${pkgs.system}.st
-    inputs.st.packages.${pkgs.system}.st-snazzy
-    inputs.st.packages.${pkgs.system}.st-luke
+    (pkgs.runCommand "st-snazzy-renamed" { } ''
+      mkdir -p $out/bin
+      ln -s ${inputs.st.packages.${pkgs.system}.st-snazzy}/bin/st $out/bin/st-snazzy
+    '')
+    (pkgs.runCommand "st-luke-renamed" { } ''
+      mkdir -p $out/bin
+      ln -s ${inputs.st.packages.${pkgs.system}.st-luke}/bin/st $out/bin/st-luke
+    '')
   ];
 
   # ─── Stylix: derive desktop colors from the PDX-carpet wallpaper ────
@@ -118,12 +135,48 @@
   # carpet density.
   stylix = {
     enable = true;
-    image = pkgs.callPackage ../../pkgs/pdx-wallpaper { scale = 1; };
+    # scale = 1.0/3.0 → ~163px tile, so ~9×6 tiles fit on a 1440×900 panel.
+    # Bigger pattern density than scale=1; matches the "carpet underfoot"
+    # feel of the original PDX terminal carpet a bit closer.
+    image = pkgs.callPackage ../../pkgs/pdx-wallpaper { scale = 1.0 / 3.0; };
     # Wallpaper is a tiled pattern, not a single-frame image.
     imageScalingMode = "tile";
-    # Carpet is bright/saturated; pick a dark colorscheme so terminal
-    # text stays readable. Switch to "either" if you want stylix to
-    # auto-pick based on the image's overall lightness.
+    # Hand-tuned base16 scheme derived from the PDX-carpet SVG's actual
+    # colors, designed for HIGH contrast on the E6400's TN panel
+    # (~60% sRGB coverage, washes saturated colors out at low brightness):
+    #
+    #   #6FD6A8 → base0B (strings / success / "go" green) — the carpet's
+    #              mint background, kept saturated so it pops on near-black
+    #   #544A93 → base02 (selection) — the deep purple X-shapes, used as
+    #              UI chrome accent; original is too dark for foreground text
+    #   #8279D2 → base0D (functions / "thinking" blue-purple) — lifted
+    #              variant of the deep purple, readable against base00
+    #   #FB2C42 → base08 (variables / errors) — the carpet's red squares
+    #   #F7BEDF → base0F (special / quotes) — the pale pink diagonals;
+    #              works as a soft accent, not for primary text
+    #
+    # Background is pure-black-leaning charcoal (#08080c) instead of the
+    # carpet's mint, because the carpet IS the wallpaper — the desktop
+    # itself shouldn't compete. Foreground is near-white (#f4f4f8) for
+    # maximum legibility.
+    base16Scheme = {
+      base00 = "08080c"; # background
+      base01 = "16161e"; # status bar / line highlight bg
+      base02 = "2d2640"; # selection — PDX deep purple tinted
+      base03 = "5a5a72"; # comments — readable grey-purple
+      base04 = "b0b0c0"; # status bar fg
+      base05 = "f4f4f8"; # default foreground — high contrast
+      base06 = "fafafc"; # light fg
+      base07 = "ffffff"; # extreme highlight
+      base08 = "fb2c42"; # red (PDX scarlet) — vars, errors
+      base09 = "ff8a5c"; # orange — derived from red toward warmth
+      base0A = "ffd966"; # yellow — types, search hits
+      base0B = "6fd6a8"; # green (PDX mint) — strings, success
+      base0C = "a0e8d0"; # cyan — lighter mint
+      base0D = "8279d2"; # blue (PDX medium purple) — functions
+      base0E = "a899e8"; # magenta-purple — keywords
+      base0F = "f7bedf"; # pink (PDX pale pink) — special
+    };
     polarity = "dark";
     # Keep the existing BlexMono Nerd Font choice for the i3 bar /
     # alacritty rather than letting stylix pick a different monospace.

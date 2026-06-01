@@ -11,6 +11,7 @@ let
     cheesecake = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKQgFzMg37QTeFE2ybQRHfVEQwW/Wz7lK6jPPmctFd/U kimb@surface3go";
     marshmallow = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICwE1JLDrS+C2GcUcFb8ZvDRJX0lF+e0CLhJhFK8DpTO mccartykim@zoho.com";
     mochi = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHBSIfvPHC+UmMq6pghmdsjCTje/lOeiTVo2vDmyoNbf root@mochi";
+    creme = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPgRTonCa57ppntb8BrN1Pu9thHb6Yv1HxLwtR4M8N53 kimb@creme";
   };
 
   # Desktop host keys (derived from registry)
