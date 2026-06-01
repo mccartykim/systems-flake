@@ -40,6 +40,9 @@
   coreutils,
   which,
   perl,
+  gettext,
+  autoconf-archive,
+  help2man,
 }:
 stdenv.mkDerivation (finalAttrs: {
   pname = "libreboot-e6400-mec5035";
@@ -83,6 +86,9 @@ stdenv.mkDerivation (finalAttrs: {
     coreutils
     which
     perl
+    gettext
+    autoconf-archive
+    help2man
   ];
 
   buildInputs = [zlib openssl];
