@@ -160,7 +160,7 @@
     # scale = 1.0/3.0 → ~163px tile, so ~9×6 tiles fit on a 1440×900 panel.
     # Bigger pattern density than scale=1; matches the "carpet underfoot"
     # feel of the original PDX terminal carpet a bit closer.
-    image = pkgs.callPackage ../../pkgs/pdx-wallpaper { scale = 1.0 / 3.0; };
+    image = pkgs.callPackage ../../pkgs/pdx-wallpaper { scale = 1.0 / 6.0; };
     # Wallpaper is a tiled pattern, not a single-frame image.
     imageScalingMode = "tile";
     # Hand-tuned base16 scheme derived from the PDX-carpet SVG's actual
@@ -250,7 +250,6 @@
       extraPackages = with pkgs; [
         dmenu
         i3status
-        alacritty
       ];
     };
   };
@@ -267,11 +266,11 @@
     ${pkgs.feh}/bin/feh --no-fehbg --bg-tile ${config.stylix.image} &
     exec i3
   '';
-  programs.fish.loginShellInit = ''
-    if test -z "$DISPLAY"; and test (tty) = /dev/tty1
-      exec startx
-    end
-  '';
+  # programs.fish.loginShellInit = ''
+   # if test -z "$DISPLAY"; and test (tty) = /dev/tty1
+   #   exec startx
+   # end
+  # '';
 
   # Default i3 config — emacsclient + alacritty(tmux) auto-spawn on
   # workspace 1, vim-style focus keys, BlexMono font. User can override
@@ -284,7 +283,6 @@
     # emacs daemon is up — we DON'T use -a fallback because that'd race-spawn
     # a standalone emacs that steals the server socket from the daemon.
     exec --no-startup-id sh -c 'while ! emacsclient -e t >/dev/null 2>&1; do sleep 1; done; emacsclient -c'
-    exec --no-startup-id alacritty --config-file /etc/alacritty.toml -e tmux new-session -A -s main
 
     # Launchers (daemon is guaranteed up by the time these fire post-login)
     bindsym $mod+Return exec alacritty --config-file /etc/alacritty.toml -e tmux new-session -A -s main
@@ -339,42 +337,6 @@
       position top
       font pango:BlexMono Nerd Font Mono 9
     }
-  '';
-
-  # Alacritty theme — Nord palette, muted dark for less eye strain than
-  # the default white-on-black. Alacritty doesn't read /etc/xdg, so we
-  # have to point each i3 launcher at this with --config-file.
-  environment.etc."alacritty.toml".text = ''
-    [font]
-    normal = { family = "BlexMono Nerd Font Mono", style = "Regular" }
-    size = 11.0
-
-    [window]
-    padding = { x = 4, y = 4 }
-
-    [colors.primary]
-    background = "#2e3440"
-    foreground = "#d8dee9"
-
-    [colors.normal]
-    black   = "#3b4252"
-    red     = "#bf616a"
-    green   = "#a3be8c"
-    yellow  = "#ebcb8b"
-    blue    = "#81a1c1"
-    magenta = "#b48ead"
-    cyan    = "#88c0d0"
-    white   = "#e5e9f0"
-
-    [colors.bright]
-    black   = "#4c566a"
-    red     = "#bf616a"
-    green   = "#a3be8c"
-    yellow  = "#ebcb8b"
-    blue    = "#81a1c1"
-    magenta = "#b48ead"
-    cyan    = "#8fbcbb"
-    white   = "#eceff4"
   '';
 
   # i3status config with battery / volume / clock
