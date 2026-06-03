@@ -56,7 +56,10 @@
   # but everything from there to login is quiet.
   boot.plymouth.enable = true;
   boot.initrd.systemd.enable = true;
-  boot.kernelParams = [ "quiet" "splash" "loglevel=3" "rd.systemd.show_status=auto" "rd.udev.log_level=3" ];
+  boot.kernelParams = [ "quiet" "splash" "loglevel=3" "rd.systemd.show_status=auto" "rd.udev.log_level=3" "resume_offset=56424448" ];
+  # Hibernate resume from swapfile on /dev/sda2 (ext4).
+  # resume_offset is the physical block offset from `filefrag -e /swapfile`.
+  boot.resumeDevice = "/dev/sda2";
   boot.consoleLogLevel = 3;
 
   # Nebula mesh - reachable from your other personal devices
@@ -219,6 +222,39 @@
   # gpg-agent for mbsync PassCmd (decrypts ~/.authinfo.gpg).
   programs.gnupg.agent.enable = true;
 
+  # Lid switch → suspend-then-hibernate. S3 first, then hibernates
+  # after HibernateDelaySec. Libreboot on the E6400 doesn't reliably
+  # deliver ACPI GPEs for lid state changes, so logind may never see
+  # the event. We set all three lid handlers explicitly and add a
+  # polling watchdog as a fallback.
+  services.logind = {
+    lidSwitch = "suspend-then-hibernate";
+    lidSwitchExternalPower = "suspend-then-hibernate";
+    lidSwitchDocked = "suspend-then-hibernate";
+  };
+  # 4GB swapfile for hibernate. Created manually with fallocate;
+  # NixOS runs mkswap + swapon on activation.
+  swapDevices = [{device = "/swapfile";}];
+  systemd.services.lid-watchdog = {
+    description = "Poll lid state and suspend on close (Libreboot fallback)";
+    wantedBy = ["multi-user.target"];
+    path = [pkgs.gnugrep];
+    serviceConfig = {
+      Type = "simple";
+      ExecStart = pkgs.writeShellScript "lid-watchdog" ''
+        while true; do
+          if grep -q closed /proc/acpi/button/lid/LID/state 2>/dev/null; then
+            systemctl suspend-then-hibernate
+            sleep 30
+          fi
+          sleep 5
+        done
+      '';
+      Restart = "always";
+      RestartSec = 10;
+    };
+  };
+
   # Minimal X compositor — required for the alpha patch in st-luke (and
   # any other ARGB-visual app) to actually blend. xrender backend has no
   # GL dependency and stays cheap on the E6400's GMA 4500MHD. No shadow,
@@ -256,25 +292,33 @@
 
   # After logging in on tty1, fish auto-execs startx → i3.
   # tty2-6 stay as plain login prompts for the occasional console need.
-  # Override by writing your own ~/.xinitrc / ~/.config/i3/config on creme.
+  # Override by writing your own ~/.xinitrc on creme.
   #
   # We paint the wallpaper before i3 starts (with `&` so it doesn't block).
   # Stylix would normally do this via a display manager hook, but creme runs
   # startx so we wire feh directly. `config.stylix.image` resolves to the
   # PDX-carpet PNG derivation defined in the stylix block below.
+  #
+  # picom is started here (not via its systemd user service) because creme
+  # uses bare startx — graphical-session.target never activates, so the
+  # service stays dead.  xrender backend is light enough for the E6400.
   environment.etc."X11/xinit/xinitrc".text = ''
     ${pkgs.feh}/bin/feh --no-fehbg --bg-tile ${config.stylix.image} &
+    ${pkgs.picom}/bin/picom -b
     exec i3
   '';
-  # programs.fish.loginShellInit = ''
-   # if test -z "$DISPLAY"; and test (tty) = /dev/tty1
-   #   exec startx
-   # end
-  # '';
+
+  # Auto-startx on tty1 login. tty2-6 stay as plain getty.
+  programs.fish.loginShellInit = ''
+    if test -z "$DISPLAY"; and test (tty) = /dev/tty1
+      exec startx
+    end
+  '';
 
   # Default i3 config — emacsclient + alacritty(tmux) auto-spawn on
-  # workspace 1, vim-style focus keys, BlexMono font. User can override
-  # via ~/.config/i3/config (i3 prefers $XDG_CONFIG_HOME).
+  # workspace 1, vim-style focus keys, BlexMono font.
+  # NOTE: delete ~/.config/i3/config on creme if it exists (wizard-generated
+  # shadow), otherwise this /etc/i3/config is ignored.
   environment.etc."i3/config".text = ''
     set $mod Mod4
     font pango:BlexMono Nerd Font Mono 10
@@ -331,9 +375,17 @@
     bindsym $mod+Shift+c reload
     bindsym $mod+Shift+r restart
 
+    # Brightness — libreboot drops Dell EC SCI, so XF86 keysyms may not
+    # fire. actkbd handles the Fn keys at the kernel level; these are
+    # i3-level fallbacks.
+    bindsym $mod+F8 exec --no-startup-id ${pkgs.brightnessctl}/bin/brightnessctl set 10%-
+    bindsym $mod+F9 exec --no-startup-id ${pkgs.brightnessctl}/bin/brightnessctl set +10%
+    bindsym $mod+Ctrl+Up exec --no-startup-id ${pkgs.brightnessctl}/bin/brightnessctl set +10%
+    bindsym $mod+Ctrl+Down exec --no-startup-id ${pkgs.brightnessctl}/bin/brightnessctl set 10%-
+
     # Statusbar: battery + volume + clock + workspaces
     bar {
-      status_command i3status
+      status_command i3status -c /etc/i3status.conf
       position top
       font pango:BlexMono Nerd Font Mono 9
     }
