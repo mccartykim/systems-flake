@@ -304,7 +304,7 @@
   # service stays dead.  xrender backend is light enough for the E6400.
   environment.etc."X11/xinit/xinitrc".text = ''
     ${pkgs.feh}/bin/feh --no-fehbg --bg-tile ${config.stylix.image} &
-    ${pkgs.picom}/bin/picom -b
+    ${pkgs.picom}/bin/picom --backend xrender -b
     exec i3
   '';
 
