@@ -1,7 +1,7 @@
 # Email Digest Agent
 #
 # Twice-daily email summary DM'd to Kimb on Discord.
-# Syncs mail via mbsync (pull-only), summarizes with Claude (sonnet),
+# Syncs mail via mbsync (pull-only), summarizes with Ollama (gemma4:26b),
 # sends via Discord bot API.
 {
   config,
@@ -121,7 +121,6 @@
     - mccartykim@zoho.com = primary personal email
     - mccarty.tim@gmail.com = legacy Gmail
     - kimb@kimb.dev = professional/domain email
-    - You may Read files from ${orgNotesDir} for sender context
     - Do NOT suggest replying, forwarding, or acting on emails
   '';
 
@@ -137,7 +136,6 @@
       pkgs.isync
       pkgs.mu
       pkgs.findutils
-      pkgs.claude-code
     ]}:$PATH"
 
         MBSYNCRC="${mbsyncrc}"
@@ -240,7 +238,17 @@
           exit 0
         fi
 
-        # Build email content for Claude
+        # Pre-fetch org notes for sender context (replaces Claude's Read tool)
+        ORG_CONTEXT=""
+        if [ -d "$ORG_NOTES_DIR" ]; then
+          for f in "$ORG_NOTES_DIR"/*.org; do
+            [ -f "$f" ] && ORG_CONTEXT="$ORG_CONTEXT
+--- $(basename "$f") ---
+$(head -20 "$f")"
+          done
+        fi
+
+        # Build email content for Ollama
         EMAIL_CONTENT=""
         TOTAL_SIZE=0
         MAX_SIZE=80000
@@ -284,22 +292,29 @@
 
     $EMAIL_CONTENT"
 
-        # Invoke Claude for summary
-        SUMMARY=""
-        if command -v claude >/dev/null 2>&1; then
-          SUMMARY=$(echo "$USER_PROMPT" | claude -p \
-            --system-prompt "$(cat ${systemPrompt})" \
-            --model sonnet \
-            --max-turns 1 \
-            --allowedTools Read \
-            --no-session-persistence \
-            --output-format text 2>/dev/null || true)
-        fi
+        # Invoke Ollama for summary (OLLAMA_HOST and OLLAMA_MODEL set via systemd environment)
+        OLLAMA_HOST="''${OLLAMA_HOST:-http://historian.nebula:11434}"
+        OLLAMA_MODEL="''${OLLAMA_MODEL:-gemma4:26b}"
+        ENHANCED_SYSTEM="$(cat ${systemPrompt})"
+        [ -n "$ORG_CONTEXT" ] && ENHANCED_SYSTEM="$ENHANCED_SYSTEM"$'\n\n## Sender context\n'"$ORG_CONTEXT"
 
-        # Fallback: raw subject lines if Claude fails
+        SUMMARY=""
+        SUMMARY=$(curl -sf -X POST "$OLLAMA_HOST/api/chat" \
+          -H "Content-Type: application/json" \
+          -d "$(jq -n \
+              --arg model "$OLLAMA_MODEL" \
+              --arg system "$ENHANCED_SYSTEM" \
+              --arg user "$USER_PROMPT" \
+              '{model: $model, stream: false,
+                options: {temperature: 0.3, num_predict: 4096, num_ctx: 16384},
+                keep_alive: "30m",
+                messages: [{role: "system", content: $system}, {role: "user", content: $user}]}')" \
+          --max-time 600 2>/dev/null | jq -r '.message.content' 2>/dev/null || true)
+
+        # Fallback: raw subject lines if Ollama fails
         if [ -z "$SUMMARY" ]; then
           SUBJECT_LINES=$(mu find "date:$SINCE_DATE.." --fields='d f s' --sortfield=date 2>/dev/null || true)
-          SUMMARY="**Email Digest** (Claude unavailable, raw subjects):
+          SUMMARY="**Email Digest** (Ollama unavailable, raw subjects):
     \`\`\`
     $SUBJECT_LINES
     \`\`\`"
@@ -357,6 +372,10 @@ in {
       after = ["network-online.target"];
       wants = ["network-online.target"];
       path = ["/run/current-system/sw"];
+      environment = {
+        OLLAMA_HOST = "http://historian.nebula:11434";
+        OLLAMA_MODEL = "gemma4:26b";
+      };
       serviceConfig = {
         Type = "oneshot";
         ExecStart = "${digestScript}";
