@@ -108,10 +108,11 @@
     gh
     jujutsu
     helix
-    # xterm — TrueType fonts via Xft (no patching needed), scrollback,
-    # 256-color, proper unicode, and X resource theming. Replaces st as
-    # the primary terminal on creme because st requires patch-and-rebuild
-    # for any config change while xterm reads X resources at startup.
+    # uxterm — Unicode wrapper around xterm. TrueType fonts via Xft (no
+    # patching needed), scrollback, 256-color, proper unicode, and X
+    # resource theming. Replaces st as the primary terminal on creme
+    # because st requires patch-and-rebuild for any config change while
+    # xterm reads X resources at startup.
     xterm
   ];
 
@@ -298,7 +299,7 @@
     exec --no-startup-id sh -c 'while ! emacsclient -e t >/dev/null 2>&1; do sleep 1; done; emacsclient -c'
 
     # Launchers
-    bindsym $mod+Return exec xterm -e tmux new-session -A -s main
+    bindsym $mod+Return exec uxterm -e tmux new-session -A -s main
     bindsym $mod+e exec emacsclient -c
     bindsym $mod+d exec dmenu_run -fn 'BlexMono Nerd Font Mono-10'
 
@@ -423,45 +424,52 @@
     emoji = ["Noto Emoji"];
   };
 
-  # X resources for xterm. Creme doesn't use home-manager, so stylix's
-  # xresources HM module can't apply these — we mirror the PDX-carpet
-  # palette and BlexMono font here manually. The xinitrc merges this
-  # file with xrdb before i3 starts, so all X apps (xterm, dmenu, etc.)
-  # pick up the theme.
+  # X resources for uxterm. Stylix has no NixOS-level xresources module,
+  # so we mirror the PDX-carpet palette and BlexMono font here. The xinitrc
+  # merges this file with xrdb before i3 starts, so all X apps (uxterm,
+  # dmenu, etc.) pick up the theme.  uxterm uses the UXTerm resource class
+  # (not XTerm), so we prefix with UXTerm* to match.
   environment.etc."X11/Xresources/creme".text = with config.stylix;
     let
       c = base16Scheme;
     in ''
       ! ── Font ──
-      XTerm*faceName: ${fonts.monospace.name}
-      XTerm*faceSize: ${toString fonts.sizes.terminal}
-      XTerm*renderFont: true
-      XTerm*termName: xterm-256color
-      XTerm*scrollBar: false
-      XTerm*saveLines: 10000
-      XTerm*allowBoldFonts: true
-      XTerm*boldMode: false
+      UXTerm*faceName: ${fonts.monospace.name}
+      UXTerm*faceSize: ${toString fonts.sizes.terminal}
+      UXTerm*renderFont: true
+      UXTerm*termName: xterm-256color
+      UXTerm*scrollBar: false
+      UXTerm*saveLines: 10000
+      UXTerm*allowBoldFonts: true
+      UXTerm*boldMode: false
 
       ! ── PDX-carpet base16 palette (mirrors stylix/xresources/hm.nix) ──
-      XTerm*foreground: #${c.base05}
-      XTerm*background: #${c.base00}
-      XTerm*cursorColor: #${c.base05}
-      XTerm*color0:  #${c.base00}
-      XTerm*color1:  #${c.base08}
-      XTerm*color2:  #${c.base0B}
-      XTerm*color3:  #${c.base0A}
-      XTerm*color4:  #${c.base0D}
-      XTerm*color5:  #${c.base0E}
-      XTerm*color6:  #${c.base0C}
-      XTerm*color7:  #${c.base05}
-      XTerm*color8:  #${c.base02}
-      XTerm*color9:  #${c.base08}
-      XTerm*color10: #${c.base0B}
-      XTerm*color11: #${c.base0A}
-      XTerm*color12: #${c.base0D}
-      XTerm*color13: #${c.base0E}
-      XTerm*color14: #${c.base0C}
-      XTerm*color15: #${c.base07}
+      UXTerm*foreground: #${c.base05}
+      UXTerm*background: #${c.base00}
+      UXTerm*cursorColor: #${c.base05}
+      UXTerm*color0:  #${c.base00}
+      UXTerm*color1:  #${c.base08}
+      UXTerm*color2:  #${c.base0B}
+      UXTerm*color3:  #${c.base0A}
+      UXTerm*color4:  #${c.base0D}
+      UXTerm*color5:  #${c.base0E}
+      UXTerm*color6:  #${c.base0C}
+      UXTerm*color7:  #${c.base05}
+      UXTerm*color8:  #${c.base02}
+      UXTerm*color9:  #${c.base08}
+      UXTerm*color10: #${c.base0B}
+      UXTerm*color11: #${c.base0A}
+      UXTerm*color12: #${c.base0D}
+      UXTerm*color13: #${c.base0E}
+      UXTerm*color14: #${c.base0C}
+      UXTerm*color15: #${c.base07}
+      ! ── Extended 22-color palette (base09–base06, per stylix) ──
+      UXTerm*color16: #${c.base09}
+      UXTerm*color17: #${c.base0F}
+      UXTerm*color18: #${c.base01}
+      UXTerm*color19: #${c.base02}
+      UXTerm*color20: #${c.base04}
+      UXTerm*color21: #${c.base06}
     '';
 
   # Sound — pipewire SYSTEM-WIDE so the system mpd service can reach it.
