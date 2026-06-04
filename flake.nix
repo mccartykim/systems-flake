@@ -56,41 +56,41 @@
     # don't have wired up; the github: short-form would use the
     # archive/<rev>.tar.gz URL, which fine-grained PATs cannot read.
     # git+https:// is the scheme that works with our existing auth.
-    mist-blog.url = "git+https://github.com/mccartykim/mist-blog.git";
+    mist-blog.url = "git+ssh://git@github.com/mccartykim/mist-blog.git";
     mist-blog.inputs.nixpkgs.follows = "nixpkgs";
 
     # Private blog content tree (not a flake — just markdown sources).
     # Consumed by services.mist-blog via BLOG_CONTENT_DIR.
-    kimb-blog-content.url = "git+https://github.com/mccartykim/kimb-blog-content.git";
+    kimb-blog-content.url = "git+ssh://git@github.com/mccartykim/kimb-blog-content.git";
     kimb-blog-content.flake = false;
 
-    claude_yapper.url = "git+https://github.com/mccartykim/claude-alarmclock-agent.git";
+    claude_yapper.url = "git+ssh://git@github.com/mccartykim/claude-alarmclock-agent.git";
     claude_yapper.inputs.nixpkgs.follows = "nixpkgs";
 
     # Kokoro TTS - local flake for now (has working build)
-    kokoro.url = "git+https://github.com/mccartykim/kokoro-flake.git";
+    kokoro.url = "git+ssh://git@github.com/mccartykim/kokoro-flake.git";
     kokoro.inputs.nixpkgs.follows = "nixpkgs";
 
     # Media classifier for Jellyfin library organization
-    media-classifier.url = "git+https://github.com/mccartykim/media-classifier.git";
+    media-classifier.url = "git+ssh://git@github.com/mccartykim/media-classifier.git";
     media-classifier.inputs.nixpkgs.follows = "nixpkgs";
 
     # org-agent + org-life-coach (replaces claude_yapper life-coach)
-    org-agent.url = "git+https://github.com/mccartykim/org-agent.git";
+    org-agent.url = "git+ssh://git@github.com/mccartykim/org-agent.git";
     org-agent.inputs.nixpkgs.follows = "nixpkgs";
     org-life-coach = {
-      url = "git+https://github.com/mccartykim/org-life-coach.git";
+      url = "git+ssh://git@github.com/mccartykim/org-life-coach.git";
       inputs = {
         nixpkgs.follows = "nixpkgs";
         org-agent.follows = "org-agent";
       };
     };
-    lifecoach-organism.url = "git+https://github.com/mccartykim/lifecoach_organism.git";
+    lifecoach-organism.url = "git+ssh://git@github.com/mccartykim/lifecoach_organism.git";
     lifecoach-organism.inputs.nixpkgs.follows = "nixpkgs";
-    vacuum-organism.url = "git+https://github.com/mccartykim/vacuum_organism.git";
+    vacuum-organism.url = "git+ssh://git@github.com/mccartykim/vacuum_organism.git";
     vacuum-organism.inputs.nixpkgs.follows = "nixpkgs";
     org-crm = {
-      url = "git+https://github.com/mccartykim/org_crm.git";
+      url = "git+ssh://git@github.com/mccartykim/org_crm.git";
       inputs = {
         nixpkgs.follows = "nixpkgs";
         org-agent.follows = "org-agent";
@@ -104,17 +104,17 @@
     jovian-nixos.inputs.nixpkgs.follows = "nixpkgs";
 
     # Qwen3-TTS CUDA inference server (faster-qwen3-tts via uv2nix).
-    qwen3-tts-cuda.url = "git+https://github.com/mccartykim/qwen3-tts-cuda-flake.git";
+    qwen3-tts-cuda.url = "git+ssh://git@github.com/mccartykim/qwen3-tts-cuda-flake.git";
     qwen3-tts-cuda.inputs.nixpkgs.follows = "nixpkgs";
 
     # Generic restic-to-B2 backup module. systems-flake personalizes it
     # in modules/restic-backup.nix with kimb-specific paths + repo + secrets.
-    restic-b2-backup.url = "git+https://github.com/mccartykim/restic-b2-backup-flake.git";
+    restic-b2-backup.url = "git+ssh://git@github.com/mccartykim/restic-b2-backup-flake.git";
 
     # Generic Cloudflare dynamic DNS (inadyn) module. systems-flake
     # personalizes it in hosts/maitred/dns-update.nix with the kimb.dev
     # zone + agenix-managed API token.
-    cloudflare-ddns.url = "git+https://github.com/mccartykim/cloudflare-ddns-flake.git";
+    cloudflare-ddns.url = "git+ssh://git@github.com/mccartykim/cloudflare-ddns-flake.git";
 
     # Firefox Nightly
     firefox-nightly.url = "github:nix-community/flake-firefox-nightly";
