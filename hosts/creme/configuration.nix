@@ -108,46 +108,11 @@
     gh
     jujutsu
     helix
-    # Three st variants from mccartykim/st (multi-fork-packaging branch).
-    # All three forks' upstream Makefiles install the binary as `st`, so
-    # exposing all three creates a collision. We let vanilla `st` win the
-    # bare `st` command, and symlink-rename the other two so they're
-    # callable as `st-snazzy` and `st-luke` distinct commands.
-    #   st           — vanilla 0.9.3, cleanest kerning, no scrollback,
-    #                  opaque (no alpha patch in this fork)
-    #   st-snazzy    — siduck/st, gruvbox, harfbuzz ligatures; opaque
-    #                  default (alpha=1.0) via the schema
-    #   st-luke      — LukeSmithxyz/st, gruvbox + scrollback + font2 emoji
-    #                  fallback + boxdraw + alpha. Explicitly tuned below
-    #                  so the PDX-carpet wallpaper shows through cells
-    #                  without harming text legibility.
-    inputs.st.packages.${pkgs.system}.st
-    (pkgs.runCommand "st-snazzy-renamed" { } ''
-      mkdir -p $out/bin
-      ln -s ${inputs.st.packages.${pkgs.system}.st-snazzy}/bin/st $out/bin/st-snazzy
-    '')
-    (pkgs.runCommand "st-luke-renamed" { } ''
-      mkdir -p $out/bin
-      ln -s ${
-        (inputs.st.packages.${pkgs.system}.st-luke).override {
-          config = {
-            # Bigger default so it's readable on the E6400's 1440×900 panel.
-            font  = "mono:pixelsize=18:antialias=true:autohint=true";
-            # Monochrome line-drawn emoji — Noto Color Emoji's blobby SVG
-            # glyphs look terrible against cell text. Noto Emoji is the
-            # plain-glyph sibling, treats emoji as ordinary monospace
-            # glyphs that share baseline/metrics with the primary font.
-            font2 = [ "Noto Emoji:pixelsize=14:antialias=true:autohint=true" ];
-            # Carpet bleeds through cells. 0.9 = subtle hint of pattern
-            # without softening text. Tune live with Alt+s / Alt+a, then
-            # pin here. Requires a compositor (we enable picom below).
-            alpha = 0.9;
-            # Slightly dimmer when the window loses focus (Luke-only knob).
-            alphaUnfocus = 0.8;
-          };
-        }
-      }/bin/st $out/bin/st-luke
-    '')
+    # xterm — TrueType fonts via Xft (no patching needed), scrollback,
+    # 256-color, proper unicode, and X resource theming. Replaces st as
+    # the primary terminal on creme because st requires patch-and-rebuild
+    # for any config change while xterm reads X resources at startup.
+    xterm
   ];
 
   # ─── Stylix: derive desktop colors from the PDX-carpet wallpaper ────
@@ -203,8 +168,8 @@
       base0F = "f7bedf"; # pink (PDX pale pink) — special
     };
     polarity = "dark";
-    # Keep the existing BlexMono Nerd Font choice for the i3 bar /
-    # alacritty rather than letting stylix pick a different monospace.
+    # Keep BlexMono Nerd Font as the monospace choice for the i3 bar
+    # and xterm rather than letting stylix pick a different one.
     # Pin emoji to the monochrome Noto sibling — Noto Color Emoji's
     # blobby SVG glyphs look terrible in cell terminals.
     fonts = {
@@ -217,6 +182,10 @@
         name = "Noto Emoji";
       };
     };
+    # stylix's kmscon target uses the removed services.kmscon.fonts and
+    # services.kmscon.extraConfig options (upstream bug). creme doesn't
+    # use kmscon anyway (see comment above), so just disable the target.
+    targets.kmscon.enable = false;
   };
 
   # gpg-agent for mbsync PassCmd (decrypts ~/.authinfo.gpg).
@@ -255,11 +224,10 @@
     };
   };
 
-  # Minimal X compositor — required for the alpha patch in st-luke (and
-  # any other ARGB-visual app) to actually blend. xrender backend has no
-  # GL dependency and stays cheap on the E6400's GMA 4500MHD. No shadow,
-  # no fade, no vsync — those are real perf knobs on old hw and we don't
-  # need any of them here, just compositing for transparency.
+  # Minimal X compositor. xrender backend has no GL dependency and stays
+  # cheap on the E6400's GMA 4500MHD. No shadow, no fade, no vsync —
+  # those are real perf knobs on old hw and we don't need any of them
+  # here, just compositing for transparency.
   services.picom = {
     enable = true;
     backend = "xrender";
@@ -276,7 +244,7 @@
   };
 
   # X server with `startx` only — no display manager.
-  # i3 is the WM; auto-launches emacsclient + alacritty(tmux) on workspace 1.
+  # i3 is the WM; auto-launches emacsclient + xterm(tmux) on workspace 1.
   services.xserver = {
     enable = true;
     displayManager.startx.enable = true;
@@ -303,6 +271,7 @@
   # uses bare startx — graphical-session.target never activates, so the
   # service stays dead.  xrender backend is light enough for the E6400.
   environment.etc."X11/xinit/xinitrc".text = ''
+    ${pkgs.xorg.xrdb}/bin/xrdb -merge /etc/X11/Xresources/creme
     ${pkgs.feh}/bin/feh --no-fehbg --bg-tile ${config.stylix.image} &
     ${pkgs.picom}/bin/picom --backend xrender -b
     exec i3
@@ -315,7 +284,7 @@
     end
   '';
 
-  # Default i3 config — emacsclient + alacritty(tmux) auto-spawn on
+  # Default i3 config — emacsclient + xterm(tmux) auto-spawn on
   # workspace 1, vim-style focus keys, BlexMono font.
   # NOTE: delete ~/.config/i3/config on creme if it exists (wizard-generated
   # shadow), otherwise this /etc/i3/config is ignored.
@@ -328,8 +297,8 @@
     # a standalone emacs that steals the server socket from the daemon.
     exec --no-startup-id sh -c 'while ! emacsclient -e t >/dev/null 2>&1; do sleep 1; done; emacsclient -c'
 
-    # Launchers (daemon is guaranteed up by the time these fire post-login)
-    bindsym $mod+Return exec alacritty --config-file /etc/alacritty.toml -e tmux new-session -A -s main
+    # Launchers
+    bindsym $mod+Return exec xterm -e tmux new-session -A -s main
     bindsym $mod+e exec emacsclient -c
     bindsym $mod+d exec dmenu_run -fn 'BlexMono Nerd Font Mono-10'
 
@@ -453,6 +422,47 @@
     monospace = ["BlexMono Nerd Font Mono"];
     emoji = ["Noto Emoji"];
   };
+
+  # X resources for xterm. Creme doesn't use home-manager, so stylix's
+  # xresources HM module can't apply these — we mirror the PDX-carpet
+  # palette and BlexMono font here manually. The xinitrc merges this
+  # file with xrdb before i3 starts, so all X apps (xterm, dmenu, etc.)
+  # pick up the theme.
+  environment.etc."X11/Xresources/creme".text = with config.stylix;
+    let
+      c = base16Scheme;
+    in ''
+      ! ── Font ──
+      XTerm*faceName: ${fonts.monospace.name}
+      XTerm*faceSize: ${toString fonts.sizes.terminal}
+      XTerm*renderFont: true
+      XTerm*termName: xterm-256color
+      XTerm*scrollBar: false
+      XTerm*saveLines: 10000
+      XTerm*allowBoldFonts: true
+      XTerm*boldMode: false
+
+      ! ── PDX-carpet base16 palette (mirrors stylix/xresources/hm.nix) ──
+      XTerm*foreground: #${c.base05}
+      XTerm*background: #${c.base00}
+      XTerm*cursorColor: #${c.base05}
+      XTerm*color0:  #${c.base00}
+      XTerm*color1:  #${c.base08}
+      XTerm*color2:  #${c.base0B}
+      XTerm*color3:  #${c.base0A}
+      XTerm*color4:  #${c.base0D}
+      XTerm*color5:  #${c.base0E}
+      XTerm*color6:  #${c.base0C}
+      XTerm*color7:  #${c.base05}
+      XTerm*color8:  #${c.base02}
+      XTerm*color9:  #${c.base08}
+      XTerm*color10: #${c.base0B}
+      XTerm*color11: #${c.base0A}
+      XTerm*color12: #${c.base0D}
+      XTerm*color13: #${c.base0E}
+      XTerm*color14: #${c.base0C}
+      XTerm*color15: #${c.base07}
+    '';
 
   # Sound — pipewire SYSTEM-WIDE so the system mpd service can reach it.
   # Per-user pipewire would be cleaner on a multi-user desktop, but creme
