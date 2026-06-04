@@ -260,11 +260,11 @@
     "doomemacs": {
       "flake": false,
       "locked": {
-        "lastModified": 1780466459,
-        "narHash": "sha256-YQIg0m8qg8a0W2qJyE0dzouVCN0EXTdWnc4N+UzaPqM=",
+        "lastModified": 1780561590,
+        "narHash": "sha256-7Qk1eXTk9qX/hHO8LifnFGKh8RVzmVqQDwD+1OKYk7o=",
         "owner": "doomemacs",
         "repo": "doomemacs",
-        "rev": "e2704b79295bbe13ea83b00b8469c3825a441608",
+        "rev": "5c208a2928a3222fda8433b29f386e7a29bd15f7",
         "type": "github"
       },
       "original": {
@@ -283,11 +283,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1780490590,
-        "narHash": "sha256-/2KtN9tUYH79bdbuEPMNqJA/53IRqqZwgseCS8HwhUg=",
+        "lastModified": 1780571866,
+        "narHash": "sha256-8gpnhQWgrrCEZdMS6W8wP9wB033NNLQmD2pruRDMg1I=",
         "owner": "nix-community",
         "repo": "emacs-overlay",
-        "rev": "5506467b0036fed0aa16370f34813b660c31c6ae",
+        "rev": "eee13492ed7228d9f63d03212c08b5a07b3d1c6b",
         "type": "github"
       },
       "original": {
@@ -855,11 +855,11 @@
     "kimb-blog-content": {
       "flake": false,
       "locked": {
-        "lastModified": 1780557402,
-        "narHash": "sha256-jECoiAusnFxzBq1OLAeRljOS4b5viYHVYI6yQKkO4cQ=",
+        "lastModified": 1780581496,
+        "narHash": "sha256-UDHjU5nn1WHNS+zBe8v1j/jH7St2hvfcHUMD4l5jpLE=",
         "ref": "refs/heads/main",
-        "rev": "3e84fbd140f60f8bd51a6f6bb98f5842054996d9",
-        "revCount": 11,
+        "rev": "b890fb361ad72dbe38a0b016ccb39a129fe93b9e",
+        "revCount": 12,
         "type": "git",
         "url": "ssh://git@github.com/mccartykim/kimb-blog-content.git"
       },
@@ -1038,11 +1038,11 @@
         "systems": "systems_7"
       },
       "locked": {
-        "lastModified": 1780491047,
-        "narHash": "sha256-zyUvbzDBoJOHi5fVMg/Rxd70ticxcDuFbaE6Rn2CtIo=",
+        "lastModified": 1780572348,
+        "narHash": "sha256-QH4Lqntns/Q/A8Hu9zC7K3jyqQq9RCl56hT6/b1tgh4=",
         "owner": "marienz",
         "repo": "nix-doom-emacs-unstraightened",
-        "rev": "682b697bf869eb60a37b2e24467a880a8e2c8562",
+        "rev": "6df8b6bfa8199fa9c1800259dc34a6054f43160e",
         "type": "github"
       },
       "original": {
