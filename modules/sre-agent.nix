@@ -108,14 +108,8 @@ in {
 
     prWorkerModel = mkOption {
       type = types.str;
-      default = "glm-5:cloud";
-      description = "Model for Claude Code CLI in the PR worker (via Ollama Anthropic-compat endpoint)";
-    };
-
-    prWorkerApiBaseUrl = mkOption {
-      type = types.str;
-      default = "http://historian.nebula:11434";
-      description = "Anthropic-compatible API base URL for Claude Code (Ollama endpoint)";
+      default = "gemma4:26b";
+      description = "Ollama model for the PR worker agent";
     };
 
     prWorkerGitAuthorName = mkOption {
@@ -261,23 +255,14 @@ in {
     };
 
     systemd.services.sre-agent-pr-worker = mkIf cfg.enablePrWorker {
-      description = "SRE Agent PR Worker — reads issues, drafts fixes via Claude Code, creates PRs";
+      description = "SRE Agent PR Worker — reads issues, drafts fixes via Ollama, creates PRs";
       after = ["network.target"];
       wantedBy = ["multi-user.target"];
 
       serviceConfig = {
         ExecStart = "${pkgs.writeShellScript "sre-agent-pr-worker" ''
           set -euo pipefail
-          export PATH="${lib.makeBinPath [pkgs.coreutils pkgs.git pkgs.gh pkgs.claude-code]}:$PATH"
-
-          # Read Ollama Cloud API key for Claude Code (reuses existing secret)
-          API_KEY=$(${pkgs.coreutils}/bin/cat ${cfg.ollamaCloudKeyFile})
-          if [ -z "$API_KEY" ] || [ "$API_KEY" = "PLACEHOLDER" ]; then
-            echo "pr-worker: API key is empty or placeholder" >&2
-            exit 1
-          fi
-          export ANTHROPIC_AUTH_TOKEN="$API_KEY"
-          export ANTHROPIC_BASE_URL="${cfg.prWorkerApiBaseUrl}"
+          export PATH="${lib.makeBinPath [pkgs.coreutils pkgs.git pkgs.gh]}:$PATH"
 
           export GIT_AUTHOR_NAME="${cfg.prWorkerGitAuthorName}"
           export GIT_AUTHOR_EMAIL="${cfg.prWorkerGitAuthorEmail}"
@@ -299,13 +284,14 @@ in {
           "GITHUB_REPO=${cfg.githubRepo}"
           "GITHUB_SOURCE_REPO=${cfg.githubSourceRepo}"
           "PR_WORKER_MODEL=${cfg.prWorkerModel}"
+          "OLLAMA_HOST=${cfg.ollamaHost}"
         ];
 
         NoNewPrivileges = true;
         ProtectSystem = "strict";
         ProtectHome = true;
         ReadWritePaths = [cfg.stateDir];
-        ReadOnlyPaths = [cfg.githubTokenFile cfg.ollamaCloudKeyFile];
+        ReadOnlyPaths = [cfg.githubTokenFile];
       };
     };
 

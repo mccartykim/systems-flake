@@ -1,6 +1,7 @@
 # org-crm: Personal CRM agent
 #
 # Manages contacts, tasks, email digest, and scanned documents.
+# Uses Ollama for LLM calls (replaces Claude CLI).
 # Once verified working, remove email-digest.nix (this absorbs its functionality).
 #
 # Dedicated Discord bot app (Secretary) for DMs and slash commands.
@@ -22,7 +23,7 @@
     scanDir = "/var/lib/scans/documents";
 
     interval = 300; # 5 minutes
-    model = "sonnet";
+    # Model is set via OLLAMA_MODEL env var in the NixOS module (default: gemma4:26b)
 
     # Mail passwords (own copies of the same secrets, owned by org-crm user)
     mailZohoPasswordFile = config.age.secrets.org-crm-mail-zoho.path;

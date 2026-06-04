@@ -22,9 +22,9 @@
     orgFile = "/var/lib/life-coach-agent/agent.org";
     interval = 300; # 5 minutes
 
-    # Claude Haiku via claude CLI — vision + reasoning in one call
-    provider = "claude";
-    model = "haiku";
+    # Ollama for LLM calls (replaces Claude CLI)
+    provider = "ollama";
+    model = "gemma4:26b";
     ollamaHost = "http://historian.nebula:11434";
 
     # Home Assistant (same host)
@@ -47,7 +47,7 @@
     # Discord bot
     discordBotTokenFile = config.age.secrets.discord-life-coach-token.path;
 
-    # Gemini vision (unused — images go directly to Claude as multimodal)
+    # Gemini vision (unused — images go directly to Ollama as multimodal)
     # geminiApiKeyFile = config.age.secrets.gemini-life-coach-key.path;
   };
 
@@ -59,6 +59,9 @@
 
     OLLAMA_TIMEOUT = "600";
     OLLAMA_NUM_CTX = "8192";
+    OLLAMA_MODEL_SCULLY = "gemma4:e4b";
+    OLLAMA_MODEL_MULDER = "gemma4:26b";
+    OLLAMA_MODEL_SKINNER = "gemma4:26b";
     CAMERA_MAX_WIDTH = "1280";
 
     # Vacuum (Valetudo)

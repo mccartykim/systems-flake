@@ -1,8 +1,8 @@
 """SRE Agent PR Worker — reads GitHub issues, drafts fixes, creates PRs.
 
-Polls mccartykim/homelab-incidents for open sre-agent issues, uses Claude Code
-CLI to analyze the issue and draft a NixOS config fix in a temporary clone of
-the source repo, then creates a branch and opens a PR via gh.
+Polls mccartykim/homelab-incidents for open sre-agent issues, uses Ollama
+with tool dispatch to analyze the issue and draft a NixOS config fix in a
+temporary clone of the source repo, then creates a branch and opens a PR via gh.
 
 The PR worker does NOT build — that's for CI to validate.
 """
@@ -123,17 +123,20 @@ def extract_pr_url(output: str) -> Optional[str]:
     return None
 
 
-def fix_issue_with_claude(issue: GitHubIssue, token: str) -> Optional[str]:
-    """Use Claude Code CLI to analyze an issue, edit config, and create a PR.
+def fix_issue_with_ollama(issue: GitHubIssue, token: str) -> Optional[str]:
+    """Use Ollama with tool dispatch to analyze an issue, edit config, and create a PR.
 
-    Clones the source repo into a temp workspace, invokes Claude Code with
-    the issue context, and lets Claude explore, edit, commit, and create a PR.
+    Clones the source repo into a temp workspace, invokes Ollama with the
+    issue context, and lets the model explore, edit, commit, and create a PR
+    via the bash tool.
 
     Returns the PR URL on success, None on failure or skip.
     """
     state_dir = _env("STATE_DIR", "/var/lib/sre-agent")
     source_repo = _env("GITHUB_SOURCE_REPO", "mccartykim/systems-flake")
-    model = _env("PR_WORKER_MODEL", "glm-5:cloud")
+    ollama_host = _env("OLLAMA_HOST", "http://historian.nebula:11434")
+    model = _env("PR_WORKER_MODEL", "gemma4:26b")
+    max_turns = int(_env("PR_WORKER_MAX_TURNS", "15"))
 
     workspace = os.path.join(state_dir, "workspaces", f"issue-{issue.number}")
 
@@ -157,8 +160,8 @@ def fix_issue_with_claude(issue: GitHubIssue, token: str) -> Optional[str]:
         # Build the prompt
         prompt = build_claude_prompt(issue)
 
-        # Set up environment for Claude Code
-        claude_env = {
+        # Set up environment for git/gh commands (used by bash tool)
+        tool_env = {
             **os.environ,
             "GH_TOKEN": token,
             "GIT_AUTHOR_NAME": os.environ.get("GIT_AUTHOR_NAME", "sre-agent"),
@@ -168,62 +171,33 @@ def fix_issue_with_claude(issue: GitHubIssue, token: str) -> Optional[str]:
             "GIT_TERMINAL_PROMPT": "0",
         }
 
-        # Run Claude Code in the cloned workspace
-        cmd = [
-            "claude", "-p", prompt,
-            "--output-format", "json",
-            "--dangerously-skip-permissions",
-            "--max-turns", "15",
-            "--model", model,
-        ]
-
-        print(f"pr-worker: running claude for issue #{issue.number} (model={model})", file=sys.stderr)
-        result = subprocess.run(
-            cmd,
-            capture_output=True, text=True, timeout=600,
-            env=claude_env,
-            cwd=workspace,
+        # Run Ollama agent loop with bash tool dispatch
+        print(f"pr-worker: running ollama for issue #{issue.number} (model={model})", file=sys.stderr)
+        result_text = _run_ollama_agent(
+            ollama_host=ollama_host,
+            model=model,
+            system_prompt=PR_WORKER_SYSTEM_PROMPT,
+            user_prompt=prompt,
+            max_turns=max_turns,
+            workspace=workspace,
+            tool_env=tool_env,
         )
 
-        if result.returncode != 0:
-            print(f"pr-worker: claude exited {result.returncode}: {result.stderr[:500]}", file=sys.stderr)
-            # Still try to parse stdout in case claude produced output before failing
-            if result.stdout:
-                try:
-                    output_data = json.loads(result.stdout)
-                    result_text = output_data.get("result", "")
-                    pr_url = extract_pr_url(result_text)
-                    if pr_url:
-                        return pr_url
-                except json.JSONDecodeError:
-                    pass
+        if result_text is None:
+            print(f"pr-worker: ollama agent failed for issue #{issue.number}", file=sys.stderr)
             return None
-
-        # Parse JSON output from Claude Code
-        try:
-            output_data = json.loads(result.stdout)
-            result_text = output_data.get("result", "")
-            cost = output_data.get("total_cost_usd", 0)
-            turns = output_data.get("num_turns", 0)
-            print(f"pr-worker: claude completed in {turns} turns, cost ${cost:.4f}", file=sys.stderr)
-        except json.JSONDecodeError:
-            # If not JSON, use raw stdout
-            result_text = result.stdout
 
         pr_url = extract_pr_url(result_text)
         if pr_url:
             print(f"pr-worker: created PR for issue #{issue.number}: {pr_url}", file=sys.stderr)
         else:
-            print(f"pr-worker: no PR URL found in Claude output for issue #{issue.number}", file=sys.stderr)
-            print(f"pr-worker: claude output: {result_text[:200]}", file=sys.stderr)
+            print(f"pr-worker: no PR URL found in Ollama output for issue #{issue.number}", file=sys.stderr)
+            print(f"pr-worker: ollama output: {result_text[:200]}", file=sys.stderr)
 
         return pr_url
 
-    except subprocess.TimeoutExpired:
-        print(f"pr-worker: claude timed out for issue #{issue.number}", file=sys.stderr)
-        return None
     except Exception as e:
-        print(f"pr-worker: fix_issue_with_claude failed: {e}", file=sys.stderr)
+        print(f"pr-worker: fix_issue_with_ollama failed: {e}", file=sys.stderr)
         return None
     finally:
         # Always clean up workspace
@@ -232,6 +206,162 @@ def fix_issue_with_claude(issue: GitHubIssue, token: str) -> Optional[str]:
                 shutil.rmtree(workspace)
             except OSError:
                 pass
+
+
+# System prompt for the PR worker agent
+PR_WORKER_SYSTEM_PROMPT = """You are an SRE fix agent for a NixOS homelab. You have access to a bash tool to explore the repository, edit files, run git commands, and create PRs.
+
+When you receive an issue:
+1. Use bash to explore the repository structure (ls, find, cat).
+2. Identify which host(s) and config file(s) are relevant.
+3. Use bash to make the MINIMAL config change needed. Do NOT create new host directories. Do NOT make unrelated changes.
+4. All config must be valid NixOS module syntax (Nix language, NOT Python/JSON).
+5. Use bash to commit changes: git add, git commit -m "fix: resolve issue #N - TITLE"
+6. Use bash to push and create a PR: git push origin HEAD:sre-fix/issue-N, then gh pr create.
+7. If the issue cannot be fixed with a config change, respond with SKIP: <reason>.
+
+Important:
+- Use `gh` for all GitHub operations (it is already authenticated via GH_TOKEN).
+- Use `git` for version control operations.
+- The PR body should reference the issue number and include "Fixes #N".
+- Output ONLY the PR URL as your final line if a PR was created, or "SKIP: <reason>" if no PR can fix this."""
+
+
+# Tool definitions for the PR worker agent
+PR_WORKER_TOOLS = [
+    {
+        "type": "function",
+        "function": {
+            "name": "bash",
+            "description": "Execute a shell command. Use for exploring files, editing configs, git operations, and gh CLI commands. Commands run in the workspace directory.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "command": {
+                        "type": "string",
+                        "description": "Shell command to execute",
+                    },
+                },
+                "required": ["command"],
+            },
+        },
+    },
+]
+
+
+def _call_ollama(host: str, model: str, messages: list, tools: list = None) -> dict:
+    """Call Ollama /api/chat and return the response dict."""
+    payload = {
+        "model": model,
+        "stream": False,
+        "messages": messages,
+        "options": {
+            "temperature": 0.3,  # Lower temperature for precise config edits
+            "num_ctx": 16384,
+            "num_predict": 8192,
+        },
+    }
+    if tools:
+        payload["tools"] = tools
+
+    data = json.dumps(payload).encode()
+    req = urllib.request.Request(
+        f"{host}/api/chat",
+        data=data,
+        headers={"Content-Type": "application/json"},
+    )
+    timeout = int(_env("PR_WORKER_OLLAMA_TIMEOUT", "600"))
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
+        return json.loads(resp.read())
+
+
+def _run_ollama_agent(ollama_host: str, model: str, system_prompt: str,
+                      user_prompt: str, max_turns: int = 15,
+                      workspace: str = None,
+                      tool_env: dict = None) -> Optional[str]:
+    """Run the Ollama agent loop with bash tool dispatch.
+
+    Returns the final text response, or None if failed.
+    """
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": user_prompt},
+    ]
+
+    for turn in range(max_turns):
+        try:
+            response = _call_ollama(ollama_host, model, messages, tools=PR_WORKER_TOOLS)
+        except (urllib.error.URLError, urllib.error.HTTPError, ConnectionError, OSError) as e:
+            print(f"pr-worker: ollama error on turn {turn}: {e}", file=sys.stderr)
+            return None
+        except Exception as e:
+            print(f"pr-worker: unexpected ollama error on turn {turn}: {e}", file=sys.stderr)
+            return None
+
+        message = response.get("message", {})
+        tool_calls = message.get("tool_calls", [])
+
+        if not tool_calls:
+            # No tool calls — final text response
+            content = message.get("content", "")
+            return content
+
+        # Add assistant message to history
+        messages.append(message)
+
+        # Execute each tool call
+        for tc_data in tool_calls:
+            fn_name = tc_data.get("function", {}).get("name", "")
+            fn_args_str = tc_data.get("function", {}).get("arguments", "{}")
+            try:
+                fn_args = json.loads(fn_args_str) if isinstance(fn_args_str, str) else fn_args_str
+            except json.JSONDecodeError:
+                fn_args = {}
+
+            if fn_name != "bash":
+                messages.append({
+                    "role": "tool",
+                    "name": fn_name,
+                    "content": f"Error: Unknown tool '{fn_name}'. Only 'bash' is available.",
+                })
+                continue
+
+            command = fn_args.get("command", "")
+            print(f"  bash: {command[:120]}{'...' if len(command) > 120 else ''}", file=sys.stderr)
+
+            try:
+                result = subprocess.run(
+                    command, shell=True, capture_output=True, text=True,
+                    timeout=120, cwd=workspace, env=tool_env,
+                )
+                output = result.stdout
+                if result.stderr:
+                    output += f"\n(stderr: {result.stderr[:500]})"
+                if result.returncode != 0:
+                    output += f"\n(exit code {result.returncode})"
+            except subprocess.TimeoutExpired:
+                output = "Error: Command timed out (120s)"
+            except Exception as e:
+                output = f"Error executing command: {e}"
+
+            # Truncate very long outputs
+            if len(output) > 12000:
+                output = output[:12000] + "\n... (truncated)"
+
+            messages.append({
+                "role": "tool",
+                "name": fn_name,
+                "content": output,
+            })
+
+    # Max turns reached — get final response without tools
+    print(f"pr-worker: max turns ({max_turns}) reached, requesting final response", file=sys.stderr)
+    try:
+        final_response = _call_ollama(ollama_host, model, messages, tools=None)
+        return final_response.get("message", {}).get("content", "")
+    except Exception as e:
+        print(f"pr-worker: ollama final response error: {e}", file=sys.stderr)
+        return None
 
 
 def mark_issue_processing(issue_number: int, token):
@@ -348,7 +478,7 @@ def run_pr_worker():
         print(f"pr-worker: processing issue #{issue.number}: {issue.title}", file=sys.stderr)
         mark_issue_processing(issue.number, token)
 
-        pr_url = fix_issue_with_claude(issue, token)
+        pr_url = fix_issue_with_ollama(issue, token)
         if pr_url:
             mark_issue_created(issue.number, pr_url, token)
             prs_created += 1

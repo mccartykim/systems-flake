@@ -19,8 +19,7 @@
     enableLlmTriage = true;
     enablePrWorker = true;
     githubSourceRepo = "mccartykim/systems-flake";
-    prWorkerModel = "glm-5:cloud";
-    prWorkerApiBaseUrl = "http://historian.nebula:11434";
+    prWorkerModel = "gemma4:26b";
     prWorkerGitAuthorName = "sre-agent";
     prWorkerGitAuthorEmail = "sre-agent@nebula";
     prometheusUrl = "http://10.100.0.50:9090";
