@@ -306,7 +306,7 @@ $(head -20 "$f")"
               --arg system "$ENHANCED_SYSTEM" \
               --arg user "$USER_PROMPT" \
               '{model: $model, stream: false,
-                options: {temperature: 0.3, num_predict: 4096, num_ctx: 16384},
+                options: {temperature: 0.3, num_predict: 4096, num_ctx: 32768},
                 keep_alive: "30m",
                 messages: [{role: "system", content: $system}, {role: "user", content: $user}]}')" \
           --max-time 600 2>/dev/null | jq -r '.message.content' 2>/dev/null || true)

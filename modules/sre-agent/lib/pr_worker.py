@@ -257,7 +257,7 @@ def _call_ollama(host: str, model: str, messages: list, tools: list = None) -> d
         "messages": messages,
         "options": {
             "temperature": 0.3,  # Lower temperature for precise config edits
-            "num_ctx": 16384,
+            "num_ctx": int(_env("PR_WORKER_NUM_CTX", "32768")),
             "num_predict": 8192,
         },
     }
