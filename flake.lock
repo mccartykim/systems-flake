@@ -935,11 +935,11 @@
         "organism": "organism"
       },
       "locked": {
-        "lastModified": 1779933905,
-        "narHash": "sha256-7v3HhQqnCRcsMRkH+KzMa0WHnLkoLHSnQxKMemhfYCg=",
+        "lastModified": 1780623910,
+        "narHash": "sha256-hSt61fgygMLvx8LcbMC787OFtmSSeaHY96QxSd1CnkQ=",
         "ref": "refs/heads/main",
-        "rev": "906ac94f95f4d58152b411a52b6818159c122478",
-        "revCount": 145,
+        "rev": "ece6f231f7ea4b82fe47072716cb7f183a11b60c",
+        "revCount": 114,
         "type": "git",
         "url": "ssh://git@github.com/mccartykim/lifecoach_organism.git"
       },
