@@ -413,6 +413,13 @@
     };
   };
 
+  # Doom startup can be slow on this machine (treesit grammars, many packages).
+  # The default TimeoutStartSec of 90s is too aggressive — emacs with notify
+  # type needs to finish loading before signaling READY=1, which can take 2-3
+  # minutes on cold start. The activation failure on 2026-06-04 was caused by
+  # this timeout firing repeatedly during nixos-rebuild switch.
+  systemd.user.services.emacs.serviceConfig.TimeoutStartSec = "300";
+
   # Fonts. Blex Mono Nerd Font as primary; Google monochrome emoji noto
   # so emoji render cleanly without dragging in colored fallback bitmaps.
   fonts.packages = with pkgs; [
