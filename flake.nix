@@ -354,11 +354,64 @@
           minimal-test = import ./tests/minimal-test.nix {inherit pkgs;};
           network-test = import ./tests/network-test.nix {inherit pkgs;};
           working-vm-test = import ./tests/working-vm-test.nix {inherit pkgs;};
-          fish-functions-test = import ./tests/fish-functions-test.nix {inherit pkgs inputs;};
 
           # Configuration evaluation tests (fast - no VM)
           # buildbot-nix builds every .#checks attr on each commit, so adding a
           # host's toplevel here means CI will catch breakage for that host.
+
+          # Fish functions eval check: verifies the fish-functions module produces
+          # the expected function definitions. Runs in seconds, no VM needed.
+          eval-fish-functions =
+            let
+              # Test the module in isolation with includeJjPrompt = true
+              testConfig = {
+                imports = [./home/modules/fish-functions.nix];
+                modules.fish-functions = {
+                  enable = true;
+                  includeJjPrompt = true;
+                };
+                programs.fish.enable = true;
+                home.username = "test";
+                home.homeDirectory = "/home/test";
+                home.stateVersion = "24.11";
+                programs.home-manager.enable = true;
+              };
+              hmLib = inputs.home-manager.lib;
+              eval = hmLib.homeManagerConfiguration {
+                pkgs = pkgs;
+                modules = [testConfig];
+              };
+              functions = eval.config.programs.fish.functions;
+              # Verify each function body contains the expected substring
+              expectedSubstrings = {
+                jd = "jj desc -m";
+                nr = "nix run nixpkgs";
+                ns = "nix shell nixpkgs";
+                nru = "NIXPKGS_ALLOW_UNFREE";
+                nsu = "NIXPKGS_ALLOW_UNFREE";
+                cb = "fish_clipboard_copy";
+                fish_jj_prompt = "jj log";
+                fish_vcs_prompt = "fish_jj_prompt";
+              };
+              # Build a list of (name, expected, actual) for any mismatches
+              mismatches = lib.filter
+                (m: m != null)
+                (lib.mapAttrsToList (name: expected:
+                  if lib.hasInfix expected (functions.${name} or "")
+                  then null
+                  else {inherit name expected; actual = functions.${name} or "(missing)";})
+                expectedSubstrings);
+            in
+              pkgs.runCommand "eval-fish-functions" {} ''
+                ${lib.concatMapStrings (m: ''
+                  echo "FAIL: ${m.name} expected '${m.expected}' in '${m.actual}'"
+                '') mismatches}
+                ${if mismatches == []
+                  then "echo 'All ${toString (builtins.length (builtins.attrNames expectedSubstrings))} fish functions verified' > $out"
+                  else "echo 'FAIL: ${toString (builtins.length mismatches)} function(s) mismatched' >&2; exit 1"
+                }
+              '';
+
           eval-historian = self.nixosConfigurations.historian.config.system.build.toplevel;
           eval-marshmallow = self.nixosConfigurations.marshmallow.config.system.build.toplevel;
           eval-bartleby = self.nixosConfigurations.bartleby.config.system.build.toplevel;
