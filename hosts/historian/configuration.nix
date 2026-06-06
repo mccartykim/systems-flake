@@ -276,12 +276,12 @@
         fi
         sleep 1
       done
-      # Warm with num_ctx=16384 matching the server default so the
+      # Warm with num_ctx=131072 matching the server default so the
       # cold-loaded KV layout matches runtime. 180s budget for the
       # cold-load; failure is non-fatal (callers retry).
       ${pkgs.curl}/bin/curl -sS -X POST http://localhost:11434/api/chat \
         -H "Content-Type: application/json" \
-        -d '{"model":"gemma4:26b","options":{"num_ctx":16384},"messages":[{"role":"user","content":"warmup"}],"stream":false}' \
+        -d '{"model":"gemma4:26b","options":{"num_ctx":131072},"messages":[{"role":"user","content":"warmup"}],"stream":false}' \
         --max-time 180 >/dev/null || true
     '';
   };
@@ -444,9 +444,10 @@
         OLLAMA_KV_CACHE_TYPE = "q8_0";
         OLLAMA_KEEP_ALIVE = "30m";
         # Must be OLLAMA_CONTEXT_LENGTH, NOT OLLAMA_NUM_CTX (silently ignored).
-        # Prevents models' native 131K context from OOMing the iGPU's shared
-        # memory. Callers that need more pass num_ctx per-request.
-        OLLAMA_CONTEXT_LENGTH = "16384";
+        # With 64GB RAM + 57GB GTT, 128K context uses ~8-12GB KV cache (q8_0),
+        # well within budget. Lifecoach prompts are ~88K tokens; this prevents
+        # truncation. Callers that need less pass num_ctx per-request.
+        OLLAMA_CONTEXT_LENGTH = "131072";
       };
     };
     open-webui = {

@@ -21,6 +21,9 @@
   ...
 }: let
   org-agent-emacs = inputs.org-agent.packages.${pkgs.system}.emacs;
+  # Per-service overrides for all lifecoach-organism units
+  lifecoach-services = ["lifecoach-heartbeat" "lifecoach-scheduler" "lifecoach-watchdog"
+    "lifecoach-discord-bot" "lifecoach-button-monitor" "lifecoach-dashboard"];
 in {
   services.lifecoach-organism = {
     enable = true;
@@ -111,31 +114,27 @@ in {
     };
   };
 
-  systemd.services.lifecoach-watchdog.path = lib.mkAfter [org-agent-emacs];
-
   # Use gemma4:26b for judgment/vision (same speed as e4b on this hardware,
   # better quality, one model to keep warm on historian's iGPU).
-  systemd.services.lifecoach-heartbeat.environment.LIFECOACH_JUDGMENT_MODEL = lib.mkForce "gemma4:26b";
-  systemd.services.lifecoach-heartbeat.environment.LIFECOACH_VISION_MODEL = lib.mkForce "gemma4:26b";
-  systemd.services.lifecoach-scheduler.environment.LIFECOACH_JUDGMENT_MODEL = lib.mkForce "gemma4:26b";
-  systemd.services.lifecoach-scheduler.environment.LIFECOACH_VISION_MODEL = lib.mkForce "gemma4:26b";
-  systemd.services.lifecoach-watchdog.environment.LIFECOACH_JUDGMENT_MODEL = lib.mkForce "gemma4:26b";
-  systemd.services.lifecoach-watchdog.environment.LIFECOACH_VISION_MODEL = lib.mkForce "gemma4:26b";
-  systemd.services.lifecoach-discord-bot.environment.LIFECOACH_JUDGMENT_MODEL = lib.mkForce "gemma4:26b";
-  systemd.services.lifecoach-discord-bot.environment.LIFECOACH_VISION_MODEL = lib.mkForce "gemma4:26b";
-  systemd.services.lifecoach-button-monitor.environment.LIFECOACH_JUDGMENT_MODEL = lib.mkForce "gemma4:26b";
-  systemd.services.lifecoach-button-monitor.environment.LIFECOACH_VISION_MODEL = lib.mkForce "gemma4:26b";
-  systemd.services.lifecoach-dashboard.environment.LIFECOACH_JUDGMENT_MODEL = lib.mkForce "gemma4:26b";
-  systemd.services.lifecoach-dashboard.environment.LIFECOACH_VISION_MODEL = lib.mkForce "gemma4:26b";
-
-  # Make emacsclient findable from every lifecoach service. The
-  # module's default `path =` doesn't include it because the
-  # lifecoach-organism flake has no dependency on org-agent.
-  systemd.services.lifecoach-heartbeat.path = lib.mkAfter [org-agent-emacs];
-  systemd.services.lifecoach-scheduler.path = lib.mkAfter [org-agent-emacs];
-  systemd.services.lifecoach-dashboard.path = lib.mkAfter [org-agent-emacs];
-  systemd.services.lifecoach-button-monitor.path = lib.mkAfter [org-agent-emacs];
-  systemd.services.lifecoach-discord-bot.path = lib.mkAfter [org-agent-emacs];
+  # Also make emacsclient findable — the module's default `path =` doesn't
+  # include it because the lifecoach-organism flake has no dependency on org-agent.
+  systemd.services = lib.mkMerge [
+    (lib.genAttrs lifecoach-services (_: {
+      environment = {
+        LIFECOACH_JUDGMENT_MODEL = lib.mkForce "gemma4:26b";
+        LIFECOACH_VISION_MODEL = lib.mkForce "gemma4:26b";
+      };
+      path = lib.mkAfter [org-agent-emacs];
+    }))
+    # Stop the old org-life-coach python daemon. Setting wantedBy=[]
+    # removes the multi-user.target.wants symlink so it's no longer
+    # "wanted" by systemd on boot. But NixOS activation won't stop a
+    # currently-running unit whose unit file still exists in the new
+    # config (the old module still defines it under cfg.enable, which
+    # we keep true to preserve the emacs daemon). So we also need the
+    # activation script below to stop it imperatively during switch.
+    { org-life-coach.wantedBy = lib.mkForce []; }
+  ];
 
   # ------------------------------------------------------------------
   # Cutover: disable the old org-life-coach services while keeping
@@ -156,15 +155,6 @@ in {
 
   # Disable the old dashboard the same way (sub-option).
   services.org-life-coach.dashboard.enable = lib.mkForce false;
-
-  # Stop the main python daemon itself. Setting wantedBy=[] removes
-  # the multi-user.target.wants symlink so it's no longer "wanted"
-  # by systemd on boot. But NixOS activation won't stop a currently-
-  # running unit whose unit file still exists in the new config
-  # (the old module still defines it under cfg.enable, which we
-  # keep true to preserve the emacs daemon). So we also need an
-  # activation script to stop it imperatively during switch.
-  systemd.services.org-life-coach.wantedBy = lib.mkForce [];
 
   system.activationScripts.stop-old-org-life-coach = {
     text = ''
