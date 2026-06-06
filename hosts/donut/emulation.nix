@@ -1,8 +1,8 @@
 # Emulator stack for the Steam Deck. Keys/firmware/ROMs live under
 # ~/.local/share/<emu>/ and are not managed by Nix.
 {pkgs, ...}: let
-  # Eden built from upstream master with the steamdeck profile (znver2 + LTO
-  # + sdl2_steamdeck CPM dep). Shared package; see ../../pkgs/eden-master/.
+  # Eden built from upstream master with the steamdeck profile (znver2 + LTO).
+  # Shared package; see ../../pkgs/eden-master/.
   eden-master = pkgs.callPackage ../../pkgs/eden-master {profile = "steamdeck";};
 in {
   environment.systemPackages = with pkgs; [
