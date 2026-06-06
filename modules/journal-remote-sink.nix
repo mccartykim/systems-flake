@@ -43,7 +43,7 @@ in {
       requires = ["systemd-journal-remote.socket"];
       after = ["systemd-journal-remote.socket"];
       serviceConfig = {
-        ExecStart = "${pkgs.systemd}/lib/systemd/systemd-journal-remote --output=/var/log/journal/remote/ --split-mode=host --max-use=2G";
+        ExecStart = "${pkgs.systemd}/lib/systemd/systemd-journal-remote --output=/var/log/journal/remote/ --split-mode=host";
         User = "systemd-journal-remote";
         Group = "systemd-journal-remote";
       };
