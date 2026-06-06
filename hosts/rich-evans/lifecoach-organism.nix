@@ -117,6 +117,16 @@ in {
   # better quality, one model to keep warm on historian's iGPU).
   systemd.services.lifecoach-heartbeat.environment.LIFECOACH_JUDGMENT_MODEL = lib.mkForce "gemma4:26b";
   systemd.services.lifecoach-heartbeat.environment.LIFECOACH_VISION_MODEL = lib.mkForce "gemma4:26b";
+  systemd.services.lifecoach-scheduler.environment.LIFECOACH_JUDGMENT_MODEL = lib.mkForce "gemma4:26b";
+  systemd.services.lifecoach-scheduler.environment.LIFECOACH_VISION_MODEL = lib.mkForce "gemma4:26b";
+  systemd.services.lifecoach-watchdog.environment.LIFECOACH_JUDGMENT_MODEL = lib.mkForce "gemma4:26b";
+  systemd.services.lifecoach-watchdog.environment.LIFECOACH_VISION_MODEL = lib.mkForce "gemma4:26b";
+  systemd.services.lifecoach-discord-bot.environment.LIFECOACH_JUDGMENT_MODEL = lib.mkForce "gemma4:26b";
+  systemd.services.lifecoach-discord-bot.environment.LIFECOACH_VISION_MODEL = lib.mkForce "gemma4:26b";
+  systemd.services.lifecoach-button-monitor.environment.LIFECOACH_JUDGMENT_MODEL = lib.mkForce "gemma4:26b";
+  systemd.services.lifecoach-button-monitor.environment.LIFECOACH_VISION_MODEL = lib.mkForce "gemma4:26b";
+  systemd.services.lifecoach-dashboard.environment.LIFECOACH_JUDGMENT_MODEL = lib.mkForce "gemma4:26b";
+  systemd.services.lifecoach-dashboard.environment.LIFECOACH_VISION_MODEL = lib.mkForce "gemma4:26b";
 
   # Make emacsclient findable from every lifecoach service. The
   # module's default `path =` doesn't include it because the
