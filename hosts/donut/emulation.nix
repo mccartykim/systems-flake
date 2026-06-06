@@ -1,13 +1,10 @@
 # Emulator stack for the Steam Deck. Keys/firmware/ROMs live under
 # ~/.local/share/<emu>/ and are not managed by Nix.
-{pkgs, ...}: let
-  # Eden built from upstream master with the steamdeck profile (znver2 + LTO).
-  # Shared package; see ../../pkgs/eden-master/.
-  eden-master = pkgs.callPackage ../../pkgs/eden-master {profile = "steamdeck";};
-in {
-  environment.systemPackages = with pkgs; [
-    # Switch
-    eden-master
+{pkgs, inputs, ...}: {
+  environment.systemPackages = [
+    # Switch — eden-nightly built from upstream master with steamdeck profile (znver2 + LTO)
+    inputs.eden-nightly-flake.packages.x86_64-linux.eden-nightly-steamdeck
+  ] ++ (with pkgs; [
     ryubing
 
     # Sony
@@ -27,7 +24,7 @@ in {
 
     # Catch-all + PS1 via Swanstation core
     retroarch-full
-  ];
+  ]);
 
   # Allow running AppImages directly (useful for one-off emulator builds
   # outside nixpkgs).
@@ -37,7 +34,6 @@ in {
   };
 
   # Flatpak for ES-DE frontend and Steam ROM Manager (neither in nixpkgs).
-  # Disabled: eden update being tested without Flatpak dependency.
   services.flatpak.enable = false;
   xdg.portal = {
     enable = true;

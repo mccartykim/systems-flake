@@ -99,6 +99,10 @@
 
     nixos-facter-modules.url = "github:nix-community/nixos-facter-modules";
 
+    # Eden nightly (Switch emulator from upstream master)
+    eden-nightly-flake.url = "github:mccartykim/eden-nightly-flake";
+    eden-nightly-flake.inputs.nixpkgs.follows = "nixpkgs";
+
     # Jovian NixOS for Steam Deck
     jovian-nixos.url = "github:Jovian-Experiments/Jovian-NixOS";
     jovian-nixos.inputs.nixpkgs.follows = "nixpkgs";
@@ -159,6 +163,7 @@
     nixos-facter-modules,
     system-manager,
     jovian-nixos,
+    eden-nightly-flake,
     nix-topology,
     ...
   } @ inputs:

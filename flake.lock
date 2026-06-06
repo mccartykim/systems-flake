@@ -273,6 +273,43 @@
         "type": "github"
       }
     },
+    "eden-nightly-flake": {
+      "inputs": {
+        "eden-src": "eden-src",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1780711336,
+        "narHash": "sha256-Tk69N8F0FpZhvZE+/rFEFgfR61XfxsYB/xQEt86xk0c=",
+        "owner": "mccartykim",
+        "repo": "eden-nightly-flake",
+        "rev": "42bb537f350c2764d2b26069b1c99846032ec319",
+        "type": "github"
+      },
+      "original": {
+        "owner": "mccartykim",
+        "repo": "eden-nightly-flake",
+        "type": "github"
+      }
+    },
+    "eden-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1780705169,
+        "narHash": "sha256-ZCjaCcb6TF5y8mD1E8k4brFzTxwwdwF8TGHmfEfBo/Y=",
+        "ref": "refs/heads/master",
+        "rev": "2912f641458cf9992d643c5cb9d309cfa0146553",
+        "revCount": 28709,
+        "type": "git",
+        "url": "https://git.eden-emu.dev/eden-emu/eden.git"
+      },
+      "original": {
+        "type": "git",
+        "url": "https://git.eden-emu.dev/eden-emu/eden.git"
+      }
+    },
     "emacs-overlay": {
       "inputs": {
         "nixpkgs": [
@@ -1741,6 +1778,7 @@
         "cloudflare-ddns": "cloudflare-ddns",
         "copyparty": "copyparty",
         "disko": "disko",
+        "eden-nightly-flake": "eden-nightly-flake",
         "firefox-nightly": "firefox-nightly",
         "flake-parts": "flake-parts_2",
         "home-manager": "home-manager_2",
