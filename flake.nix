@@ -354,7 +354,7 @@
           minimal-test = import ./tests/minimal-test.nix {inherit pkgs;};
           network-test = import ./tests/network-test.nix {inherit pkgs;};
           working-vm-test = import ./tests/working-vm-test.nix {inherit pkgs;};
-          fish-functions-test = import ./tests/fish-functions-test.nix {inherit pkgs;};
+          fish-functions-test = import ./tests/fish-functions-test.nix {inherit pkgs inputs;};
 
           # Configuration evaluation tests (fast - no VM)
           # buildbot-nix builds every .#checks attr on each commit, so adding a

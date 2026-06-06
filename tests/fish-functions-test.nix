@@ -2,15 +2,18 @@
 #
 # Verifies that the fish-functions module correctly defines all convenience
 # functions and the jj VCS prompt. Runs in a minimal NixOS VM with fish
-# installed and the module enabled.
+# installed and home-manager configured.
 #
 # Run with: nix build .#checks.x86_64-linux.fish-functions-test
-{pkgs}: let
-  # Import the fish-functions module for testing
+{
+  pkgs,
+  inputs,
+}: let
+  # Import the fish-functions module
   fishFunctionsModule = import ../home/modules/fish-functions.nix;
 
   # A minimal home-manager config that enables fish-functions
-  testHomeManagerConfig = {
+  testHomeConfig = {
     imports = [fishFunctionsModule];
     modules.fish-functions = {
       enable = true;
@@ -31,15 +34,23 @@ in
       pkgs,
       ...
     }: {
+      imports = [inputs.home-manager.nixosModules.home-manager];
+
       # Enable fish as system shell
       programs.fish.enable = true;
+
       users.users.testuser = {
         isNormalUser = true;
         shell = pkgs.fish;
       };
 
-      # Deploy the home-manager config for testuser
-      home-manager.users.testuser = testHomeManagerConfig;
+      # Deploy home-manager config for testuser
+      home-manager = {
+        backupFileExtension = "backup";
+        useGlobalPkgs = true;
+        useUserPackages = true;
+        users.testuser = testHomeConfig;
+      };
 
       system.stateVersion = "24.11";
     };
@@ -49,20 +60,18 @@ in
       machine.wait_for_unit("multi-user.target")
 
       # Wait for home-manager activation
-      machine.succeed("systemctl --user -M testuser@ wait home-manager-testuser.service || true")
-
-      # Test each fish function by checking it's defined and expands correctly
-      # We use `fish -c` to run commands in fish and check the output
+      machine.succeed("systemctl --user -M testuser@ wait-home-manager-testuser.service 2>/dev/null || true")
+      machine.execute("sleep 3")
 
       # --- Global convenience functions ---
 
-      # jd: should expand to "jj desc -m" with the argument
+      # jd: should be defined as a function wrapping "jj desc -m"
       machine.succeed(
           'su - testuser -c "fish -c \'type jd\'" | grep -q "jj desc -m"'
       )
-      machine.log("✅ jd function defined correctly")
+      machine.log("✅ jd function defined and wraps jj desc -m")
 
-      # nr: should expand to "nix run nixpkgs#" with the argument
+      # nr: should expand to "nix run nixpkgs#"
       machine.succeed(
           'su - testuser -c "fish -c \'type nr\'" | grep -q "nix run nixpkgs"'
       )
@@ -74,19 +83,19 @@ in
       )
       machine.log("✅ ns function defined correctly")
 
-      # nru: should expand to "NIXPKGS_ALLOW_UNFREE=1 nix run --impure nixpkgs#"
+      # nru: should contain NIXPKGS_ALLOW_UNFREE
       machine.succeed(
           'su - testuser -c "fish -c \'type nru\'" | grep -q "NIXPKGS_ALLOW_UNFREE"'
       )
       machine.log("✅ nru function defined correctly")
 
-      # nsu: should expand to "NIXPKGS_ALLOW_UNFREE=1 nix shell --impure nixpkgs#"
+      # nsu: should contain NIXPKGS_ALLOW_UNFREE
       machine.succeed(
           'su - testuser -c "fish -c \'type nsu\'" | grep -q "NIXPKGS_ALLOW_UNFREE"'
       )
       machine.log("✅ nsu function defined correctly")
 
-      # cb: should be defined as a function
+      # cb: should be defined as a function (clipboard helper)
       machine.succeed(
           'su - testuser -c "fish -c \'type cb\'" | grep -q "function"'
       )
@@ -100,19 +109,15 @@ in
       )
       machine.log("✅ fish_jj_prompt function defined correctly")
 
-      # fish_vcs_prompt: should override the default and include jj
+      # fish_vcs_prompt: should override default and include jj
       machine.succeed(
           'su - testuser -c "fish -c \'type fish_vcs_prompt\'" | grep -q "fish_jj_prompt"'
       )
-      machine.log("✅ fish_vcs_prompt function overrides default correctly")
+      machine.log("✅ fish_vcs_prompt overrides default and includes jj")
 
-      # --- Verify functions NOT defined when module is disabled ---
-      # (This would require a second node, but we can at least verify
-      #  the current node has all expected functions)
-
-      # Count all custom functions (should have at least our 8)
+      # --- Verify all 8 expected functions are present ---
       func_count = machine.succeed(
-          'su - testuser -c "fish -c \'functions\'" | grep -cE "^(jd|nr|ns|nru|nsu|cb|fish_jj_prompt|fish_vcs_prompt)$"'
+          'su - testuser -c "fish -c \'functions\'" 2>/dev/null | grep -cE "^(jd|nr|ns|nru|nsu|cb|fish_jj_prompt|fish_vcs_prompt)$"'
       ).strip()
       assert func_count == "8", f"Expected 8 custom functions, got {func_count}"
       machine.log(f"✅ All 8 custom functions present: {func_count}")
