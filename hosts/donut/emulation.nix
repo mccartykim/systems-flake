@@ -37,7 +37,8 @@ in {
   };
 
   # Flatpak for ES-DE frontend and Steam ROM Manager (neither in nixpkgs).
-  services.flatpak.enable = true;
+  # Disabled: eden update being tested without Flatpak dependency.
+  services.flatpak.enable = false;
   xdg.portal = {
     enable = true;
     extraPortals = [pkgs.xdg-desktop-portal-gtk];
