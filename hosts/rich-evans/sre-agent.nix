@@ -13,8 +13,8 @@
     githubRepo = "mccartykim/homelab-incidents";
     alertChannelId = "900242088434757662";
     webhookPort = 9095;
-    ollamaHost = "http://total-eclipse.nebula:11434";
-    ollamaModel = "qwen3:8b";
+    ollamaHost = "http://historian.nebula:11434";
+    ollamaModel = "gemma4:e4b";
     enableDiscordBot = true;
     enableLlmTriage = true;
     enablePrWorker = true;
