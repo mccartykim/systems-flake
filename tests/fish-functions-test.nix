@@ -63,64 +63,37 @@ in
       machine.succeed("systemctl --user -M testuser@ wait-home-manager-testuser.service 2>/dev/null || true")
       machine.execute("sleep 3")
 
+      # Helper: check that a fish function is defined and its body contains expected text
+      def check_fish_func(name, expected_text):
+          result = machine.succeed(
+              f'su - testuser -c "fish -c \'type {name}\'"'
+          )
+          if expected_text not in result:
+              raise Exception(f"Function {name}: expected '{expected_text}' in output, got: {result}")
+          machine.log(f"✅ {name} function defined correctly")
+
       # --- Global convenience functions ---
-
-      # jd: should be defined as a function wrapping "jj desc -m"
-      machine.succeed(
-          'su - testuser -c "fish -c \'type jd\'" | grep -q "jj desc -m"'
-      )
-      machine.log("✅ jd function defined and wraps jj desc -m")
-
-      # nr: should expand to "nix run nixpkgs#"
-      machine.succeed(
-          'su - testuser -c "fish -c \'type nr\'" | grep -q "nix run nixpkgs"'
-      )
-      machine.log("✅ nr function defined correctly")
-
-      # ns: should expand to "nix shell nixpkgs#"
-      machine.succeed(
-          'su - testuser -c "fish -c \'type ns\'" | grep -q "nix shell nixpkgs"'
-      )
-      machine.log("✅ ns function defined correctly")
-
-      # nru: should contain NIXPKGS_ALLOW_UNFREE
-      machine.succeed(
-          'su - testuser -c "fish -c \'type nru\'" | grep -q "NIXPKGS_ALLOW_UNFREE"'
-      )
-      machine.log("✅ nru function defined correctly")
-
-      # nsu: should contain NIXPKGS_ALLOW_UNFREE
-      machine.succeed(
-          'su - testuser -c "fish -c \'type nsu\'" | grep -q "NIXPKGS_ALLOW_UNFREE"'
-      )
-      machine.log("✅ nsu function defined correctly")
-
-      # cb: should be defined as a function (clipboard helper)
-      machine.succeed(
-          'su - testuser -c "fish -c \'type cb\'" | grep -q "function"'
-      )
-      machine.log("✅ cb function defined correctly")
+      check_fish_func("jd", "jj desc -m")
+      check_fish_func("nr", "nix run nixpkgs")
+      check_fish_func("ns", "nix shell nixpkgs")
+      check_fish_func("nru", "NIXPKGS_ALLOW_UNFREE")
+      check_fish_func("nsu", "NIXPKGS_ALLOW_UNFREE")
+      check_fish_func("cb", "fish_clipboard_copy")
 
       # --- JJ VCS prompt functions ---
+      # fish_jj_prompt: defined and contains "jj log"
+      check_fish_func("fish_jj_prompt", "jj log")
 
-      # fish_jj_prompt: should be defined
-      machine.succeed(
-          'su - testuser -c "fish -c \'type fish_jj_prompt\'" | grep -q "function"'
-      )
-      machine.log("✅ fish_jj_prompt function defined correctly")
-
-      # fish_vcs_prompt: should override default and include jj
-      machine.succeed(
-          'su - testuser -c "fish -c \'type fish_vcs_prompt\'" | grep -q "fish_jj_prompt"'
-      )
-      machine.log("✅ fish_vcs_prompt overrides default and includes jj")
+      # fish_vcs_prompt: overrides default, includes fish_jj_prompt
+      check_fish_func("fish_vcs_prompt", "fish_jj_prompt")
 
       # --- Verify all 8 expected functions are present ---
-      func_count = machine.succeed(
-          'su - testuser -c "fish -c \'functions\'" 2>/dev/null | grep -cE "^(jd|nr|ns|nru|nsu|cb|fish_jj_prompt|fish_vcs_prompt)$"'
-      ).strip()
-      assert func_count == "8", f"Expected 8 custom functions, got {func_count}"
-      machine.log(f"✅ All 8 custom functions present: {func_count}")
+      func_list = machine.succeed(
+          'su - testuser -c "fish -c \'functions\'" 2>/dev/null'
+      )
+      for name in ["jd", "nr", "ns", "nru", "nsu", "cb", "fish_jj_prompt", "fish_vcs_prompt"]:
+          assert name in func_list, f"Function {name} not found in fish functions list"
+      machine.log("✅ All 8 custom functions present in fish functions list")
 
       machine.log("🎉 All fish function tests passed!")
     '';
