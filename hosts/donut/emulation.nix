@@ -33,8 +33,6 @@
     binfmt = true;
   };
 
-  # Flatpak for ES-DE frontend and Steam ROM Manager (neither in nixpkgs).
-  services.flatpak.enable = false;
   xdg.portal = {
     enable = true;
     extraPortals = [pkgs.xdg-desktop-portal-gtk];
