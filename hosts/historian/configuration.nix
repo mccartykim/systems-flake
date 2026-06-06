@@ -316,15 +316,19 @@
         vram_bytes=$(${pkgs.jq}/bin/jq -r '[.models[].size_vram // 0] | add // 0' <<< "$ps_json" 2>/dev/null)
         vram_bytes=''${vram_bytes:-0}
 
-        # Measure inference latency with a tiny prompt
+        # Measure inference latency with a tiny prompt.
+        # Non-fatal: if ollama is still loading or the request times out,
+        # report latency as 0 (the probe still exports ollama_up=1 and
+        # model_loaded status).
         start=$(${pkgs.coreutils}/bin/date +%s%N)
-        ${pkgs.curl}/bin/curl -sf --max-time 30 -X POST http://localhost:11434/api/chat \
+        if ${pkgs.curl}/bin/curl -sf --max-time 60 -X POST http://localhost:11434/api/chat \
           -H "Content-Type: application/json" \
-          -d '{"model":"gemma4:26b","options":{"num_ctx":4096,"num_predict":1},"messages":[{"role":"user","content":"hi"}],"stream":false}' >/dev/null 2>&1
-        end=$(${pkgs.coreutils}/bin/date +%s%N)
-        latency_seconds=$(( (end - start) / 1000000 ))
-        latency_ms=$(( latency_seconds / 1000 ))
-        latency_seconds=$( ${pkgs.coreutils}/bin/printf '%d.%03d' $(( latency_ms / 1000 )) $(( latency_ms % 1000 )) )
+          -d '{"model":"gemma4:26b","options":{"num_ctx":4096,"num_predict":1},"messages":[{"role":"user","content":"hi"}],"stream":false}' >/dev/null 2>&1; then
+          end=$(${pkgs.coreutils}/bin/date +%s%N)
+          latency_seconds=$(( (end - start) / 1000000 ))
+          latency_ms=$(( latency_seconds / 1000 ))
+          latency_seconds=$( ${pkgs.coreutils}/bin/printf '%d.%03d' $(( latency_ms / 1000 )) $(( latency_ms % 1000 )) )
+        fi
 
         # Count context truncation warnings in the last 5 minutes
         truncations=$(${pkgs.systemd}/bin/journalctl -u ollama --since "5 min ago" --no-pager -q 2>/dev/null | grep -c "truncating input prompt" || true)
