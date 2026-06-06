@@ -91,17 +91,9 @@ in {
       alertChannelId = "";
     };
 
-    # DISABLED 2026-05-25 (lo-eq1): this warmup pinned qwen3.6:35b-a3b
-    # (~26GB) on historian's AMD iGPU, starving gemma4:e4b (~10GB) which
-    # the mechanical/judgment/vision hot path actually uses. Result was a
-    # silent wake-up failure on the morning of 2026-05-25 (user slept
-    # until 13:00). Tradeoff: Discord/organic triggers now pay the ~73s
-    # qwen cold-load on the first call after qwen evicts. Wake-up
-    # reliability is safety-critical and wins.
-    # If Discord latency becomes painful, revisit: either run a smaller
-    # qwen quant alongside gemma4 (math says both fit in 57GB GTT but
-    # ollama doesn't co-load them in practice), or warm qwen on a
-    # different host.
+    # DISABLED: warmup now handled by historian's ollama-warmup service
+    # which pre-loads gemma4:26b (the only model on historian's iGPU).
+    # Previously tried qwen3.6:35b-a3b which starved the smaller model.
     ollamaWarmup = {
       enable = false;
       model = "qwen3.6:35b-a3b";
@@ -120,6 +112,11 @@ in {
   };
 
   systemd.services.lifecoach-watchdog.path = lib.mkAfter [org-agent-emacs];
+
+  # Use gemma4:26b for judgment/vision (same speed as e4b on this hardware,
+  # better quality, one model to keep warm on historian's iGPU).
+  systemd.services.lifecoach-heartbeat.environment.LIFECOACH_JUDGMENT_MODEL = lib.mkForce "gemma4:26b";
+  systemd.services.lifecoach-heartbeat.environment.LIFECOACH_VISION_MODEL = lib.mkForce "gemma4:26b";
 
   # Make emacsclient findable from every lifecoach service. The
   # module's default `path =` doesn't include it because the

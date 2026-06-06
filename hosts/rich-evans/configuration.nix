@@ -46,8 +46,8 @@ in {
     # Static networking
     ./networking.nix
 
-    # SRE agent (Phase 0: Alertmanager webhook stub)
-    ./sre-agent.nix
+    # SRE agent — DISABLED: noisy, low value, pegs historian GPU at 100%
+    # ./sre-agent.nix
   ];
 
   # Restic backup to shared B2 repo

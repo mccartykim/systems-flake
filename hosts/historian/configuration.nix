@@ -252,18 +252,12 @@
   # shader cache writes fail and the Vulkan subtitle overlay pipeline deadlocks.
   systemd.services.jellyfin.environment.XDG_CACHE_HOME = "/var/cache/jellyfin";
 
-  # Pre-warm gemma4:e4b into ollama after ollama starts. The first cold
-  # load on the AMD iGPU takes ~73s (9GB model + KV cache into shared
-  # memory); without this, the first lifecoach mechanical heartbeat
-  # after a host reboot or ollama restart hits a cold path that exceeds
-  # the 90s ask_ollama timeout. Pre-warming pulls that latency out of
-  # the agent's hot path and into a one-shot service that finishes
-  # before the first heartbeat fires.
-  #
-  # Tied to ollama's lifecycle via partOf so it re-runs when ollama
-  # restarts, and via wantedBy=multi-user.target so it fires at boot.
+  # Pre-warm gemma4:26b after ollama starts. Cold-load on the AMD iGPU
+  # takes ~73s; without this, the first lifecoach heartbeat after a
+  # reboot exceeds the 90s ask_ollama timeout. Tied to ollama's lifecycle
+  # via partOf so it re-runs on ollama restarts.
   systemd.services.ollama-warmup = {
-    description = "Pre-load gemma4:e4b into ollama";
+    description = "Pre-load gemma4:26b into ollama";
     after = ["ollama.service"];
     requires = ["ollama.service"];
     partOf = ["ollama.service"];
@@ -282,15 +276,87 @@
         fi
         sleep 1
       done
-      # Tiny chat with explicit num_ctx=4096 — same context lifecoach
-      # uses, so the cold-loaded layout matches the runtime layout and
-      # subsequent calls hit a warm runner. 180s budget for the
-      # cold-load itself; failure is non-fatal (callers will retry).
+      # Warm with num_ctx=16384 matching the server default so the
+      # cold-loaded KV layout matches runtime. 180s budget for the
+      # cold-load; failure is non-fatal (callers retry).
       ${pkgs.curl}/bin/curl -sS -X POST http://localhost:11434/api/chat \
         -H "Content-Type: application/json" \
-        -d '{"model":"gemma4:e4b","options":{"num_ctx":4096},"messages":[{"role":"user","content":"warmup"}],"stream":false}' \
+        -d '{"model":"gemma4:26b","options":{"num_ctx":16384},"messages":[{"role":"user","content":"warmup"}],"stream":false}' \
         --max-time 180 >/dev/null || true
     '';
+  };
+
+  # Ollama health probe: exports model load status, inference latency, and
+  # context truncation count to Prometheus via the node_exporter textfile collector.
+  systemd.services.ollama-health-probe = {
+    description = "Export ollama model status, latency, and truncation metrics";
+    serviceConfig.Type = "oneshot";
+    path = [pkgs.curl pkgs.jq pkgs.coreutils pkgs.systemd];
+    script = ''
+      OUT=/var/lib/prometheus-node-exporter-textfiles/ollama_health.prom.tmp
+      FINAL=/var/lib/prometheus-node-exporter-textfiles/ollama_health.prom
+      NOW=$(${pkgs.coreutils}/bin/date +%s)
+
+      ollama_up=0
+      model_loaded=0
+      vram_bytes=0
+      latency_seconds=0
+      truncations=0
+
+      # Check liveness and model status via /api/ps
+      ps_json=$(${pkgs.curl}/bin/curl -sf --max-time 5 http://localhost:11434/api/ps 2>/dev/null) && ollama_up=1
+
+      if [ "$ollama_up" -eq 1 ]; then
+        # Check if gemma4:26b is loaded (warm)
+        model_loaded=$(${pkgs.jq}/bin/jq -r '.models[] | select(.name=="gemma4:26b") | 1' <<< "$ps_json" 2>/dev/null | head -1)
+        model_loaded=''${model_loaded:-0}
+        [ "$model_loaded" != "1" ] && model_loaded=0
+
+        # VRAM usage of loaded models
+        vram_bytes=$(${pkgs.jq}/bin/jq -r '[.models[].size_vram // 0] | add // 0' <<< "$ps_json" 2>/dev/null)
+        vram_bytes=''${vram_bytes:-0}
+
+        # Measure inference latency with a tiny prompt
+        start=$(${pkgs.coreutils}/bin/date +%s%N)
+        ${pkgs.curl}/bin/curl -sf --max-time 30 -X POST http://localhost:11434/api/chat \
+          -H "Content-Type: application/json" \
+          -d '{"model":"gemma4:26b","options":{"num_ctx":4096,"num_predict":1},"messages":[{"role":"user","content":"hi"}],"stream":false}' >/dev/null 2>&1
+        end=$(${pkgs.coreutils}/bin/date +%s%N)
+        latency_seconds=$(( (end - start) / 1000000 ))
+        latency_ms=$(( latency_seconds / 1000 ))
+        latency_seconds=$( ${pkgs.coreutils}/bin/printf '%d.%03d' $(( latency_ms / 1000 )) $(( latency_ms % 1000 )) )
+
+        # Count context truncation warnings in the last 5 minutes
+        truncations=$(${pkgs.systemd}/bin/journalctl -u ollama --since "5 min ago" --no-pager -q 2>/dev/null | grep -c "truncating input prompt" || true)
+      fi
+
+      {
+        echo "# HELP ollama_up Whether ollama /api/ps responded (1=ok, 0=fail)"
+        echo "# TYPE ollama_up gauge"
+        echo "ollama_up $ollama_up"
+        echo "# HELP ollama_model_loaded Whether gemma4:26b is loaded in VRAM (1=loaded, 0=not loaded)"
+        echo "# TYPE ollama_model_loaded gauge"
+        echo "ollama_model_loaded $model_loaded"
+        echo "# HELP ollama_model_vram_bytes Total VRAM used by loaded models in bytes"
+        echo "# TYPE ollama_model_vram_bytes gauge"
+        echo "ollama_model_vram_bytes $vram_bytes"
+        echo "# HELP ollama_inference_latency_seconds Time for a minimal gemma4:26b inference call"
+        echo "# TYPE ollama_inference_latency_seconds gauge"
+        echo "ollama_inference_latency_seconds $latency_seconds"
+        echo "# HELP ollama_truncations_total Context truncation events in the last 5 minutes"
+        echo "# TYPE ollama_truncations_total gauge"
+        echo "ollama_truncations_total $truncations"
+      } > "$OUT"
+      mv "$OUT" "$FINAL"
+    '';
+  };
+
+  systemd.timers.ollama-health-probe = {
+    wantedBy = ["timers.target"];
+    timerConfig = {
+      OnCalendar = "*:0/2";
+      Persistent = true;
+    };
   };
 
   # Auto-login for TV use
@@ -372,13 +438,11 @@
         OLLAMA_NUM_PARALLEL = "1";
         OLLAMA_FLASH_ATTENTION = "1";
         OLLAMA_KV_CACHE_TYPE = "q8_0";
-        OLLAMA_KEEP_ALIVE = "2h";
-        # NB: must be OLLAMA_CONTEXT_LENGTH, NOT OLLAMA_NUM_CTX. The
-        # latter is silently ignored by ollama serve. Without this set,
-        # ollama falls back to the model's native context (gemma4:e4b
-        # defaults to 131072), and allocating that KV cache + model
-        # weights on the AMD iGPU's shared memory OOMs the runner.
-        OLLAMA_CONTEXT_LENGTH = "4096";
+        OLLAMA_KEEP_ALIVE = "30m";
+        # Must be OLLAMA_CONTEXT_LENGTH, NOT OLLAMA_NUM_CTX (silently ignored).
+        # Prevents models' native 131K context from OOMing the iGPU's shared
+        # memory. Callers that need more pass num_ctx per-request.
+        OLLAMA_CONTEXT_LENGTH = "16384";
       };
     };
     open-webui = {

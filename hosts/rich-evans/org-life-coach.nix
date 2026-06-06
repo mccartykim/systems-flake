@@ -58,8 +58,8 @@
     # KASA_DESK_LAMP = "";  # TODO: find desk lamp IP (not currently on network)
 
     OLLAMA_TIMEOUT = "600";
-    OLLAMA_NUM_CTX = "8192";
-    OLLAMA_MODEL_SCULLY = "gemma4:e4b";
+    OLLAMA_NUM_CTX = "16384";
+    OLLAMA_MODEL_SCULLY = "gemma4:26b";
     OLLAMA_MODEL_MULDER = "gemma4:26b";
     OLLAMA_MODEL_SKINNER = "gemma4:26b";
     CAMERA_MAX_WIDTH = "1280";
