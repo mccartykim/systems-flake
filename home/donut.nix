@@ -7,6 +7,7 @@
     ./modules/terminal-enhanced.nix
     ./modules/ai-tools.nix
     ./modules/gaming.nix
+    ./modules/fish-functions.nix
   ];
 
   home = {
@@ -47,6 +48,10 @@
     gaming = {
       enable = true;
       steam = true;
+    };
+    fish-functions = {
+      enable = true;
+      includeJjPrompt = false;
     };
   };
 

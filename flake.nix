@@ -210,17 +210,82 @@
         formatter = pkgs.alejandra;
 
         # Dev shells
-        devShells = lib.optionalAttrs (system == "x86_64-linux") {
+        devShells = let
+          # Repo-specific CLI tools only available inside the systems-flake devShell
+          shellApps = [
+            # flu: nix flake update + auto-describe
+            # Usage: flu nixpkgs → updates nixpkgs input, commits "chore: flake bump nixpkgs"
+            #        flu          → updates all inputs, commits "chore: flake lock update"
+            (pkgs.writeShellApplication {
+              name = "flu";
+              runtimeInputs = [pkgs.nix];
+              text = ''
+                if [ $# -ge 1 ]; then
+                  nix flake update "$1" && jj desc -m "chore: flake bump $1"
+                else
+                  nix flake update && jj desc -m "chore: flake lock update"
+                fi
+              '';
+            })
+
+            # deploy: colmena deploy shorthand
+            # Usage: deploy historian         → colmena apply --on historian
+            #        deploy historian,maitred → colmena apply --on historian,maitred
+            (pkgs.writeShellApplication {
+              name = "deploy";
+              runtimeInputs = [pkgs.colmena];
+              text = ''
+                colmena apply --on "$@"
+              '';
+            })
+
+            # nb: nix build piped through nom
+            # Usage: nb .#nixosConfigurations.historian → nix build .#nixosConfigurations.historian 2>&1 | nom
+            (pkgs.writeShellApplication {
+              name = "nb";
+              runtimeInputs = [pkgs.nix pkgs.nix-output-monitor];
+              text = ''
+                nix build "$@" 2>&1 | nom
+              '';
+            })
+
+            # nswitch: nh os switch shorthand
+            # Usage: nswitch historian → nh os switch .#nixosConfigurations.historian
+            #        nswitch historian --target-host historian.nebula
+            (pkgs.writeShellApplication {
+              name = "nswitch";
+              runtimeInputs = [pkgs.nh];
+              text = ''
+                host="$1"; shift
+                nh os switch ".#nixosConfigurations.$host" "$@"
+              '';
+            })
+
+            # nbuild: nh os build shorthand
+            # Usage: nbuild historian → nh os build .#nixosConfigurations.historian
+            (pkgs.writeShellApplication {
+              name = "nbuild";
+              runtimeInputs = [pkgs.nh];
+              text = ''
+                host="$1"; shift
+                nh os build ".#nixosConfigurations.$host" "$@"
+              '';
+            })
+          ];
+        in lib.optionalAttrs (system == "x86_64-linux" || system == "aarch64-linux") {
           default = pkgs.mkShell {
-            packages = [
-              pkgs.tealdeer
-              pkgs.colmena
-              pkgs.esphome # ESP32/ESP8266 firmware builder
-              pkgs.esptool # ESP32/ESP8266 flasher
-              pkgs.age # age encryption tool
-              pkgs.age-plugin-yubikey # YubiKey support for age encryption
-              pkgs.beads # AI-native issue tracking
-            ];
+            packages =
+              [
+                pkgs.tealdeer
+                pkgs.colmena
+                pkgs.esphome # ESP32/ESP8266 firmware builder
+                pkgs.esptool # ESP32/ESP8266 flasher
+                pkgs.age # age encryption tool
+                pkgs.age-plugin-yubikey # YubiKey support for age encryption
+                pkgs.beads # AI-native issue tracking
+                pkgs.nix-output-monitor # nom - for nb command
+              ]
+              ++ shellApps;
           };
         };
 
@@ -289,6 +354,7 @@
           minimal-test = import ./tests/minimal-test.nix {inherit pkgs;};
           network-test = import ./tests/network-test.nix {inherit pkgs;};
           working-vm-test = import ./tests/working-vm-test.nix {inherit pkgs;};
+          fish-functions-test = import ./tests/fish-functions-test.nix {inherit pkgs;};
 
           # Configuration evaluation tests (fast - no VM)
           # buildbot-nix builds every .#checks attr on each commit, so adding a

@@ -15,6 +15,7 @@
     ./modules/shell-essentials.nix
     ./modules/terminal-enhanced.nix
     ./modules/ai-tools.nix
+    ./modules/fish-functions.nix
   ];
 
   modules = {
@@ -27,6 +28,10 @@
     ai-tools = {
       enable = true;
       claudeZai = true;
+    };
+    fish-functions = {
+      enable = true;
+      includeJjPrompt = false;
     };
   };
 

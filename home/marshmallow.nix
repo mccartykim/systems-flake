@@ -22,6 +22,7 @@
     ./modules/terminal-enhanced.nix
     ./modules/gaming.nix
     ./modules/ai-tools.nix
+    ./modules/fish-functions.nix
   ];
 
   # nixpkgs config inherited from NixOS via useGlobalPkgs = true
@@ -60,6 +61,11 @@
     ai-tools = {
       enable = true;
       claudeZai = true;
+    };
+    fish-functions = {
+      enable = true;
+      # Marshmallow uses tide for its prompt; no need for the jj prompt override
+      includeJjPrompt = false;
     };
   };
 
