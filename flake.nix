@@ -412,6 +412,60 @@
                 }
               '';
 
+          # Fish syntax validation: runs fish --no-execute on the generated
+          # config to catch syntax errors that string checks would miss.
+          eval-fish-syntax =
+            let
+              testConfig = {
+                imports = [./home/modules/fish-functions.nix];
+                modules.fish-functions = {
+                  enable = true;
+                  includeJjPrompt = true;
+                };
+                programs.fish.enable = true;
+                home.username = "test";
+                home.homeDirectory = "/home/test";
+                home.stateVersion = "24.11";
+                programs.home-manager.enable = true;
+              };
+              hmLib = inputs.home-manager.lib;
+              eval = hmLib.homeManagerConfiguration {
+                pkgs = pkgs;
+                modules = [testConfig];
+              };
+              # Collect all generated fish function files
+              fishFiles = eval.config.home.file;
+              # Get the generated fish config directory
+              fishFuncDir = "${eval.config.xdg.configFile."fish/functions".source or eval.config.programs.fish.functions}";
+            in
+              pkgs.runCommand "eval-fish-syntax" {
+                nativeBuildInputs = [pkgs.fish];
+              } ''
+                # Validate each function definition by sourcing it with fish --no-execute
+                errors=0
+                ${lib.concatStrings (lib.mapAttrsToList (name: body: ''
+                  # Write function to a temp file and validate syntax
+                  cat > function_test.fish << 'FISHEOF'
+                  function ${name}
+                    ${body}
+                  end
+                  FISHEOF
+                  if ! fish --no-execute function_test.fish 2>&1; then
+                    echo "FAIL: fish syntax error in function '${name}'"
+                    errors=$((errors + 1))
+                  else
+                    echo "OK: ${name}"
+                  fi
+                  rm function_test.fish
+                '') eval.config.programs.fish.functions)}
+
+                if [ $errors -gt 0 ]; then
+                  echo "FAIL: $errors function(s) had syntax errors"
+                  exit 1
+                fi
+                echo "All fish functions passed syntax validation" > $out
+              '';
+
           eval-historian = self.nixosConfigurations.historian.config.system.build.toplevel;
           eval-marshmallow = self.nixosConfigurations.marshmallow.config.system.build.toplevel;
           eval-bartleby = self.nixosConfigurations.bartleby.config.system.build.toplevel;
