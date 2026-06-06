@@ -1,8 +1,8 @@
 # systemd-journal-remote receiver sink
 # Companion to modules/observability.nix — receives journal uploads on
 # TCP/19532 (plain HTTP) from senders that set kimb.observability.enable.
-# Retention is bounded via --max-use=2G (per-host file with default
-# --split-mode=host, so ~2G per sender).
+# Retention is bounded via journal-remote.conf MaxUse (2G total, or ~2G
+# per sender with --split-mode=host).
 {
   config,
   lib,
@@ -27,6 +27,13 @@ in {
     systemd.tmpfiles.rules = [
       "d /var/log/journal/remote 0755 systemd-journal-remote systemd-journal-remote -"
     ];
+
+    # Retention limit via config file (works on all systemd versions;
+    # the --max-use CLI flag was only added in systemd 261).
+    environment.etc."systemd/journal-remote.conf".text = ''
+      [Remote]
+      MaxUse=2G
+    '';
 
     systemd.sockets.systemd-journal-remote = {
       description = "Journal Remote Sink";
