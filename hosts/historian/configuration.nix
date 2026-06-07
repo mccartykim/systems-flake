@@ -438,6 +438,7 @@
       host = "0.0.0.0";
       # Enable parallel inference for batch processing (6 concurrent requests)
       environmentVariables = {
+        OLLAMA_IGPU_ENABLE = "1";  # Required for Strix Point iGPU (Radeon 890M)
         OLLAMA_NUM_PARALLEL = "1";
         OLLAMA_FLASH_ATTENTION = "1";
         OLLAMA_KV_CACHE_TYPE = "q8_0";
