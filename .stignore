@@ -1,0 +1,5 @@
+# Prevent syncthing from corrupting git/jj internals
+.git/objects/
+.jj/repo/
+.jj/working_copy/
+*.sync-conflict-*
