@@ -14,12 +14,12 @@
     alertChannelId = "900242088434757662";
     webhookPort = 9095;
     ollamaHost = "http://historian.nebula:11434";
-    ollamaModel = "gemma4:e4b";
+    ollamaModel = "gemma4:12b";
     enableDiscordBot = true;
     enableLlmTriage = true;
     enablePrWorker = true;
     githubSourceRepo = "mccartykim/systems-flake";
-    prWorkerModel = "gemma4:26b";
+    prWorkerModel = "gemma4:12b";
     prWorkerGitAuthorName = "sre-agent";
     prWorkerGitAuthorEmail = "sre-agent@nebula";
     prometheusUrl = "http://10.100.0.50:9090";

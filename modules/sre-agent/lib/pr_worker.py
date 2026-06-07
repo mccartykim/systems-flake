@@ -135,7 +135,7 @@ def fix_issue_with_ollama(issue: GitHubIssue, token: str) -> Optional[str]:
     state_dir = _env("STATE_DIR", "/var/lib/sre-agent")
     source_repo = _env("GITHUB_SOURCE_REPO", "mccartykim/systems-flake")
     ollama_host = _env("OLLAMA_HOST", "http://historian.nebula:11434")
-    model = _env("PR_WORKER_MODEL", "gemma4:26b")
+    model = _env("PR_WORKER_MODEL", "gemma4:12b")
     max_turns = int(_env("PR_WORKER_MAX_TURNS", "15"))
 
     workspace = os.path.join(state_dir, "workspaces", f"issue-{issue.number}")

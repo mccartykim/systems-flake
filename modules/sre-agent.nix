@@ -85,7 +85,7 @@ in {
 
     ollamaCloudModel = mkOption {
       type = types.str;
-      default = "gemma4:e4b";
+      default = "gemma4:12b";
       description = "Fallback Ollama model on historian";
     };
 
@@ -108,7 +108,7 @@ in {
 
     prWorkerModel = mkOption {
       type = types.str;
-      default = "gemma4:26b";
+      default = "gemma4:12b";
       description = "Ollama model for the PR worker agent";
     };
 

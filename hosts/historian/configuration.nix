@@ -251,12 +251,12 @@
   # shader cache writes fail and the Vulkan subtitle overlay pipeline deadlocks.
   systemd.services.jellyfin.environment.XDG_CACHE_HOME = "/var/cache/jellyfin";
 
-  # Pre-warm gemma4:26b after ollama starts. Cold-load on the AMD iGPU
+  # Pre-warm gemma4:12b after ollama starts. Cold-load on the AMD iGPU
   # takes ~73s; without this, the first lifecoach heartbeat after a
   # reboot exceeds the 90s ask_ollama timeout. Tied to ollama's lifecycle
   # via partOf so it re-runs on ollama restarts.
   systemd.services.ollama-warmup = {
-    description = "Pre-load gemma4:26b into ollama";
+    description = "Pre-load gemma4:12b into ollama";
     after = ["ollama.service"];
     requires = ["ollama.service"];
     partOf = ["ollama.service"];
@@ -280,7 +280,7 @@
       # cold-load; failure is non-fatal (callers retry).
       ${pkgs.curl}/bin/curl -sS -X POST http://localhost:11434/api/chat \
         -H "Content-Type: application/json" \
-        -d '{"model":"gemma4:26b","options":{"num_ctx":131072},"messages":[{"role":"user","content":"warmup"}],"stream":false}' \
+        -d '{"model":"gemma4:12b","options":{"num_ctx":131072},"messages":[{"role":"user","content":"warmup"}],"stream":false}' \
         --max-time 180 >/dev/null || true
     '';
   };
@@ -306,8 +306,8 @@
       ps_json=$(${pkgs.curl}/bin/curl -sf --max-time 5 http://localhost:11434/api/ps 2>/dev/null) && ollama_up=1
 
       if [ "$ollama_up" -eq 1 ]; then
-        # Check if gemma4:26b is loaded (warm)
-        model_loaded=$(${pkgs.jq}/bin/jq -r '.models[] | select(.name=="gemma4:26b") | 1' <<< "$ps_json" 2>/dev/null | head -1)
+        # Check if gemma4:12b is loaded (warm)
+        model_loaded=$(${pkgs.jq}/bin/jq -r '.models[] | select(.name=="gemma4:12b") | 1' <<< "$ps_json" 2>/dev/null | head -1)
         model_loaded=''${model_loaded:-0}
         [ "$model_loaded" != "1" ] && model_loaded=0
 
@@ -322,7 +322,7 @@
         start=$(${pkgs.coreutils}/bin/date +%s%N)
         if ${pkgs.curl}/bin/curl -sf --max-time 60 -X POST http://localhost:11434/api/chat \
           -H "Content-Type: application/json" \
-          -d '{"model":"gemma4:26b","options":{"num_ctx":4096,"num_predict":1},"messages":[{"role":"user","content":"hi"}],"stream":false}' >/dev/null 2>&1; then
+          -d '{"model":"gemma4:12b","options":{"num_ctx":4096,"num_predict":1},"messages":[{"role":"user","content":"hi"}],"stream":false}' >/dev/null 2>&1; then
           end=$(${pkgs.coreutils}/bin/date +%s%N)
           latency_seconds=$(( (end - start) / 1000000 ))
           latency_ms=$(( latency_seconds / 1000 ))
@@ -337,13 +337,13 @@
         echo "# HELP ollama_up Whether ollama /api/ps responded (1=ok, 0=fail)"
         echo "# TYPE ollama_up gauge"
         echo "ollama_up $ollama_up"
-        echo "# HELP ollama_model_loaded Whether gemma4:26b is loaded in VRAM (1=loaded, 0=not loaded)"
+        echo "# HELP ollama_model_loaded Whether gemma4:12b is loaded in VRAM (1=loaded, 0=not loaded)"
         echo "# TYPE ollama_model_loaded gauge"
         echo "ollama_model_loaded $model_loaded"
         echo "# HELP ollama_model_vram_bytes Total VRAM used by loaded models in bytes"
         echo "# TYPE ollama_model_vram_bytes gauge"
         echo "ollama_model_vram_bytes $vram_bytes"
-        echo "# HELP ollama_inference_latency_seconds Time for a minimal gemma4:26b inference call"
+        echo "# HELP ollama_inference_latency_seconds Time for a minimal gemma4:12b inference call"
         echo "# TYPE ollama_inference_latency_seconds gauge"
         echo "ollama_inference_latency_seconds $latency_seconds"
         echo "# HELP ollama_truncations_total Context truncation events in the last 5 minutes"

@@ -24,7 +24,7 @@
 
     # Ollama for LLM calls (replaces Claude CLI)
     provider = "ollama";
-    model = "gemma4:26b";
+    model = "gemma4:12b";
     ollamaHost = "http://historian.nebula:11434";
 
     # Home Assistant (same host)
@@ -59,9 +59,9 @@
 
     OLLAMA_TIMEOUT = "600";
     OLLAMA_NUM_CTX = "16384";
-    OLLAMA_MODEL_SCULLY = "gemma4:26b";
-    OLLAMA_MODEL_MULDER = "gemma4:26b";
-    OLLAMA_MODEL_SKINNER = "gemma4:26b";
+    OLLAMA_MODEL_SCULLY = "gemma4:12b";
+    OLLAMA_MODEL_MULDER = "gemma4:12b";
+    OLLAMA_MODEL_SKINNER = "gemma4:12b";
     CAMERA_MAX_WIDTH = "1280";
 
     # Vacuum (Valetudo)

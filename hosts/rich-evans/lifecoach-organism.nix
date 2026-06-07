@@ -95,7 +95,7 @@ in {
     };
 
     # DISABLED: warmup now handled by historian's ollama-warmup service
-    # which pre-loads gemma4:26b (the only model on historian's iGPU).
+    # which pre-loads gemma4:12b (the only model on historian's iGPU).
     # Previously tried qwen3.6:35b-a3b which starved the smaller model.
     ollamaWarmup = {
       enable = false;
@@ -114,15 +114,15 @@ in {
     };
   };
 
-  # Use gemma4:26b for judgment/vision (same speed as e4b on this hardware,
-  # better quality, one model to keep warm on historian's iGPU).
+  # Use gemma4:12b for judgment/vision (best accuracy in benchmarks,
+  # one model to keep warm on historian's iGPU).
   # Also make emacsclient findable — the module's default `path =` doesn't
   # include it because the lifecoach-organism flake has no dependency on org-agent.
   systemd.services = lib.mkMerge [
     (lib.genAttrs lifecoach-services (_: {
       environment = {
-        LIFECOACH_JUDGMENT_MODEL = lib.mkForce "gemma4:26b";
-        LIFECOACH_VISION_MODEL = lib.mkForce "gemma4:26b";
+        LIFECOACH_JUDGMENT_MODEL = lib.mkForce "gemma4:12b";
+        LIFECOACH_VISION_MODEL = lib.mkForce "gemma4:12b";
       };
       path = lib.mkAfter [org-agent-emacs];
     }))

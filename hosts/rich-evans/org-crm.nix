@@ -23,7 +23,7 @@
     scanDir = "/var/lib/scans/documents";
 
     interval = 300; # 5 minutes
-    # Model is set via OLLAMA_MODEL env var in the NixOS module (default: gemma4:26b)
+    # Model is set via OLLAMA_MODEL env var in the NixOS module (default: gemma4:12b)
 
     # Mail passwords (own copies of the same secrets, owned by org-crm user)
     mailZohoPasswordFile = config.age.secrets.org-crm-mail-zoho.path;

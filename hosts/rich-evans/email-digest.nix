@@ -1,7 +1,7 @@
 # Email Digest Agent
 #
 # Twice-daily email summary DM'd to Kimb on Discord.
-# Syncs mail via mbsync (pull-only), summarizes with Ollama (gemma4:26b),
+# Syncs mail via mbsync (pull-only), summarizes with Ollama (gemma4:12b),
 # sends via Discord bot API.
 {
   config,
@@ -294,7 +294,7 @@ $(head -20 "$f")"
 
         # Invoke Ollama for summary (OLLAMA_HOST and OLLAMA_MODEL set via systemd environment)
         OLLAMA_HOST="''${OLLAMA_HOST:-http://historian.nebula:11434}"
-        OLLAMA_MODEL="''${OLLAMA_MODEL:-gemma4:26b}"
+        OLLAMA_MODEL="''${OLLAMA_MODEL:-gemma4:12b}"
         ENHANCED_SYSTEM="$(cat ${systemPrompt})"
         [ -n "$ORG_CONTEXT" ] && ENHANCED_SYSTEM="$ENHANCED_SYSTEM"$'\n\n## Sender context\n'"$ORG_CONTEXT"
 
@@ -374,7 +374,7 @@ in {
       path = ["/run/current-system/sw"];
       environment = {
         OLLAMA_HOST = "http://historian.nebula:11434";
-        OLLAMA_MODEL = "gemma4:26b";
+        OLLAMA_MODEL = "gemma4:12b";
       };
       serviceConfig = {
         Type = "oneshot";

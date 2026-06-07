@@ -93,7 +93,7 @@ LOCAL_OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "qwen3:8b")
 CLOUD_OLLAMA_HOST = os.environ.get(
     "OLLAMA_CLOUD_HOST", "http://historian.nebula:11434"
 )
-CLOUD_OLLAMA_MODEL = os.environ.get("OLLAMA_CLOUD_MODEL", "gemma4:31b")
+CLOUD_OLLAMA_MODEL = os.environ.get("OLLAMA_CLOUD_MODEL", "gemma4:12b")
 CLOUD_OLLAMA_KEY_FILE = os.environ.get("OLLAMA_CLOUD_KEY_FILE", "")
 
 LOCAL_TIMEOUT = 180
