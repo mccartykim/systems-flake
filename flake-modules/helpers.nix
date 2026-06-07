@@ -55,7 +55,7 @@ in {
       (self + "/services/default.nix")
       # Fix Python packages with strict version bounds + Firefox Nightly
       # + override ollama to 0.30.4 for gemma4:12b support (remove once nixpkgs-unstable advances)
-      {nixpkgs.overlays = [pythonFixesOverlay gleamFixOverlay firefoxNightlyOverlay (final: prev: {
+      {nixpkgs.overlays = [pythonFixesOverlay firefoxNightlyOverlay (final: prev: {
         ollama = ollamaPkgs.${prev.system}.ollama;
         ollama-rocm = ollamaPkgs.${prev.system}.ollama-rocm;
       })];}
