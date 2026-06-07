@@ -436,10 +436,12 @@
       rocmOverrideGfx = "11.5.0";
       openFirewall = true;
       host = "0.0.0.0";
-      # Enable parallel inference for batch processing (6 concurrent requests)
+      # Enable parallel inference — needed when Claude Code session shares the
+      # ollama instance; otherwise benchmark/agent requests queue behind it.
+      # Strix Point iGPU has enough unified memory for multiple concurrent slots.
       environmentVariables = {
         OLLAMA_IGPU_ENABLE = "1";  # Required for Strix Point iGPU (Radeon 890M)
-        OLLAMA_NUM_PARALLEL = "1";
+        OLLAMA_NUM_PARALLEL = "4";
         OLLAMA_FLASH_ATTENTION = "1";
         OLLAMA_KV_CACHE_TYPE = "q8_0";
         OLLAMA_KEEP_ALIVE = "30m";
