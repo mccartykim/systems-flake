@@ -51,7 +51,6 @@ with lib; {
         extensions = [
           "xy-zed"
           "nix"
-          "gleam"
         ];
       };
     };

@@ -31,7 +31,6 @@
       chafa
       rebar3
       erlang
-      gleam
     ];
 
     extraConfig = ''
