@@ -108,11 +108,11 @@ CAUSE: OOM killer invoked"""
 
 
 class TestTriageLocalOllama(unittest.TestCase):
-    """triage() should call local Ollama first with format:json."""
+    """triage() should call local Ollama first with prompt-based JSON."""
 
     @patch("llm_client.urllib.request.urlopen")
     def test_local_ollama_json_mode(self, mock_urlopen):
-        """Primary: local Ollama with format:json returns structured response."""
+        """Primary: local Ollama with prompt-based JSON returns structured response."""
         mock_response = MagicMock()
         mock_response.read.return_value = json.dumps({
             "message": {"content": json.dumps({
@@ -139,10 +139,11 @@ class TestTriageLocalOllama(unittest.TestCase):
             self.assertEqual(result.severity, "warning")
             self.assertEqual(result.cause, "Service degraded")
 
-            # Verify the request used format:json
+            # Verify the request includes schema in system prompt (prompt-based JSON)
             call_args = mock_urlopen.call_args
             req = call_args[0][0]
-            self.assertIn("format", req.data.decode())
+            self.assertNotIn("format", req.data.decode())
+            self.assertIn("Respond with a JSON object", req.data.decode())
 
     @patch("llm_client.urllib.request.urlopen")
     def test_local_ollama_timeout_falls_back(self, mock_urlopen):

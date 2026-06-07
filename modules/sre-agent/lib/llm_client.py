@@ -1,8 +1,8 @@
 """SRE Agent LLM client — hybrid local Ollama + Ollama Cloud fallback.
 
-Both paths use Ollama's JSON Schema structured-output mode (TRIAGE_SCHEMA)
-so even small models reliably emit valid output. Cache: responses cached in
-STATE_DIR/llm-cache.jsonl keyed by alert fingerprint.
+Both paths request JSON output via prompt instructions instead of ollama's
+format:schema parameter, which causes 5-20x slowdown on gemma4 models.
+Cache: responses cached in STATE_DIR/llm-cache.jsonl keyed by alert fingerprint.
 """
 import hashlib
 import json
@@ -13,6 +13,43 @@ import urllib.request
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Optional
+
+
+def _extract_json(text: str) -> Optional[dict]:
+    """Extract JSON from model response, handling markdown code blocks.
+
+    Tries in order: raw parse, markdown code block, balanced-brace extraction.
+    """
+    # 1. Try parsing the whole response as JSON
+    try:
+        return json.loads(text)
+    except (json.JSONDecodeError, ValueError):
+        pass
+
+    # 2. Try extracting from a markdown code block
+    m = re.search(r'```(?:json)?\s*(.*?)\s*```', text, re.DOTALL)
+    if m:
+        try:
+            return json.loads(m.group(1))
+        except (json.JSONDecodeError, ValueError):
+            pass
+
+    # 3. Balanced-brace extraction: find the first { and match to its closing }
+    depth = 0
+    start = text.find('{')
+    if start == -1:
+        return None
+    for i in range(start, len(text)):
+        if text[i] == '{':
+            depth += 1
+        elif text[i] == '}':
+            depth -= 1
+            if depth == 0:
+                try:
+                    return json.loads(text[start:i + 1])
+                except (json.JSONDecodeError, ValueError):
+                    break
+    return None
 
 
 @dataclass
@@ -74,8 +111,9 @@ Respond with a JSON object with these fields:
 - issue_title: suggested GitHub issue title (empty string if not filing)
 - silence_hours: integer, hours to silence (0=never, 2=info alerts, 4=noise alerts, 24=persistent noise)"""
 
-# JSON Schema for Ollama's structured-output mode — constrains decoding so
-# small models (e.g. gemma4:e4b) reliably emit valid output.
+# JSON Schema included in system prompt for prompt-based JSON output.
+# Previously used with ollama's format:schema parameter, which caused
+# 5-20x slowdown on gemma4 models due to grammar-constrained decoding.
 TRIAGE_SCHEMA = {
     "type": "object",
     "properties": {
@@ -190,16 +228,20 @@ def _get_cloud_model():
 
 
 def _call_local_ollama(prompt: str) -> Optional[TriageResult]:
-    """Call local Ollama with JSON Schema structured output."""
+    """Call local Ollama and extract JSON from response.
+
+    Uses prompt-based JSON instead of format:schema (5-20x faster on gemma4).
+    """
     url = f"{_get_local_host()}/api/chat"
+    schema_desc = "\n\nRespond with a JSON object matching this schema:\n" + json.dumps(TRIAGE_SCHEMA, indent=2)
     payload = json.dumps({
         "model": _get_local_model(),
         "messages": [
-            {"role": "system", "content": TRIAGE_SYSTEM_PROMPT},
+            {"role": "system", "content": TRIAGE_SYSTEM_PROMPT + schema_desc},
             {"role": "user", "content": prompt},
         ],
         "stream": False,
-        "format": TRIAGE_SCHEMA,
+        "think": False,
         "options": {"temperature": 0.1},
     }).encode()
 
@@ -210,8 +252,7 @@ def _call_local_ollama(prompt: str) -> Optional[TriageResult]:
             resp = urllib.request.urlopen(req, timeout=LOCAL_TIMEOUT)
             body = json.loads(resp.read().decode())
             content = body.get("message", {}).get("content", "")
-            # With format:json, content should be valid JSON
-            parsed = json.loads(content)
+            parsed = _extract_json(content)
             result = TriageResult.from_dict(parsed)
             print(f"llm: triage result for {prompt.splitlines()[0]}: severity={result.severity}", file=sys.stderr)
             return result
@@ -228,7 +269,10 @@ def _call_local_ollama(prompt: str) -> Optional[TriageResult]:
 
 
 def _call_cloud_ollama(prompt: str) -> Optional[TriageResult]:
-    """Call fallback Ollama (historian) with JSON Schema structured output."""
+    """Call fallback Ollama (historian) with prompt-based JSON output.
+
+    Uses prompt-based JSON instead of format:schema (5-20x faster on gemma4).
+    """
     key_file = os.environ.get("OLLAMA_CLOUD_KEY_FILE", CLOUD_OLLAMA_KEY_FILE)
     url = f"{_get_cloud_host()}/api/chat"
     headers = {"Content-Type": "application/json", "User-Agent": "sre-agent/1.0"}
@@ -241,14 +285,15 @@ def _call_cloud_ollama(prompt: str) -> Optional[TriageResult]:
         except OSError:
             pass
 
+    schema_desc = "\n\nRespond with a JSON object matching this schema:\n" + json.dumps(TRIAGE_SCHEMA, indent=2)
     payload = json.dumps({
         "model": _get_cloud_model(),
         "messages": [
-            {"role": "system", "content": TRIAGE_SYSTEM_PROMPT},
+            {"role": "system", "content": TRIAGE_SYSTEM_PROMPT + schema_desc},
             {"role": "user", "content": prompt},
         ],
         "stream": False,
-        "format": TRIAGE_SCHEMA,
+        "think": False,
         "options": {"temperature": 0.1},
     }).encode()
 
@@ -259,10 +304,12 @@ def _call_cloud_ollama(prompt: str) -> Optional[TriageResult]:
             resp = urllib.request.urlopen(req, timeout=CLOUD_TIMEOUT)
             body = json.loads(resp.read().decode())
             content = body.get("message", {}).get("content", "")
-            parsed = json.loads(content)
-            return TriageResult.from_dict(parsed)
+            parsed = _extract_json(content)
+            if parsed is None:
+                raise json.JSONDecodeError("no JSON found", content, 0)
+            result = TriageResult.from_dict(parsed)
+            return result
         except (json.JSONDecodeError, KeyError, TypeError) as e:
-            # Schema-constrained output should always parse; fall back to free-form just in case.
             print(f"llm: cloud parse error (attempt {attempt+1}): {e}", file=sys.stderr)
             result = parse_freeform_response(content)
             if result:
