@@ -228,7 +228,6 @@
       tealdeer
       rebar3
       erlang
-      gleam
       # Media
       vlc
       rclone
