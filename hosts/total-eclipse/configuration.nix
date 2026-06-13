@@ -41,8 +41,8 @@
       "/home/kimb/.gradle"
     ];
 
-    # Centralized observability (node_exporter + journal-upload + Nebula rule)
-    observability.enable = true;
+    # Centralized observability — DISABLED: too noisy, low value for now
+    # observability.enable = true;
 
     # Nebula configuration
     nebula = {

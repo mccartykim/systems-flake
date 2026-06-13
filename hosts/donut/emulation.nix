@@ -9,7 +9,9 @@
 
     # Sony
     pcsx2
-    rpcs3
+    # rpcs3 — BROKEN: GLEW 2.3.1 removes GLX symbols that rpcs3 links against
+    # (undefined reference to __glewXSwapIntervalEXT). See nixpkgs#427693,
+    # rpcs3#16819. Re-enable once nixpkgs patches rpcs3 for GLEW 2.3+.
 
     # Nintendo
     dolphin-emu

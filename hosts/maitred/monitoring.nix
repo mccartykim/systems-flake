@@ -9,7 +9,8 @@
   cfg = config.kimb;
   textfileDir = "/var/lib/prometheus-node-exporter-textfiles";
 in {
-  imports = [./monitoring-probes.nix];
+  # Probes disabled along with SRE observability stack
+  # imports = [./monitoring-probes.nix];
 
   # Agenix secret for Grafana secret key
   age.secrets.grafana-secret-key = {
@@ -24,12 +25,8 @@ in {
     enable = true;
     inherit (cfg.services.prometheus) port;
 
-    # Alertmanager integration
-    alertmanagers = [
-      {
-        static_configs = [{targets = ["localhost:9093"];}];
-      }
-    ];
+    # Alertmanager disabled — removed integration
+    # alertmanagers = [];
 
     # Scrape configurations
     scrapeConfigs = let
@@ -115,87 +112,8 @@ in {
     in
       [nodeExporterConfig blackboxBlogInternal blackboxBlogExternal] ++ serviceScrapeConfigs;
 
-    # Alert rules
-    ruleFiles = [
-      (pkgs.writeText "sre-alerts.yml" (
-        lib.generators.toYAML {} {
-          groups = [
-            {
-              name = "sre-blog";
-              rules = [
-                {
-                  alert = "BlogUnreachable";
-                  expr = ''probe_success{job="blackbox-blog-external"} == 0'';
-                  for = "2m";
-                  labels.severity = "critical";
-                  annotations.summary = "blog.kimb.dev unreachable from oracle (external probe)";
-                }
-              ];
-            }
-            {
-              name = "sre-ollama";
-              rules = [
-                {
-                  alert = "OllamaUnreachable";
-                  expr = ''ollama_up == 0'';
-                  for = "5m";
-                  labels.severity = "warning";
-                  annotations.summary = "Ollama on {{ $labels.host }} unreachable for 5m";
-                }
-              ];
-            }
-            {
-              name = "sre-lifecoach";
-              rules = [
-                {
-                  alert = "LifecoachStale";
-                  expr = ''lifecoach_last_run_staleness_seconds > 14400'';
-                  for = "0m";
-                  labels.severity = "warning";
-                  annotations.summary = "Lifecoach-organism has not run for {{ $value }}s (>4h)";
-                }
-              ];
-            }
-            {
-              name = "sre-node";
-              rules = [
-                {
-                  alert = "NodeExporterDown";
-                  expr = ''up{job="node-exporter"} == 0'';
-                  for = "5m";
-                  labels.severity = "critical";
-                  annotations.summary = "Node exporter on {{ $labels.instance }} down for 5m";
-                }
-              ];
-            }
-            {
-              name = "sre-systemd";
-              rules = [
-                {
-                  alert = "UnitFailed";
-                  expr = ''node_systemd_unit_state{state="failed"} == 1'';
-                  for = "10m";
-                  labels.severity = "warning";
-                  annotations.summary = "systemd unit {{ $labels.name }} failed on {{ $labels.instance }} for >10m";
-                }
-              ];
-            }
-            {
-              name = "sre-restic";
-              rules = [
-                {
-                  alert = "ResticBackupStale";
-                  expr = ''restic_backup_staleness_seconds > 86400'';
-                  for = "0m";
-                  labels.severity = "warning";
-                  annotations.summary = "Restic backup on {{ $labels.instance }} has not completed in {{ $value }}s (>24h)";
-                }
-              ];
-            }
-          ];
-        }
-      ))
-    ];
+    # Alert rules — DISABLED: SRE/observability stack disabled for now
+    # ruleFiles = [];
 
     # Retention policy
     extraFlags = [
@@ -234,47 +152,8 @@ in {
       );
     };
 
-    # Alertmanager — fires webhooks to SRE agent on rich-evans
-    alertmanager = {
-      enable = true;
-      port = 9093;
-      openFirewall = false;
-      configuration = {
-        global.resolve_timeout = "5m";
-        route = {
-          receiver = "sre-webhook";
-          group_by = ["alertname" "instance"];
-          group_wait = "30s";
-          group_interval = "5m";
-          repeat_interval = "4h";
-          routes = [
-            {
-              match = {severity = "critical";};
-              receiver = "sre-webhook";
-              repeat_interval = "4h";
-            }
-          ];
-        };
-        inhibit_rules = [
-          {
-            source_match = {alertname = "NodeExporterDown";};
-            target_match = {alertname = "OllamaUnreachable";};
-            equal = [];
-          }
-        ];
-        receivers = [
-          {
-            name = "sre-webhook";
-            webhook_configs = [
-              {
-                url = "http://10.100.0.40:9095/webhook";
-                send_resolved = true;
-              }
-            ];
-          }
-        ];
-      };
-    };
+    # Alertmanager — DISABLED: SRE agent is offline, webhooks go nowhere
+    # alertmanager = { ... };
   };
 
   # Grafana visualization (host service)
@@ -338,12 +217,12 @@ in {
       "br-lan".allowedTCPPorts = lib.flatten [
         (lib.optional cfg.services.grafana.enable cfg.services.grafana.port)
         (lib.optional cfg.services.prometheus.enable cfg.services.prometheus.port)
-        [9093 9100] # alertmanager + node exporter
+        [9100] # node exporter
       ];
       "nebula1".allowedTCPPorts = lib.flatten [
         (lib.optional cfg.services.grafana.enable cfg.services.grafana.port)
         (lib.optional cfg.services.prometheus.enable cfg.services.prometheus.port)
-        [9093 9100] # alertmanager + node exporter
+        [9100] # node exporter
       ];
     };
   };

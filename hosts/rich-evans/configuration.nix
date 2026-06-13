@@ -53,11 +53,11 @@ in {
   # Restic backup to shared B2 repo
   kimb.restic.enable = true;
 
-  # Centralized observability (node_exporter + journal-upload + Nebula rule)
-  kimb.observability.enable = true;
+  # Centralized observability — DISABLED: too noisy, low value for now
+  # kimb.observability.enable = true;
 
-  # Receive journal uploads from other observability hosts
-  kimb.journalRemote.enable = true;
+  # Receive journal uploads — DISABLED along with observability
+  # kimb.journalRemote.enable = true;
 
   # Nebula configuration with server-specific firewall rules
   kimb.nebula = {
@@ -320,41 +320,9 @@ in {
   };
   networking.firewall.trustedInterfaces = ["nebula1" "lo"];
 
-  # Lifecoach freshness metric — how long since last successful organism cycle
-  systemd.services.lifecoach-freshness-probe = {
-    description = "Export lifecoach-organism staleness metric";
-    serviceConfig = {
-      Type = "oneshot";
-      User = "life-coach";
-      Group = "life-coach";
-    };
-    script = ''
-      DIR=/var/lib/prometheus-node-exporter-textfiles
-      OUT=$DIR/lifecoach_staleness.prom.tmp
-      FINAL=$DIR/lifecoach_staleness.prom
-      NOW=$(${pkgs.coreutils}/bin/date +%s)
-      if [ -f /var/lib/lifecoach-organism/.organism/last-run.json ]; then
-        LAST=$(${pkgs.jq}/bin/jq -r '.epoch // 0' /var/lib/lifecoach-organism/.organism/last-run.json)
-        STALE=$(( NOW - LAST ))
-      else
-        STALE=999999
-      fi
-      cat > "$OUT" << EOF
-      # HELP lifecoach_last_run_staleness_seconds Seconds since last successful lifecoach cycle
-      # TYPE lifecoach_last_run_staleness_seconds gauge
-      lifecoach_last_run_staleness_seconds $STALE
-      EOF
-      mv "$OUT" "$FINAL"
-    '';
-  };
-
-  systemd.timers.lifecoach-freshness-probe = {
-    wantedBy = ["timers.target"];
-    timerConfig = {
-      OnCalendar = "*:0/2";
-      Persistent = true;
-    };
-  };
+  # Lifecoach freshness metric — DISABLED along with observability
+  # systemd.services.lifecoach-freshness-probe = { ... };
+  # systemd.timers.lifecoach-freshness-probe = { ... };
 
   system.stateVersion = "23.11";
 }

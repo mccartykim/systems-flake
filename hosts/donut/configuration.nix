@@ -46,8 +46,8 @@
   # Restic backups
   kimb.restic.enable = true;
 
-  # Centralized observability (node_exporter + journal-upload + Nebula rule)
-  kimb.observability.enable = true;
+  # Centralized observability — DISABLED: too noisy, low value for now
+  # kimb.observability.enable = true;
 
   # Steam Deck hardware support
   jovian = {

@@ -44,8 +44,8 @@ in {
           useGlobalPkgs = true;
         }
         ++ [
+          # jovian module applies its own overlay internally — no need to add it again
           inputs.jovian-nixos.nixosModules.jovian
-          {nixpkgs.overlays = [inputs.jovian-nixos.overlays.default];}
           (self + "/hosts/donut/configuration.nix")
         ];
     };
