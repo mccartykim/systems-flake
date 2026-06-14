@@ -165,6 +165,7 @@ in {
 
     useDHCP = false; # Managed by systemd-networkd
     useNetworkd = true;
+    networkmanager.enable = lib.mkForce false; # Router uses networkd exclusively — NM fights with it
     nftables.enable = lib.mkForce false; # Override base profile - use iptables for router
 
     # Override base profile - maitred uses its own unbound DNS server only
@@ -440,7 +441,7 @@ in {
   users.users.kimb = {
     isNormalUser = true;
     description = "Kimberly";
-    extraGroups = ["wheel" "networkmanager"];
+    extraGroups = ["wheel"];
     openssh.authorizedKeys.keys = sshKeys.authorizedKeys;
     initialPassword = "changeme"; # CRITICAL: Change this password immediately after deployment!
   };
