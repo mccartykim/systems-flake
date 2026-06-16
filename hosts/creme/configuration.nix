@@ -275,7 +275,7 @@
     ${pkgs.xorg.xrdb}/bin/xrdb -merge /etc/X11/Xresources/creme
     ${pkgs.feh}/bin/feh --no-fehbg --bg-tile ${config.stylix.image} &
     ${pkgs.picom}/bin/picom --backend xrender -b
-    exec i3
+    exec i3 -c /etc/i3/config
   '';
 
   # Auto-startx on tty1 login. tty2-6 stay as plain getty.
@@ -419,6 +419,13 @@
   # minutes on cold start. The activation failure on 2026-06-04 was caused by
   # this timeout firing repeatedly during nixos-rebuild switch.
   systemd.user.services.emacs.serviceConfig.TimeoutStartSec = "300";
+  # Stale server socket blocks the daemon from starting ("Unable to start the
+  # daemon — Another instance of Emacs is running the server"). This happens
+  # when a standalone emacs (emacs -c from a terminal) grabs the socket before
+  # the systemd service can. Remove the socket before each start so the daemon
+  # can claim it cleanly.
+  systemd.user.services.emacs.serviceConfig.ExecStartPre =
+    "-${pkgs.coreutils}/bin/rm -f %t/emacs/server";
 
   # Fonts. Blex Mono Nerd Font as primary; Google monochrome emoji noto
   # so emoji render cleanly without dragging in colored fallback bitmaps.
