@@ -94,12 +94,12 @@ in {
       alertChannelId = "";
     };
 
-    # DISABLED: warmup now handled by historian's ollama-warmup service
-    # which pre-loads gemma4:12b (the only model on historian's iGPU).
-    # Previously tried qwen3.6:35b-a3b which starved the smaller model.
+    # DISABLED: warmup is pointless with cloud models — they're always
+    # warm on the provider side. (Previously kept a local iGPU model
+    # resident; that path is retired now that every role uses cloud.)
     ollamaWarmup = {
       enable = false;
-      model = "qwen3.6:35b-a3b";
+      model = "kimi-k2.7-code:cloud";
       interval = "25min";
       keepAlive = "30m";
     };
@@ -114,15 +114,24 @@ in {
     };
   };
 
-  # Use gemma4:12b for judgment/vision (best accuracy in benchmarks,
-  # one model to keep warm on historian's iGPU).
+  # Cloud model tiers (via historian's ollama, which proxies to ollama cloud):
+  #   main agent brain  -> kimi-k2.7-code:cloud   (sonnet/opus tier)
+  #   judgment + vision -> gemma4:31b-cloud        (haiku tier; vision-capable)
+  # Local gemma4:12b was retired from these roles: the AMD iGPU could not
+  # finish a multi-turn agent generation inside the 15-min systemd cycle,
+  # leaving lifecoach-heartbeat stuck "activating". Cloud finishes each
+  # call in single-digit seconds. think:false is set in the repo call sites
+  # (without it, thinking-capable models burn the token budget on reasoning
+  # and return empty content).
+  #
   # Also make emacsclient findable — the module's default `path =` doesn't
   # include it because the lifecoach-organism flake has no dependency on org-agent.
   systemd.services = lib.mkMerge [
     (lib.genAttrs lifecoach-services (_: {
       environment = {
-        LIFECOACH_JUDGMENT_MODEL = lib.mkForce "gemma4:12b";
-        LIFECOACH_VISION_MODEL = lib.mkForce "gemma4:12b";
+        OLLAMA_MODEL = lib.mkForce "kimi-k2.7-code:cloud";
+        LIFECOACH_JUDGMENT_MODEL = lib.mkForce "gemma4:31b-cloud";
+        LIFECOACH_VISION_MODEL = lib.mkForce "gemma4:31b-cloud";
       };
       path = lib.mkAfter [org-agent-emacs];
     }))

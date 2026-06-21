@@ -292,29 +292,53 @@ $(head -20 "$f")"
 
     $EMAIL_CONTENT"
 
-        # Invoke Ollama for summary (OLLAMA_HOST and OLLAMA_MODEL set via systemd environment)
+        # Invoke Ollama for summary (OLLAMA_HOST and OLLAMA_MODEL set via systemd environment).
+        #
+        # Model tiers (cloud, via historian's ollama):
+        #   gemma4:31b-cloud   — haiku-tier, routine work (this digest)
+        #   kimi-k2.7-code:cloud — sonnet/opus-tier, higher-stakes agents
+        # Local gemma4:12b was retired from this task: on an ~80KB payload it
+        # could not finish a 2048-token generation within the iGPU's throughput
+        # budget, so the call hung until the client/server timed out and
+        # SUMMARY came back empty — silently triggering the subject-line
+        # fallback below. Cloud models finish the same payload in 3-9s.
+        #
+        # `think: false` is REQUIRED: thinking-capable models (gemma4, qwen3.5,
+        # kimi-k2) otherwise spend the entire num_predict budget on thinking
+        # tokens and return an empty message.content -> subject-line fallback.
         OLLAMA_HOST="''${OLLAMA_HOST:-http://historian.nebula:11434}"
-        OLLAMA_MODEL="''${OLLAMA_MODEL:-gemma4:12b}"
+        OLLAMA_MODEL="''${OLLAMA_MODEL:-gemma4:31b-cloud}"
         ENHANCED_SYSTEM="$(cat ${systemPrompt})"
         [ -n "$ORG_CONTEXT" ] && ENHANCED_SYSTEM="$ENHANCED_SYSTEM"$'\n\n## Sender context\n'"$ORG_CONTEXT"
 
         SUMMARY=""
-        SUMMARY=$(curl -sf -X POST "$OLLAMA_HOST/api/chat" \
+        # Capture HTTP status + body so failures are diagnosable instead of
+        # silently swallowed into the subject-line fallback.
+        HTTP_CODE=$(curl -s -o /tmp/email-digest-resp.json -w '%{http_code}' \
+          -X POST "$OLLAMA_HOST/api/chat" \
           -H "Content-Type: application/json" \
           -d "$(jq -n \
               --arg model "$OLLAMA_MODEL" \
               --arg system "$ENHANCED_SYSTEM" \
               --arg user "$USER_PROMPT" \
-              '{model: $model, stream: false,
-                options: {temperature: 0.3, num_predict: 2048, num_ctx: 16384},
+              '{model: $model, stream: false, think: false,
+                options: {temperature: 0.3, num_predict: 2048, num_ctx: 32768},
                 keep_alive: "30m",
                 messages: [{role: "system", content: $system}, {role: "user", content: $user}]}')" \
-          --max-time 900 2>/dev/null | jq -r '.message.content' 2>/dev/null || true)
+          --max-time 180)
+        if [ "$HTTP_CODE" = "200" ]; then
+          SUMMARY=$(jq -r '.message.content // ""' /tmp/email-digest-resp.json 2>/dev/null)
+        else
+          echo "WARNING: Ollama $OLLAMA_MODEL returned HTTP $HTTP_CODE; body:" >&2
+          head -c 800 /tmp/email-digest-resp.json >&2 2>/dev/null || true
+          echo >&2
+        fi
 
-        # Fallback: raw subject lines if Ollama fails
+        # Fallback: raw subject lines if Ollama fails or returns empty content
         if [ -z "$SUMMARY" ]; then
+          echo "WARNING: empty summary from $OLLAMA_MODEL, falling back to raw subjects" >&2
           SUBJECT_LINES=$(mu find "date:$SINCE_DATE.." --fields='d f s' --sortfield=date 2>/dev/null || true)
-          SUMMARY="**Email Digest** (Ollama unavailable, raw subjects):
+          SUMMARY="**Email Digest** ($OLLAMA_MODEL unavailable, raw subjects):
     \`\`\`
     $SUBJECT_LINES
     \`\`\`"
@@ -374,7 +398,7 @@ in {
       path = ["/run/current-system/sw"];
       environment = {
         OLLAMA_HOST = "http://historian.nebula:11434";
-        OLLAMA_MODEL = "gemma4:12b";
+        OLLAMA_MODEL = "gemma4:31b-cloud";
       };
       serviceConfig = {
         Type = "oneshot";

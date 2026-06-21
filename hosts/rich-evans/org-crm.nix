@@ -23,7 +23,11 @@
     scanDir = "/var/lib/scans/documents";
 
     interval = 300; # 5 minutes
-    # Model is set via OLLAMA_MODEL env var in the NixOS module (default: gemma4:12b)
+    # Sonnet/opus-tier cloud model — org-crm is a multi-turn reasoning agent
+    # (contacts/tasks/email-digest + tool dispatch). Passed as --model on
+    # ExecStart, overriding the module's OLLAMA_MODEL env default.
+    # think:false is set in the repo call site (org_crm.claude_runner).
+    model = "kimi-k2.7-code:cloud";
 
     # Mail passwords (own copies of the same secrets, owned by org-crm user)
     mailZohoPasswordFile = config.age.secrets.org-crm-mail-zoho.path;
