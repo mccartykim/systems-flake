@@ -120,6 +120,8 @@
     user = "kimb";
   };
 
+  services.syncthing.enable = true;
+
   # NVIDIA graphics hardware configuration
   services.xserver.videoDrivers = ["nvidia"];
 
