@@ -251,9 +251,13 @@ PR_WORKER_TOOLS = [
 
 def _call_ollama(host: str, model: str, messages: list, tools: list = None) -> dict:
     """Call Ollama /api/chat and return the response dict."""
+    # think=False is REQUIRED: thinking-capable models (gemma4, qwen3.5,
+    # kimi-k2) otherwise spend the entire num_predict budget on thinking
+    # tokens and return an empty message.content.
     payload = {
         "model": model,
         "stream": False,
+        "think": False,
         "messages": messages,
         "options": {
             "temperature": 0.3,  # Lower temperature for precise config edits

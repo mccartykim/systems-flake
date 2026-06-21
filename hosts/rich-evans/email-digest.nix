@@ -322,7 +322,7 @@ $(head -20 "$f")"
               --arg system "$ENHANCED_SYSTEM" \
               --arg user "$USER_PROMPT" \
               '{model: $model, stream: false, think: false,
-                options: {temperature: 0.3, num_predict: 2048, num_ctx: 32768},
+                options: {temperature: 0.3, num_predict: 2048, num_ctx: 262144},
                 keep_alive: "30m",
                 messages: [{role: "system", content: $system}, {role: "user", content: $user}]}')" \
           --max-time 180)

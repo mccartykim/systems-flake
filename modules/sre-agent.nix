@@ -85,8 +85,8 @@ in {
 
     ollamaCloudModel = mkOption {
       type = types.str;
-      default = "gemma4:12b";
-      description = "Fallback Ollama model on historian";
+      default = "gemma4:31b-cloud";
+      description = "Fallback Ollama model on historian (haiku-tier cloud)";
     };
 
     ollamaCloudKeyFile = mkOption {

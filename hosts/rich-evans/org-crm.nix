@@ -41,6 +41,11 @@
     discordAllowedUsers = "366455267673636866"; # Kimb only
   };
 
+  # kimi-k2.7-code:cloud supports 256k context. org-crm does multi-turn
+  # reasoning + email-digest over 3 mailboxes — raise the context window
+  # well above the repo default (32768) so large digests don't truncate.
+  systemd.services.org-crm.environment.ORG_CRM_NUM_CTX = "262144";
+
   age.secrets = {
     # Mail secrets (same .age files as email-digest, but owned by org-crm user)
     org-crm-mail-zoho = {

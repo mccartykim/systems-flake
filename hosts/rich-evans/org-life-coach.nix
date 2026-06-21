@@ -22,9 +22,14 @@
     orgFile = "/var/lib/life-coach-agent/agent.org";
     interval = 300; # 5 minutes
 
-    # Ollama for LLM calls (replaces Claude CLI)
+    # Ollama for LLM calls (replaces Claude CLI).
+    # kimi-k2.7-code:cloud is vision-capable (verified) + the sonnet/opus
+    # reasoning tier — org-life-coach makes a single unified vision+reasoning
+    # call per cycle (cameras feed images through to the model). think:false
+    # is set in org-agent's llm.ollama() call site. Local gemma4:12b on the
+    # AMD iGPU could not finish a generation inside the 600s timeout.
     provider = "ollama";
-    model = "gemma4:12b";
+    model = "kimi-k2.7-code:cloud";
     ollamaHost = "http://historian.nebula:11434";
 
     # Home Assistant (same host)
@@ -58,7 +63,7 @@
     # KASA_DESK_LAMP = "";  # TODO: find desk lamp IP (not currently on network)
 
     OLLAMA_TIMEOUT = "600";
-    OLLAMA_NUM_CTX = "16384";
+    OLLAMA_NUM_CTX = "65536";
     OLLAMA_MODEL_SCULLY = "gemma4:12b";
     OLLAMA_MODEL_MULDER = "gemma4:12b";
     OLLAMA_MODEL_SKINNER = "gemma4:12b";
