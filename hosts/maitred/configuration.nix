@@ -122,7 +122,14 @@ in {
       enablePrinting = true;
       inherit (pkgs) cups;
     };
-    openFirewall = true;
+    # openFirewall=false: don't expose SMB to the WAN. LAN (enp2s0),
+    # containers (ve-+), and Nebula (nebula1) are all in
+    # networking.firewall.trustedInterfaces, so SMB/wsdd stay fully
+    # reachable there without any firewall ports being opened. Setting
+    # this false only removes 139/445/137/138 from the WAN-facing zone,
+    # closing an unnecessary internet-exposed pre-auth surface (smbd
+    # processes the full SMB handshake before `hosts allow` rejects).
+    openFirewall = false;
     settings = {
       global = {
         "workgroup" = "WORKGROUP";
@@ -146,12 +153,33 @@ in {
         "printable" = "yes";
         "create mode" = 0700;
       };
+
+      # Explicit printer share so the queue is always visible and
+      # connectable, independent of Samba's `load printers` auto-
+      # enumeration (which only runs at smbd startup and is flaky for
+      # the USB printer that auto-powers-off). Samba spools to
+      # /var/spool/samba and submits to the CUPS queue below.
+      "Brother-HL-L2400D" = {
+        "comment" = "Brother HL-L2400D Laser Printer";
+        "path" = "/var/spool/samba";
+        "printer name" = "Brother-HL-L2400D";
+        "printable" = "yes";
+        # Let clients render with their own driver; CUPS just passes the
+        # spool through. Avoids double-filtering via the server brlaser
+        # PPD (which garbles Windows RAW output).
+        "use client driver" = "yes";
+        "browseable" = "yes";
+        "guest ok" = "yes";
+        "writable" = "no";
+      };
     };
   };
 
   services.samba-wsdd = {
     enable = true;
-    openFirewall = true;
+    # Same rationale as services.samba: keep WS-Discovery on the
+    # trusted LAN/Nebula interfaces only, not the WAN.
+    openFirewall = false;
   };
 
   systemd.tmpfiles.rules = [
