@@ -9,10 +9,7 @@
   imports = [inputs.buildbot-nix.nixosModules.buildbot-worker];
 
   services.buildbot-nix.worker = {
-    # Disabled 2026-06-22 along with the master on rich-evans — see
-    # hosts/rich-evans/buildbot-master.nix. Flip back to true (and
-    # redeploy) to re-enable.
-    enable = false;
+    enable = true;
     masterUrl = "tcp:host=rich-evans.nebula:port=9989";
     workerPasswordFile = config.age.secrets.buildbot-worker-password.path;
     # 24-thread Ryzen; Jellyfin/Sunshine transcoding is GPU-accelerated and

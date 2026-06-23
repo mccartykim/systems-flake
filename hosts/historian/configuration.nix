@@ -21,8 +21,11 @@
     # Restic backups to Backblaze B2
     ../../modules/restic-backup.nix
 
-    # Buildbot worker (CI runner for systems-flake; master on rich-evans)
-    ./buildbot-worker.nix
+    # Buildbot worker — DISABLED 2026-06-22 (gave up on buildbot-nix
+    # fighting private-repo flake inputs; may revisit a different CI
+    # scheme later). Re-enable by uncommenting this import; the module
+    # file (hosts/historian/buildbot-worker.nix) is left intact.
+    # ./buildbot-worker.nix
   ];
 
   # External media drive (exFAT — ownership set at mount time)
