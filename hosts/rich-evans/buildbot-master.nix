@@ -9,7 +9,10 @@
   imports = [inputs.buildbot-nix.nixosModules.buildbot-master];
 
   services.buildbot-nix.master = {
-    enable = true;
+    # Disabled 2026-06-22: buildbot-nix fought with private-repo flake
+    # inputs; gave up and will revisit a different CI scheme later.
+    # Flip back to true (and redeploy) to re-enable.
+    enable = false;
     domain = "buildbot.kimb.dev";
     admins = ["mccartykim"];
     workersFile = config.age.secrets.buildbot-workers.path;
