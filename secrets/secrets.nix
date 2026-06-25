@@ -124,5 +124,14 @@ in
     # Ollama Cloud API key for LLM inference on rich-evans.
     # Get key from https://ollama.com/settings/api-keys
     "ollama-cloud-key.age".publicKeys = [hostKeys.rich-evans hostKeys.cheesecake hostKeys.marshmallow bootstrap];
+
+    # ===== KNITWORK (rich-evans) =====
+    # Moderation admin bearer token for the knitwork AppView's
+    # POST/DELETE /admin/hidden de-index/restore path (Stage 4). The token value
+    # itself is never in any repo/flake — only this encrypted file is. Decrypted
+    # on rich-evans via its SSH host key; consumed through
+    # services.knitwork.adminTokenFile -> KNIT_ADMIN_TOKEN_FILE. See
+    # hosts/rich-evans/knitwork.nix.
+    "knit-admin-token.age".publicKeys = [hostKeys.rich-evans bootstrap];
   }
   // allNebulaSecrets

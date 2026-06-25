@@ -34,6 +34,19 @@ in {
     # dbPath / firehoseUrl default to the module's own options — it sets
     # StateDirectory=knitwork + KNIT_DB_PATH + KNIT_FIREHOSE_URL env from them,
     # so no extra wiring is needed here.
+    # Moderation admin bearer token (Stage 4) — points at the agenix secret so
+    # the token value never lives in the repo/flake, only this path does.
+    adminTokenFile = config.age.secrets.knit-admin-token.path;
+  };
+
+  # The moderation admin token (Stage 4): age-encrypted to rich-evans's SSH host
+  # key + the bootstrap key (recipients in secrets/secrets.nix). The knitwork
+  # service runs as root (no User= in the module's serviceConfig), so the
+  # decrypted file is root-owned 0400 — no `owner` needed (agenix defaults to
+  # root). Only the path is referenced above; the value is never in the flake.
+  age.secrets.knit-admin-token = {
+    file = ../../secrets/knit-admin-token.age;
+    mode = "0400";
   };
 
   # Let maitred's socat proxy reach the indexer over Nebula (port 8080).
