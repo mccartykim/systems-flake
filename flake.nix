@@ -68,6 +68,12 @@
     kimb-blog-content.url = "git+ssh://git@github.com/mccartykim/kimb-blog-content.git";
     kimb-blog-content.flake = false;
 
+    # Knitwork — decentralized knitting/crochet app on AT Proto (lexicon host +
+    # firehose indexer). Serves dev.kimb.knit.* lexicons and self-fills its
+    # SQLite index from the relay firehose. Same git+ssh convention as mist-blog.
+    knitwork.url = "git+ssh://git@github.com/mccartykim/knitwork.git";
+    knitwork.inputs.nixpkgs.follows = "nixpkgs";
+
     claude_yapper.url = "git+ssh://git@github.com/mccartykim/claude-alarmclock-agent.git";
     claude_yapper.inputs.nixpkgs.follows = "nixpkgs";
 

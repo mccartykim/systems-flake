@@ -43,6 +43,23 @@
         publicAccess = true;
         websockets = false;
       };
+      # Knitwork — lexicon host + firehose indexer. Runs HERE as a host
+      # service (see hosts/rich-evans/knitwork.nix, which imports the
+      # knitwork flake's NixOS module). maitred only reverse-proxies to
+      # it (the duplicate `knit` entry under the maitred bucket below,
+      # with host = "rich-evans" and no containerIP, drives Caddy's vhost
+      # + maitred's socat forwarder to this host's Nebula IP:port).
+      knit = {
+        enable = true;
+        port = 8080;
+        subdomain = "knit";
+        host = "rich-evans";
+        auth = "none";
+        publicAccess = true;
+        # The lexicon host / AppView is plain HTTP; the firehose indexer's
+        # WebSocket is an *outbound* wss to the relay, so no inbound websockets.
+        websockets = false;
+      };
     };
 
     # Maitred services (router + reverse proxy)
@@ -91,6 +108,20 @@
         containerIP = "192.168.100.3";
         auth = "none";
         publicAccess = true;
+        websockets = false;
+      };
+      knit = {
+        enable = true;
+        port = 8080;
+        subdomain = "knit";
+        host = "rich-evans";
+        auth = "none";
+        publicAccess = true;
+        # No containerIP: knit runs on rich-evans (rich-evans bucket
+        # above), not as a maitred container. This entry exists only so
+        # maitred's reverse-proxy generates the knit.kimb.dev vhost and
+        # the socat forwarder (containerBridge:8080 → rich-evans Nebula
+        # 10.100.0.40:8080) engages via the `host != "maitred"` filter.
         websockets = false;
       };
       reverse-proxy = {

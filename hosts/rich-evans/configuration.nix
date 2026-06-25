@@ -40,6 +40,9 @@ in {
     # Matrix homeserver (Tuwunel) + Discord bridge
     ./matrix.nix
 
+    # Knitwork — lexicon host + firehose indexer (host service, proxied via maitred)
+    ./knitwork.nix
+
     # DNS server - DISABLED: moved to maitred router
     # ./dns.nix
 
