@@ -948,11 +948,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1782502394,
-        "narHash": "sha256-XD5s1Aabm4HOQ2TIF6qQqSURZbCbloMrFZk0PSiKFkc=",
+        "lastModified": 1782503385,
+        "narHash": "sha256-9jMfgVGQg+pJXvjZ1CfhO7/ic0E04DNBtAFUtVhxV2c=",
         "ref": "refs/heads/main",
-        "rev": "d3ad480d5e7c42bc404cc4600c47b1bc46c119ca",
-        "revCount": 9,
+        "rev": "34f5f8063b3ba88d234a29f14de8c73cd79fac41",
+        "revCount": 10,
         "type": "git",
         "url": "ssh://git@github.com/mccartykim/knitwork.git"
       },
