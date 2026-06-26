@@ -133,5 +133,13 @@ in
     # services.knitwork.adminTokenFile -> KNIT_ADMIN_TOKEN_FILE. See
     # hosts/rich-evans/knitwork.nix.
     "knit-admin-token.age".publicKeys = [hostKeys.rich-evans bootstrap];
+
+    # Confidential OAuth client P-256 private key (multibase) for the knitwork
+    # BFF's private_key_jwt client auth. The key value is never in any repo/flake
+    # — only this encrypted file. Decrypted on rich-evans via its SSH host key;
+    # consumed through services.knitwork-bff.clientKeyFile -> KNIT_CLIENT_KEY. See
+    # hosts/rich-evans/knitwork-bff.nix. Generated with the knitwork repo's
+    # bff/cmd/genkey, then age-encrypted to rich-evans + bootstrap here.
+    "knit-bff-client-key.age".publicKeys = [hostKeys.rich-evans bootstrap];
   }
   // allNebulaSecrets

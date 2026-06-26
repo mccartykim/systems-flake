@@ -84,6 +84,26 @@ in {
         virtualHosts =
           serviceVirtualHosts
           // {
+            # knit.kimb.dev — overrides the auto-generated single-backend vhost
+            # (from the `knit` service entry) to split off /api/* to the BFF.
+            # Everything else stays on the AppView exactly as before, so reads
+            # (/xrpc/*, /lexicons/*) and the current root behaviour are
+            # untouched. The KMP wasmJs SPA will later take over the final
+            # `handle {}` as a file_server once it's packaged; until then the
+            # AppView continues to serve "/".
+            "knit.${cfg.domain}" = lib.mkIf cfg.services.knit.enable {
+              extraConfig = ''
+                # BFF: auth lifecycle + writes (server-held DPoP keys/tokens).
+                handle /api/* {
+                  reverse_proxy ${cfg.networks.containerBridge}:${toString cfg.services.knit-bff.port}
+                }
+                # AppView: lexicons, read XRPCs, and the current root.
+                handle {
+                  reverse_proxy ${cfg.networks.containerBridge}:${toString cfg.services.knit.port}
+                }
+              '';
+            };
+
             # Root domain points to blog + Matrix .well-known delegation
             ${cfg.domain} = lib.mkIf cfg.services.blog.enable {
               extraConfig = ''

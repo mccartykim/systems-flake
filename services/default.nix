@@ -60,6 +60,22 @@
         # WebSocket is an *outbound* wss to the relay, so no inbound websockets.
         websockets = false;
       };
+      # Knitwork BFF — ATProto OAuth write relay, runs HERE as a host service
+      # (hosts/rich-evans/knitwork-bff.nix imports the knitwork flake's BFF
+      # module and reads this entry for port/enable). The duplicate `knit-bff`
+      # entry under the maitred bucket drives maitred's socat forwarder +
+      # the /api/* routing; this entry just feeds the rich-evans host config.
+      # publicAccess=false (mirrored in maitred): the BFF has no subdomain of
+      # its own — it's reached via /api/* on knit.kimb.dev.
+      knit-bff = {
+        enable = true;
+        port = 8787;
+        subdomain = "knit-bff";
+        host = "rich-evans";
+        auth = "none";
+        publicAccess = false;
+        websockets = false;
+      };
     };
 
     # Maitred services (router + reverse proxy)
@@ -122,6 +138,21 @@
         # maitred's reverse-proxy generates the knit.kimb.dev vhost and
         # the socat forwarder (containerBridge:8080 → rich-evans Nebula
         # 10.100.0.40:8080) engages via the `host != "maitred"` filter.
+        websockets = false;
+      };
+      # Knitwork BFF — the ATProto OAuth write relay, also on rich-evans (host
+      # service, see hosts/rich-evans/knitwork-bff.nix). publicAccess=false so
+      # this drives ONLY the socat forwarder (containerBridge:8787 → rich-evans
+      # Nebula 10.100.0.40:8787), NOT a vhost: the BFF is reached via /api/* on
+      # the hand-written knit.kimb.dev vhost in reverse-proxy.nix, not its own
+      # subdomain. Mirrors how the `knit` entry above works, minus the vhost.
+      knit-bff = {
+        enable = true;
+        port = 8787;
+        subdomain = "knit-bff";
+        host = "rich-evans";
+        auth = "none";
+        publicAccess = false;
         websockets = false;
       };
       reverse-proxy = {

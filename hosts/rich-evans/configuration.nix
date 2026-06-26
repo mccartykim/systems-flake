@@ -43,6 +43,9 @@ in {
     # Knitwork — lexicon host + firehose indexer (host service, proxied via maitred)
     ./knitwork.nix
 
+    # Knitwork BFF — ATProto OAuth write relay (host service, /api/* on knit.kimb.dev)
+    ./knitwork-bff.nix
+
     # DNS server - DISABLED: moved to maitred router
     # ./dns.nix
 
