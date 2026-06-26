@@ -19,10 +19,11 @@
 }: let
   bff = config.kimb.services.knit-bff;
 in {
-  # The BFF module references `self.packages.${pkgs.system}.knitwork-bff`;
-  # pass the knitwork flake in as a module arg (same as knitwork.nix).
-  _module.args.self = inputs.knitwork;
-
+  # The BFF module references `self.packages.${pkgs.system}.knitwork-bff`. The
+  # `self` module arg is already provided by hosts/rich-evans/knitwork.nix
+  # (`_module.args.self = inputs.knitwork`), which is always imported alongside
+  # this file — so we only import the module here, not re-set the arg (setting it
+  # twice is a module-system error even with identical values).
   imports = [inputs.knitwork.nixosModules.bff];
 
   services.knitwork-bff = lib.mkIf bff.enable {
