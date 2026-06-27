@@ -261,9 +261,9 @@
     enable = true;
     enableSystemSlice = true;
     enableUserSlices = true;
-    extraConfig = {
-      "DefaultMemoryPressureDurationSec" = "20s";
-      "SwapUsedLimit" = "90%";
+    settings.OOM = {
+      DefaultMemoryPressureDurationSec = "20s";
+      SwapUsedLimit = "90%";
     };
   };
 
