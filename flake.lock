@@ -961,6 +961,22 @@
         "url": "ssh://git@github.com/mccartykim/knitwork.git"
       }
     },
+    "knitwork-frontend": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1782522363,
+        "narHash": "sha256-j2zScyeoDAHD3mOU2eQiDyJkAixTs106frK79Rl1dfI=",
+        "ref": "refs/heads/main",
+        "rev": "6a5db4012efbf2ccc9809a2a186fe333b03ecbd0",
+        "revCount": 4,
+        "type": "git",
+        "url": "ssh://git@github.com/mccartykim/knitwork_frontend.git"
+      },
+      "original": {
+        "type": "git",
+        "url": "ssh://git@github.com/mccartykim/knitwork_frontend.git"
+      }
+    },
     "kokoro": {
       "inputs": {
         "flake-utils": "flake-utils_5",
@@ -1892,6 +1908,7 @@
         "jovian-nixos": "jovian-nixos",
         "kimb-blog-content": "kimb-blog-content",
         "knitwork": "knitwork",
+        "knitwork-frontend": "knitwork-frontend",
         "kokoro": "kokoro",
         "lifecoach-organism": "lifecoach-organism",
         "media-classifier": "media-classifier",

@@ -155,6 +155,21 @@
         publicAccess = false;
         websockets = false;
       };
+      # Knitwork webApp SPA — the KMP wasmJs bundle, built at container start
+      # inside a nixos-container (see hosts/maitred/knitwork-web.nix). Runs on
+      # maitred like blog/reverse-proxy (no cross-host socat). publicAccess=
+      # false: no auto-vhost — the hand-written knit.kimb.dev vhost in
+      # reverse-proxy.nix reverse_proxies to this containerIP:8088.
+      knit-web = {
+        enable = true;
+        port = 8088;
+        subdomain = "knit-web";
+        host = "maitred";
+        containerIP = "192.168.100.13";
+        auth = "none";
+        publicAccess = false;
+        websockets = false;
+      };
       reverse-proxy = {
         enable = true;
         port = 80;

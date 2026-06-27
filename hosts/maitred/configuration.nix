@@ -24,6 +24,9 @@ in {
     # Blog service container
     ./blog-service.nix
 
+    # Knitwork webApp SPA container (builds wasmJs at start, nginx serves)
+    ./knitwork-web.nix
+
     # Dynamic DNS (includes cloudflare secret)
     ./dns-update.nix
 

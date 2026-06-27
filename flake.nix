@@ -74,6 +74,14 @@
     knitwork.url = "git+ssh://git@github.com/mccartykim/knitwork.git";
     knitwork.inputs.nixpkgs.follows = "nixpkgs";
 
+    # The knitwork_frontend repo (KMP/Compose wasmJs SPA). Consumed only for its
+    # source tree — the knit-web nspawn container builds the SPA at runtime —
+    # so it's a plain (non-flake) checkout (mirrors kimb-blog-content): no
+    # flake.nix required at the pinned rev. The frontend's own flake handles
+    # only its devShell + compile-check, unrelated to this deploy.
+    knitwork-frontend.url = "git+ssh://git@github.com/mccartykim/knitwork_frontend.git";
+    knitwork-frontend.flake = false;
+
     claude_yapper.url = "git+ssh://git@github.com/mccartykim/claude-alarmclock-agent.git";
     claude_yapper.inputs.nixpkgs.follows = "nixpkgs";
 

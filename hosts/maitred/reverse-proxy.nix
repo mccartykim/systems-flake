@@ -3,6 +3,7 @@
   config,
   lib,
   pkgs,
+  inputs,
   ...
 }: let
   cfg = config.kimb;
@@ -85,21 +86,32 @@ in {
           serviceVirtualHosts
           // {
             # knit.kimb.dev — overrides the auto-generated single-backend vhost
-            # (from the `knit` service entry) to split off /api/* to the BFF.
-            # Everything else stays on the AppView exactly as before, so reads
-            # (/xrpc/*, /lexicons/*) and the current root behaviour are
-            # untouched. The KMP wasmJs SPA will later take over the final
-            # `handle {}` as a file_server once it's packaged; until then the
-            # AppView continues to serve "/".
+            # (from the `knit` service entry) to split routing four ways:
+            #   /api/*      → BFF (auth lifecycle + writes; server-held DPoP keys)
+            #   /xrpc/*     → AppView (read XRPCs)
+            #   /lexicons/* → AppView (serves the lexicon JSON files)
+            #   everything else → the knit-web nspawn container, which builds the
+            #     wasmJs SPA at container start and serves it (try /index.html so
+            #     client-side routes fall back to the SPA shell). The AppView no
+            #     longer owns "/" (it was just a health-JSON probe).
             "knit.${cfg.domain}" = lib.mkIf cfg.services.knit.enable {
               extraConfig = ''
                 # BFF: auth lifecycle + writes (server-held DPoP keys/tokens).
                 handle /api/* {
                   reverse_proxy ${cfg.networks.containerBridge}:${toString cfg.services.knit-bff.port}
                 }
-                # AppView: lexicons, read XRPCs, and the current root.
-                handle {
+                # AppView: read XRPCs.
+                handle /xrpc/* {
                   reverse_proxy ${cfg.networks.containerBridge}:${toString cfg.services.knit.port}
+                }
+                # AppView: lexicon JSON files (static, served from the bundled priv/ tree).
+                handle /lexicons/* {
+                  reverse_proxy ${cfg.networks.containerBridge}:${toString cfg.services.knit.port}
+                }
+                # SPA: the knit-web container (nginx, try_files → /index.html
+                # so deep links / client routes load the app shell).
+                handle {
+                  reverse_proxy ${cfg.services.knit-web.containerIP}:${toString cfg.services.knit-web.port}
                 }
               '';
             };
