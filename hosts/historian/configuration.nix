@@ -87,6 +87,15 @@
           proto = "tcp";
           host = "maitred";
         }
+        # Knitwork webApp SPA: maitred's socat forwarder (knit-web-proxy)
+        # reaches the knit-web nspawn container's nginx on :8088. Without
+        # this, Nebula drops the router's traffic (maitred is a server, not a
+        # personal device, so openToPersonalDevices doesn't cover it).
+        {
+          port = 8088;
+          proto = "tcp";
+          host = "maitred";
+        }
       ];
     };
 
