@@ -35,9 +35,10 @@
     cfg="''${PI_CODING_AGENT_DIR:-''${XDG_CONFIG_HOME:-$HOME/.config}/ollama-pi}"
     mkdir -p "$cfg"
     # models.json is fully Nix-managed, so refresh it from the store on every
-    # launch — a plain copy beats a symlink (no stale-link drift when the
-    # model list / endpoint changes). settings.json / trust.json / sessions
-    # are the user's and are left untouched.
+    # launch. rm -f first so a stale symlink left by an older wrapper (pointing
+    # at a read-only store path) is replaced rather than written through.
+    # settings.json / trust.json / sessions are the user's and are left alone.
+    rm -f "$cfg/models.json"
     cp ${modelsJson} "$cfg/models.json"
     export PI_CODING_AGENT_DIR="$cfg"
     # Inject the default model unless the caller already chose one.
