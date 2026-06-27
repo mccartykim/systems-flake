@@ -149,8 +149,11 @@ in {
           ./gradlew :webApp:wasmJsBrowserDistribution \
             --no-daemon --console=plain -Dorg.gradle.warning.mode=none
 
-          rm -rf "$WEB_ROOT"
-          mkdir -p "$WEB_ROOT"
+          # $WEB_ROOT is a bind-mount (hostPath /var/lib/knit-web/web), so the
+          # mountpoint itself can't be removed (rm → "Device or resource busy")
+          # — clear its contents (dotfiles incl. the .knit-src marker) instead,
+          # then lay down the freshly built dist + new marker.
+          rm -rf "$WEB_ROOT"/* "$WEB_ROOT"/.[!.]* "$WEB_ROOT"/..?* 2>/dev/null || true
           cp -r "$WORK"/webApp/build/dist/wasmJs/productionExecutable/. "$WEB_ROOT/"
           echo "$SRC" > "$WEB_ROOT/.knit-src"
           echo "knit-web-build: build complete; dist at $WEB_ROOT"
