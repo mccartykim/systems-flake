@@ -121,6 +121,10 @@ in {
           cp -r --no-preserve=mode "$SRC"/. "$WORK"/
           chmod -R +w "$WORK"
           cd "$WORK"
+          # cp --no-preserve=mode stripped the exec bit from the gradlew
+          # wrapper (source had it; our copy is 0644) and chmod +w doesn't add
+          # execute — restore it so ./gradlew runs.
+          chmod +x gradlew
 
           # Point Gradle's JDK toolchain at the bundled Corretto 21; no
           # auto-download. Leading \n: tracked gradle.properties has no
