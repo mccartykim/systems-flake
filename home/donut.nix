@@ -45,6 +45,7 @@
       kitty = true;
     };
     ai-tools.enable = true;
+    ai-tools.ollamaPi = true;
     gaming = {
       enable = true;
       steam = true;

@@ -45,6 +45,7 @@
     };
     gaming.enable = true;
     ai-tools.enable = true;
+    ai-tools.ollamaPi = true;
     fish-functions = {
       enable = true;
       includeJjPrompt = true;

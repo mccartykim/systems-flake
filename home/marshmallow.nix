@@ -61,6 +61,7 @@
     ai-tools = {
       enable = true;
       claudeZai = true;
+      ollamaPi = true;
     };
     fish-functions = {
       enable = true;
