@@ -14,76 +14,28 @@ This directory contains the test suite for the kimb-services NixOS module system
 ## Test Components
 
 ### Unit Tests
-- `nix eval .#tests.unitTests.testServiceIPResolution`
-- `nix eval .#tests.unitTests.testEnabledServiceFiltering`
 
-Tests core kimb-services module functionality in isolation.
+The flake does not currently expose standalone unit test outputs. Quick
+functional checks are embedded in the `eval-fish-functions` and
+`eval-fish-syntax` flake checks instead.
 
 ### VM Integration Tests
-- `nix build .#tests.integrationTest.driver -o test-driver`
-- `./test-driver/bin/nixos-test-driver`
-
-Full end-to-end testing with:
-- Isolated VM network (10.200.0.0/16)
-- Real Nebula certificates (test-only)
-- Agenix secret encryption/decryption
-- Service discovery and networking
-- Cross-VM communication
-
-### Test Network Architecture
-
-```
-Test Network: 10.200.0.0/16
-├── test-lighthouse: 10.200.0.1 (simulated)
-├── test-router:     10.200.0.50 (reverse-proxy, blog)
-├── test-server:     10.200.0.40 (homeassistant, copyparty)  
-└── test-desktop:    10.200.0.10 (no services)
-```
-
-### Test Secrets
-
-All test secrets are encrypted with agenix:
-- `secrets/test-nebula-*-cert.age` - Nebula certificates
-- `secrets/test-nebula-*-key.age` - Nebula private keys  
-- `secrets/test-ssh-*-key.age` - SSH private keys for orchestration
-
-**Test VMs can decrypt their own secrets using embedded private keys.**
-
-## What Gets Tested
-
-✅ **Functional Programming Patterns**
-- Services use `lib.mapAttrs`, `lib.filterAttrs` instead of hardcoded references
-- Dynamic service configuration generation
-- IP resolution from registry works correctly
-
-✅ **Service Registry**
-- `cfg.computed.servicesWithIPs` provides host IPs
-- Service filtering by traits (enabled, public, auth type)
-- Cross-host service discovery
-
-✅ **Secret Management**
-- Agenix encryption/decryption works in VMs
-- Private keys properly embedded for testing
-- Secrets accessible to services that need them
-
-✅ **Network Architecture**
-- VM-to-VM communication
-- Service proxy configuration
-- DNS resolution for test domains
-
-## Running Tests
 
 ```bash
-# Quick unit tests
-nix eval .#tests.unitTests.testServiceIPResolution --json
-nix eval .#tests.unitTests.testEnabledServiceFiltering --json
+nix build .#checks.x86_64-linux.minimal-test
+nix build .#checks.x86_64-linux.network-test
+nix build .#checks.x86_64-linux.working-vm-test
+```
 
-# Full integration test (takes ~5-10 minutes)
-nix build .#tests.integrationTest.driver -o test-driver
-./test-driver/bin/nixos-test-driver
+The original full end-to-end test driver (`.#tests.integrationTest.driver`)
+has been retired; use the VM checks above.
 
-# Or use the test runner script
-./tests/run-tests.sh
+### Per-Configuration Evaluation
+
+`nix flake check` also evaluates every NixOS configuration automatically:
+
+```bash
+nix build .#checks.x86_64-linux.eval-<hostname>
 ```
 
 ## Test Safety

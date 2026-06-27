@@ -1,35 +1,28 @@
 #!/usr/bin/env bash
 
-# Test runner for kimb-services integration tests
+# Test runner for systems-flake flake checks
 
 set -e
 
-echo "=== Running kimb-services Integration Tests ==="
+echo "=== Running systems-flake Flake Checks ==="
 
 # Change to project root
 cd "$(dirname "$0")/.."
 
-# Run unit tests
-echo "Running unit tests..."
-nix eval --json .#tests.unitTests.testServiceIPResolution
-nix eval --json .#tests.unitTests.testEnabledServiceFiltering
+SYSTEM="${SYSTEM:-x86_64-linux}"
 
-echo "✅ Unit tests passed!"
+echo "Running quick evaluation checks..."
+nix build ".#checks.$SYSTEM.eval-fish-functions"
+nix build ".#checks.$SYSTEM.eval-fish-syntax"
 
-# Run VM integration test
-echo "Running VM integration test..."
+echo "✅ Evaluation checks passed!"
+
+echo "Running VM integration checks..."
 echo "⚠️  This may take several minutes to build VMs..."
+nix build ".#checks.$SYSTEM.minimal-test"
+nix build ".#checks.$SYSTEM.network-test"
+nix build ".#checks.$SYSTEM.working-vm-test"
 
-nix build .#tests.integrationTest.driver -o test-driver
+echo "✅ VM checks passed!"
 
-echo "🚀 Starting VM integration test..."
-./test-driver/bin/nixos-test-driver
-
-echo "✅ All tests passed successfully!"
-
-# Cleanup
-echo "Cleaning up test artifacts..."
-rm -f test-driver
-rm -rf test-tmp/
-
-echo "🎉 kimb-services test suite completed successfully!"
+echo "🎉 systems-flake test suite completed successfully!"
