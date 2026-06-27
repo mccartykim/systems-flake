@@ -17,6 +17,7 @@
   writeShellScript,
   writeText,
   pi-coding-agent,
+  nodejs,
   baseUrl ? "http://localhost:11434/v1",
   models ? ["kimi-k2.7-code:cloud" "glm-5.2:cloud" "glm-5.1:cloud"],
   model ? builtins.head models,
@@ -41,8 +42,22 @@
     rm -f "$cfg/models.json"
     cp ${modelsJson} "$cfg/models.json"
     export PI_CODING_AGENT_DIR="$cfg"
-    # Inject the default model unless the caller already chose one.
-    case " $* " in *" --model "*) ;; *) set -- --model "ollama/${model}" "$@";; esac
+    # pi install/update run `npm install` for git packages, and node may not
+    # be on the user's PATH (common on Nix). Put a Nix nodejs on PATH so those
+    # subcommands — and runtime extensions that spawn node — actually work.
+    export PATH="${nodejs}/bin:$PATH"
+    # Inject the default model unless the caller already chose one, or is
+    # invoking a pi subcommand. Subcommands (install/remove/uninstall/update/
+    # list/config) MUST be the first argument — prepending --model makes pi
+    # treat them (and their args) as an interactive prompt to the model
+    # instead of running the subcommand. e.g. `ollama-pi install git:...`
+    # must reach pi as `pi install git:...`, not `pi --model ... install ...`.
+    case "''${1:-}" in
+      install|remove|uninstall|update|list|config) ;;
+      *)
+        case " $* " in *" --model "*) ;; *) set -- --model "ollama/${model}" "$@";; esac
+        ;;
+    esac
     exec ${pi-coding-agent}/bin/pi "$@"
   '';
 in
