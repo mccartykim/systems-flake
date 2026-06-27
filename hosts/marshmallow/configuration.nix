@@ -254,6 +254,37 @@
   # zram compressed swap - used before file swap (priority 5 vs -2)
   zramSwap.enable = true;
 
+  # Kill memory-hogging cgroups before kwin starves and the cursor freezes.
+  # This machine hit memory pressure 06-17/06-25/06-26; on 06-26 Android
+  # Studio's EDT froze 42s and took the Wayland compositor with it.
+  systemd.oomd = {
+    enable = true;
+    enableSystemSlice = true;
+    enableUserSlices = true;
+    extraConfig = {
+      "DefaultMemoryPressureDurationSec" = "20s";
+      "SwapUsedLimit" = "90%";
+    };
+  };
+
+  # ponytail: poll top-RSS procs every 60s into the journal so a future
+  # hard-reset leaves evidence of what ate the RAM (the journal can't show
+  # per-process RSS post-mortem on its own). Query: journalctl -u mem-hog-log
+  systemd.services.mem-hog-log = {
+    description = "Snapshot top RSS processes for post-crash diagnosis";
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = "${pkgs.bash}/bin/sh -c '${pkgs.procps}/bin/ps -eo pid,rss,args --sort=-rss --no-headers | ${pkgs.coreutils}/bin/head -n 15'";
+    };
+  };
+  systemd.timers.mem-hog-log = {
+    wantedBy = ["timers.target"];
+    timerConfig = {
+      OnBootSec = "1min";
+      OnUnitActiveSec = "60s";
+    };
+  };
+
   # User configuration
   users = {
     users.kimb = {
