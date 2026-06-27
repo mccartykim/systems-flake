@@ -63,6 +63,13 @@ with lib; {
         environment = {
           "PAGER" = ":builtin";
         };
+        # kitty #10102: __watch_conf__ recursively inotify-watches the parent
+        # dir of kitty.conf. Under home-manager that dir is inside /nix/store,
+        # so it walks the WHOLE store (~500k watches) and exhausts the system
+        # inotify pool. Live reload is already broken on NixOS anyway, so
+        # disable the watcher. Drop when kitty ships the non-recursive fix
+        # past 0.47.1.
+        settings.auto_reload_config = "no";
       };
     };
 
