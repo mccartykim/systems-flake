@@ -78,7 +78,7 @@ in {
       environment.systemPackages = [corretto pkgs.gradle];
 
       # Build the wasmJs dist once at container start, before nginx serves.
-      # Fingerprints the (pinned, read-only) source tree and skips the build
+      # Marks the dist with the pinned source's store path and skips the build
       # when the dist on the volume already matches it — so a restart of the
       # same container is instant, and a new-image deploy rebuilds once.
       systemd.services.knit-web-build = {
@@ -128,28 +128,27 @@ in {
           printf '\norg.gradle.java.installations.paths=%s\norg.gradle.java.installations.auto-download=false\n' \
             "${corretto}" >> gradle.properties
 
-          # Fingerprint the source (excluding build outputs / caches).
-          hash=$(find . -type f \
-            -not -path './build/*' -not -path '*/build/*' \
-            -not -path './.gradle/*' -not -path '*/.gradle/*' \
-            -not -path './kotlin-js-store/*' \
-            -not -path './node_modules/*' \
-            | LC_ALL=C sort | xargs -r sha256sum | sha256sum | cut -d' ' -f1)
-
-          if [ -f "$WEB_ROOT/index.html" ] && [ -f "$WEB_ROOT/.knit-src-hash" ] \
-             && [ "$(cat "$WEB_ROOT/.knit-src-hash")" = "$hash" ]; then
-            echo "knit-web-build: dist present, source unchanged ($hash); skipping"
+          # Skip the build if the dist already matches this (pinned, read-only)
+          # source tree — a restart of the same container is instant; a new-image
+          # deploy rebuilds once. The marker is the store path itself
+          # (inputs.knitwork-frontend.outPath): it changes iff the flake input's
+          # content changes, i.e. iff the source changes. (Replaces a
+          # find|xargs sha256 fingerprint that broke on iOS asset paths with
+          # spaces — xargs split them into non-existent path fragments.)
+          if [ -f "$WEB_ROOT/index.html" ] && [ -f "$WEB_ROOT/.knit-src" ] \
+             && [ "$(cat "$WEB_ROOT/.knit-src")" = "$SRC" ]; then
+            echo "knit-web-build: dist present, source unchanged ($SRC); skipping"
             exit 0
           fi
 
-          echo "knit-web-build: building wasmJs SPA (source hash $hash)..."
+          echo "knit-web-build: building wasmJs SPA (source $SRC)..."
           ./gradlew :webApp:wasmJsBrowserDistribution \
             --no-daemon --console=plain -Dorg.gradle.warning.mode=none
 
           rm -rf "$WEB_ROOT"
           mkdir -p "$WEB_ROOT"
           cp -r "$WORK"/webApp/build/dist/wasmJs/productionExecutable/. "$WEB_ROOT/"
-          echo "$hash" > "$WEB_ROOT/.knit-src-hash"
+          echo "$SRC" > "$WEB_ROOT/.knit-src"
           echo "knit-web-build: build complete; dist at $WEB_ROOT"
         '';
       };
