@@ -149,7 +149,6 @@
     # pkgs/pdx-wallpaper.
     stylix.url = "github:danth/stylix";
     stylix.inputs.nixpkgs.follows = "nixpkgs";
-    stylix.inputs.home-manager.follows = "home-manager";
   };
 
   outputs = {
@@ -278,22 +277,23 @@
               '';
             })
           ];
-        in lib.optionalAttrs (system == "x86_64-linux" || system == "aarch64-linux") {
-          default = pkgs.mkShell {
-            packages =
-              [
-                pkgs.tealdeer
-                pkgs.colmena
-                pkgs.esphome # ESP32/ESP8266 firmware builder
-                pkgs.esptool # ESP32/ESP8266 flasher
-                pkgs.age # age encryption tool
-                pkgs.age-plugin-yubikey # YubiKey support for age encryption
-                pkgs.beads # AI-native issue tracking
-                pkgs.nix-output-monitor # nom - for nb command
-              ]
-              ++ shellApps;
+        in
+          lib.optionalAttrs (system == "x86_64-linux" || system == "aarch64-linux") {
+            default = pkgs.mkShell {
+              packages =
+                [
+                  pkgs.tealdeer
+                  pkgs.colmena
+                  pkgs.esphome # ESP32/ESP8266 firmware builder
+                  pkgs.esptool # ESP32/ESP8266 flasher
+                  pkgs.age # age encryption tool
+                  pkgs.age-plugin-yubikey # YubiKey support for age encryption
+                  pkgs.beads # AI-native issue tracking
+                  pkgs.nix-output-monitor # nom - for nb command
+                ]
+                ++ shellApps;
+            };
           };
-        };
 
         # Apps for common tasks
         apps = lib.optionalAttrs (system == "x86_64-linux" || system == "aarch64-linux") {
@@ -356,19 +356,18 @@
 
         # Flake checks - runs via `nix flake check`
         checks = lib.optionalAttrs (system == "x86_64-linux") ({
-          # VM tests
-          minimal-test = import ./tests/minimal-test.nix {inherit pkgs;};
-          network-test = import ./tests/network-test.nix {inherit pkgs;};
-          working-vm-test = import ./tests/working-vm-test.nix {inherit pkgs;};
+            # VM tests
+            minimal-test = import ./tests/minimal-test.nix {inherit pkgs;};
+            network-test = import ./tests/network-test.nix {inherit pkgs;};
+            working-vm-test = import ./tests/working-vm-test.nix {inherit pkgs;};
 
-          # Configuration evaluation tests (fast - no VM)
-          # buildbot-nix builds every .#checks attr on each commit, so adding a
-          # host's toplevel here means CI will catch breakage for that host.
+            # Configuration evaluation tests (fast - no VM)
+            # buildbot-nix builds every .#checks attr on each commit, so adding a
+            # host's toplevel here means CI will catch breakage for that host.
 
-          # Fish functions eval check: verifies the fish-functions module produces
-          # the expected function definitions. Runs in seconds, no VM needed.
-          eval-fish-functions =
-            let
+            # Fish functions eval check: verifies the fish-functions module produces
+            # the expected function definitions. Runs in seconds, no VM needed.
+            eval-fish-functions = let
               # Test the module in isolation with includeJjPrompt = true
               testConfig = {
                 imports = [./home/modules/fish-functions.nix];
@@ -400,28 +399,33 @@
                 fish_vcs_prompt = "fish_jj_prompt";
               };
               # Build a list of (name, expected, actual) for any mismatches
-              mismatches = lib.filter
+              mismatches =
+                lib.filter
                 (m: m != null)
                 (lib.mapAttrsToList (name: expected:
                   if lib.hasInfix expected (functions.${name} or "")
                   then null
-                  else {inherit name expected; actual = functions.${name} or "(missing)";})
+                  else {
+                    inherit name expected;
+                    actual = functions.${name} or "(missing)";
+                  })
                 expectedSubstrings);
             in
               pkgs.runCommand "eval-fish-functions" {} ''
                 ${lib.concatMapStrings (m: ''
-                  echo "FAIL: ${m.name} expected '${m.expected}' in '${m.actual}'"
-                '') mismatches}
-                ${if mismatches == []
+                    echo "FAIL: ${m.name} expected '${m.expected}' in '${m.actual}'"
+                  '')
+                  mismatches}
+                ${
+                  if mismatches == []
                   then "echo 'All ${toString (builtins.length (builtins.attrNames expectedSubstrings))} fish functions verified' > $out"
                   else "echo 'FAIL: ${toString (builtins.length mismatches)} function(s) mismatched' >&2; exit 1"
                 }
               '';
 
-          # Fish syntax validation: runs fish --no-execute on the generated
-          # config to catch syntax errors that string checks would miss.
-          eval-fish-syntax =
-            let
+            # Fish syntax validation: runs fish --no-execute on the generated
+            # config to catch syntax errors that string checks would miss.
+            eval-fish-syntax = let
               testConfig = {
                 imports = [./home/modules/fish-functions.nix];
                 modules.fish-functions = {
@@ -450,20 +454,21 @@
                 # Validate each function definition by sourcing it with fish --no-execute
                 errors=0
                 ${lib.concatStrings (lib.mapAttrsToList (name: body: ''
-                  # Write function to a temp file and validate syntax
-                  cat > function_test.fish << 'FISHEOF'
-                  function ${name}
-                    ${body}
-                  end
-                  FISHEOF
-                  if ! fish --no-execute function_test.fish 2>&1; then
-                    echo "FAIL: fish syntax error in function '${name}'"
-                    errors=$((errors + 1))
-                  else
-                    echo "OK: ${name}"
-                  fi
-                  rm function_test.fish
-                '') eval.config.programs.fish.functions)}
+                    # Write function to a temp file and validate syntax
+                    cat > function_test.fish << 'FISHEOF'
+                    function ${name}
+                      ${body}
+                    end
+                    FISHEOF
+                    if ! fish --no-execute function_test.fish 2>&1; then
+                      echo "FAIL: fish syntax error in function '${name}'"
+                      errors=$((errors + 1))
+                    else
+                      echo "OK: ${name}"
+                    fi
+                    rm function_test.fish
+                  '')
+                  eval.config.programs.fish.functions)}
 
                 if [ $errors -gt 0 ]; then
                   echo "FAIL: $errors function(s) had syntax errors"
@@ -472,8 +477,9 @@
                 echo "All fish functions passed syntax validation" > $out
               '';
 
-          # Eval every nixosConfiguration — auto-tracks hosts, no hand-synced list.
-        } // lib.mapAttrs' (n: _: lib.nameValuePair "eval-${n}" self.nixosConfigurations.${n}.config.system.build.toplevel) self.nixosConfigurations);
+            # Eval every nixosConfiguration — auto-tracks hosts, no hand-synced list.
+          }
+          // lib.mapAttrs' (n: _: lib.nameValuePair "eval-${n}" self.nixosConfigurations.${n}.config.system.build.toplevel) self.nixosConfigurations);
       };
 
       # All flake outputs (nixosConfigurations, darwinConfigurations, colmena, systemConfigs)
