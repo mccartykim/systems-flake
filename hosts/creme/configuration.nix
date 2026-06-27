@@ -56,7 +56,7 @@
   # but everything from there to login is quiet.
   boot.plymouth.enable = true;
   boot.initrd.systemd.enable = true;
-  boot.kernelParams = [ "quiet" "splash" "loglevel=3" "rd.systemd.show_status=auto" "rd.udev.log_level=3" "resume_offset=56424448" ];
+  boot.kernelParams = ["quiet" "splash" "loglevel=3" "rd.systemd.show_status=auto" "rd.udev.log_level=3" "resume_offset=56424448"];
   # Hibernate resume from swapfile on /dev/sda2 (ext4).
   # resume_offset is the physical block offset from `filefrag -e /swapfile`.
   boot.resumeDevice = "/dev/sda2";
@@ -102,7 +102,7 @@
     isync
     gnupg
     # Spellcheck for doom's :checkers spell module
-    (hunspellWithDicts [hunspellDicts.en_US])
+    (pkgs.hunspell.withDicts (dicts: [dicts.en_US]))
     # acpi + brightnessctl already provided by laptop profile
     git
     gh
@@ -129,7 +129,7 @@
     # scale = 1.0/3.0 → ~163px tile, so ~9×6 tiles fit on a 1440×900 panel.
     # Bigger pattern density than scale=1; matches the "carpet underfoot"
     # feel of the original PDX terminal carpet a bit closer.
-    image = pkgs.callPackage ../../pkgs/pdx-wallpaper { scale = 1.0 / 6.0; };
+    image = pkgs.callPackage ../../pkgs/pdx-wallpaper {scale = 1.0 / 6.0;};
     # Wallpaper is a tiled pattern, not a single-frame image.
     imageScalingMode = "tile";
     # Hand-tuned base16 scheme derived from the PDX-carpet SVG's actual
@@ -197,10 +197,10 @@
   # deliver ACPI GPEs for lid state changes, so logind may never see
   # the event. We set all three lid handlers explicitly and add a
   # polling watchdog as a fallback.
-  services.logind = {
-    lidSwitch = "suspend-then-hibernate";
-    lidSwitchExternalPower = "suspend-then-hibernate";
-    lidSwitchDocked = "suspend-then-hibernate";
+  services.logind.settings.Login = {
+    HandleLidSwitch = "suspend-then-hibernate";
+    HandleLidSwitchExternalPower = "suspend-then-hibernate";
+    HandleLidSwitchDocked = "suspend-then-hibernate";
   };
   # 4GB swapfile for hibernate. Created manually with fallocate;
   # NixOS runs mkswap + swapon on activation.
@@ -239,8 +239,8 @@
       detect-rounded-corners = true;
       detect-client-opacity = true;
       use-ewmh-active-win = true;
-      unredir-if-possible = true;  # disable comp when a fullscreen app
-                                   # is up (e.g. mpv) — saves CPU
+      unredir-if-possible = true; # disable comp when a fullscreen app
+      # is up (e.g. mpv) — saves CPU
     };
   };
 
@@ -272,7 +272,7 @@
   # uses bare startx — graphical-session.target never activates, so the
   # service stays dead.  xrender backend is light enough for the E6400.
   environment.etc."X11/xinit/xinitrc".text = ''
-    ${pkgs.xorg.xrdb}/bin/xrdb -merge /etc/X11/Xresources/creme
+    ${pkgs.xrdb}/bin/xrdb -merge /etc/X11/Xresources/creme
     ${pkgs.feh}/bin/feh --no-fehbg --bg-tile ${config.stylix.image} &
     ${pkgs.picom}/bin/picom --backend xrender -b
     exec i3 -c /etc/i3/config
@@ -424,8 +424,7 @@
   # when a standalone emacs (emacs -c from a terminal) grabs the socket before
   # the systemd service can. Remove the socket before each start so the daemon
   # can claim it cleanly.
-  systemd.user.services.emacs.serviceConfig.ExecStartPre =
-    "-${pkgs.coreutils}/bin/rm -f %t/emacs/server";
+  systemd.user.services.emacs.serviceConfig.ExecStartPre = "-${pkgs.coreutils}/bin/rm -f %t/emacs/server";
 
   # Fonts. Blex Mono Nerd Font as primary; Google monochrome emoji noto
   # so emoji render cleanly without dragging in colored fallback bitmaps.
@@ -443,48 +442,47 @@
   # merges this file with xrdb before i3 starts, so all X apps (uxterm,
   # dmenu, etc.) pick up the theme.  uxterm uses the UXTerm resource class
   # (not XTerm), so we prefix with UXTerm* to match.
-  environment.etc."X11/Xresources/creme".text = with config.stylix;
-    let
-      c = base16Scheme;
-    in ''
-      ! ── Font ──
-      UXTerm*faceName: ${fonts.monospace.name}
-      UXTerm*faceSize: ${toString fonts.sizes.terminal}
-      UXTerm*renderFont: true
-      UXTerm*termName: xterm-256color
-      UXTerm*scrollBar: false
-      UXTerm*saveLines: 10000
-      UXTerm*allowBoldFonts: true
-      UXTerm*boldMode: false
+  environment.etc."X11/Xresources/creme".text = with config.stylix; let
+    c = base16Scheme;
+  in ''
+    ! ── Font ──
+    UXTerm*faceName: ${fonts.monospace.name}
+    UXTerm*faceSize: ${toString fonts.sizes.terminal}
+    UXTerm*renderFont: true
+    UXTerm*termName: xterm-256color
+    UXTerm*scrollBar: false
+    UXTerm*saveLines: 10000
+    UXTerm*allowBoldFonts: true
+    UXTerm*boldMode: false
 
-      ! ── PDX-carpet base16 palette (mirrors stylix/xresources/hm.nix) ──
-      UXTerm*foreground: #${c.base05}
-      UXTerm*background: #${c.base00}
-      UXTerm*cursorColor: #${c.base05}
-      UXTerm*color0:  #${c.base00}
-      UXTerm*color1:  #${c.base08}
-      UXTerm*color2:  #${c.base0B}
-      UXTerm*color3:  #${c.base0A}
-      UXTerm*color4:  #${c.base0D}
-      UXTerm*color5:  #${c.base0E}
-      UXTerm*color6:  #${c.base0C}
-      UXTerm*color7:  #${c.base05}
-      UXTerm*color8:  #${c.base02}
-      UXTerm*color9:  #${c.base08}
-      UXTerm*color10: #${c.base0B}
-      UXTerm*color11: #${c.base0A}
-      UXTerm*color12: #${c.base0D}
-      UXTerm*color13: #${c.base0E}
-      UXTerm*color14: #${c.base0C}
-      UXTerm*color15: #${c.base07}
-      ! ── Extended 22-color palette (base09–base06, per stylix) ──
-      UXTerm*color16: #${c.base09}
-      UXTerm*color17: #${c.base0F}
-      UXTerm*color18: #${c.base01}
-      UXTerm*color19: #${c.base02}
-      UXTerm*color20: #${c.base04}
-      UXTerm*color21: #${c.base06}
-    '';
+    ! ── PDX-carpet base16 palette (mirrors stylix/xresources/hm.nix) ──
+    UXTerm*foreground: #${c.base05}
+    UXTerm*background: #${c.base00}
+    UXTerm*cursorColor: #${c.base05}
+    UXTerm*color0:  #${c.base00}
+    UXTerm*color1:  #${c.base08}
+    UXTerm*color2:  #${c.base0B}
+    UXTerm*color3:  #${c.base0A}
+    UXTerm*color4:  #${c.base0D}
+    UXTerm*color5:  #${c.base0E}
+    UXTerm*color6:  #${c.base0C}
+    UXTerm*color7:  #${c.base05}
+    UXTerm*color8:  #${c.base02}
+    UXTerm*color9:  #${c.base08}
+    UXTerm*color10: #${c.base0B}
+    UXTerm*color11: #${c.base0A}
+    UXTerm*color12: #${c.base0D}
+    UXTerm*color13: #${c.base0E}
+    UXTerm*color14: #${c.base0C}
+    UXTerm*color15: #${c.base07}
+    ! ── Extended 22-color palette (base09–base06, per stylix) ──
+    UXTerm*color16: #${c.base09}
+    UXTerm*color17: #${c.base0F}
+    UXTerm*color18: #${c.base01}
+    UXTerm*color19: #${c.base02}
+    UXTerm*color20: #${c.base04}
+    UXTerm*color21: #${c.base06}
+  '';
 
   # Sound — pipewire SYSTEM-WIDE so the system mpd service can reach it.
   # Per-user pipewire would be cleaner on a multi-user desktop, but creme
@@ -504,13 +502,13 @@
   services.mpd = {
     enable = true;
     user = "kimb";
-    musicDirectory = "/home/kimb/Music";
     dataDir = "/home/kimb/.local/share/mpd";
-    network.listenAddress = "127.0.0.1";
-    # Explicit pulse output → routed through systemWide pipewire-pulse.
-    # Without this mpd auto-detects JACK first (binary has libjack linked)
-    # and fails to connect to a non-existent JACK server.
     settings = {
+      music_directory = "/home/kimb/Music";
+      bind_to_address = "127.0.0.1";
+      # Explicit pulse output → routed through systemWide pipewire-pulse.
+      # Without this mpd auto-detects JACK first (binary has libjack linked)
+      # and fails to connect to a non-existent JACK server.
       audio_output = [
         {
           type = "pulse";
@@ -536,7 +534,7 @@
   # with "# This file has been auto-generated by i3-config-wizard(1)."
   # Fix .Xauthority ownership if root previously ran startx (creates it
   # as root:root, blocking kimb's X auth).
-  system.activationScripts.creme-i3-cleanup = lib.stringAfter [ "users" "etc" ] ''
+  system.activationScripts.creme-i3-cleanup = lib.stringAfter ["users" "etc"] ''
     I3CFG="/home/kimb/.config/i3/config"
     if [ -f "$I3CFG" ] && head -3 "$I3CFG" | grep -q "auto-generated by i3-config-wizard"; then
       echo "removing wizard-generated i3 config: $I3CFG"
@@ -556,16 +554,48 @@
     enable = true;
     bindings = [
       # Brightness (Fn keys → /sys/class/backlight)
-      {keys = [224]; events = ["key"]; command = "${pkgs.brightnessctl}/bin/brightnessctl set 10%-";}
-      {keys = [225]; events = ["key"]; command = "${pkgs.brightnessctl}/bin/brightnessctl set +10%";}
+      {
+        keys = [224];
+        events = ["key"];
+        command = "${pkgs.brightnessctl}/bin/brightnessctl set 10%-";
+      }
+      {
+        keys = [225];
+        events = ["key"];
+        command = "${pkgs.brightnessctl}/bin/brightnessctl set +10%";
+      }
       # Volume (ALSA Master — pipewire honors it)
-      {keys = [113]; events = ["key"]; command = "${pkgs.alsa-utils}/bin/amixer -q set Master toggle";}
-      {keys = [114]; events = ["key"]; command = "${pkgs.alsa-utils}/bin/amixer -q set Master 5%-";}
-      {keys = [115]; events = ["key"]; command = "${pkgs.alsa-utils}/bin/amixer -q set Master 5%+";}
+      {
+        keys = [113];
+        events = ["key"];
+        command = "${pkgs.alsa-utils}/bin/amixer -q set Master toggle";
+      }
+      {
+        keys = [114];
+        events = ["key"];
+        command = "${pkgs.alsa-utils}/bin/amixer -q set Master 5%-";
+      }
+      {
+        keys = [115];
+        events = ["key"];
+        command = "${pkgs.alsa-utils}/bin/amixer -q set Master 5%+";
+      }
       # Media (mpc → mpd on localhost:6600)
-      {keys = [164]; events = ["key"]; command = "${pkgs.mpc}/bin/mpc toggle";}
-      {keys = [163]; events = ["key"]; command = "${pkgs.mpc}/bin/mpc next";}
-      {keys = [165]; events = ["key"]; command = "${pkgs.mpc}/bin/mpc prev";}
+      {
+        keys = [164];
+        events = ["key"];
+        command = "${pkgs.mpc}/bin/mpc toggle";
+      }
+      {
+        keys = [163];
+        events = ["key"];
+        command = "${pkgs.mpc}/bin/mpc next";
+      }
+      {
+        keys = [165];
+        events = ["key"];
+        command = "${pkgs.mpc}/bin/mpc prev";
+      }
     ];
   };
 
