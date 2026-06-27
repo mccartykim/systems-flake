@@ -3,11 +3,11 @@
 # pi has no base-URL env var (upstream closed issue #8 in favour of
 # models.json) and Ollama isn't in `/login` — it's a custom provider configured
 # via ~/.pi/agent/models.json. This wrapper points PI_CODING_AGENT_DIR at a
-# per-user writable dir, symlinks a Nix-store models.json (defining the ollama
-# provider + the model list) into it on first run, and launches pi. All listed
+# per-user writable dir, copies a Nix-store models.json (defining the ollama
+# provider + the model list) into it on every launch, and runs pi. All listed
 # models appear in pi's `/model` picker; the first one is the launch default
 # unless the caller passes `--model` themselves. settings.json / trust.json /
-# sessions persist in that dir; models.json stays pinned to the Nix store.
+# sessions persist in that dir; models.json is fully Nix-managed (refreshed).
 #
 # apiKey is a placeholder — ollama ignores it, but pi won't list models in
 # `/model` until auth is configured. Cloud models (e.g. kimi-k2.7-code:cloud)
@@ -34,7 +34,11 @@
     set -euo pipefail
     cfg="''${PI_CODING_AGENT_DIR:-''${XDG_CONFIG_HOME:-$HOME/.config}/ollama-pi}"
     mkdir -p "$cfg"
-    [[ -e "$cfg/models.json" ]] || ln -s ${modelsJson} "$cfg/models.json"
+    # models.json is fully Nix-managed, so refresh it from the store on every
+    # launch — a plain copy beats a symlink (no stale-link drift when the
+    # model list / endpoint changes). settings.json / trust.json / sessions
+    # are the user's and are left untouched.
+    cp ${modelsJson} "$cfg/models.json"
     export PI_CODING_AGENT_DIR="$cfg"
     # Inject the default model unless the caller already chose one.
     case " $* " in *" --model "*) ;; *) set -- --model "ollama/${model}" "$@";; esac
