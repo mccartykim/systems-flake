@@ -7,7 +7,7 @@
   config,
   lib,
   pkgs,
-  kokoro,
+  inputs,
   ...
 }: let
   # Model files fetched from GitHub releases
@@ -21,7 +21,7 @@
   };
 
   # Kokoro TTS binary from the flake
-  kokoPackage = kokoro.packages.${pkgs.stdenv.hostPlatform.system}.default;
+  kokoPackage = inputs.kokoro.packages.${pkgs.stdenv.hostPlatform.system}.default;
 
   # Wrapper script that sets up model paths
   # Note: --model, --data, --style are global options and must come before the subcommand

@@ -4,7 +4,7 @@
   self,
   ...
 }: let
-  inherit (inputs) nixpkgs copyparty claude_yapper kokoro media-classifier;
+  inherit (inputs) nixpkgs;
   registry = import (self + "/hosts/nebula-registry.nix");
 
   # Only include hosts that have a nixosConfiguration (auto-filters non-NixOS hosts)
@@ -34,7 +34,7 @@ in {
           overlays = [];
         };
         specialArgs = {
-          inherit inputs copyparty claude_yapper kokoro media-classifier;
+          inherit inputs;
           outputs = self;
         };
       };

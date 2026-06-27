@@ -7,7 +7,6 @@
   config,
   lib,
   pkgs,
-  claude_yapper,
   ...
 }: {
   # Agenix secret for HA token (shared with org-life-coach)

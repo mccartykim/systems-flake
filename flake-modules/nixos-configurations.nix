@@ -5,7 +5,7 @@
   self,
   ...
 }: let
-  inherit (inputs) nixpkgs nixos-hardware nixos-facter-modules nixos-avf copyparty nil-flake claude_yapper kokoro media-classifier org-life-coach lifecoach-organism vacuum-organism org-crm;
+  inherit (inputs) nixpkgs nixos-hardware nixos-facter-modules copyparty nil-flake claude_yapper media-classifier org-life-coach lifecoach-organism vacuum-organism org-crm;
   inherit (config.flake.lib) mkDesktop mkServer mkHomeManager commonModules;
 in {
   flake.nixosConfigurations = {
@@ -41,7 +41,6 @@ in {
         commonModules
         ++ mkHomeManager {
           homeConfig = self + "/home/donut.nix";
-          useGlobalPkgs = true;
         }
         ++ [
           # jovian module applies its own overlay internally — no need to add it again
@@ -53,7 +52,6 @@ in {
     # Desktops using mkDesktop helper
     historian = mkDesktop {
       hostname = "historian";
-      extraSpecialArgs = {inherit media-classifier;};
       extraModules = [media-classifier.nixosModules.default];
     };
     total-eclipse = mkDesktop {hostname = "total-eclipse";};
@@ -69,7 +67,6 @@ in {
 
     bartleby = mkDesktop {
       hostname = "bartleby";
-      useGlobalPkgs = true;
       hardwareModules = [
         nixos-hardware.nixosModules.lenovo-thinkpad
         inputs.srvos.nixosModules.mixins-systemd-boot
@@ -93,10 +90,6 @@ in {
     # Servers using mkServer helper
     rich-evans = mkServer {
       hostname = "rich-evans";
-      extraSpecialArgs = {
-        inherit copyparty claude_yapper kokoro;
-        org_life_coach = org-life-coach;
-      };
       extraModules = [
         copyparty.nixosModules.default
         claude_yapper.nixosModules.default

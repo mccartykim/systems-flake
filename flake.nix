@@ -28,23 +28,13 @@
 
     nix-index-database.url = "github:nix-community/nix-index-database";
     nix-index-database.inputs.nixpkgs.follows = "nixpkgs";
-    nixos-avf.url = "github:nix-community/nixos-avf";
     disko.url = "github:nix-community/disko";
     disko.inputs.nixpkgs.follows = "nixpkgs";
-
-    nixos-generators = {
-      url = "github:nix-community/nixos-generators";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
 
     copyparty.url = "github:9001/copyparty";
 
     agenix.url = "github:ryantm/agenix";
     agenix.inputs.nixpkgs.follows = "nixpkgs";
-
-    # agenix-rekey for YubiKey master identity + declarative cert generation
-    agenix-rekey.url = "github:oddlama/agenix-rekey";
-    agenix-rekey.inputs.nixpkgs.follows = "nixpkgs";
 
     # buildbot-nix for CI (master on rich-evans, worker on historian)
     buildbot-nix.url = "github:nix-community/buildbot-nix";
@@ -174,11 +164,8 @@
     nix-darwin,
     srvos,
     nix-index-database,
-    nixos-avf,
-    nixos-generators,
     disko,
     agenix,
-    agenix-rekey,
     nixos-facter-modules,
     system-manager,
     jovian-nixos,
@@ -368,7 +355,7 @@
         };
 
         # Flake checks - runs via `nix flake check`
-        checks = lib.optionalAttrs (system == "x86_64-linux") {
+        checks = lib.optionalAttrs (system == "x86_64-linux") ({
           # VM tests
           minimal-test = import ./tests/minimal-test.nix {inherit pkgs;};
           network-test = import ./tests/network-test.nix {inherit pkgs;};
@@ -485,16 +472,8 @@
                 echo "All fish functions passed syntax validation" > $out
               '';
 
-          eval-historian = self.nixosConfigurations.historian.config.system.build.toplevel;
-          eval-marshmallow = self.nixosConfigurations.marshmallow.config.system.build.toplevel;
-          eval-bartleby = self.nixosConfigurations.bartleby.config.system.build.toplevel;
-          eval-total-eclipse = self.nixosConfigurations.total-eclipse.config.system.build.toplevel;
-          eval-maitred = self.nixosConfigurations.maitred.config.system.build.toplevel;
-          eval-rich-evans = self.nixosConfigurations.rich-evans.config.system.build.toplevel;
-          eval-cheesecake = self.nixosConfigurations.cheesecake.config.system.build.toplevel;
-          eval-donut = self.nixosConfigurations.donut.config.system.build.toplevel;
-          eval-creme = self.nixosConfigurations.creme.config.system.build.toplevel;
-        };
+          # Eval every nixosConfiguration — auto-tracks hosts, no hand-synced list.
+        } // lib.mapAttrs' (n: _: lib.nameValuePair "eval-${n}" self.nixosConfigurations.${n}.config.system.build.toplevel) self.nixosConfigurations);
       };
 
       # All flake outputs (nixosConfigurations, darwinConfigurations, colmena, systemConfigs)

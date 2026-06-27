@@ -2,7 +2,7 @@
 {
   config,
   lib,
-  copyparty,
+  inputs,
   pkgs,
   ...
 }: let
@@ -190,7 +190,7 @@ in {
     options = ["defaults" "nofail"];
   };
 
-  nixpkgs.overlays = [copyparty.overlays.default];
+  nixpkgs.overlays = [inputs.copyparty.overlays.default];
 
   # Server-specific services
   services = {
