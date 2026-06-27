@@ -108,10 +108,12 @@ in {
                 handle /lexicons/* {
                   reverse_proxy ${cfg.networks.containerBridge}:${toString cfg.services.knit.port}
                 }
-                # SPA: the knit-web container (nginx, try_files → /index.html
-                # so deep links / client routes load the app shell).
+                # SPA: the knit-web nspawn container on historian (nginx,
+                # try_files → /index.html so deep links / client routes load
+                # the app shell). Reached via maitred's socat forwarder
+                # (containerBridge:8088 → historian Nebula 10.100.0.10:8088).
                 handle {
-                  reverse_proxy ${cfg.services.knit-web.containerIP}:${toString cfg.services.knit-web.port}
+                  reverse_proxy ${cfg.networks.containerBridge}:${toString cfg.services.knit-web.port}
                 }
               '';
             };

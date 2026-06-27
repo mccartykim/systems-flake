@@ -78,6 +78,25 @@
       };
     };
 
+    # Historian services (the beefy always-on Beelink)
+    historian = {
+      # Knitwork webApp SPA — the KMP wasmJs bundle, built at container start
+      # inside a nixos-container (see hosts/historian/knitwork-web.nix) on this
+      # box, offloading the build from rich-evans/the router. publicAccess=
+      # false: no auto-vhost — the hand-written knit.kimb.dev vhost in
+      # reverse-proxy.nix reverse_proxies via maitred's socat forwarder to this
+      # host's Nebula IP:8088.
+      knit-web = {
+        enable = true;
+        port = 8088;
+        subdomain = "knit-web";
+        host = "historian";
+        auth = "none";
+        publicAccess = false;
+        websockets = false;
+      };
+    };
+
     # Maitred services (router + reverse proxy)
     maitred = {
       authelia = {
@@ -156,16 +175,18 @@
         websockets = false;
       };
       # Knitwork webApp SPA — the KMP wasmJs bundle, built at container start
-      # inside a nixos-container (see hosts/maitred/knitwork-web.nix). Runs on
-      # maitred like blog/reverse-proxy (no cross-host socat). publicAccess=
-      # false: no auto-vhost — the hand-written knit.kimb.dev vhost in
-      # reverse-proxy.nix reverse_proxies to this containerIP:8088.
+      # inside a nixos-container on historian (see hosts/historian/knitwork-
+      # web.nix; the real entry is under the historian bucket above). This
+      # duplicate exists only to drive maitred's socat forwarder
+      # (containerBridge:8088 → historian Nebula 10.100.0.10:8088) via the
+      # `host != "maitred"` filter and feed the port to the hand-written
+      # knit.kimb.dev vhost. No containerIP (remote host) → the vhost reverse-
+      # proxies to containerBridge, where the socat forwarder listens.
       knit-web = {
         enable = true;
         port = 8088;
         subdomain = "knit-web";
-        host = "maitred";
-        containerIP = "192.168.100.13";
+        host = "historian";
         auth = "none";
         publicAccess = false;
         websockets = false;

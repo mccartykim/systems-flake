@@ -1,17 +1,24 @@
 # Knitwork webApp SPA container.
 #
-# A NixOS nspawn container that builds the KMP wasmJs distribution AT CONTAINER
-# START (not at Nix build time) and serves it with nginx. Rationale: the Kotlin
-# wasm plugin downloads a prebuilt Node.js whose ELF needs glibc's
-# /lib64/ld-linux-x86-64.so.2, which the Nix sandbox lacks but
-# programs.nix-ld provides here; and a persistent bindMount caches Gradle's
-# deps across restarts (which a Nix derivation can't, given the rotating
-# nixbld* users). Caddy in the reverse-proxy container reverse_proxies
-# knit.kimb.dev's SPA paths here (see reverse-proxy.nix).
+# A NixOS nspawn container on historian (the beefy 8-core/64GB always-on
+# Beelink) that builds the KMP wasmJs distribution AT CONTAINER START (not at
+# Nix build time) and serves it with nginx. Rationale: maitred is the edge
+# router — a 4-core Atom box with 8GB — and a Gradle/Kotlin/webpack build would
+# starve routing; rich-evans already carries the BFF + AppView + a dozen other
+# services, so the SPA build is offloaded to historian's idle Ryzen cores
+# instead, isolating the ~8min build spike from the BFF/AppView it depends on.
+# The Kotlin wasm plugin downloads a prebuilt Node.js whose ELF needs glibc's
+# /lib64/ld-linux-x86-64.so.2 (absent in the Nix sandbox) but programs.nix-ld
+# provides it here; a persistent bindMount caches Gradle's deps across restarts.
+# maitred's socat forwarder (containerBridge:8088 → historian Nebula
+# 10.100.0.10:8088) bridges Caddy to this box (nebula1 is trusted on historian,
+# so no firewall hole is needed). The BFF/AppView stay on rich-evans.
 #
-# Mirrors blog-service.nix: same veth + DNS-via-unbound shape. The source comes
-# from the knitwork-frontend flake input (inputs.knitwork-frontend.outPath), so
-# the frontend flake ships nothing here but its tree.
+# Host networking (no privateNetwork): the container shares historian's netns,
+# so Gradle's Maven/Node downloads ride the host's internet and nginx binds
+# 0.0.0.0:8088 directly — dropping the privateNetwork + host NAT + DNS-via-
+# bridge plumbing the maitred containers (blog/reverse-proxy) need. The source
+# comes from the knitwork-frontend flake input (inputs.knitwork-frontend.outPath).
 {
   config,
   lib,
@@ -21,9 +28,6 @@
 }: let
   cfg = config.kimb;
   knitWeb = cfg.services.knit-web;
-  # Host-side endpoint of this container's veth (unique per container; blog
-  # uses .11, reverse-proxy uses .1 = containerBridge).
-  hostAddress = "192.168.100.12";
   corretto = pkgs.corretto21;
 in {
   # Host dirs backing the container's persistent bindMounts (must exist before
@@ -35,9 +39,8 @@ in {
 
   containers.knit-web = lib.mkIf knitWeb.enable {
     autoStart = true;
-    privateNetwork = true;
-    inherit hostAddress;
-    localAddress = knitWeb.containerIP;
+    # No privateNetwork → host networking: shares historian's netns, so no
+    # hostAddress/localAddress, no ve-+ NAT, no per-container DNS bridge.
 
     # Gradle deps cache + built dist persist on the host, so a restart of the
     # same image skips the build (the service fingerprints the source) and a
@@ -62,14 +65,14 @@ in {
       # The downloaded Node's ELF wants the FHS loader; nix-ld provides it.
       programs.nix-ld.enable = true;
 
-      # DNS through unbound on maitred (same NSS-bypass as blog-service /
-      # reverse-proxy). Gradle's deps fetch needs working resolution.
-      networking.nameservers = [cfg.networks.containerBridge];
+      # Host networking gives the container historian's internet for Gradle's
+      # Maven/Node downloads; bypass nscd/nsncd and point DNS at a resolver the
+      # host can actually reach (1.1.1.1) so the static resolv.conf is honored.
       services.nscd.enable = false;
       system.nssModules = lib.mkForce [];
       networking.resolvconf.enable = false;
       environment.etc."resolv.conf".text = ''
-        nameserver ${cfg.networks.containerBridge}
+        nameserver 1.1.1.1
       '';
 
       environment.systemPackages = [corretto pkgs.gradle];
@@ -154,6 +157,8 @@ in {
       services.nginx = {
         enable = true;
         virtualHosts.knit = {
+          # Host networking: bind on the host's stack so maitred's socat
+          # forwarder (→ historian Nebula IP) reaches nginx directly.
           listen = [{addr = "0.0.0.0"; port = knitWeb.port;}];
           root = "/var/lib/knitwork/web";
           # SPA fallback: deep links / client routes load the app shell.
@@ -161,7 +166,6 @@ in {
         };
       };
 
-      networking.firewall.allowedTCPPorts = [knitWeb.port];
       system.stateVersion = "24.11";
     };
   };

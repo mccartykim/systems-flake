@@ -21,6 +21,10 @@
     # Restic backups to Backblaze B2
     ../../modules/restic-backup.nix
 
+    # Knitwork webApp SPA container (builds wasmJs at start, nginx serves;
+    # proxied to knit.kimb.dev via maitred's socat forwarder)
+    ./knitwork-web.nix
+
     # Buildbot worker — DISABLED 2026-06-22 (gave up on buildbot-nix
     # fighting private-repo flake inputs; may revisit a different CI
     # scheme later). Re-enable by uncommenting this import; the module
