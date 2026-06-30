@@ -44,6 +44,38 @@ wifi:
 
 captive_portal:
 
+# Press counter — incremented on every physical on_press and restored
+# across reboots. button-monitor uses sensor.<name>_press_count to tell
+# a real finger press from the PENDING→IDLE transition a device reboot
+# produces when its template switches reset (RESTORE_DEFAULT_OFF): a
+# reboot leaves press_count unchanged (the counter is restored and
+# republished on boot so HA never sees a jump); a real press advances it.
+# Restoring the counter means each increment writes flash, but at a few
+# presses/day the wear is negligible.
+globals:
+  - id: press_counter
+    type: int
+    restore_value: yes
+    initial_value: '0'
+
+# Republish the restored counter on boot so HA stays in sync (otherwise
+# the template sensor would report `unknown` after a reboot, which is a
+# value change and would read as a press).
+on_boot:
+  - priority: 600
+    then:
+      - sensor.template.publish:
+          id: press_count
+          state: !lambda "return float(id(press_counter));"
+
+sensor:
+  - platform: template
+    id: press_count
+    name: "Press Count"
+    icon: mdi:counter
+    accuracy_decimals: 0
+    unit_of_measurement: "count"
+
 # Bluetooth proxy for Home Assistant
 esp32_ble_tracker:
   scan_parameters:
@@ -97,6 +129,14 @@ binary_sensor:
       - delayed_off: 10ms
     on_press:
       then:
+        # Advance the press counter on EVERY press (bound or unbound)
+        # before anything else. This is the reliable "a finger touched
+        # it" signal button-monitor keys off to reject reboot ghosts.
+        - globals.increment:
+            id: press_counter
+        - sensor.template.publish:
+            id: press_count
+            state: !lambda "return float(id(press_counter));"
         # If any task was assigned (pending or priority), show yellow solid (processing)
         - if:
             condition:

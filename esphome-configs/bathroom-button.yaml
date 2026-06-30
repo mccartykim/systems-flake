@@ -31,6 +31,32 @@ wifi:
 
 captive_portal:
 
+# Press counter — restored across reboots, advanced on every on_press,
+# republished on boot. button-monitor rejects PENDING→IDLE transitions
+# whose press_count didn't advance as reboot ghosts (the task switches
+# reset on reboot but this counter survives).
+globals:
+  - id: press_counter
+    type: int
+    restore_value: yes
+    initial_value: '0'
+
+on_boot:
+  - priority: 600
+    then:
+      - sensor.template.publish:
+          id: press_count
+          state: !lambda "return float(id(press_counter));"
+
+sensor:
+  - platform: template
+    id: press_count
+    entity_id: sensor.bathroom_press_count
+    name: "Press Count"
+    icon: mdi:counter
+    accuracy_decimals: 0
+    unit_of_measurement: "count"
+
 # Bluetooth proxy for Home Assistant
 esp32_ble_tracker:
   scan_parameters:
@@ -82,6 +108,11 @@ binary_sensor:
       - delayed_off: 10ms
     on_press:
       then:
+        - globals.increment:
+            id: press_counter
+        - sensor.template.publish:
+            id: press_count
+            state: !lambda "return float(id(press_counter));"
         - if:
             condition:
               or:
