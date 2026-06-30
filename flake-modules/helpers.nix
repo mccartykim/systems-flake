@@ -5,7 +5,6 @@
   ...
 }: let
   inherit (inputs) nixpkgs home-manager srvos nix-index-database firefox-nightly nix-topology;
-  ollamaPkgs = inputs.nixpkgs-ollama.legacyPackages;
 
   # Overlay to fix Python packages with build/test issues
   pythonFixesOverlay = final: prev: {
@@ -54,11 +53,7 @@ in {
       (self + "/modules/kimb-services.nix")
       (self + "/services/default.nix")
       # Fix Python packages with strict version bounds + Firefox Nightly
-      # + override ollama to 0.30.4 for gemma4:12b support (remove once nixpkgs-unstable advances)
-      {nixpkgs.overlays = [pythonFixesOverlay firefoxNightlyOverlay (final: prev: {
-        ollama = ollamaPkgs.${prev.system}.ollama;
-        ollama-rocm = ollamaPkgs.${prev.system}.ollama-rocm;
-      })];}
+      {nixpkgs.overlays = [pythonFixesOverlay firefoxNightlyOverlay];}
       # Infrastructure/network diagram generation
       nix-topology.nixosModules.default
       # Static nebula host entries so hostname.nebula resolves without maitred DNS

@@ -5,10 +5,6 @@
     # Nixpkgs
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
-    # Nixpkgs pinned to ollama 0.30.5 for gemma4:12b support (0.30.4 crashes on 12b).
-    # Remove this input once nixpkgs-unstable has ollama >= 0.30.5.
-    nixpkgs-ollama.url = "github:NixOS/nixpkgs/bba51cb2479b7a23134f69b932811df999b892e1";
-
     # Add flake-parts
     flake-parts.url = "github:hercules-ci/flake-parts";
 
@@ -154,7 +150,6 @@
   outputs = {
     self,
     nixpkgs,
-    nixpkgs-ollama,
     flake-parts,
     copyparty,
     home-manager,

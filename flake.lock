@@ -1265,22 +1265,6 @@
         "type": "github"
       }
     },
-    "nixpkgs-ollama": {
-      "locked": {
-        "lastModified": 1780615177,
-        "narHash": "sha256-Xr+OvVyOkESPtnTOARUvOo2aZkqrKfyYvQgCSCSfLw0=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "bba51cb2479b7a23134f69b932811df999b892e1",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "bba51cb2479b7a23134f69b932811df999b892e1",
-        "type": "github"
-      }
-    },
     "nixpkgs_2": {
       "locked": {
         "lastModified": 1764950072,
@@ -1723,7 +1707,6 @@
         "nixos-facter-modules": "nixos-facter-modules",
         "nixos-hardware": "nixos-hardware",
         "nixpkgs": "nixpkgs_6",
-        "nixpkgs-ollama": "nixpkgs-ollama",
         "org-agent": "org-agent",
         "org-crm": "org-crm",
         "org-life-coach": "org-life-coach",
