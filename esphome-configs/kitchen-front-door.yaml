@@ -44,16 +44,6 @@ globals:
     restore_value: yes
     initial_value: '0'
 
-# Republish the restored counter on boot so HA stays in sync (otherwise
-# the template sensor would report `unknown` after a reboot, which is a
-# value change and would read as a press).
-on_boot:
-  - priority: 600
-    then:
-      - sensor.template.publish:
-          id: press_count
-          state: !lambda "return float(id(press_counter));"
-
 sensor:
   - platform: template
     id: press_count
@@ -61,6 +51,8 @@ sensor:
     icon: mdi:counter
     accuracy_decimals: 0
     unit_of_measurement: "count"
+    update_interval: 1s
+    lambda: !lambda "return float(id(press_counter));"
 
 # Bluetooth proxy for Home Assistant
 esp32_ble_tracker:
@@ -113,14 +105,11 @@ binary_sensor:
       - delayed_off: 10ms
     on_press:
       then:
-        # Advance the press counter on EVERY press before anything else.
-        # This is the reliable "a finger touched it" signal button-monitor
-        # keys off to reject reboot ghosts.
-        - globals.increment:
+        # Advance the restored counter on every press. The press_count
+        # template sensor self-publishes this value on its 1s update.
+        - globals.set:
             id: press_counter
-        - sensor.template.publish:
-            id: press_count
-            state: !lambda "return float(id(press_counter));"
+            value: !lambda "return id(press_counter) + 1;"
         # If any task was assigned (pending or priority), show yellow solid (processing)
         - if:
             condition:
