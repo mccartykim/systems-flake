@@ -31,22 +31,17 @@ wifi:
 
 captive_portal:
 
-# Press counter — restored across reboots, advanced on every on_press,
-# republished on boot. button-monitor rejects PENDING→IDLE transitions
-# whose press_count didn't advance as reboot ghosts (the task switches
-# reset on reboot but this counter survives).
+# Press counter — restored across reboots (restore_value), advanced on
+# every on_press. The template sensor self-publishes via a lambda reading
+# the global on a 1s update_interval, so it always has a real numeric
+# state (never "unknown") without needing an on_boot trigger (this
+# ESPHome build has none). button-monitor rejects PENDING→IDLE
+# transitions whose press_count didn't advance as reboot ghosts.
 globals:
   - id: press_counter
     type: int
     restore_value: yes
     initial_value: '0'
-
-on_boot:
-  - priority: 600
-    then:
-      - sensor.template.publish:
-          id: press_count
-          state: !lambda "return float(id(press_counter));"
 
 sensor:
   - platform: template
@@ -55,6 +50,8 @@ sensor:
     icon: mdi:counter
     accuracy_decimals: 0
     unit_of_measurement: "count"
+    update_interval: 1s
+    lambda: !lambda "return float(id(press_counter));"
 
 # Bluetooth proxy for Home Assistant
 esp32_ble_tracker:
@@ -107,11 +104,11 @@ binary_sensor:
       - delayed_off: 10ms
     on_press:
       then:
-        - globals.increment:
+        # Advance the restored counter on every press. The press_count
+        # template sensor self-publishes this value on its 1s update.
+        - globals.set:
             id: press_counter
-        - sensor.template.publish:
-            id: press_count
-            state: !lambda "return float(id(press_counter));"
+            value: !lambda "return id(press_counter) + 1;"
         - if:
             condition:
               or:
