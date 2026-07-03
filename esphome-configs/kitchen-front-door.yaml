@@ -1,9 +1,11 @@
-# M5Stack Atom S3 Lite - Kitchen Button
-# Kitchen tasks
+# M5Stack Atom S3 Lite - Kitchen / Front Door Button
+# One ESP32, one button. Deployed firmware is named kitchen-front-door
+# (entity prefix kitchen_front_door), which ha.py reads as bid
+# "kitchen_front_door" — keep this name stable or you break the agent.
 
 esphome:
-  name: kitchen-button
-  friendly_name: Kitchen Button
+  name: kitchen-front-door
+  friendly_name: "Kitchen/Front Door Button"
 
 esp32:
   board: esp32-s3-devkitc-1
@@ -26,10 +28,39 @@ wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
   ap:
-    ssid: "Kitchen-Button"
+    ssid: "Kitchen-Front-Door"
     password: !secret ap_password
 
 captive_portal:
+
+# Press counter — incremented on every physical on_press and restored
+# across reboots. button-monitor uses sensor.kitchen_front_door_press_count
+# to tell a real finger press from the PENDING→IDLE transition a device
+# reboot produces when its template switches reset (RESTORE_DEFAULT_OFF):
+# a reboot leaves press_count unchanged; a real press advances it.
+globals:
+  - id: press_counter
+    type: int
+    restore_value: yes
+    initial_value: '0'
+
+# Republish the restored counter on boot so HA stays in sync (otherwise
+# the template sensor would report `unknown` after a reboot, which is a
+# value change and would read as a press).
+on_boot:
+  - priority: 600
+    then:
+      - sensor.template.publish:
+          id: press_count
+          state: !lambda "return float(id(press_counter));"
+
+sensor:
+  - platform: template
+    id: press_count
+    name: "Press Count"
+    icon: mdi:counter
+    accuracy_decimals: 0
+    unit_of_measurement: "count"
 
 # Bluetooth proxy for Home Assistant
 esp32_ble_tracker:
@@ -82,6 +113,15 @@ binary_sensor:
       - delayed_off: 10ms
     on_press:
       then:
+        # Advance the press counter on EVERY press before anything else.
+        # This is the reliable "a finger touched it" signal button-monitor
+        # keys off to reject reboot ghosts.
+        - globals.increment:
+            id: press_counter
+        - sensor.template.publish:
+            id: press_count
+            state: !lambda "return float(id(press_counter));"
+        # If any task was assigned (pending or priority), show yellow solid (processing)
         - if:
             condition:
               or:
