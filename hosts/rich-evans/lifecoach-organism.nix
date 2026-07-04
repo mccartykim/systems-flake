@@ -89,9 +89,12 @@ in {
     # cadence + dispatch logic.
     watchdog = {
       enable = true;
-      # Kim's DM channel id — fill in once known. Empty string =
-      # TTS only, no Discord fan-out.
-      alertChannelId = "";
+      # DM channel between the lifecoach bot and Kimb (recipient_id
+      # 366455267673636866 — same user org_crm's Secretary bot DMs).
+      # Created once via POST /users/@me/channels with the lifecoach bot
+      # token; the id is stable. Speak/TTS is the loud channel, gated
+      # by quiet hours; this DM is the silent always-fires channel.
+      alertChannelId = "1489092456048754719";
     };
 
     # DISABLED: warmup is pointless with cloud models — they're always
