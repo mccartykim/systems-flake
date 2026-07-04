@@ -1,10 +1,6 @@
 # Kimb's System Flake
 
-So, I've been gushing about Nix to anyone who will hear, trying to explain how all the parts fit together, but I was mostly just using it as a way to set up computers with one big config directory with logic and paths I defined.
-
-I loved that garnix could build all my stuff. I liked that I could do things like send an overheating tablet's builds to my gaming pc.
-
-But to get the ultimate configuration experience, it should apply changes to all my machines at once when I decide something else about a shell makes me comfy. So now I'm trying to kludge together a fleet flake.
+So, I've been gushing about Nix to anyone who will hear. I started out just using it as a way to set up computers with one big config directory with logic and paths I defined — liked that garnix could build all my stuff, liked that I could send an overheating tablet's builds to my gaming PC. But to get the ultimate configuration experience, it should apply changes to all my machines at once when I decide something else about a shell makes me comfy. So now I'm kludging together a fleet flake.
 
 ## Dramatis Personae
 
@@ -22,20 +18,20 @@ But to get the ultimate configuration experience, it should apply changes to all
 Plus a few others. Sweets are portable, anything goes for desktops and servers :)
 
 ## Services off the top of my head
-Having a declarative mesh network and single config for my fleet makes this system very ammenable to setting up a few home services. I suppose this is self-host/homelabbing stuff, but I just consider it a kind of DIY home improvement.
+Having a declarative mesh network and single config for my fleet makes this system very amenable to setting up a few home services. I suppose this is self-host/homelabbing stuff, but I just consider it a kind of DIY home improvement.
 
-* Caddy, my reverse proxy that runs on maitred (so far it's fine), paired with some cloudflare dedyn thing. Hosts kimb.dev and internal services.
+* Caddy, my reverse proxy that runs on maitred, paired with some cloudflare dedyn thing. Hosts kimb.dev and internal services.
 * Nebula, abstracts away lan/remote machines and allows my laptop to function well wherever. I also like it as a tool to get around level 3 networking for tiny/weird machines and hope to get it really straightforward for nebula.
 * Authelia, for authentification
 * Home Assistant via the NixOS Configuration options instead of Docker. Runs on rich evans.
    * See also: ESPHome configs that use HA to add a bunch of ESP32 based buttons around the house to remind me of things.
-   * TODO: Add valetudo vacuum
+   * Valetudo vacuum integration, with a vacuum-organism sidecar that nags me to put away chairs before it runs.
 * My blog, under mist-blog. Runs under gleam so I have it run on maitred to test its vaunted efficiency.
-* Ollama, for local VLM inference on total-eclipse
+* Ollama, for local VLM inference on total-eclipse and historian (historian runs the rocm build).
 * Life Coach Agent, a rich-evans based agent that helps me keep up with routines and tasks.
 * A dual webcam endpoint for stills from rich-evans for lifecoach to use.
-* Syncthing, a delightful tool for keeping folders synced between computers
-* Restic, for lightly compressed regular backups
+* Syncthing, for keeping folders synced between computers
+* Restic, for regular backups
 * Buildbot CI on rich-evans (master) and historian (worker). Took over the role garnix used to play; I miss garnix's UI but at least this one runs on hardware I own.
 * Matrix (conduit) on rich-evans for self-hosted chat
 * Kokoro and Qwen3-TTS for the life-coach's voice. Kokoro is the small fast one; Qwen3 is the zero-shot voice cloning one.
@@ -49,7 +45,7 @@ A handful of services live in their own little repos and get pulled in here as f
 * `qwen3-tts-cuda-flake` — Qwen3-TTS via CUDA, runs on total-eclipse
 * `restic-b2-backup-flake` — restic to Backblaze B2 with sensible defaults
 * `cloudflare-ddns-flake` — inadyn wrapper for Cloudflare DDNS
-* `eden-nightly-flake` — Switch emulator AppImage extraction (currently parked; we build from source instead)
+* `eden-nightly-flake` — the Switch emulator built from upstream master. donut pulls the `eden-nightly-steamdeck` (znver2) package, total-eclipse pulls `eden-nightly` (x86-64-v3). This *is* the from-source path, not an AppImage extraction.
 
 I'm not sold on every extraction sticking — once tried pulling out a nebula wrapper and it turned out nixpkgs's `services.nebula` was already doing 90% of it, so that one came back inline.
 
@@ -57,7 +53,6 @@ I'm not sold on every extraction sticking — once tried pulling out a nebula wr
 * Get agenix rekeying working reliably on computers I actually use, I keep resorting to manual age rotations that still work fine.
 * Add room presence for my phone/watch to HA via one of the ESP32 presence libraries
 * Add bedroom led strip to esphome via the tasmoda reflash mod
-* Add valetudo vacuum to HA
 * Maybe move lifecoach to the faster historian once I'm confident in the migration/ports.
 * Document colmena deployment better.
 * Consider: Maybe direnv does make sense for my projects/this repo but every time I do it I get annoyed at speed + everything else.
@@ -72,9 +67,7 @@ I'm not sold on every extraction sticking — once tried pulling out a nebula wr
 6. Add import of default nix config. Test again.
 7. Strip out redundant components, leaving just the quirks for that machine in the config.
 
-I've dabbled with building custom installers but without the whole SSH pubkey copy routine, building a flake with private inputs kinda sucks... I might have to open source stuff, maybe move my blog content to a separate repo/bucket so I still have private drafts. But I'm just thinking out loud!
-
-(I really wish NixOS anywhere worked consistently on the VPS' that fit in my cheap-as-free budget for the rare cloud machine I want)
+I've dabbled with building custom installers but without the whole SSH pubkey copy routine, building a flake with private inputs kinda sucks. (I really wish NixOS anywhere worked consistently on the VPS' that fit in my cheap-as-free budget for the rare cloud machine I want.)
 
 ## Nebula Mesh Network
 
@@ -86,7 +79,7 @@ All machines are connected via a [Nebula](https://github.com/slackhq/nebula) mes
 
 ### DNS Resolution
 - `hostname.nebula` - Nebula mesh IPs (e.g., `historian.nebula` → `10.100.0.10`)
-- `hostname.local` - LAN IPs (e.g., `rich-evans.local` → `192.168.68.200`)
+- `hostname.local` - LAN IPs (e.g., `maitred.local` → `192.168.69.1`). Only maitred has a fixed LAN IP in the registry; other hosts get their LAN address via DHCP.
 
 ### Adding a host
 
@@ -100,7 +93,3 @@ The annoying part is that nebula certs need the host's SSH pubkey, which doesn't
 6. Deploy again, this time via colmena (`nix develop -c colmena apply --on <hostname>`). Mesh should be live.
 
 Most of the friction here is the YubiKey ceremony — one day I'll get agenix-rekey working reliably and that'll smooth out a lot.
-
-## Wish list
-* Create a few simple configs that suit my idea of an archetypal config, for easier installs down the line. Maybe templates but honestly flake templates never work like i hope.
-* See if I can get off flakes and try [Nixtamal](https://nixtamel.toast.al/). Not sure if that works well with my flake parts impl. However, flakes are indeed annoying and set rules I'm not sure I need.
