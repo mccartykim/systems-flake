@@ -62,6 +62,23 @@
   boot.resumeDevice = "/dev/sda2";
   boot.consoleLogLevel = 3;
 
+  # ─── SSD tuning (HDD → SSD swap, 2026-07) ──────────────────────────
+  # ext4's default is relatime (atime touched at most once per day per
+  # file); noatime drops that last per-read metadata write. Free win for
+  # SSD write endurance on this box.
+  fileSystems."/".options = ["noatime"];
+
+  # Periodic TRIM via fstrim.timer (weekly). Preferred over the `discard`
+  # mount option, which can stutter on old SATA SSDs. Covers the swapfile
+  # too. disk-encryption.nix sets allowDiscards=true on the LUKS devices,
+  # so this passes through to the SSD if/when encryption is enabled.
+  services.fstrim.enable = true;
+
+  # Swappiness 10 keeps active pages in RAM and only spills to swap under
+  # real memory pressure, cutting churn on the small SSD. The 4GB swapfile
+  # stays for hibernate-to-disk.
+  boot.kernel.sysctl."vm.swappiness" = 10;
+
   # Nebula mesh - reachable from your other personal devices
   kimb.nebula = {
     enable = true;
