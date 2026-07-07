@@ -514,6 +514,17 @@
     UXTerm*allowBoldFonts: true
     UXTerm*boldMode: false
 
+    ! ── Sixel graphics (optional image previews in the terminal) ──
+    ! nixpkgs xterm is built with sixel support; advertising a vt340
+    ! terminal class makes it honor sixel escape sequences so tools like
+    ! `chafa --format sixel image.jpg` render inline. Sixel is
+    ! software-rendered on the CPU — fine for occasional previews on the
+    ! E6400's GMA 4500MHD, where GPU terminals (wezterm/kitty/alacritty)
+    ! are the wrong trade. No new package; just a flag on the existing
+    ! uxterm. Leave commented to disable.
+    UXTerm*decTerminalID: vt340
+    UXTerm*sixelScrolling: true
+
     ! ── PDX-carpet base16 palette (mirrors stylix/xresources/hm.nix) ──
     UXTerm*foreground: #${c.base05}
     UXTerm*background: #${c.base00}
