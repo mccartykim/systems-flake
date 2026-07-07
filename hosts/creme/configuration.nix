@@ -209,21 +209,37 @@
   # gpg-agent for mbsync PassCmd (decrypts ~/.authinfo.gpg).
   programs.gnupg.agent.enable = true;
 
-  # Lid switch → suspend-then-hibernate. S3 first, then hibernates
-  # after HibernateDelaySec. Libreboot on the E6400 doesn't reliably
-  # deliver ACPI GPEs for lid state changes, so logind may never see
-  # the event. We set all three lid handlers explicitly and add a
-  # polling watchdog as a fallback.
+  # Lid switch → hibernate directly (skip S3). Libreboot on the E6400
+  # doesn't reliably deliver ACPI GPEs for lid state changes, so logind
+  # may never see the event — we set all three lid handlers explicitly
+  # and add a polling watchdog as a fallback.
+  #
+  # Why hibernate, not suspend-then-hibernate: suspend-then-hibernate
+  # sleeps in S3 first and writes the hibernate image only after
+  # HibernateDelaySec (default 2h), woken by an RTC alarm. On this
+  # libreboot box S3 doesn't hold — the journal shows RAM losing power
+  # ~90s after `PM: suspend entry (deep)`, followed by a cold boot with
+  # `PM: Image not found (code -22)`. The session dies with the RAM and
+  # the hibernate step never fires. Going straight to hibernate writes
+  # the image to the 4GB swapfile immediately and powers off, so the
+  # session survives across the lid close.
+  #
+  # Docked: ignore (don't hibernate a writerdeck that's plugged in at
+  # a desk, the user closed the lid to use an external monitor).
+  #
+  # NOTE: resume_offset=56424448 (kernelParams below) must match the
+  # physical offset of /swapfile. If /swapfile is ever recreated,
+  # recompute with `sudo filefrag -e /swapfile` and update it.
   services.logind.settings.Login = {
-    HandleLidSwitch = "suspend-then-hibernate";
-    HandleLidSwitchExternalPower = "suspend-then-hibernate";
-    HandleLidSwitchDocked = "suspend-then-hibernate";
+    HandleLidSwitch = "hibernate";
+    HandleLidSwitchExternalPower = "hibernate";
+    HandleLidSwitchDocked = "ignore";
   };
   # 4GB swapfile for hibernate. Created manually with fallocate;
   # NixOS runs mkswap + swapon on activation.
   swapDevices = [{device = "/swapfile";}];
   systemd.services.lid-watchdog = {
-    description = "Poll lid state and suspend on close (Libreboot fallback)";
+    description = "Poll lid state and hibernate on close (Libreboot fallback)";
     wantedBy = ["multi-user.target"];
     path = [pkgs.gnugrep];
     serviceConfig = {
@@ -231,7 +247,7 @@
       ExecStart = pkgs.writeShellScript "lid-watchdog" ''
         while true; do
           if grep -q closed /proc/acpi/button/lid/LID/state 2>/dev/null; then
-            systemctl suspend-then-hibernate
+            systemctl hibernate
             sleep 30
           fi
           sleep 5
