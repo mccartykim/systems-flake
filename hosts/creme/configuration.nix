@@ -298,7 +298,7 @@
   };
 
   # X server with `startx` only — no display manager.
-  # i3 is the WM; auto-launches emacsclient + xterm(tmux) on workspace 1.
+  # i3 is the WM; auto-launches emacsclient on workspace 1.
   services.xserver = {
     enable = true;
     displayManager.startx.enable = true;
@@ -338,8 +338,9 @@
     end
   '';
 
-  # Default i3 config — emacsclient + xterm(tmux) auto-spawn on
-  # workspace 1, vim-style focus keys, BlexMono font.
+  # Default i3 config — emacsclient auto-spawns on workspace 1, plain
+  # uxterm via $mod+Return (tmux started manually inside), vim-style
+  # focus keys, BlexMono font.
   # The activation script below removes ~/.config/i3/config if it's the
   # wizard-generated default (which shadows /etc/i3/config).
   environment.etc."i3/config".text = ''
@@ -351,8 +352,10 @@
     # a standalone emacs that steals the server socket from the daemon.
     exec --no-startup-id sh -c 'while ! emacsclient -e t >/dev/null 2>&1; do sleep 1; done; emacsclient -c'
 
-    # Launchers
-    bindsym $mod+Return exec uxterm -e tmux new-session -A -s main
+    # Launchers — plain uxterm; start tmux yourself inside it.
+    # (Previously `uxterm -e tmux new-session -A -s main`, which made
+    # every terminal attach to the same `main` session.)
+    bindsym $mod+Return exec uxterm
     bindsym $mod+e exec emacsclient -c
     bindsym $mod+d exec dmenu_run -fn 'BlexMono Nerd Font Mono-10'
 
