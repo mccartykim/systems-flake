@@ -79,6 +79,16 @@
 (setq user-full-name "Kimberly McCarty"
       user-mail-address "kimb@kimb.dev")
 
+;; Use a POSIX shell internally. creme's login shell is fish, which
+;; doom doctor flags as non-POSIX — it can break Emacs utilities that
+;; spawn child processes (diff-hl TRAMP, term shells, etc.). Keep fish
+;; as the interactive shell inside terminal emulators via
+;; vterm-shell/explicit-shell-file-name, but use bash for
+;; shell-command/compile/call-process.
+(setq shell-file-name (executable-find "bash")
+      vterm-shell "/run/current-system/sw/bin/fish"
+      explicit-shell-file-name "/run/current-system/sw/bin/fish")
+
 ;; GPG/pinentry - use Qt dialog, passphrase cached by gpg-agent
 (setq epa-file-select-keys nil)     ; Don't prompt for key selection
 (setq epa-pinentry-mode 'ask)       ; Use system pinentry (Qt dialog)
