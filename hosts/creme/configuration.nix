@@ -120,6 +120,26 @@
     gnupg
     # Spellcheck for doom's :checkers spell module
     (pkgs.hunspell.withDicts (dicts: [dicts.en_US]))
+    # External binaries doom doctor flags as missing. These are not
+    # elisp packages — nix-doom-emacs-unstraightened bakes the elisp
+    # into the emacs closure, but doom modules also shell out to
+    # these tools, and the systemd-spawned daemon's exec-path only
+    # sees /run/current-system/sw/bin. Put them here so doom doctor
+    # stops warning and the features actually work.
+    #   nixfmt      — :lang nix (nix-format-buffer)
+    #   shellcheck  — :lang sh (script linting)
+    #   xclip/maim  — :lang org (org-download-clipboard)
+    #   graphviz    — :lang org (org-roam graph viz; provides `dot`)
+    #   imagemagick — :email mu4e (LaTeX fragment rescale; `identify`)
+    #   discount    — :lang markdown (provides `markdown` compiler;
+    #                markdown-preview won't work without it)
+    nixfmt
+    shellcheck
+    xclip
+    maim
+    graphviz
+    imagemagick
+    discount
     # acpi + brightnessctl already provided by laptop profile
     git
     gh
@@ -461,9 +481,15 @@
 
   # Fonts. Blex Mono Nerd Font as primary; Google monochrome emoji noto
   # so emoji render cleanly without dragging in colored fallback bitmaps.
+  # Symbola is doom's fallback symbol font (avoids the render-failure
+  # crash/slowdown doom doctor warns about); nerd-fonts.symbols-only
+  # provides the "Symbols Nerd Font Mono" family doom's nerd-icons
+  # needs for modeline/completion icons.
   fonts.packages = with pkgs; [
     nerd-fonts.blex-mono
+    nerd-fonts.symbols-only
     noto-fonts-monochrome-emoji
+    symbola
   ];
   fonts.fontconfig.defaultFonts = {
     monospace = ["BlexMono Nerd Font Mono"];
