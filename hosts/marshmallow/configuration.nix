@@ -49,9 +49,17 @@
 
     kernelPackages = pkgs.linuxKernel.packages.linux_6_18;
 
-    # Disable Intel Panel Self Refresh - fixes Wayland freezes on KWin
-    # See: https://wiki.archlinux.org/title/Intel_graphics
-    kernelParams = ["i915.enable_psr=0"];
+    # i915: Disable Panel Self Refresh - fixes Wayland freezes on KWin
+    #   https://wiki.archlinux.org/title/Intel_graphics
+    # nvme: Disable APST. The SPCC budget SSD misreports its power-state
+    #   latency table; the controller sleeps between commands and stalls writes
+    #   on wake, causing the periodic whole-system freezes (kernel logs
+    #   "nvme ... timeout, aborting req_op:WRITE"; diskstats shows ~100% busy
+    #   with ~0 ops during the stall).
+    kernelParams = [
+      "i915.enable_psr=0"
+      "nvme_core.default_ps_max_latency_us=0"
+    ];
 
     # systemd initrd
     initrd.systemd.enable = true;
