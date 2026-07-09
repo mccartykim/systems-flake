@@ -115,12 +115,7 @@
 
   networking.hostName = "cheesecake";
 
-  services.syncthing = {
-    enable = true;
-    openDefaultPorts = true;
-    user = "kimb";
-    dataDir = "/home/kimb";
-  };
+  kimb.syncthing.enable = true;
 
   fonts.packages = with pkgs; [
     nerd-fonts.symbols-only

@@ -59,6 +59,10 @@ in {
   # Restic backup to shared B2 repo
   kimb.restic.enable = true;
 
+  # Syncthing — shared config via kimb.syncthing module (guiAddress dropped:
+  # was 0.0.0.0:8384; default localhost:8384 is fine, reach via Nebula/SSH tunnel)
+  kimb.syncthing.enable = true;
+
   # Centralized observability — DISABLED: too noisy, low value for now
   # kimb.observability.enable = true;
 
@@ -200,14 +204,6 @@ in {
       config = {
         LISTEN_ADDR = "0.0.0.0:8080";
       };
-    };
-
-    syncthing = {
-      enable = true;
-      openDefaultPorts = true;
-      user = "kimb";
-      dataDir = "/home/kimb";
-      guiAddress = "0.0.0.0:8384";
     };
 
     # Tailscale with server routing

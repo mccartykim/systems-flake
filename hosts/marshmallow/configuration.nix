@@ -38,6 +38,9 @@
       enable = true;
       openToPersonalDevices = true;
     };
+
+    # Syncthing — shared config via kimb.syncthing module
+    syncthing.enable = true;
   };
 
   # Power management - use laptop profile's auto-cpufreq defaults
@@ -180,13 +183,6 @@
       enable = true;
       host = "0.0.0.0"; # Bind to all interfaces
       openFirewall = true; # Open port 11434
-    };
-
-    syncthing = {
-      enable = true;
-      openDefaultPorts = true;
-      user = "kimb";
-      dataDir = "/home/kimb";
     };
   };
 

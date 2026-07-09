@@ -94,13 +94,7 @@
 
   # Syncthing for syncing writing across devices.
   # First-run: web UI on http://creme.nebula:8384 to pair folders/devices.
-  services.syncthing = {
-    enable = true;
-    user = "kimb";
-    dataDir = "/home/kimb";
-    configDir = "/home/kimb/.config/syncthing";
-    openDefaultPorts = true;
-  };
+  kimb.syncthing.enable = true;
 
   # Neovim with vimwiki preloaded; init.lua is yours to write.
   programs.neovim = {

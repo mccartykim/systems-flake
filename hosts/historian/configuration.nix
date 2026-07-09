@@ -32,6 +32,9 @@
     # ./buildbot-worker.nix
   ];
 
+  # Syncthing — shared config via kimb.syncthing module
+  kimb.syncthing.enable = true;
+
   # External media drive (exFAT — ownership set at mount time)
   fileSystems."/mnt/media-drive" = {
     device = "/dev/disk/by-uuid/4A44-E68C";
@@ -441,13 +444,6 @@
       environment = {
         OLLAMA_BASE_URL = "http://127.0.0.1:11434";
       };
-    };
-
-    syncthing = {
-      enable = true;
-      openDefaultPorts = true;
-      user = "kimb";
-      dataDir = "/home/kimb";
     };
 
     # Enable Sunshine for game streaming

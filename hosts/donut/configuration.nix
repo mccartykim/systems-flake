@@ -72,12 +72,7 @@
     settings.PasswordAuthentication = false;
   };
 
-  services.syncthing = {
-    enable = true;
-    openDefaultPorts = true;
-    user = "kimb";
-    dataDir = "/home/kimb";
-  };
+  kimb.syncthing.enable = true;
 
   # Network configuration
   networking = {

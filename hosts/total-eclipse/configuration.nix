@@ -120,13 +120,7 @@
     user = "kimb";
   };
 
-  services.syncthing = {
-    enable = true;
-    openDefaultPorts = true;
-    user = "kimb";
-    dataDir = "/home/kimb";
-    configDir = "/home/kimb/.config/syncthing";
-  };
+  kimb.syncthing.enable = true;
 
   # NVIDIA graphics hardware configuration
   services.xserver.videoDrivers = ["nvidia"];
