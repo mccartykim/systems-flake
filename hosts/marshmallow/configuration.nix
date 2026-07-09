@@ -79,6 +79,18 @@
     };
   };
 
+  # throttled 0.12 imports dbus_next, but nixpkgs' package.nix lists only
+  # dbus-python in pythonPath -> "ModuleNotFoundError: No module named 'dbus_next'".
+  # Upstream packaging bug, present even at nixpkgs-unstable tip. Add the missing
+  # dep here until nixpkgs ships the fix.
+  nixpkgs.overlays = [
+    (final: prev: {
+      throttled = prev.throttled.overrideAttrs (old: {
+        pythonPath = old.pythonPath ++ [final.python3Packages.dbus-next];
+      });
+    })
+  ];
+
   # Network configuration
   networking = {
     # Host identification
