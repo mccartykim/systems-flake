@@ -287,9 +287,10 @@
     };
   };
 
-  # ponytail: poll top-RSS procs every 60s into the journal so a future
-  # hard-reset leaves evidence of what ate the RAM (the journal can't show
-  # per-process RSS post-mortem on its own). Query: journalctl -u mem-hog-log
+  # Poll top-RSS procs every 60s into the journal so a future hard-reset leaves
+  # evidence of what ate the RAM (the journal can't show per-process RSS
+  # post-mortem on its own; systemd-oomd only logs the kill, not the buildup).
+  # Permanent fixture. Query: journalctl -u mem-hog-log
   systemd.services.mem-hog-log = {
     description = "Snapshot top RSS processes for post-crash diagnosis";
     serviceConfig = {
