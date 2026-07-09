@@ -116,6 +116,7 @@
   networking.hostName = "cheesecake";
 
   kimb.syncthing.enable = true;
+  kimb.zaiApiKey.enable = true;
 
   fonts.packages = with pkgs; [
     nerd-fonts.symbols-only
@@ -145,14 +146,6 @@
       }
     ];
     ensureDefaultPrinter = "Brother-HL-L2400D";
-  };
-
-  # z.ai API key for the claude-zai wrapper (home/modules/ai-tools.nix).
-  # Read at exec-time by the wrapper from /run/agenix/zai-api-key.
-  age.secrets.zai-api-key = {
-    file = ../../secrets/zai-api-key.age;
-    owner = "kimb";
-    mode = "0400";
   };
 
   # Additional packages for kimb (user defined in base.nix)

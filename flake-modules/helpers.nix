@@ -51,6 +51,7 @@ in {
       (self + "/modules/observability.nix")
       (self + "/modules/syncthing.nix")
       (self + "/modules/maitred-nameservers.nix")
+      (self + "/modules/zai-api-key.nix")
       # kimb.* option declarations + per-host service auto-injection
       (self + "/modules/kimb-services.nix")
       (self + "/services/default.nix")

@@ -63,6 +63,7 @@ in {
   # was 0.0.0.0:8384; default localhost:8384 is fine, reach via Nebula/SSH tunnel)
   kimb.syncthing.enable = true;
   kimb.maitredNameservers.enable = true;
+  kimb.zaiApiKey.enable = true;
 
   # Centralized observability — DISABLED: too noisy, low value for now
   # kimb.observability.enable = true;
@@ -255,13 +256,6 @@ in {
       enable = true;
       enableSSHSupport = true;
     };
-  };
-
-  # z.ai API key for the claude-zai wrapper.
-  age.secrets.zai-api-key = {
-    file = ../../secrets/zai-api-key.age;
-    owner = "kimb";
-    mode = "0400";
   };
 
   # Server-specific packages and environment

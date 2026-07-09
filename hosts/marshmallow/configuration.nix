@@ -41,6 +41,9 @@
 
     # Syncthing — shared config via kimb.syncthing module
     syncthing.enable = true;
+
+    # z.ai API key for the claude-zai wrapper — shared via kimb.zaiApiKey module.
+    zaiApiKey.enable = true;
   };
 
   # Power management - use laptop profile's auto-cpufreq defaults
@@ -313,14 +316,6 @@
 
   # Trusted users for nix
   nix.settings.trusted-users = ["root" "kimb"];
-
-  # z.ai API key for the claude-zai wrapper (home/modules/ai-tools.nix).
-  # Read at exec-time by the wrapper from /run/agenix/zai-api-key.
-  age.secrets.zai-api-key = {
-    file = ../../secrets/zai-api-key.age;
-    owner = "kimb";
-    mode = "0400";
-  };
 
   system.stateVersion = "24.11";
 }

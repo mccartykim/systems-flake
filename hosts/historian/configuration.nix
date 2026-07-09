@@ -35,6 +35,7 @@
   # Syncthing — shared config via kimb.syncthing module
   kimb.syncthing.enable = true;
   kimb.maitredNameservers.enable = true;
+  kimb.zaiApiKey.enable = true;
 
   # External media drive (exFAT — ownership set at mount time)
   fileSystems."/mnt/media-drive" = {
@@ -489,13 +490,6 @@
     path = "/run/agenix/rclone-config";
     mode = "0400";
     owner = "kimb";
-  };
-
-  # z.ai API key for the claude-zai wrapper (home/modules/ai-tools.nix).
-  age.secrets.zai-api-key = {
-    file = ../../secrets/zai-api-key.age;
-    owner = "kimb";
-    mode = "0400";
   };
 
   # Jellyfin API key for media-classifier library rescan trigger
