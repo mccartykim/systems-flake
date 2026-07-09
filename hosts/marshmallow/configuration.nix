@@ -15,6 +15,7 @@
     ../profiles/desktop.nix
     ../profiles/laptop.nix
     ../profiles/gaming.nix
+    ../profiles/brother-printer.nix
 
     # Nebula mesh network (consolidated module)
     ../../modules/nebula-node.nix
@@ -221,19 +222,6 @@
     pkgs.brgenml1lpr
     pkgs.brgenml1cupswrapper
   ];
-
-  hardware.printers = {
-    ensurePrinters = [
-      {
-        name = "Brother-HL-L2400D";
-        description = "Brother HL-L2400D Laser Printer";
-        location = "Living Room";
-        deviceUri = "ipp://maitred.nebula:631/printers/Brother-HL-L2400D";
-        model = "everywhere";
-      }
-    ];
-    ensureDefaultPrinter = "Brother-HL-L2400D";
-  };
 
   # ensure-printers needs nebula for maitred.nebula DNS
   systemd.services.ensure-printers = {

@@ -7,6 +7,7 @@
     ./hardware-configuration.nix
     ../profiles/base.nix
     ../profiles/desktop.nix
+    ../profiles/brother-printer.nix
     ../../modules/nebula-node.nix
     ../../modules/restic-backup.nix
   ];
@@ -133,19 +134,6 @@
       pkgs.brgenml1lpr
       pkgs.brgenml1cupswrapper
     ];
-  };
-
-  hardware.printers = {
-    ensurePrinters = [
-      {
-        name = "Brother-HL-L2400D";
-        description = "Brother HL-L2400D Laser Printer";
-        location = "Living Room";
-        deviceUri = "ipp://maitred.nebula:631/printers/Brother-HL-L2400D";
-        model = "everywhere";
-      }
-    ];
-    ensureDefaultPrinter = "Brother-HL-L2400D";
   };
 
   # Additional packages for kimb (user defined in base.nix)
