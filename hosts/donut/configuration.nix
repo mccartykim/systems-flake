@@ -73,18 +73,11 @@
   };
 
   kimb.syncthing.enable = true;
+  kimb.maitredNameservers.enable = true;
 
   # Network configuration
   networking = {
     hostName = "donut";
-
-    # Use maitred router for DNS
-    nameservers = let
-      registry = import ../nebula-registry.nix;
-    in [
-      registry.nodes.maitred.ip # maitred router via Nebula
-      "1.1.1.1" # Fallback
-    ];
 
     # Steam Remote Play and Sunshine streaming
     firewall = {

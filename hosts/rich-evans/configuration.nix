@@ -62,6 +62,7 @@ in {
   # Syncthing — shared config via kimb.syncthing module (guiAddress dropped:
   # was 0.0.0.0:8384; default localhost:8384 is fine, reach via Nebula/SSH tunnel)
   kimb.syncthing.enable = true;
+  kimb.maitredNameservers.enable = true;
 
   # Centralized observability — DISABLED: too noisy, low value for now
   # kimb.observability.enable = true;
@@ -288,13 +289,6 @@ in {
 
   # Firewall configuration
   #
-  networking.nameservers = let
-    registry = import ../nebula-registry.nix;
-  in [
-    registry.nodes.maitred.ip # maitred router via Nebula
-    "1.1.1.1" # Fallback
-  ];
-
   networking.firewall = {
     allowedTCPPorts = [
       9001 # Existing service

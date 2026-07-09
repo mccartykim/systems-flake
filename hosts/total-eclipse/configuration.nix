@@ -89,14 +89,6 @@
       policy = ["magic" "unicast"];
     };
 
-    # Use maitred router for DNS
-    nameservers = let
-      registry = import ../nebula-registry.nix;
-    in [
-      registry.nodes.maitred.ip # maitred router via Nebula
-      "1.1.1.1" # Fallback
-    ];
-
     # Extended firewall configuration for streaming
     firewall = {
       allowedTCPPorts = [47984 47989 47990 48000 48010];
@@ -121,6 +113,7 @@
   };
 
   kimb.syncthing.enable = true;
+  kimb.maitredNameservers.enable = true;
 
   # NVIDIA graphics hardware configuration
   services.xserver.videoDrivers = ["nvidia"];

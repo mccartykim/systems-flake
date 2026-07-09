@@ -50,6 +50,7 @@ in {
       (self + "/modules/sre-agent.nix")
       (self + "/modules/observability.nix")
       (self + "/modules/syncthing.nix")
+      (self + "/modules/maitred-nameservers.nix")
       # kimb.* option declarations + per-host service auto-injection
       (self + "/modules/kimb-services.nix")
       (self + "/services/default.nix")

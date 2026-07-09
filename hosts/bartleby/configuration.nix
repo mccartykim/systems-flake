@@ -69,12 +69,7 @@
   environment.shells = [pkgs.fish];
 
   # Use maitred router for DNS
-  networking.nameservers = let
-    registry = import ../nebula-registry.nix;
-  in [
-    registry.nodes.maitred.ip # maitred router via Nebula
-    "1.1.1.1" # Fallback
-  ];
+  kimb.maitredNameservers.enable = true;
 
   # Printing via maitred (IPP Everywhere - server handles rendering)
   hardware.printers = {

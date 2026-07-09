@@ -34,6 +34,7 @@
 
   # Syncthing — shared config via kimb.syncthing module
   kimb.syncthing.enable = true;
+  kimb.maitredNameservers.enable = true;
 
   # External media drive (exFAT — ownership set at mount time)
   fileSystems."/mnt/media-drive" = {
@@ -140,14 +141,6 @@
       enable = true;
       policy = ["magic" "unicast"];
     };
-
-    # Use maitred router for DNS
-    nameservers = let
-      registry = import ../nebula-registry.nix;
-    in [
-      registry.nodes.maitred.ip # maitred router via Nebula
-      "1.1.1.1" # Fallback
-    ];
 
     # Extended firewall configuration for streaming
     firewall = {
