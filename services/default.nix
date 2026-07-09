@@ -229,8 +229,11 @@
         publicAccess = true;
         websockets = true;
       };
+      # buildbot master+worker disabled 2026-06-22 (abandoned the buildbot-nix
+      # effort vs private-repo flake inputs). Entry kept disabled so the
+      # buildbot.kimb.dev DNS record + Caddy vhost stop pointing at nothing.
       buildbot = {
-        enable = true;
+        enable = false;
         port = 80;
         subdomain = "buildbot";
         host = "rich-evans";
