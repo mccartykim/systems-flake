@@ -20,3 +20,6 @@ secrets/.age-recipients.backup
 
 # direnv
 .direnv/
+
+# marimo notebook cache
+__marimo__/

@@ -28,4 +28,4 @@ for host in $MACHINES; do
 done
 
 echo "Recipients file created at $RECIPIENTS_FILE"
-echo "Next: Run ./scripts/encrypt-nebula-certs.sh"
+echo "Next: nix run .#generate-nebula-certs"
