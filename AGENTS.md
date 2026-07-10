@@ -22,11 +22,11 @@ bd sync               # Sync with git
 2. **Run quality gates** (if code changed) - Tests, linters, builds
 3. **Update issue status** - Close finished work, update in-progress items
 4. **PUSH TO REMOTE** - This is MANDATORY:
+   This repo uses Jujutsu (jj), not plain git — plain `git push` will not push the working-copy commit.
    ```bash
-   git pull --rebase
-   bd sync
-   git push
-   git status  # MUST show "up to date with origin"
+   jj describe -m "message"
+   jj bookmark set main -r @
+   jj git push
    ```
 5. **Clean up** - Clear stashes, prune remote branches
 6. **Verify** - All changes committed AND pushed

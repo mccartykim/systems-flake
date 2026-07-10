@@ -102,7 +102,7 @@ kimb.services.<name> = {
 
 ### 4.1 Helper Functions
 
-Defined in `flake.nix`:
+Defined in `flake-modules/helpers.nix` (consumed via the flake lib attribute):
 
 **mkDesktop** - Desktop/laptop configurations
 ```nix
@@ -112,7 +112,7 @@ mkDesktop {
   extraModules?   : [module]        # Additional modules
   hardwareModules?: [module]        # Hardware-specific modules
   homeConfig?     : path            # Default: ./home/${hostname}.nix
-  useGlobalPkgs?  : bool            # Default: false
+  useGlobalPkgs?  : bool            # Default: true
 }
 ```
 
@@ -220,8 +220,8 @@ Colmena uses Nebula IPs from the registry via `${hostname}.nebula` DNS.
 ┌─────────────────────────────────────────────────────────────┐
 │                     Nebula Mesh (10.100.0.0/16)             │
 │                                                              │
-│  lighthouse ─────────────────────────────────────────────   │
-│  (10.100.0.1)                                               │
+│  lighthouse (oracle, 10.100.0.2) ─────────────────────────  │
+│  lighthouse/relay (maitred, 10.100.0.50) ─────────────────  │
 │       │                                                      │
 │       ├── historian (10.100.0.10) [desktop]                 │
 │       ├── total-eclipse (10.100.0.6) [desktop]              │

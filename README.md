@@ -86,7 +86,7 @@ All machines are connected via a [Nebula](https://github.com/slackhq/nebula) mes
 The annoying part is that nebula certs need the host's SSH pubkey, which doesn't exist until after first install. So this is a two-pass dance:
 
 1. Add the host to `hosts/nebula-registry.nix` — IP, groups (e.g. `["laptops" "nixos"]`), `publicKey = null` for now. The registry's the source of truth; everything else derives from it.
-2. Wire it up in `flake-modules/nixos-configurations.nix`. Most hosts go through the `mkDesktop` / `mkServer` helpers in `flake-modules/helpers.nix`. The weird ones (donut on Jovian, maitred the router, mochi on AVF) call `nixpkgs.lib.nixosSystem` themselves.
+2. Wire it up in `flake-modules/nixos-configurations.nix`. Most hosts go through the `mkDesktop` / `mkServer` helpers in `flake-modules/helpers.nix`. The weird ones (donut on Jovian, maitred the router, creme (writerdeck)) call `nixpkgs.lib.nixosSystem` themselves.
 3. First deploy without nebula. Install NixOS however, copy this flake in, `nixos-rebuild switch --flake .#<host>`. Most things come up; nebula won't because there's no cert yet, that's fine.
 4. Run `./scripts/collect-age-keys.sh` to grab the new host's SSH host pubkey. Paste it into the registry's `publicKey` field.
 5. `nix run .#generate-nebula-certs` — wants my YubiKey to decrypt the CA. Outputs per-host certs/keys re-encrypted against each host's SSH pubkey.

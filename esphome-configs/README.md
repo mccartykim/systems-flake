@@ -12,8 +12,7 @@ Declarative firmware configurations for ESP32-CAM devices, managed with Nix.
 
 2. **Generate API encryption key:**
    ```bash
-   nix run nixpkgs#esphome -- \
-     esphome-configs/esp32-cam-01.yaml config
+   openssl rand -hex 16
    ```
    Copy the generated encryption key to `secrets.yaml`
 
@@ -58,18 +57,6 @@ After initial flash, update over WiFi:
 ```bash
 nix run nixpkgs#esphome -- \
   run esphome-configs/esp32-cam-01.yaml --device esp32-cam-01.local
-```
-
-## Integration with go2rtc
-
-After flashing, add to rich-evans go2rtc configuration:
-
-```nix
-services.go2rtc.settings.streams = {
-  camera1 = ["ffmpeg:/dev/video0#video=h264"];
-  camera2 = ["ffmpeg:/dev/video1#video=h264"];
-  esp32cam1 = ["http://esp32-cam-01.local"];  # ESPHome stream
-};
 ```
 
 ## Accessing Camera
