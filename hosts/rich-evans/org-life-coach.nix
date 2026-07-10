@@ -53,7 +53,6 @@
     discordBotTokenFile = config.age.secrets.discord-life-coach-token.path;
 
     # Gemini vision (unused — images go directly to Ollama as multimodal)
-    # geminiApiKeyFile = config.age.secrets.gemini-life-coach-key.path;
   };
 
   # Extra environment for org-life-coach service

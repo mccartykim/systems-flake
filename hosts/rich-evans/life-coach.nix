@@ -1,8 +1,7 @@
-# Life Coach Agent (claude_yapper) — DISABLED
-# Replaced by org-life-coach. Keeping this file for the dashboard and
-# user/group config (shared with org-life-coach) until full migration.
-#
-# To remove entirely: delete this file and its import in nixos-configurations.nix
+# Shared agenix secrets + tmpfiles for the life-coach agent stack
+# (org-life-coach + lifecoach-organism + vacuum-organism). The agent
+# services themselves are configured in their host files; this just
+# holds the cross-service secrets and the state-dir permissions.
 {
   config,
   lib,
@@ -42,13 +41,6 @@
     mode = "0400";
   };
 
-  # Gemini API key for life-coach vision
-  age.secrets.gemini-life-coach-key = {
-    file = ../../secrets/gemini-life-coach-key.age;
-    owner = "life-coach";
-    mode = "0400";
-  };
-
   # User and group are now created by org-life-coach module.
   # Keep these here as lib.mkDefault so they don't conflict.
 
@@ -59,9 +51,6 @@
     "z /var/lib/life-coach-agent/state.db-wal 0660 life-coach life-coach -"
     "z /var/lib/life-coach-agent/state.db-shm 0660 life-coach life-coach -"
   ];
-
-  # Old claude_yapper service — DISABLED
-  services.life-coach-agent.enable = false;
 
   # Open port for TTS audio serving to Chromecast devices
   networking.firewall.allowedTCPPorts = [8555];

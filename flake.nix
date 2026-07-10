@@ -68,9 +68,6 @@
     knitwork-frontend.url = "git+ssh://git@github.com/mccartykim/knitwork_frontend.git";
     knitwork-frontend.flake = false;
 
-    claude_yapper.url = "git+ssh://git@github.com/mccartykim/claude-alarmclock-agent.git";
-    claude_yapper.inputs.nixpkgs.follows = "nixpkgs";
-
     # Kokoro TTS - local flake for now (has working build)
     kokoro.url = "git+ssh://git@github.com/mccartykim/kokoro-flake.git";
     kokoro.inputs.nixpkgs.follows = "nixpkgs";
@@ -79,7 +76,7 @@
     media-classifier.url = "git+ssh://git@github.com/mccartykim/media-classifier.git";
     media-classifier.inputs.nixpkgs.follows = "nixpkgs";
 
-    # org-agent + org-life-coach (replaces claude_yapper life-coach)
+    # org-agent + org-life-coach (life-coach agent stack)
     org-agent.url = "git+ssh://git@github.com/mccartykim/org-agent.git";
     org-agent.inputs.nixpkgs.follows = "nixpkgs";
     org-life-coach = {

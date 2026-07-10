@@ -5,7 +5,7 @@
   self,
   ...
 }: let
-  inherit (inputs) nixpkgs nixos-hardware nixos-facter-modules copyparty nil-flake claude_yapper media-classifier org-life-coach lifecoach-organism vacuum-organism org-crm;
+  inherit (inputs) nixpkgs nixos-hardware nixos-facter-modules copyparty nil-flake media-classifier org-life-coach lifecoach-organism vacuum-organism org-crm;
   inherit (config.flake.lib) mkDesktop mkServer mkHomeManager commonModules;
 in {
   flake.nixosConfigurations = {
@@ -92,7 +92,6 @@ in {
       hostname = "rich-evans";
       extraModules = [
         copyparty.nixosModules.default
-        claude_yapper.nixosModules.default
         org-life-coach.nixosModules.default
         lifecoach-organism.nixosModules.default
         vacuum-organism.nixosModules.default
