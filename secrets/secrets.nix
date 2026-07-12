@@ -139,5 +139,16 @@ in
     # hosts/rich-evans/knitwork-bff.nix. Generated with the knitwork repo's
     # bff/cmd/genkey, then age-encrypted to rich-evans + bootstrap here.
     "knit-bff-client-key.age".publicKeys = [hostKeys.rich-evans bootstrap];
+
+    # ===== BORGES (rich-evans) =====
+    # systemd EnvironmentFile for the borges ebook server: BORGES_ADMIN_PASS
+    # (required), BORGES_APP_PASS_KEY (pepper for app-passwords/sessions — lives
+    # outside the DB so a DB leak alone can't forge a session or brute-force a
+    # PIN), BORGES_BASE_URL (https://borges.kimb.dev -> Secure session cookie).
+    # The values are never in any repo/flake — only this encrypted file.
+    # Decrypted on rich-evans via its SSH host key; consumed through
+    # services.borges.environmentFile -> systemd EnvironmentFile=. See
+    # hosts/rich-evans/borges.nix.
+    "borges-env.age".publicKeys = [hostKeys.rich-evans bootstrap];
   }
   // allNebulaSecrets

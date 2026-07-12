@@ -102,6 +102,7 @@ in {
         org-crm.nixosModules.default
         (self + "/hosts/rich-evans/org-crm.nix")
         (self + "/hosts/rich-evans/email-digest.nix")
+        (self + "/hosts/rich-evans/borges.nix")
         # Buildbot master — DISABLED 2026-06-22 (gave up on buildbot-nix
         # fighting private-repo flake inputs; may revisit a different CI
         # scheme later). Re-enable by uncommenting; the module file

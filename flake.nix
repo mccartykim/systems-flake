@@ -76,6 +76,13 @@
     media-classifier.url = "git+ssh://git@github.com/mccartykim/media-classifier.git";
     media-classifier.inputs.nixpkgs.follows = "nixpkgs";
 
+    # Borges — EPUB-first ebook server (Go). NixOS module + package live in the
+    # flake; systems-flake runs it as a host service on rich-evans and reverse-
+    # proxies via maitred at borges.kimb.dev (services.borges.*). Same git+ssh
+    # convention as knitwork/media-classifier.
+    borges.url = "git+ssh://git@github.com/mccartykim/borges_book_warehouse.git";
+    borges.inputs.nixpkgs.follows = "nixpkgs";
+
     # org-agent + org-life-coach (life-coach agent stack)
     org-agent.url = "git+ssh://git@github.com/mccartykim/org-agent.git";
     org-agent.inputs.nixpkgs.follows = "nixpkgs";

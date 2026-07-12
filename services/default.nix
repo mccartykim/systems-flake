@@ -76,6 +76,21 @@
         publicAccess = false;
         websockets = false;
       };
+      # Borges — EPUB-first ebook server. Runs HERE as a host service (see
+      # hosts/rich-evans/borges.nix, which imports the borges flake's NixOS
+      # module). maitred only reverse-proxies to it (the duplicate `borges`
+      # entry under the maitred bucket below, with host = "rich-evans" and no
+      # containerIP, drives Caddy's vhost + maitred's socat forwarder to this
+      # host's Nebula IP:port).
+      borges = {
+        enable = true;
+        port = 7171;
+        subdomain = "borges";
+        host = "rich-evans";
+        auth = "none";
+        publicAccess = true;
+        websockets = false;
+      };
     };
 
     # Historian services (the beefy always-on Beelink)
@@ -249,6 +264,24 @@
         subdomain = "coach";
         host = "rich-evans";
         auth = "authelia";
+        publicAccess = true;
+        websockets = false;
+      };
+      # Borges — EPUB-first ebook server, running on rich-evans. No containerIP:
+      # borges runs on rich-evans (the `borges` entry under the rich-evans
+      # bucket above), not as a maitred container. This entry exists only so
+      # maitred's reverse-proxy generates the borges.kimb.dev vhost and the
+      # socat forwarder (containerBridge:7171 -> rich-evans Nebula
+      # 10.100.0.40:7171) engages via the `host != "maitred"` filter.
+      # auth = "none": borges does its own HTTP Basic + session auth; an
+      # Authelia gate would break the e-reader clients (KOReader/CrossPoint
+      # speak Basic + x-auth-user, not an interactive SSO flow).
+      borges = {
+        enable = true;
+        port = 7171;
+        subdomain = "borges";
+        host = "rich-evans";
+        auth = "none";
         publicAccess = true;
         websockets = false;
       };
