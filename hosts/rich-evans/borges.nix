@@ -38,6 +38,13 @@ in {
     libraryRoots = ["/mnt/seagate/borges/lib"];
     databasePath = "/var/lib/borges/borges.db";
     adminUser = "admin";
+    # maitred's socat forwarder is the immediate peer borges sees
+    # (RemoteAddr = 10.100.0.50, maitred's Nebula IP). Trusting its
+    # X-Forwarded-For (set by Caddy, passed through raw by socat) lets the
+    # auth-failure limiter key on each device's real IP instead of collapsing
+    # all proxied traffic onto one lockout bucket — which otherwise lets
+    # internet scanners 401-ing on non-borges paths lock out every real device.
+    trustedProxies = ["10.100.0.50"];
     # Secret env (age-encrypted to rich-evans's SSH host key + bootstrap, see
     # secrets/secrets.nix): BORGES_ADMIN_PASS (required), BORGES_APP_PASS_KEY
     # (pepper for app-passwords/sessions — outside the DB so a DB leak alone

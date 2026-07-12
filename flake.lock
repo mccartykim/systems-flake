@@ -99,11 +99,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1783853255,
-        "narHash": "sha256-jKq/WuaHiJk5kvr0i4okacvoK1rvYcYZ65WyPTZ1YEA=",
+        "lastModified": 1783859696,
+        "narHash": "sha256-1+dMhK/Q7x6tRnHaDzVvYmEa5hXMEWfcqKPxFjRE80c=",
         "ref": "refs/heads/main",
-        "rev": "9e74a8bd330d5fe354461056ce6cee46dba8419a",
-        "revCount": 11,
+        "rev": "86027ad969132b8fa7e7a139549af2c46909363a",
+        "revCount": 12,
         "type": "git",
         "url": "ssh://git@github.com/mccartykim/borges_book_warehouse.git"
       },
