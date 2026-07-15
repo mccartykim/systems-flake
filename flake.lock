@@ -120,11 +120,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1783231291,
-        "narHash": "sha256-iaoW3Enrb51mCT4AIixKXgkb1LdI/ikpCV9sV+zmkYU=",
+        "lastModified": 1783833875,
+        "narHash": "sha256-G+hRtNJ/Nnr6VFMQp2UZdx/ckJDR/RJoK0Fy/yx1/YY=",
         "owner": "nix-community",
         "repo": "buildbot-nix",
-        "rev": "d8a926f66587ed37df1a422205d7aeb1692700f8",
+        "rev": "147af587241e2af85399402da60a4f44fdb1e5d7",
         "type": "github"
       },
       "original": {
@@ -154,11 +154,11 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1783628189,
-        "narHash": "sha256-fve7atq5unVKIeMG5IXPsv9dS5wdL0/feHwQ8SLGCJo=",
+        "lastModified": 1783882035,
+        "narHash": "sha256-pkzLrA8E07RerGgaN3dkA7gy2NC+QEUeIHQuYUiDdEU=",
         "owner": "9001",
         "repo": "copyparty",
-        "rev": "12878e6c1cbf4417da42d46230dff686dd48760b",
+        "rev": "daee3e85001a7bb8716577e84b01aafce8f813bb",
         "type": "github"
       },
       "original": {
@@ -229,11 +229,11 @@
     "doomemacs": {
       "flake": false,
       "locked": {
-        "lastModified": 1783093997,
-        "narHash": "sha256-oIZAGdY1EYMWUyuHMSlLGk9Zv5iEYXigZ4v3bSgdr6c=",
+        "lastModified": 1783978047,
+        "narHash": "sha256-1Oo455PbIVW//LeOQebeefyF4iCHIkrTgFnaIN7cnN0=",
         "owner": "doomemacs",
-        "repo": "core",
-        "rev": "8e4fbbae048a9abe897bf1878cbd32732a6d41d7",
+        "repo": "doomemacs",
+        "rev": "d19a264ba857724608457c625d9cdece8c1c22b8",
         "type": "github"
       },
       "original": {
@@ -245,11 +245,11 @@
     "doomemacs-modules": {
       "flake": false,
       "locked": {
-        "lastModified": 1782931200,
-        "narHash": "sha256-jzC96RZXEVuGD+qdoTmuzd8PcrqnH+38B7jc6kVfTeQ=",
+        "lastModified": 1783655598,
+        "narHash": "sha256-BM0TGZjWqeHO+K1ENOENIziIMArMZ27SVhx+7mweOMU=",
         "owner": "doomemacs",
         "repo": "modules",
-        "rev": "7a3c5a14ec18b088183166dfab560000078e4bea",
+        "rev": "c8f828c08230c015e0ed55e317487f57639cfaa6",
         "type": "github"
       },
       "original": {
@@ -305,11 +305,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1783594576,
-        "narHash": "sha256-MBj5rWdvqGJftQ1GLaH7gI9MWZhD7TW/Lwjwc2D0LkQ=",
+        "lastModified": 1783941133,
+        "narHash": "sha256-2IWPXUpBVimmzeMgRbjOjZmSDxe3PFalOlJqDct1Pso=",
         "owner": "nix-community",
         "repo": "emacs-overlay",
-        "rev": "381117114ff001e4ab8a4c3b9996a628866380cf",
+        "rev": "4d1f8b51db1a1344a21f4ce26691032358ad80e6",
         "type": "github"
       },
       "original": {
@@ -343,11 +343,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1783564792,
-        "narHash": "sha256-+/Vq4eo3qc3rsraIeiN2+XjDh2oxGk/Mp9K3nXieKcw=",
+        "lastModified": 1784073330,
+        "narHash": "sha256-TJD3FcD0IPZ5nX5TQ731dSNG6+IrYFn6R+Oifcv4P4s=",
         "owner": "nix-community",
         "repo": "flake-firefox-nightly",
-        "rev": "830e1737a6d9b2beb4d7b9905df9921002cc78f3",
+        "rev": "e6800ddef5a38115db5b0c3d98bf7d8265ff2c5e",
         "type": "github"
       },
       "original": {
@@ -799,11 +799,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1783618078,
-        "narHash": "sha256-F43DGcBoIO8xOZFAfodg3jy0VghB9NGdb6xbTYAIx1A=",
+        "lastModified": 1783963347,
+        "narHash": "sha256-r376E2XpakiXwModDHIxlvB6qLq4iFVEq730vxOO4JY=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "144f4e36d0186195037da9fce80a727108978070",
+        "rev": "a45a7c451455a51ae740ec3bce4024b312809c29",
         "type": "github"
       },
       "original": {
@@ -858,11 +858,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1782503385,
-        "narHash": "sha256-9jMfgVGQg+pJXvjZ1CfhO7/ic0E04DNBtAFUtVhxV2c=",
+        "lastModified": 1783702388,
+        "narHash": "sha256-Yurb7qzpI1868I8L3XJfPOp1WDudSXUuLSgV+urQftc=",
         "ref": "refs/heads/main",
-        "rev": "34f5f8063b3ba88d234a29f14de8c73cd79fac41",
-        "revCount": 10,
+        "rev": "6c5345403ee1f930ffdc44559737676c6d78ee16",
+        "revCount": 13,
         "type": "git",
         "url": "ssh://git@github.com/mccartykim/knitwork.git"
       },
@@ -932,11 +932,11 @@
         "nixpkgs-lib": "nixpkgs-lib"
       },
       "locked": {
-        "lastModified": 1783259247,
-        "narHash": "sha256-BwUfzuMTIjJfIfQ633POzdHGyy6K8yXlObG7TNNvsiY=",
+        "lastModified": 1783862842,
+        "narHash": "sha256-ce7YKXi5QtoadOPoWt+nWzxo/+a+OxXuVnzVozKO+Z8=",
         "owner": "nix-community",
         "repo": "lib-aggregate",
-        "rev": "99bd70dc57c6e24feb6113c0b51d7750c029644f",
+        "rev": "5d5d26bea1c99929d6d99c9b9ad08813266f770f",
         "type": "github"
       },
       "original": {
@@ -954,11 +954,11 @@
         "organism": "organism"
       },
       "locked": {
-        "lastModified": 1783170581,
-        "narHash": "sha256-f8CrSMHDB6dkjjTKAZ6nRQxtYUU0bDeN6rRyHafoRYc=",
+        "lastModified": 1783702350,
+        "narHash": "sha256-+zBkQbH02xuKpbIux9Lc21vITqRWHZIm4u/AUNzsOGk=",
         "ref": "refs/heads/main",
-        "rev": "ad937064aa02436c0f9f311db86d17ff179c69f9",
-        "revCount": 123,
+        "rev": "02df900d5ae6d37cf880fdf2252553a93e276e43",
+        "revCount": 126,
         "type": "git",
         "url": "ssh://git@github.com/mccartykim/lifecoach_organism.git"
       },
@@ -996,11 +996,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1780192441,
-        "narHash": "sha256-GYiEihqgOhJEmh/QWQEZtghsmomaTSGtfaS9BSWDGbU=",
+        "lastModified": 1783702467,
+        "narHash": "sha256-58ByxxrvWDaiPIwwb0honKjViam2D3Oi3i/sB60BDkQ=",
         "ref": "refs/heads/main",
-        "rev": "a186c1b3fd20096a7cf1daf6402b5ef37377b81a",
-        "revCount": 31,
+        "rev": "6cb0d068624ba2def323a3b6af1066ced1bbe9c8",
+        "revCount": 34,
         "type": "git",
         "url": "ssh://git@github.com/mccartykim/mist-blog.git"
       },
@@ -1059,11 +1059,11 @@
         "systems": "systems_8"
       },
       "locked": {
-        "lastModified": 1783604036,
-        "narHash": "sha256-zBIrginoEy/uWoYd6qkkFs9xlU5/kFl8x4yZIQoBnC4=",
+        "lastModified": 1784034336,
+        "narHash": "sha256-jGqvP/nXeTab1BJlS+HNa9SPqG+w3arW9cUi0U7wjuw=",
         "owner": "marienz",
         "repo": "nix-doom-emacs-unstraightened",
-        "rev": "7f9a2e3bbbeae545790a270ccc2dfb38494d9f53",
+        "rev": "2672592e038bfcda9da3a2cd96a393f68d9b5616",
         "type": "github"
       },
       "original": {
@@ -1137,11 +1137,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1783414108,
-        "narHash": "sha256-RY8e+gR2/DhXsYDxGDL6Hhe9+POD9u4+llwxMBqMQDs=",
+        "lastModified": 1783864904,
+        "narHash": "sha256-BQxN5UMg9FOevAsgBRwPxfxlh51Puj+dNn/8Dsi3sPM=",
         "owner": "nix-community",
         "repo": "nix-index-database",
-        "rev": "96d6de10eb281b98f5cfcd1841394c03da5df77c",
+        "rev": "1111b9bc836afb7e31a7014e8d1272de9b1c917d",
         "type": "github"
       },
       "original": {
@@ -1191,11 +1191,11 @@
         "nixpkgs": "nixpkgs_5"
       },
       "locked": {
-        "lastModified": 1783582157,
-        "narHash": "sha256-EteIu2AVVbxzkBnBKjrbdknbpjxBkWTMNg02rXj4mgU=",
+        "lastModified": 1784100666,
+        "narHash": "sha256-HF/mrw5NYQfKFZgkfV2h1UL5/E3ccfsE2XJ1AbbLLJ0=",
         "owner": "NixOS",
         "repo": "nixos-hardware",
-        "rev": "968980fba2c290b5529025636474eae8457b854c",
+        "rev": "fccfa9031a85b78a437f2f153c1f6449f3bc3185",
         "type": "github"
       },
       "original": {
@@ -1222,11 +1222,11 @@
     },
     "nixpkgs-lib": {
       "locked": {
-        "lastModified": 1783217952,
-        "narHash": "sha256-lItVCcSNUiL9NlB0+VoZwhtZk+0jAnfjJjch1g7U0bM=",
+        "lastModified": 1783821755,
+        "narHash": "sha256-eMPX9S6MKPyUnaOgeRfrG7OKUiAlc1AlcRinMbSB0WA=",
         "owner": "nix-community",
         "repo": "nixpkgs.lib",
-        "rev": "830143f1e74a5ce8aa6cdad9c41ae84b73e8b3be",
+        "rev": "228ab8523d81526e57a6ca342e1a919fb6d246a8",
         "type": "github"
       },
       "original": {
@@ -1343,11 +1343,11 @@
     },
     "nixpkgs_6": {
       "locked": {
-        "lastModified": 1783279667,
-        "narHash": "sha256-/NAkDSsve+GNM0Bt6tleJdCGfsTlK89nPjkVOzZMo0s=",
+        "lastModified": 1783915482,
+        "narHash": "sha256-FmieJB8/OUvNxbkboi7+IGfIuSXY3nF/hZQm8kD0r50=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "f205b5574fd0cb7da5b702a2da51507b7f4fdd1b",
+        "rev": "6cdc7fc76e8bf7fde9fa43a849fcaaa70e230dee",
         "type": "github"
       },
       "original": {
@@ -1422,11 +1422,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1782032922,
-        "narHash": "sha256-+jLS0MdmB1RGGAZtZ23g1FvYcExTxAaAKIT4LmjG2bs=",
+        "lastModified": 1783702333,
+        "narHash": "sha256-ZsPjxL0BnjqNGY3gFA63mz5n0nyQel9GhZQ+zLq7AuA=",
         "ref": "refs/heads/main",
-        "rev": "0afe90d1a320f70f89e52a8b5918cf78a559c5fb",
-        "revCount": 15,
+        "rev": "53173389ad9204a04011f05f39fb4f1e67379992",
+        "revCount": 19,
         "type": "git",
         "url": "ssh://git@github.com/mccartykim/org-agent.git"
       },
@@ -1446,11 +1446,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1782029999,
-        "narHash": "sha256-BBIMcorp6qMszX/c68bkr9JsMgScFk598ko/xKco7tI=",
+        "lastModified": 1783702370,
+        "narHash": "sha256-Nj+fZi5AEKx9ZuZo8C0dwW/zDeECb93G6q8rPBTbWAE=",
         "ref": "refs/heads/main",
-        "rev": "6f70d00a4519ec92212a09b2b3206f73859e080b",
-        "revCount": 24,
+        "rev": "fed21ad52debcebcaa264d2b17af0f013f68182d",
+        "revCount": 28,
         "type": "git",
         "url": "ssh://git@github.com/mccartykim/org_crm.git"
       },
@@ -1470,11 +1470,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1782032954,
-        "narHash": "sha256-szFwfBQZk3ZYucNjgDpR7fN4c2LsZsZcYuei4tH5mRk=",
+        "lastModified": 1783702368,
+        "narHash": "sha256-LGUkTvGP8XWUiBUMv+09bgrrciCTH4ayXHHuhmEFwGI=",
         "ref": "refs/heads/main",
-        "rev": "33c8c118cae31bb4a037d0af59b05f69d1fe7ba5",
-        "revCount": 69,
+        "rev": "f9b49a4086e13584eab3d0f4d1c3652151e46991",
+        "revCount": 71,
         "type": "git",
         "url": "ssh://git@github.com/mccartykim/org-life-coach.git"
       },
@@ -1711,11 +1711,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1783564915,
-        "narHash": "sha256-FSJW7P6nv6QUbjMZvWvdfrwNEPHGkoQjqGNGnZL9qFU=",
+        "lastModified": 1783909676,
+        "narHash": "sha256-vv2nJXQerOPlhDbdPY6zhXwXXYEJL4+wUGAyyxe4ze0=",
         "owner": "nix-community",
         "repo": "srvos",
-        "rev": "cc4362a6bfb33523d7d19e587c8d99ca5a00b7d8",
+        "rev": "35119abd9f2a347af72e3b2b8b110d921e17bb2a",
         "type": "github"
       },
       "original": {
@@ -1744,11 +1744,11 @@
         "tinted-zed": "tinted-zed"
       },
       "locked": {
-        "lastModified": 1783358511,
-        "narHash": "sha256-/F85cBWvU8b2hpawuCog464065ZTJtdMgVPWwJ9yHjE=",
+        "lastModified": 1784059683,
+        "narHash": "sha256-q5MZrmKlg9A4ORx3EQcr7qkuidMU1gVZ+xJ3nCK+xgc=",
         "owner": "danth",
         "repo": "stylix",
-        "rev": "14814ef555d8148ab82eba5054e654cd9eae3a1f",
+        "rev": "c8ccc31f3ea29dc3eb5b54945e5eb549529491d6",
         "type": "github"
       },
       "original": {
@@ -2168,11 +2168,11 @@
         "vacuum-skills": "vacuum-skills"
       },
       "locked": {
-        "lastModified": 1782030098,
-        "narHash": "sha256-riI8eR5YYjeN1rixvrKwq0HJPeuY+8s2P/yMU84Btfc=",
+        "lastModified": 1783703841,
+        "narHash": "sha256-mkOphKeev88oKxCTZeKy6RIntn84jOHmGRNfk2P/RVo=",
         "ref": "refs/heads/main",
-        "rev": "47ab541de1f1faa13d2c60e62d8746abf65ec97f",
-        "revCount": 33,
+        "rev": "5bcf19c75b04ebbf448d10ce1c68e1bf73df0cea",
+        "revCount": 38,
         "type": "git",
         "url": "ssh://git@github.com/mccartykim/vacuum_organism.git"
       },
