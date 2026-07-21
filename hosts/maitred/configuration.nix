@@ -359,7 +359,29 @@ in {
       )
       cfg.services;
   in
-    lib.mapAttrs' mkProxyService remoteServices;
+    lib.mapAttrs' mkProxyService remoteServices
+    // {
+      # CUPS auto-generates a self-signed TLS cert whose SAN only covers DNS
+      # names (maitred, maitred.local, localhost) — no IP addresses. Phones
+      # adding the printer by IP over ipps://192.168.69.1:631 fail TLS
+      # hostname verification ("IP address mismatch") and the add times out;
+      # AirPrint/Bonjour via maitred.local works (it is in the SAN). cupsd
+      # serves maitred.crt for every SNI, so regenerating that one cert with
+      # LAN + Nebula IP SANs fixes the by-IP path. Self-healing: only
+      # regenerates when the current cert doesn't cover 192.168.69.1.
+      cups.preStart = ''
+        if ! ${pkgs.openssl}/bin/openssl x509 -in /var/lib/cups/ssl/maitred.crt -noout -checkip 192.168.69.1 2>/dev/null; then
+          mkdir -p /var/lib/cups/ssl
+          ${pkgs.openssl}/bin/openssl req -x509 -newkey rsa:2048 -nodes \
+            -keyout /var/lib/cups/ssl/maitred.key \
+            -out /var/lib/cups/ssl/maitred.crt \
+            -days 3650 -subj "/CN=maitred" \
+            -addext "subjectAltName=DNS:maitred,DNS:maitred.local,DNS:localhost,IP:192.168.69.1,IP:10.100.0.50"
+          chmod 600 /var/lib/cups/ssl/maitred.key
+          chmod 644 /var/lib/cups/ssl/maitred.crt
+        fi
+      '';
+    };
 
   # Guacamole proxy service - DISABLED
   # TODO: Re-enable when Guacamole is working properly
