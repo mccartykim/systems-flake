@@ -580,5 +580,71 @@
         || echo "Warning: Jellyfin scan trigger failed (non-fatal)"
     '';
 
+  # === Jellyfin index drift detector ===
+  # Alerts when a media file the classifier symlinked into /srv/media is missing
+  # from Jellyfin's library — the symptom of Jellyfin's DeleteItem SQLite bug
+  # (UNIQUE constraint failed on UserData) that aborts the whole-library scan
+  # and silently blocks new items from appearing. Read-only: no DB writes, no
+  # jellyfin restart. On mismatch it logs ERR and exits non-zero so the unit
+  # shows as failed in `systemctl` / journalctl. The fix stays a manual runbook
+  # (stop jellyfin; DELETE stale BaseItems rows whose Path is gone on disk +
+  # orphaned UserData/AncestorIds; restart; trigger scan) — deliberately NOT
+  # auto-heal, to avoid routine DB surgery / downtime.
+  systemd.services.media-jellyfin-index-check = {
+    description = "Detect media files missing from Jellyfin's library";
+    serviceConfig = {
+      Type = "oneshot";
+      User = "jellyfin";
+      Group = "media";
+      ExecStart = pkgs.writeShellScript "media-jellyfin-index-check" ''
+        set -uo pipefail
+        DB="/var/lib/jellyfin/data/jellyfin.db"
+        GRACE_MIN=15 # only flag symlinks older than this — let scans run first
+
+        # Paths Jellyfin has indexed (read-only; WAL-safe concurrent read)
+        tmp="$(mktemp)"
+        trap 'rm -f "$tmp"' EXIT
+        ${pkgs.sqlite}/bin/sqlite3 "$DB" -readonly \
+          "SELECT Path FROM BaseItems WHERE Path LIKE '/srv/media/%';" \
+          | sort -u > "$tmp"
+
+        missing=0
+        while IFS= read -r -d "" link; do
+          # Only video files are indexed as Jellyfin BaseItems; subtitles
+          # (.srt/.vtt/.ass), images, and .nfo are streams/metadata, not items.
+          low="''${link,,}"
+          case "$low" in
+            *.mkv|*.mp4|*.avi|*.m4v|*.mov|*.wmv|*.flv|*.webm|*.ts|*.m2ts|*.mpg|*.mpeg|*.vob|*.ogv|*.3gp|*.rm|*.rmvb) ;;
+            *) continue ;;
+          esac
+          # Skip dead symlinks (media-symlink-cleanup handles those)
+          target="$(${pkgs.coreutils}/bin/readlink -f -- "$link")"
+          [ -r "$target" ] || continue
+          if ! ${pkgs.gnugrep}/bin/grep -Fxq -- "$link" "$tmp"; then
+            echo "MISSING FROM JELLYFIN: $link" >&2
+            missing=1
+          fi
+        done < <(${pkgs.findutils}/bin/find \
+          "/srv/media/TV Shows" "/srv/media/Anime" "/srv/media/Movies" \
+          -type l -mmin "+$GRACE_MIN" -print0 2>/dev/null)
+
+        if [ "$missing" -eq 1 ]; then
+          echo "Jellyfin is missing indexed media — likely the scan-abort bug. Runbook: stop jellyfin, DELETE FROM BaseItems WHERE Path LIKE '/srv/media/TV Shows/<show>%'; + orphaned UserData/AncestorIds, restart, trigger scan." >&2
+          exit 1
+        fi
+        exit 0
+      '';
+    };
+  };
+
+  systemd.timers.media-jellyfin-index-check = {
+    wantedBy = ["timers.target"];
+    timerConfig = {
+      OnCalendar = "*:0/10"; # Every 10 minutes
+      RandomizedDelaySec = "2m";
+      Persistent = true;
+    };
+  };
+
   system.stateVersion = "23.11";
 }
