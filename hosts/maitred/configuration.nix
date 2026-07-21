@@ -114,7 +114,20 @@ in {
       pkgs.brgenml1cupswrapper
     ];
   };
-  services.ipp-usb.enable = true;
+  # ipp-usb was the only thing pulling avahi into this host (base.nix does
+  # not enable it), and it left avahi's allowInterfaces at the null default —
+  # so the printer and mDNS 5353 were published on the WAN enp3s0 and the
+  # container links too. The HL-L2400D has no IPP-over-USB, so ipp-usb is
+  # inert here; disable it and enable avahi explicitly, scoped to the LAN.
+  services.ipp-usb.enable = false;
+
+  services.avahi = {
+    enable = true;
+    publish.enable = true;
+    publish.userServices = true; # advertise the CUPS queue over Bonjour
+    allowInterfaces = ["enp2s0" "lo"]; # LAN only — not WAN/containers
+    openFirewall = false; # enp2s0 is in trustedInterfaces
+  };
 
   services.samba = {
     enable = true;
