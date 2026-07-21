@@ -208,9 +208,6 @@ in {
       };
     };
 
-    # Tailscale with server routing
-    tailscale.useRoutingFeatures = "server";
-
     # Mesh networking
     yggdrasil = {
       enable = false;

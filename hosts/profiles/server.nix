@@ -14,9 +14,6 @@
       X11Forwarding = false;
     };
 
-    # Server networking optimizations
-    tailscale.useRoutingFeatures = "server";
-
     # Performance and maintenance
     fstrim.enable = true;
     locate.enable = true;

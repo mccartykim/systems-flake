@@ -132,7 +132,7 @@ in {
               networks = {
                 containerBridge = "192.168.100.1";
                 reverseProxyIP = "192.168.100.2";
-                trustedNetworks = ["192.168.0.0/16" "10.100.0.0/16" "100.64.0.0/10"];
+                trustedNetworks = ["192.168.0.0/16" "10.100.0.0/16"];
               };
               dns = {
                 provider = "cloudflare";

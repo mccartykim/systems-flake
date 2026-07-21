@@ -1,6 +1,6 @@
 # Kimb's System Flake
 
-So, I've been gushing about Nix to anyone who will hear. I started out just using it as a way to set up computers with one big config directory with logic and paths I defined — liked that garnix could build all my stuff, liked that I could send an overheating tablet's builds to my gaming PC. But to get the ultimate configuration experience, it should apply changes to all my machines at once when I decide something else about a shell makes me comfy. So now I'm kludging together a fleet flake.
+So, I've been gushing about Nix to anyone who will hear. I started out just using it as a way to set up computers with one big config directory with logic and paths I defined — liked that I could send an overheating tablet's builds to my gaming PC. But to get the ultimate configuration experience, it should apply changes to all my machines at once when I decide something else about a shell makes me comfy. So now I'm kludging together a fleet flake.
 
 ## Dramatis Personae
 
@@ -32,7 +32,7 @@ Having a declarative mesh network and single config for my fleet makes this syst
 * A dual webcam endpoint for stills from rich-evans for lifecoach to use.
 * Syncthing, for keeping folders synced between computers
 * Restic, for regular backups
-* Buildbot CI on rich-evans (master) and historian (worker). Took over the role garnix used to play; I miss garnix's UI but at least this one runs on hardware I own.
+* Buildbot CI on rich-evans (master) and historian (worker). Runs on hardware I own.
 * Matrix (conduit) on rich-evans for self-hosted chat
 * Kokoro and Qwen3-TTS for the life-coach's voice. Kokoro is the small fast one; Qwen3 is the zero-shot voice cloning one.
 * Eden, the Switch emulator, built from master with a per-host profile (znver2 for the Steam Deck, x86-64-v3 for total-eclipse)
@@ -60,7 +60,7 @@ I'm not sold on every extraction sticking — once tried pulling out a nebula wr
 
 ## My hive-mindification approach so far:
 1. Install NixOS on machine using whatever installer works. I've mostly used the GUI installer but I've also used the manual installer. They're both nice. But both make an opinionated config I need to then install over.
-2. Fix up that config to work with flakes and probably also tailscale and garnix
+2. Fix up that config to work with flakes
 3. Sort out hardware specific issues
 4. Copy nixos config files from that machine into this flake's hosts/$HOST directory.
 5. Add reference to that host in flake. Ensure it builds.

@@ -30,7 +30,6 @@ let
         authelia = "192.168.100.4";
       };
     };
-    tailscale.subnet = "100.64.0.0/10";
   };
 
   # All managed hosts with complete configuration

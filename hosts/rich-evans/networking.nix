@@ -34,6 +34,5 @@
 
   # Access via:
   # - Nebula: 10.100.0.40 (always works)
-  # - Tailscale: backup access
   # - rich-evans.local: mDNS discovery
 }

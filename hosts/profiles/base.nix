@@ -31,7 +31,6 @@ in {
   services = {
     fstrim.enable = true;
     dbus.implementation = "broker";
-    tailscale.enable = true;
 
     # Disable systemd-resolved to respect DHCP-provided DNS servers
     # Use mkForce to override systemd-networkd's default enabling of resolved
@@ -66,12 +65,10 @@ in {
   nix.settings = {
     experimental-features = ["nix-command" "flakes"];
     trusted-public-keys = [
-      "cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g="
       "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
       "cache.nixos-cuda.org:74DUi4Ye579gUqzH4ziL9IyiJBlDpMRn9MBN8oNan9M="
     ];
     substituters = [
-      "https://cache.garnix.io"
       "https://cache.nixos.org/"
       "https://cache.nixos-cuda.org"
     ];
@@ -95,7 +92,6 @@ in {
     gh
     wget
     jq
-    tailscale
   ];
 
   # Essential programs

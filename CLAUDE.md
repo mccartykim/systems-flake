@@ -359,7 +359,7 @@ services.caddy = {
     "internal.domain.com" = {
       extraConfig = ''
         @allowed {
-          remote_ip 192.168.0.0/16 10.0.0.0/8 100.64.0.0/10
+          remote_ip 192.168.0.0/16 10.0.0.0/8
         }
         handle @allowed {
           reverse_proxy service-ip:port
@@ -376,7 +376,6 @@ services.caddy = {
 ### Network Access Control
 - **LAN**: `192.168.0.0/16` (local network)
 - **Nebula**: `10.100.0.0/16` (mesh VPN)
-- **Tailscale**: `100.64.0.0/10` (backup VPN)
 
 ## Secret Management with Agenix
 
@@ -591,7 +590,6 @@ tests/                         # NixOS VM tests
 - **Nebula Mesh**: 10.100.0.0/16 - overlay network
 - **LAN**: 192.168.69.0/24 - local network
 - **Containers**: 192.168.100.0/24 - maitred containers
-- **Tailscale**: 100.64.0.0/10 - backup connectivity
 
 ## Remote Shell Gotchas (NixOS)
 

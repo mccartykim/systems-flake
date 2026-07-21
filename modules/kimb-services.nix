@@ -162,7 +162,6 @@ in {
         default = [
           "192.168.0.0/16" # LAN
           "10.100.0.0/16" # Nebula
-          "100.64.0.0/10" # Tailscale
         ];
         description = "Networks that bypass certain restrictions";
       };

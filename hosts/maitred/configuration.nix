@@ -391,12 +391,6 @@ in {
       # sshd silently fell back to LAN-only and broke mesh deploys.
     };
 
-    # Tailscale for backup access
-    tailscale = {
-      enable = true;
-      useRoutingFeatures = "server"; # Can route LAN traffic if needed
-    };
-
     # Disable systemd-resolved to avoid port 53 conflict
     resolved.enable = false;
 
