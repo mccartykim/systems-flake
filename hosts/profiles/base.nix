@@ -62,15 +62,33 @@ in {
   };
 
   # Nix configuration
+  #
+  # Binary caches: keys/URLs verified against the Cachix REST API
+  # (app.cachix.org/api/v1/cache/<name>). Order matters — most-hit first.
+  #   - cache.nixos.org:     nixpkgs (incl. nvidia drivers on stock kernel)
+  #   - cache.nixos-cuda.org: CUDA-enabled builds (total-eclipse)
+  #   - nix-community:        home-manager, srvos, disko, buildbot-nix,
+  #                          nixos-facter-modules, flake-firefox-nightly
+  #   - jovian:               Jovian NixOS (donut Steam Deck) — mesa/kernel
+  #   - mccartykim:           own flakes (eden-nightly, borges, knitwork,
+  #                          kokoro, qwen3-tts, media-classifier, org-*, etc.)
+  #                          NOTE: buildbot push is currently disabled, so this
+  #                          only serves artifacts pushed before 2026-06-22.
   nix.settings = {
     experimental-features = ["nix-command" "flakes"];
     trusted-public-keys = [
       "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
       "cache.nixos-cuda.org:74DUi4Ye579gUqzH4ziL9IyiJBlDpMRn9MBN8oNan9M="
+      "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
+      "jovian.cachix.org-1:8Vq4Txku6VZIRhYrHYki3Ab9XHJRoWmdYqMqj4rB/Uc="
+      "mccartykim.cachix.org-1:WzHencScmSzp4YOayeZBCqqNoM98LXFpf9wqUZf0e4s="
     ];
     substituters = [
       "https://cache.nixos.org/"
       "https://cache.nixos-cuda.org"
+      "https://nix-community.cachix.org"
+      "https://jovian.cachix.org"
+      "https://mccartykim.cachix.org"
     ];
   };
 
