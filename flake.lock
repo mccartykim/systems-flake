@@ -976,11 +976,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1783173540,
-        "narHash": "sha256-sG7lSK0NPd3mAwgFlgTMmDjmGrlH/Gh0u6EOftAEL9E=",
+        "lastModified": 1784684554,
+        "narHash": "sha256-1lfXsVk7QEXRCCyk3IaRK8PLtvMMJzVywAzNDsQo4xw=",
         "ref": "refs/heads/main",
-        "rev": "6eeaf6b24c0328932ad2726c6d385cd403102c00",
-        "revCount": 9,
+        "rev": "4636b475ec893b842b3528a83038d0a64e71a9a5",
+        "revCount": 10,
         "type": "git",
         "url": "ssh://git@github.com/mccartykim/media-classifier.git"
       },
