@@ -22,6 +22,30 @@
     srvos.url = "github:nix-community/srvos";
     srvos.inputs.nixpkgs.follows = "nixpkgs";
 
+    # Lix — community CppNix fork (same store/NAR format, drop-in). The
+    # nixos-module swaps nixVersions.stable to Lix across nixpkgs (so the daemon
+    # and every nix-dependent tool use Lix) and keeps packages that break or
+    # mass-rebuild under Lix (nixd, devenv, nurl, nix-prefetch-git, attic-client,
+    # nix-du, nix-init, nixt, prefetch-yarn-deps) on CppNix. We use the
+    # lixFromNixpkgs variant: it pulls Lix from nixpkgs' lixPackageSets, which is
+    # cached on cache.nixos.org — no Lix source input, no local Lix build, no
+    # extra binary cache. CUDA/standard derivations are unaffected (they don't
+    # take the Nix implementation as a build input), so cache.nixos-cuda.org and
+    # cache.nixos.org hits are preserved.
+    # Pinned to the module's 2.95 commit (c0f7fd4) rather than the floating
+    # archive/main.tar.gz. Lix's docs say the overlay version should match the
+    # major Lix version, and nixpkgs here ships Lix 2.95.x, so the module must
+    # target 2.95. The floating `main` tarball already targets 2.96 (unreleased):
+    # its overlay looks up lixPackageSets.lix_2_96 — absent from nixpkgs — which
+    # emits a "major version mismatch" warning and leaves a latent nix-eval-jobs
+    # attr that throws if ever forced. Pinning to 2.95 (which uses lix_2_95,
+    # present in nixpkgs) eliminates both. Bump this rev when nixpkgs moves to
+    # Lix 2.96+.
+    lix-module = {
+      url = "git+https://git.lix.systems/lix-project/nixos-module?rev=c0f7fd423f73c6561bf610a9b7a464cba560c5f5";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     nix-index-database.url = "github:nix-community/nix-index-database";
     nix-index-database.inputs.nixpkgs.follows = "nixpkgs";
     disko.url = "github:nix-community/disko";

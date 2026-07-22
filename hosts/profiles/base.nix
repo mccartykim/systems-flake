@@ -61,6 +61,12 @@ in {
     LC_TIME = "en_US.UTF-8";
   };
 
+  # Nix implementation is Lix, provided by lix-module (imported in
+  # commonModules). It swaps nixVersions.stable → Lix nixpkgs-wide, so the
+  # NixOS default nix.package (= pkgs.nix = nixVersions.stable) resolves to
+  # Lix automatically — no explicit nix.package here. The module also keeps
+  # CppNix-incompatible packages (nixd, devenv, nurl, …) on CppNix.
+
   # Nix configuration
   #
   # Binary caches: keys/URLs verified against the Cachix REST API

@@ -4,7 +4,7 @@
   self,
   ...
 }: let
-  inherit (inputs) nixpkgs home-manager srvos nix-index-database firefox-nightly nix-topology;
+  inherit (inputs) nixpkgs home-manager srvos nix-index-database firefox-nightly nix-topology lix-module;
 
   # Overlay to fix Python packages with build/test issues
   pythonFixesOverlay = final: prev: {
@@ -40,8 +40,14 @@
 in {
   # Export helpers via flake.lib for use by other modules
   flake.lib = rec {
-    # Common modules applied to all NixOS configurations
+    # Common modules applied to all NixOS configurations.
+    # lix-module goes first so its overlay (nixVersions.stable → Lix + the
+    # CppNix-keep list) is applied before anything else consults nix. This covers
+    # every NixOS host, including creme/donut which use commonModules directly
+    # rather than mkDesktop/mkServer. (Darwin uses darwinModules.lixFromNixpkgs
+    # separately if ever wanted.)
     commonModules = [
+      lix-module.nixosModules.lixFromNixpkgs
       nix-index-database.nixosModules.nix-index
       {programs.nix-index-database.comma.enable = true;}
       (self + "/modules/distributed-builds.nix")
@@ -90,16 +96,18 @@ in {
     ];
 
     # Desktop-specific modules (srvos desktop + common mixins)
+    # NB: mixins-nix-experimental deliberately omitted — it enables CppNix-only
+    # experimental features (ca-derivations, impure-derivations, recursive-nix,
+    # fetch-closure, blake3-hashes, configurable-impure-env) that Lix doesn't
+    # implement, which hard-fails the nix.conf build-time validator under Lix.
     desktopModules = [
       srvos.nixosModules.desktop
-      srvos.nixosModules.mixins-nix-experimental
       srvos.nixosModules.mixins-trusted-nix-caches
     ];
 
-    # Server-specific modules
+    # Server-specific modules (see desktopModules note re: nix-experimental)
     serverModules = [
       srvos.nixosModules.server
-      srvos.nixosModules.mixins-nix-experimental
       srvos.nixosModules.mixins-trusted-nix-caches
       srvos.nixosModules.mixins-systemd-boot
     ];
