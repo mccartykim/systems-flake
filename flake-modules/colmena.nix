@@ -36,6 +36,13 @@ in {
         specialArgs = {
           inherit inputs;
           outputs = self;
+          # Parity with nixosConfigurations' mkServer `extraSpecialArgs`: the
+          # org-bridge module (on rich-evans, loaded via the shared modules
+          # in makeColmenaNode `imports`) takes { bridgeCrewSrc } as a module
+          # arg. nixosConfigurations threads it via mkServer; colmena sets its
+          # own specialArgs here, so without this `deploy rich-evans` (colmena)
+          # fails "attribute 'bridgeCrewSrc' missing" while `nswitch` works.
+          bridgeCrewSrc = inputs."bridge-crew-src";
         };
       };
     }
