@@ -109,6 +109,14 @@
     void-master-organism.url = "git+ssh://git@github.com/mccartykim/voidmaster_organism.git";
     void-master-organism.inputs.nixpkgs.follows = "nixpkgs";
 
+    # The High Factotum officer agent (Severin, bookkeeper). Read-only
+    # status dashboard for the fleet — counts and names, deploys nothing.
+    # Exposes nixosModules.default, self-contained (mirrors
+    # voidmaster_organism minus the write-scope PATH tools). Same git+ssh
+    # convention as the Void-Master.
+    factotum-organism.url = "git+ssh://git@github.com/mccartykim/factotum_organism.git";
+    factotum-organism.inputs.nixpkgs.follows = "nixpkgs";
+
     # 40k_bridge source tree — NOT a flake (no flake.nix). Consumed for the
     # org-bridge + vox-bridge NixOS modules via `import` of path strings, and
     # for the org-bridge broker/client Python + scope TOML at eval time.

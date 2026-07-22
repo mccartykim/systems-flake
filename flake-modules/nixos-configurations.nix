@@ -5,7 +5,7 @@
   self,
   ...
 }: let
-  inherit (inputs) nixpkgs nixos-hardware nixos-facter-modules copyparty nil-flake media-classifier org-life-coach lifecoach-organism vacuum-organism org-crm organism void-master-organism;
+  inherit (inputs) nixpkgs nixos-hardware nixos-facter-modules copyparty nil-flake media-classifier org-life-coach lifecoach-organism vacuum-organism org-crm organism void-master-organism factotum-organism;
   inherit (config.flake.lib) mkDesktop mkServer mkHomeManager commonModules;
 in {
   flake.nixosConfigurations = {
@@ -109,6 +109,14 @@ in {
         # + vox-bridge Matrix transport (imported from the 40k_bridge source
         # tree). See 40k_bridge/deploy/SYSTEMS_FLAKE_PATCH.md.
         void-master-organism.nixosModules.default
+        # High Factotum officer agent (Severin, read-only bookkeeper).
+        # Self-contained module from the factotum_organism flake — it
+        # resolves its own package from pkgs.system, so it needs NO
+        # extraSpecialArgs (unlike org-bridge/vox-bridge which take
+        # bridgeCrewSrc/organism). Consequently NO colmena meta.specialArgs
+        # change is required (the prior colmena break was a missing
+        # specialArgs; this module adds none).
+        factotum-organism.nixosModules.default
         (import "${inputs."bridge-crew-src"}/deploy/org-bridge.nix")
         (import "${inputs."bridge-crew-src"}/deploy/vox-bridge.nix")
         (self + "/hosts/rich-evans/life-coach.nix")
@@ -117,6 +125,7 @@ in {
         (self + "/hosts/rich-evans/vacuum-organism.nix")
         (self + "/hosts/rich-evans/voidmaster-organism.nix")
         (self + "/hosts/rich-evans/voidmaster-vox-bridge.nix")
+        (self + "/hosts/rich-evans/factotum-organism.nix")
         (self + "/hosts/rich-evans/org-bridge.nix")
         org-crm.nixosModules.default
         (self + "/hosts/rich-evans/org-crm.nix")
