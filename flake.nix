@@ -97,6 +97,24 @@
     lifecoach-organism.inputs.nixpkgs.follows = "nixpkgs";
     vacuum-organism.url = "git+ssh://git@github.com/mccartykim/vacuum_organism.git";
     vacuum-organism.inputs.nixpkgs.follows = "nixpkgs";
+
+    # The organism primitive — the stateful-agent CLI (bin/organic). Consumed
+    # by the voidmaster-vox-bridge host file's organicBin. See
+    # 40k_bridge/deploy/SYSTEMS_FLAKE_PATCH.md.
+    organism.url = "git+ssh://git@github.com/mccartykim/organism.git";
+    organism.inputs.nixpkgs.follows = "nixpkgs";
+
+    # The Void-Master officer agent (Idran, fleet-fixer). Exposes
+    # nixosModules.default, self-contained (mirrors vacuum_organism).
+    void-master-organism.url = "git+ssh://git@github.com/mccartykim/voidmaster_organism.git";
+    void-master-organism.inputs.nixpkgs.follows = "nixpkgs";
+
+    # 40k_bridge source tree — NOT a flake (no flake.nix). Consumed for the
+    # org-bridge + vox-bridge NixOS modules via `import` of path strings, and
+    # for the org-bridge broker/client Python + scope TOML at eval time.
+    # `bridgeCrewSrc` is threaded into the rich-evans eval via extraSpecialArgs.
+    bridge-crew-src.url = "git+ssh://git@github.com/mccartykim/40k_bridge.git";
+    bridge-crew-src.flake = false;
     org-crm = {
       url = "git+ssh://git@github.com/mccartykim/org_crm.git";
       inputs = {

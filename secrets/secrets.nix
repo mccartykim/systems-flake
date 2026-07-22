@@ -52,6 +52,10 @@ in
     "ha-life-coach-token.age".publicKeys = [hostKeys.rich-evans hostKeys.historian hostKeys.marshmallow bootstrap];
     # Matrix access token for life-coach chatbot (Tuwunel on rich-evans)
     "matrix-life-coach-token.age".publicKeys = [hostKeys.rich-evans bootstrap];
+    # Matrix access token for the Phase-1 vox-bridge (@vox-bridge:kimb.dev,
+    # Tuwunel on rich-evans). Minted via a transient allow_registration flip;
+    # see 40k_bridge/deploy/GO_NOGO.md §3.
+    "matrix-vox-bridge-token.age".publicKeys = [hostKeys.rich-evans bootstrap];
     # Discord bot token for life-coach chatbot
     "discord-life-coach-token.age".publicKeys = [hostKeys.rich-evans bootstrap];
 

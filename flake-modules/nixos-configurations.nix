@@ -5,7 +5,7 @@
   self,
   ...
 }: let
-  inherit (inputs) nixpkgs nixos-hardware nixos-facter-modules copyparty nil-flake media-classifier org-life-coach lifecoach-organism vacuum-organism org-crm;
+  inherit (inputs) nixpkgs nixos-hardware nixos-facter-modules copyparty nil-flake media-classifier org-life-coach lifecoach-organism vacuum-organism org-crm organism void-master-organism;
   inherit (config.flake.lib) mkDesktop mkServer mkHomeManager commonModules;
 in {
   flake.nixosConfigurations = {
@@ -90,15 +90,34 @@ in {
     # Servers using mkServer helper
     rich-evans = mkServer {
       hostname = "rich-evans";
+      # bridgeCrewSrc (40k_bridge source, flake=false) is consumed by the
+      # imported org-bridge module (takes it as a module arg). `organism` is
+      # consumed by the voidmaster-vox-bridge host file for organicBin.
+      # `inputs` (already passed by mkServer) reaches the org-bridge host
+      # file for org-agent's emacs + elisp.
+      extraSpecialArgs = {
+        inherit organism;
+        bridgeCrewSrc = inputs."bridge-crew-src";
+      };
       extraModules = [
         copyparty.nixosModules.default
         org-life-coach.nixosModules.default
         lifecoach-organism.nixosModules.default
         vacuum-organism.nixosModules.default
+        # Phase-1 bridge crew: the Void-Master officer agent (self-contained
+        # module from the voidmaster_organism flake) + the org-bridge broker
+        # + vox-bridge Matrix transport (imported from the 40k_bridge source
+        # tree). See 40k_bridge/deploy/SYSTEMS_FLAKE_PATCH.md.
+        void-master-organism.nixosModules.default
+        (import "${inputs."bridge-crew-src"}/deploy/org-bridge.nix")
+        (import "${inputs."bridge-crew-src"}/deploy/vox-bridge.nix")
         (self + "/hosts/rich-evans/life-coach.nix")
         (self + "/hosts/rich-evans/org-life-coach.nix")
         (self + "/hosts/rich-evans/lifecoach-organism.nix")
         (self + "/hosts/rich-evans/vacuum-organism.nix")
+        (self + "/hosts/rich-evans/voidmaster-organism.nix")
+        (self + "/hosts/rich-evans/voidmaster-vox-bridge.nix")
+        (self + "/hosts/rich-evans/org-bridge.nix")
         org-crm.nixosModules.default
         (self + "/hosts/rich-evans/org-crm.nix")
         (self + "/hosts/rich-evans/email-digest.nix")
