@@ -131,12 +131,19 @@ in {
         explorator-organism.nixosModules.default
         (import "${inputs."bridge-crew-src"}/deploy/org-bridge.nix")
         (import "${inputs."bridge-crew-src"}/deploy/vox-bridge.nix")
+        # Phase-2 vox-organism: the Astropath comms-bridge daemon (replaces the
+        # Phase-1 voidmaster-vox-bridge above). Takes bridgeCrewSrc as a module
+        # arg (threaded via specialArgs) to read the daemon script + seed
+        # sample straight from the 40k_bridge source tree. See
+        # 40k_bridge/deploy/vox-organism.nix.
+        (import "${inputs."bridge-crew-src"}/deploy/vox-organism.nix")
         (self + "/hosts/rich-evans/life-coach.nix")
         (self + "/hosts/rich-evans/org-life-coach.nix")
         (self + "/hosts/rich-evans/lifecoach-organism.nix")
         (self + "/hosts/rich-evans/vacuum-organism.nix")
         (self + "/hosts/rich-evans/voidmaster-organism.nix")
         (self + "/hosts/rich-evans/voidmaster-vox-bridge.nix")
+        (self + "/hosts/rich-evans/vox-organism.nix")
         (self + "/hosts/rich-evans/factotum-organism.nix")
         (self + "/hosts/rich-evans/confessor-organism.nix")
         (self + "/hosts/rich-evans/explorator-organism.nix")

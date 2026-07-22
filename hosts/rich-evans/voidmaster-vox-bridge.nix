@@ -1,5 +1,16 @@
 # Host enablement for the Phase-1 vox-bridge (Matrix) on #voidmaster.
 #
+# DISABLED 2026-07-22 — REPLACED by the Phase-2 vox-organism daemon (the
+# Astropath; see hosts/rich-evans/vox-organism.nix + 40k_bridge/deploy/vox-organism.nix).
+# The Phase-1 bridge was a one-room/one-seed placeholder; Phase-2 routes
+# between every officer channel + every officer seed, with the vigil,
+# seed→seed routing, and the #bridge-events bus. This file + its import are
+# KEPT for an easy revert: `enable = true` here + `enable = false` on
+# vox-organism + flip the token owner back to voidmaster-organism (the
+# age.secrets stanza moved to vox-organism.nix with owner vox-organism).
+# The clean rollback, though, is `git revert` of the cutover commit (restores
+# this file's enable=true + its age.secrets stanza + removes vox-organism.nix).
+#
 # The bridge module ships from the 40k_bridge source as deploy/vox-bridge.nix
 # (imported in flake-modules/nixos-configurations.nix). This file is
 # config-only. Phase 1 is Matrix-first: the bridge is a /sync polling client
@@ -17,7 +28,7 @@
   ...
 }: {
   services.voidmaster-vox-bridge = {
-    enable = true;
+    enable = false; # Phase-2 cutover: replaced by services.vox-organism.
     # The live Void-Master seed. The bridge shells out to
     # `organic <seed> "<message>"` per room message; the reply is read from
     # <dir(seed)>/.organism/last-run.json (full_out field).
@@ -40,15 +51,9 @@
     officer = "voidmaster";
   };
 
-  # @vox-bridge:kimb.dev Matrix access token. Minted via a transient
-  # allow_registration flip on the homeserver; the token VALUE is never
-  # committed in plaintext — only this age-encrypted file is. Encrypted to
-  # rich-evans + bootstrap; the bridge runs as the voidmaster-organism
-  # service user (the module's default `user`), so the secret is owned by
-  # that user. See deploy/GO_NOGO.md §3 step 3.
-  age.secrets.matrix-vox-bridge-token = {
-    file = ../../secrets/matrix-vox-bridge-token.age;
-    owner = "voidmaster-organism";
-    mode = "0400";
-  };
+  # The age.secrets.matrix-vox-bridge-token stanza MOVED to vox-organism.nix
+  # (owner flipped voidmaster-organism → vox-organism for the Phase-2 daemon).
+  # Defining it here too would be a duplicate `age.secrets` attr — Nix would
+  # reject the merge. On rollback (git revert of the cutover commit), this
+  # stanza is restored here with owner "voidmaster-organism".
 }
