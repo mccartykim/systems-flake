@@ -344,11 +344,11 @@
         "organism": "organism"
       },
       "locked": {
-        "lastModified": 1784751470,
-        "narHash": "sha256-XCRxX8w/HLB+8q0k5wvzZpZQ6zO/wH6CMiJKZiLBSu0=",
+        "lastModified": 1784752364,
+        "narHash": "sha256-/X/MFLAgkbt2ERbyzBZfx8WNALO+A+We2uXjM+7txxM=",
         "ref": "refs/heads/main",
-        "rev": "45ce361f6f512e5911eff0b8a9deb9961e9752f9",
-        "revCount": 1,
+        "rev": "2a967536bd8062034edfbf07f2cd289b795481e5",
+        "revCount": 2,
         "type": "git",
         "url": "ssh://git@github.com/mccartykim/factotum_organism.git"
       },
@@ -2647,11 +2647,11 @@
         "organism": "organism_5"
       },
       "locked": {
-        "lastModified": 1784742974,
-        "narHash": "sha256-/vCq4IpI3s52i1OktXeyLFQLUihwP+nA55lV8vnl6Gs=",
+        "lastModified": 1784752378,
+        "narHash": "sha256-ItIHerv7EdMy+h9LYB2wL/oAkRaQFNgnd63ScK1lPnM=",
         "ref": "refs/heads/main",
-        "rev": "993495727b54f987f284a5ecf58ca3d2cd2c7bd5",
-        "revCount": 7,
+        "rev": "944f5440f9d6747c9f57738c0907c49de917d2da",
+        "revCount": 8,
         "type": "git",
         "url": "ssh://git@github.com/mccartykim/voidmaster_organism.git"
       },
