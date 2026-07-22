@@ -265,6 +265,12 @@ in {
       esphome # ESP32 flashing and management
       claude-code
       (pkgs.callPackage ../../pkgs/claude-zai.nix {})
+      # Diagnostics for the bridge crew: python3 + jq for ad-hoc Matrix / organism
+      # JSON inspection over ssh (the vox-organism daemon ships its OWN pinned
+      # python3 interpreter via pkgs.python3.withPackages, so this is not a
+      # runtime dep of the daemon — just the operator's PATH).
+      python3
+      jq
     ];
 
     # Override default shell setup for server
