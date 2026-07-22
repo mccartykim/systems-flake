@@ -122,6 +122,12 @@
     confessor-organism.url = "git+ssh://git@github.com/mccartykim/confessor_organism.git";
     confessor-organism.inputs.nixpkgs.follows = "nixpkgs";
 
+    # Magos Explorator (Velan, machine-spirit diagnostician) — read-only,
+    # diagnose-not-deploy officer, same per-officer flake pattern as the
+    # Confessor.
+    explorator-organism.url = "git+ssh://git@github.com/mccartykim/explorator_organism.git";
+    explorator-organism.inputs.nixpkgs.follows = "nixpkgs";
+
     # 40k_bridge source tree — NOT a flake (no flake.nix). Consumed for the
     # org-bridge + vox-bridge NixOS modules via `import` of path strings, and
     # for the org-bridge broker/client Python + scope TOML at eval time.
