@@ -26,10 +26,18 @@ import tempfile
 # repo -> {remote, key_env}. One SHARED deploy key (BRIDGE_SCRIBE_DEPLOY_KEY)
 # serves every repo — the per-repo scope is this allowlist, not the key. The
 # key PATH comes from env (set by the shell wrapper, which bakes the agenix
-# /run/agenix path). Pilot only; add repos here as officers gain scope (#64).
+# /run/agenix path). The Chirurgeon (#62) authors its own seed repo for
+# structural self-edits (routine tweaks persist in-cycle via org-merge; only
+# the immutable head / bin / flake go through this PR loop). Add repos here as
+# officers gain scope (#64). The shared deploy key MUST be registered on the
+# chirurgeon_organism GitHub repo (a user GitHub-settings step).
 REPOS = {
     "systems-flake": {
         "remote": "git@github.com:mccartykim/systems-flake.git",
+        "key_env": "BRIDGE_SCRIBE_DEPLOY_KEY",
+    },
+    "chirurgeon_organism": {
+        "remote": "git@github.com:mccartykim/chirurgeon_organism.git",
         "key_env": "BRIDGE_SCRIBE_DEPLOY_KEY",
     },
 }

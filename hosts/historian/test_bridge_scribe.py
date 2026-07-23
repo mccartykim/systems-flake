@@ -172,5 +172,25 @@ class ValidEnvelopeNoKey(unittest.TestCase):
         self.assertEqual(rc, 4)
 
 
+class ChirurgeonAllowlist(unittest.TestCase):
+    """The Chirurgeon (#62) authors its own chirurgeon_organism repo. A valid
+    envelope against it validates + dies at the key gate (exit 4, NOT the
+    allowlist reject exit 3) — proving the repo is in REPOS + the shared
+    deploy key is the only remaining gate."""
+
+    def test_chirurgeon_repo_in_allowlist(self):
+        rc, err = run_scribe(good(repo="chirurgeon_organism"))
+        # NOT exit 3 (allowlist reject) — it passed validation + hit the key gate.
+        self.assertEqual(rc, 4)
+        self.assertNotIn("not in allowlist", err)
+
+    def test_chirurgeon_unrelated_repo_rejected(self):
+        # A repo name sharing a prefix must NOT match (exact-allowlist, no
+        # substring). "chirurgeon_organism-evil" is rejected at exit 3.
+        rc, err = run_scribe(good(repo="chirurgeon_organism-evil"))
+        self.assertEqual(rc, 3)
+        self.assertIn("not in allowlist", err)
+
+
 if __name__ == "__main__":
     unittest.main()
