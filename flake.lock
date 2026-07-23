@@ -115,11 +115,11 @@
     "bridge-crew-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1784828229,
-        "narHash": "sha256-ehasbWOzCbwEqscGNQo6g+b4c/Z71xAxZ0ptPVDtcJA=",
+        "lastModified": 1784829729,
+        "narHash": "sha256-F41AiovtMvKH3bH8YeSQsbThyb65IsUQFU+jMpWGNhA=",
         "ref": "refs/heads/main",
-        "rev": "cac21695378530712f89433e225c31eca3469a91",
-        "revCount": 49,
+        "rev": "6a8889a2fa2694d3de5ca489be945b4c903f87c2",
+        "revCount": 50,
         "type": "git",
         "url": "ssh://git@github.com/mccartykim/40k_bridge.git"
       },
@@ -1273,11 +1273,11 @@
         "organism": "organism_5"
       },
       "locked": {
-        "lastModified": 1784827954,
-        "narHash": "sha256-0orYuY2ITys/I0bUlxXU4RSFINXYz/JiT9c8eOcZRYA=",
+        "lastModified": 1784829718,
+        "narHash": "sha256-MAvI3jvTpP39yFEBPJyeJqjwzQtPIM3e7zA0G77Y7B8=",
         "ref": "refs/heads/main",
-        "rev": "27930ef5b8882d6995591c66c0bd806952a54007",
-        "revCount": 1,
+        "rev": "c6b086b32551be461b1329be7ab3137fb203139c",
+        "revCount": 2,
         "type": "git",
         "url": "ssh://git@github.com/mccartykim/interrogator_organism.git"
       },
