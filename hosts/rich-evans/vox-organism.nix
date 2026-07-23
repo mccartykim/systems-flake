@@ -60,7 +60,17 @@ in {
     # proposed/<slug> -> push). rich-evans is an antique mini PC that must not
     # run builds or grow clones, so the scratch clone + git push happen on
     # historian. Fleet-internal, over Nebula.
-    historianHost = "historian.nebula";
+    #
+    # The EXPLICIT `bridge-scribe@` user prefix is load-bearing: ssh defaults to
+    # the LOCAL user (vox-organism) when no user@ is given, but vox-organism does
+    # NOT exist on historian + the fleet key's forced command is registered ONLY
+    # on bridge-scribe (hosts/historian/bridge-scribe.nix). Without the prefix
+    # the hop ssh'es as vox-organism@historian -> no-such-user -> the #60
+    # authoring loop fails every time (verified: getent passwd vox-organism is
+    # absent on historian; authorized_keys.d/vox-organism absent; the materialize
+    # forced command lives only in authorized_keys.d/bridge-scribe). Mirrors the
+    # Navigator cross-hop's navigator-organism@<host>.nebula target.
+    historianHost = "bridge-scribe@historian.nebula";
     # The fleet-internal ssh key (agenix below, owned by vox-organism) the
     # daemon uses for that hop. The per-repo GitHub deploy keys live ONLY on
     # historian (agenix, owned by bridge-scribe) — this daemon never sees them.
