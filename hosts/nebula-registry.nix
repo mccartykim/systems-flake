@@ -191,7 +191,16 @@ let
       ip = "10.100.0.8";
       role = "mobile";
       groups = ["mobile" "system-manager"];
-      publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHBSIfvPHC+UmMq6pghmdsjCTje/lOeiTVo2vDmyoNbf";
+      # Pre-generated STABLE SSH host key
+      # (flake_keys/ssh/mochi_host_ed25519_key), baked into the AVF
+      # quick-restore script so mochi's identity survives AVF wipes without
+      # the SSH-host-key rotation dance. Nebula cert/key rotated to match
+      # (flake_keys/nebula/mochi.{crt,key}); old kept as -old. Re-encrypt with
+      # plain `age -r` (see flake-modules/phone-installer.nix + the restore
+      # bake), not agenix-rekey — the CA key lives in flake_keys, not the
+      # YubiKey-encrypted ca-master. CA itself expires 2026-08-16 (fleet
+      # renewal follow-up, now doable from flake_keys without a YubiKey).
+      publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAID2tUoCX60oSwwHmBMha9XOSy/OCiaUgLmt5ZoN4voTd";
       meta = {
         hardware = "Google Pixel 9 Pro (AVF/Debian)";
         purpose = "Mobile phone with AVF Linux terminal";

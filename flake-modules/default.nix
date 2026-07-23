@@ -7,5 +7,6 @@
     ./darwin-configurations.nix
     ./colmena.nix
     ./system-manager.nix
+    ./phone-installer.nix
   ];
 }
