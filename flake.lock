@@ -115,11 +115,11 @@
     "bridge-crew-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1784792099,
-        "narHash": "sha256-I/ywMxScIi+YtMNS1aE/xoF6x0LNaI8l1nWn5CpUBGY=",
+        "lastModified": 1784795575,
+        "narHash": "sha256-ikvSZzgy9BbKR0MT9CMoeMGRc/ke6uFNwT9urDVSSHs=",
         "ref": "refs/heads/main",
-        "rev": "27728a8fd098880dc49ef96112a8fd9391030e6c",
-        "revCount": 42,
+        "rev": "cf32e6e64b9d7476def82fe50d416b6e79b62d3b",
+        "revCount": 46,
         "type": "git",
         "url": "ssh://git@github.com/mccartykim/40k_bridge.git"
       },
@@ -196,11 +196,11 @@
         "organism": "organism_2"
       },
       "locked": {
-        "lastModified": 1784761800,
-        "narHash": "sha256-FBVnhuyYV8HtYTEK/aFW0UyqA0hxPP076sb/NZmyYO4=",
+        "lastModified": 1784794512,
+        "narHash": "sha256-5nUaV9e2s6x43aapDviQ44CId11vwImBvtzzWQ705gA=",
         "ref": "refs/heads/main",
-        "rev": "5553ec9ab71f0cf3aab0b285d930a0eadfc49b28",
-        "revCount": 2,
+        "rev": "b01b2cda1a5fb8c406a5e682e1c465358a73f0b0",
+        "revCount": 3,
         "type": "git",
         "url": "ssh://git@github.com/mccartykim/confessor_organism.git"
       },
@@ -389,11 +389,11 @@
         "organism": "organism_3"
       },
       "locked": {
-        "lastModified": 1784761801,
-        "narHash": "sha256-cwm5MXIHCLznRJEea/VrDAEFt78rNrUR6SwXT7kKeIU=",
+        "lastModified": 1784794514,
+        "narHash": "sha256-z3FDMwIlPHIziUaiXENE8HalzHCBH2gxpjDdcZz7fq0=",
         "ref": "refs/heads/main",
-        "rev": "64045c7b29cecb9d0d2e5f375bfd3ae1a34491e9",
-        "revCount": 2,
+        "rev": "0a9c3ebfa3fec1e56f277c8bd835bfb1ae616ca2",
+        "revCount": 3,
         "type": "git",
         "url": "ssh://git@github.com/mccartykim/explorator_organism.git"
       },
@@ -412,11 +412,11 @@
         "organism": "organism_4"
       },
       "locked": {
-        "lastModified": 1784761799,
-        "narHash": "sha256-RDF3xsbf0tFKC3QvTmwDYe7GIiH3e17qzKSC9zg52cE=",
+        "lastModified": 1784794511,
+        "narHash": "sha256-0cqr/7EVQcJ3wyDDGgq3PPdCjhaEXJ2Tx0ywIrWAC98=",
         "ref": "refs/heads/main",
-        "rev": "0b257a9f419724630d7fb45a6f6ce84ebc4ab1bd",
-        "revCount": 3,
+        "rev": "ecfafd54f4007f8e7c5f8fec46a3b6d1401a6b9b",
+        "revCount": 4,
         "type": "git",
         "url": "ssh://git@github.com/mccartykim/factotum_organism.git"
       },
@@ -1588,17 +1588,18 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1748162331,
-        "narHash": "sha256-rqc2RKYTxP3tbjA+PB3VMRQNnjesrT0pEofXQTrMsS8=",
+        "lastModified": 1772542754,
+        "narHash": "sha256-WGV2hy+VIeQsYXpsLjdr4GvHv5eECMISX1zKLTedhdg=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "7c43f080a7f28b2774f3b3f43234ca11661bf334",
+        "rev": "8c809a146a140c5c8806f13399592dbcb1bb5dc4",
         "type": "github"
       },
       "original": {
-        "id": "nixpkgs",
-        "ref": "nixos-25.05",
-        "type": "indirect"
+        "owner": "NixOS",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
       }
     },
     "nixpkgs-lib": {
@@ -3212,11 +3213,11 @@
         "organism": "organism_9"
       },
       "locked": {
-        "lastModified": 1784761797,
-        "narHash": "sha256-RUBRxaw0Y7hWGi1w17EbB1yPYwfNYGB70OFTkwsjoF4=",
+        "lastModified": 1784794510,
+        "narHash": "sha256-Tp46nJjOlMKbxe+6iSAg5UbyuU/06VP6d00xjoWPY6w=",
         "ref": "refs/heads/main",
-        "rev": "5991c19543ab9bb24c49b28163ade731168444c7",
-        "revCount": 9,
+        "rev": "eab12d429765f4e98f263164ac60ae801086f8b2",
+        "revCount": 10,
         "type": "git",
         "url": "ssh://git@github.com/mccartykim/voidmaster_organism.git"
       },
