@@ -176,16 +176,19 @@
         fi
         mu index 2>&1
 
-        # Widen the mu xapian dir to group-traversable so the Interrogator
+        # Widen the mu xapian dirs to group-traversable so the Interrogator
         # officer (#53) can read this index read-only. The vox-organism daemon
         # (the Interrogator's cycle runner, uid 998) is a member of this
         # email-digest group (roster.nix daemonExtraGroups); mu init creates
-        # $HOME/.cache at 0700, which blocks the group from traversing to the
-        # 0644 xapian files. We are the owner, so chmod works. g+rX = group
-        # read + traverse (capital X: x on dirs, not files). Idempotent; runs
-        # every cycle, surviving any mu re-init. Mirrors the officer modules'
-        # "chmod g+r the seed for cross-officer daemon access" pattern.
-        chmod g+rX "$STATE_DIR/.cache" "$STATE_DIR/.cache/mu" 2>/dev/null || true
+        # $HOME/.cache AND .cache/mu AND .cache/mu/xapian all at 0700
+        # (empirically verified with mu 1.14.2 — the db dir too, not just its
+        # parents), which blocks the group from traversing to the 0644 xapian
+        # db files inside .cache/mu/xapian. We are the owner, so chmod works.
+        # g+rX = group read + traverse (capital X: x on dirs, not the 0644 db
+        # files). Idempotent; runs every cycle, surviving any mu re-init.
+        # Mirrors the officer modules' "chmod g+r the seed for cross-officer
+        # daemon access" pattern.
+        chmod g+rX "$STATE_DIR/.cache" "$STATE_DIR/.cache/mu" "$STATE_DIR/.cache/mu/xapian" 2>/dev/null || true
 
         # Find new messages
         MESSAGES=$(mu find "date:$SINCE_DATE.." --fields='d f s l' --sortfield=date 2>/dev/null || true)
