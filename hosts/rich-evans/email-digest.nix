@@ -10,7 +10,13 @@
   ...
 }: let
   stateDir = "/var/lib/email-digest";
-  mailDir = "${stateDir}/Mail";
+  # The Maildir (bulk — ~17G, growing to ~30–40G with [Gmail]/All Mail) lives
+  # on the Seagate USB drive: mbsync writes sequentially, spinning rust handles
+  # that fine, and the SSD (80% full, 44G) would cliff pulling full Gmail history.
+  # The mu index (.cache/mu below) STAYS on the SSD — mu find/view do random
+  # reads and the Interrogator queries interactively; a spun-down USB drive
+  # would eat 5–10s spin-up per query. Split layout: bulk on rust, index on SSD.
+  mailDir = "/mnt/seagate/email-digest/Mail";
   orgNotesDir = "/home/kimb/shared_projects/org_crm/notes";
   discordUserId = "366455267673636866";
 
@@ -70,7 +76,11 @@
     Channel gmail
     Far :gmail-remote:
     Near :gmail-local:
-    Patterns "INBOX" "[Gmail]/Sent Mail" "[Gmail]/Drafts" "[Gmail]/Trash" "[Gmail]/Starred"
+    # All Mail = the full archive (received + sent + auto-archived); Spam so a
+    # mis-filed message isn't invisible. NOT `Patterns *` (pulls labels-as-
+    # folders, noisier); the explicit list is cleaner. mbsync -a syncs all
+    # CHANNELS; the Patterns list is the per-folder lever.
+    Patterns "INBOX" "[Gmail]/Sent Mail" "[Gmail]/Drafts" "[Gmail]/Trash" "[Gmail]/Starred" "[Gmail]/All Mail" "[Gmail]/Spam"
     Create Near
     SyncState *
     Sync Pull
@@ -412,10 +422,15 @@ in {
   };
 
   systemd = {
-    # State directory
+    # State directory. Only the SSD stateDir gets a tmpfiles rule: tmpfiles
+    # runs at boot via systemd-tmpfiles-setup, NOT gated by RequiresMountsFor,
+    # so a rule under /mnt/seagate (a `nofail` mount) would create the dir on
+    # the empty SSD mountpoint when the drive is absent — the mount-trap that
+    # shadows real data on remount. The Seagate Maildir is created at runtime
+    # by the script's `mkdir -p "$MAIL_DIR/..."` (only runs when the service
+    # runs, which RequiresMountsFor gates on the drive being mounted).
     tmpfiles.rules = [
       "d ${stateDir} 0750 email-digest email-digest -"
-      "d ${mailDir} 0750 email-digest email-digest -"
     ];
 
     # Oneshot service
@@ -436,7 +451,14 @@ in {
         TimeoutStartSec = "30min";
         ProtectHome = "read-only";
         ProtectSystem = "strict";
-        ReadWritePaths = [stateDir];
+        ReadWritePaths = [stateDir mailDir];
+        # Guard the mount-trap: /mnt/seagate is `nofail` (boots with the drive
+        # absent). Without this, the service would write the Maildir into the
+        # empty SSD mountpoint dir, shadowing the real data when the drive
+        # remounts. RequiresMountsFor makes the service refuse to run while the
+        # drive is gone (the timer retries on its next cadence). The Interrogator
+        # blocks degrade benignly when the index is stale/absent.
+        RequiresMountsFor = ["/mnt/seagate"];
         PrivateTmp = true;
         NoNewPrivileges = true;
         StateDirectory = "email-digest";
