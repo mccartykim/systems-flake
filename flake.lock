@@ -737,7 +737,7 @@
     },
     "flake-utils_17": {
       "inputs": {
-        "systems": "systems_17"
+        "systems": "systems_18"
       },
       "locked": {
         "lastModified": 1731533236,
@@ -827,7 +827,7 @@
     },
     "flake-utils_21": {
       "inputs": {
-        "systems": "systems_22"
+        "systems": "systems_24"
       },
       "locked": {
         "lastModified": 1731533236,
@@ -918,24 +918,6 @@
     "flake-utils_26": {
       "inputs": {
         "systems": "systems_29"
-      },
-      "locked": {
-        "lastModified": 1731533236,
-        "narHash": "sha256-l0KFg5HjrsfsO/JpG+r7fRrqm12kzFHyUHqHCVpMMbI=",
-        "owner": "numtide",
-        "repo": "flake-utils",
-        "rev": "11707dc2f618dd54ca8739b309ec4fc024de578b",
-        "type": "github"
-      },
-      "original": {
-        "owner": "numtide",
-        "repo": "flake-utils",
-        "type": "github"
-      }
-    },
-    "flake-utils_27": {
-      "inputs": {
-        "systems": "systems_30"
       },
       "locked": {
         "lastModified": 1731533236,
@@ -1248,45 +1230,6 @@
         "url": "ssh://git@github.com/mccartykim/knitwork_frontend.git"
       }
     },
-    "kokoro": {
-      "inputs": {
-        "flake-utils": "flake-utils_15",
-        "kokoros-src": "kokoros-src",
-        "nixpkgs": [
-          "nixpkgs"
-        ],
-        "rust-overlay": "rust-overlay"
-      },
-      "locked": {
-        "lastModified": 1767763710,
-        "narHash": "sha256-g24/RKAmxSdnW8+Ybk9QT/0UrKtku1+FwqMft9sEA2o=",
-        "ref": "refs/heads/main",
-        "rev": "9984e453d55bf00562b9a7e24e7221ef70121a09",
-        "revCount": 1,
-        "type": "git",
-        "url": "ssh://git@github.com/mccartykim/kokoro-flake.git"
-      },
-      "original": {
-        "type": "git",
-        "url": "ssh://git@github.com/mccartykim/kokoro-flake.git"
-      }
-    },
-    "kokoros-src": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1766978283,
-        "narHash": "sha256-1d0+RttcqYKe0vgIORaG3niE7ZMoMfGprccW4wq/dz4=",
-        "owner": "lucasjinreal",
-        "repo": "Kokoros",
-        "rev": "113565a744acd8cdfc47062f718e376e806e87e7",
-        "type": "github"
-      },
-      "original": {
-        "owner": "lucasjinreal",
-        "repo": "Kokoros",
-        "type": "github"
-      }
-    },
     "lib-aggregate": {
       "inputs": {
         "flake-utils": "flake-utils_13",
@@ -1308,7 +1251,7 @@
     },
     "lifecoach-organism": {
       "inputs": {
-        "flake-utils": "flake-utils_16",
+        "flake-utils": "flake-utils_15",
         "nixpkgs": [
           "nixpkgs"
         ],
@@ -1350,7 +1293,7 @@
     },
     "mist-blog": {
       "inputs": {
-        "flake-utils": "flake-utils_17",
+        "flake-utils": "flake-utils_16",
         "nix-gleam": "nix-gleam_2",
         "nixpkgs": [
           "nixpkgs"
@@ -1417,7 +1360,7 @@
         "nixpkgs": [
           "nixpkgs"
         ],
-        "systems": "systems_18"
+        "systems": "systems_17"
       },
       "locked": {
         "lastModified": 1784630071,
@@ -1904,7 +1847,7 @@
     },
     "org-agent": {
       "inputs": {
-        "flake-utils": "flake-utils_18",
+        "flake-utils": "flake-utils_17",
         "nixpkgs": [
           "nixpkgs"
         ]
@@ -1925,7 +1868,7 @@
     },
     "org-crm": {
       "inputs": {
-        "flake-utils": "flake-utils_19",
+        "flake-utils": "flake-utils_18",
         "nixpkgs": [
           "nixpkgs"
         ],
@@ -1949,7 +1892,7 @@
     },
     "org-life-coach": {
       "inputs": {
-        "flake-utils": "flake-utils_20",
+        "flake-utils": "flake-utils_19",
         "nixpkgs": [
           "nixpkgs"
         ],
@@ -2030,7 +1973,7 @@
     },
     "org_agent_4": {
       "inputs": {
-        "flake-utils": "flake-utils_26",
+        "flake-utils": "flake-utils_25",
         "nixpkgs": "nixpkgs_15"
       },
       "locked": {
@@ -2156,7 +2099,7 @@
     },
     "organism_6": {
       "inputs": {
-        "flake-utils": "flake-utils_21",
+        "flake-utils": "flake-utils_20",
         "nixpkgs": [
           "nixpkgs"
         ]
@@ -2177,7 +2120,7 @@
     },
     "organism_7": {
       "inputs": {
-        "flake-utils": "flake-utils_23",
+        "flake-utils": "flake-utils_22",
         "nixpkgs": "nixpkgs_13"
       },
       "locked": {
@@ -2196,7 +2139,7 @@
     },
     "organism_8": {
       "inputs": {
-        "flake-utils": "flake-utils_27",
+        "flake-utils": "flake-utils_26",
         "nixpkgs": "nixpkgs_16"
       },
       "locked": {
@@ -2351,7 +2294,6 @@
         "kimb-blog-content": "kimb-blog-content",
         "knitwork": "knitwork",
         "knitwork-frontend": "knitwork-frontend",
-        "kokoro": "kokoro",
         "lifecoach-organism": "lifecoach-organism",
         "media-classifier": "media-classifier",
         "mist-blog": "mist-blog",
@@ -2374,27 +2316,6 @@
         "system-manager": "system-manager",
         "vacuum-organism": "vacuum-organism",
         "void-master-organism": "void-master-organism"
-      }
-    },
-    "rust-overlay": {
-      "inputs": {
-        "nixpkgs": [
-          "kokoro",
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1767495280,
-        "narHash": "sha256-hEEgtE/RSRigw8xscchGymf/t1nluZwTfru4QF6O1CQ=",
-        "owner": "oxalica",
-        "repo": "rust-overlay",
-        "rev": "cb24c5cc207ba8e9a4ce245eedd2d37c3a988bc1",
-        "type": "github"
-      },
-      "original": {
-        "owner": "oxalica",
-        "repo": "rust-overlay",
-        "type": "github"
       }
     },
     "srvos": {
@@ -2430,7 +2351,7 @@
           "nixpkgs"
         ],
         "nur": "nur",
-        "systems": "systems_23",
+        "systems": "systems_22",
         "tinted-kitty": "tinted-kitty",
         "tinted-schemes": "tinted-schemes",
         "tinted-tmux": "tinted-tmux",
@@ -2817,21 +2738,6 @@
         "type": "github"
       }
     },
-    "systems_30": {
-      "locked": {
-        "lastModified": 1681028828,
-        "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
-        "owner": "nix-systems",
-        "repo": "default",
-        "rev": "da67096a3b9bf56a91d16901293e51ba5b49a27e",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nix-systems",
-        "repo": "default",
-        "type": "github"
-      }
-    },
     "systems_4": {
       "locked": {
         "lastModified": 1681028828,
@@ -3019,7 +2925,7 @@
           "nixpkgs"
         ],
         "pre-commit-hooks-nix": "pre-commit-hooks-nix",
-        "systems": "systems_24"
+        "systems": "systems_23"
       },
       "locked": {
         "lastModified": 1770377964,
@@ -3063,7 +2969,7 @@
     },
     "vacuum-organism": {
       "inputs": {
-        "flake-utils": "flake-utils_22",
+        "flake-utils": "flake-utils_21",
         "nixpkgs": [
           "nixpkgs"
         ],
@@ -3086,7 +2992,7 @@
     },
     "vacuum-skills": {
       "inputs": {
-        "flake-utils": "flake-utils_24",
+        "flake-utils": "flake-utils_23",
         "nixpkgs": "nixpkgs_14"
       },
       "locked": {
@@ -3105,7 +3011,7 @@
     },
     "void-master-organism": {
       "inputs": {
-        "flake-utils": "flake-utils_25",
+        "flake-utils": "flake-utils_24",
         "nixpkgs": [
           "nixpkgs"
         ],

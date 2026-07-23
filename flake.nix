@@ -68,10 +68,6 @@
     knitwork-frontend.url = "git+ssh://git@github.com/mccartykim/knitwork_frontend.git";
     knitwork-frontend.flake = false;
 
-    # Kokoro TTS - local flake for now (has working build)
-    kokoro.url = "git+ssh://git@github.com/mccartykim/kokoro-flake.git";
-    kokoro.inputs.nixpkgs.follows = "nixpkgs";
-
     # Media classifier for Jellyfin library organization
     media-classifier.url = "git+ssh://git@github.com/mccartykim/media-classifier.git";
     media-classifier.inputs.nixpkgs.follows = "nixpkgs";
