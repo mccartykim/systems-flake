@@ -141,6 +141,15 @@
     navigator-organism.url = "git+ssh://git@github.com/mccartykim/navigator_organism.git";
     navigator-organism.inputs.nixpkgs.follows = "nixpkgs";
 
+    # Interrogator Voke (the read-only mail reader, #53) — the 10th bridge
+    # officer, on rich-evans. Reads the mu index + Maildir the email-digest
+    # service already maintains (no new sync), replies with an org-mode table;
+    # authors PRs against its own repo via the #60 loop. Self-contained per-
+    # officer flake pattern (resolves its own package from pkgs.system), mirrors
+    # the other self-contained officer modules.
+    interrogator-organism.url = "git+ssh://git@github.com/mccartykim/interrogator_organism.git";
+    interrogator-organism.inputs.nixpkgs.follows = "nixpkgs";
+
     # 40k_bridge source tree — NOT a flake (no flake.nix). Consumed for the
     # org-bridge + vox-bridge NixOS modules via `import` of path strings, and
     # for the org-bridge broker/client Python + scope TOML at eval time.

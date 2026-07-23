@@ -5,7 +5,7 @@
   self,
   ...
 }: let
-  inherit (inputs) nixpkgs nixos-hardware nixos-facter-modules copyparty nil-flake media-classifier org-life-coach lifecoach-organism vacuum-organism org-crm organism void-master-organism factotum-organism confessor-organism explorator-organism chirurgeon-organism navigator-organism;
+  inherit (inputs) nixpkgs nixos-hardware nixos-facter-modules copyparty nil-flake media-classifier org-life-coach lifecoach-organism vacuum-organism org-crm organism void-master-organism factotum-organism confessor-organism explorator-organism chirurgeon-organism navigator-organism interrogator-organism;
   inherit (config.flake.lib) mkDesktop mkServer mkHomeManager commonModules;
 in {
   flake.nixosConfigurations = {
@@ -144,6 +144,14 @@ in {
         # extraSpecialArgs and NO colmena meta.specialArgs change (same shape
         # as the Confessor / Factotum / Explorator).
         chirurgeon-organism.nixosModules.default
+        # Interrogator Voke (the read-only mail reader, #53) — the 10th bridge
+        # officer. Self-contained module from the interrogator_organism flake
+        # (resolves its own package from pkgs.system, NO extraSpecialArgs, NO
+        # colmena meta.specialArgs change — same shape as the other self-
+        # contained officer modules). On-request (no heartbeat): the vox-
+        # organism daemon runs its `organic` cycle under uid 998 (a member of
+        # interrogator-organism + email-digest) to read the mu index.
+        interrogator-organism.nixosModules.default
         (import "${inputs."bridge-crew-src"}/deploy/org-bridge.nix")
         (import "${inputs."bridge-crew-src"}/deploy/vox-bridge.nix")
         # Phase-2 vox-organism: the Astropath comms-bridge daemon (replaces the
@@ -163,6 +171,7 @@ in {
         (self + "/hosts/rich-evans/confessor-organism.nix")
         (self + "/hosts/rich-evans/explorator-organism.nix")
         (self + "/hosts/rich-evans/chirurgeon-organism.nix")
+        (self + "/hosts/rich-evans/interrogator-organism.nix")
         (self + "/hosts/rich-evans/org-bridge.nix")
         org-crm.nixosModules.default
         (self + "/hosts/rich-evans/org-crm.nix")

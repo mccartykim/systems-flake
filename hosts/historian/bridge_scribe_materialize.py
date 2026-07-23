@@ -23,14 +23,18 @@ import subprocess
 import sys
 import tempfile
 
-# repo -> {remote, key_env}. One SHARED deploy key (BRIDGE_SCRIBE_DEPLOY_KEY)
-# serves every repo — the per-repo scope is this allowlist, not the key. The
-# key PATH comes from env (set by the shell wrapper, which bakes the agenix
-# /run/agenix path). The Chirurgeon (#62) authors its own seed repo for
-# structural self-edits (routine tweaks persist in-cycle via org-merge; only
-# the immutable head / bin / flake go through this PR loop). Add repos here as
-# officers gain scope (#64). The shared deploy key MUST be registered on the
-# chirurgeon_organism GitHub repo (a user GitHub-settings step).
+# repo -> {remote, key_env}. The scribe authenticates to GitHub with ONE key
+# (BRIDGE_SCRIBE_DEPLOY_KEY) that is registered as a mccartykim ACCOUNT SSH
+# key (titled "bridge-scribe service"), NOT a per-repo deploy key — so it has
+# write access to every mccartykim/* repo and needs NO per-repo registration.
+# (GitHub enforces one-key-one-repo for deploy keys, which is why a "shared
+# deploy key" would not work; the account key sidesteps that.) The per-repo
+# SCOPE is this allowlist, not the key. The key PATH comes from env (set by the
+# shell wrapper, which bakes the agenix /run/agenix path). The Chirurgeon (#62)
+# + Interrogator (#53) author their own seed repos for structural self-edits
+# (routine tweaks persist in-cycle via org-merge; only the immutable head /
+# bin / flake go through this PR loop). Add repos here as officers gain scope
+# (#64).
 REPOS = {
     "systems-flake": {
         "remote": "git@github.com:mccartykim/systems-flake.git",
@@ -38,6 +42,10 @@ REPOS = {
     },
     "chirurgeon_organism": {
         "remote": "git@github.com:mccartykim/chirurgeon_organism.git",
+        "key_env": "BRIDGE_SCRIBE_DEPLOY_KEY",
+    },
+    "interrogator_organism": {
+        "remote": "git@github.com:mccartykim/interrogator_organism.git",
         "key_env": "BRIDGE_SCRIBE_DEPLOY_KEY",
     },
 }

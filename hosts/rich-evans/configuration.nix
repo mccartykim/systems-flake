@@ -268,6 +268,13 @@ in {
       # runtime dep of the daemon — just the operator's PATH).
       python3
       jq
+      # mu — the Interrogator (#53) runs read-only `mu find`/`mu view` over the
+      # index the email-digest service already maintains (it is NOT a package
+      # runtimeDep of interrogator_organism — the index/Maildir only exist on
+      # rich-evans + the hermetic test stubs mu). Placed here so it resolves on
+      # the vox-organism daemon's reactive PATH (/run/current-system/sw/bin)
+      # + a manual interrogator-invoke. See email-digest.nix for the index.
+      mu
     ];
 
     # Override default shell setup for server

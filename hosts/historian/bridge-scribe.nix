@@ -20,16 +20,21 @@
 # scratch + one deploy key, NO VM, one-pass patch the Lord-Captain reviews on
 # the branch.
 #
-# ONE shared deploy key, NOT one per repo. Justification: every authorable
-# repo's key would live in the same /run/agenix on this one host, owned by this
-# one user, used by this one forced-command process — so per-repo keys buy no
-# real blast-radius isolation (anyone who can read one can read them all). The
-# per-repo SCOPE is enforced in CODE, not by key scoping: the REPOS allowlist
-# below (+ the daemon's OFFICER_REPOS) decides which repo a request may touch,
-# and the key only ever reaches github through this forced command. So one key,
-# registered on every authorable repo (write access), is the proxy's single
-# credential — like a reverse proxy holding one backend credential and routing
-# by the request. Rotate once; extend the REPOS map as officers gain scope (#64).
+# ONE shared key, NOT one per repo. The key is registered as a mccartykim
+# ACCOUNT SSH key (titled "bridge-scribe service"), NOT a per-repo deploy
+# key — so it has write access to every mccartykim/* repo and needs NO
+# per-repo registration (GitHub's one-key-one-repo rule makes a shared
+# deploy key unworkable; the account key sidesteps it). Justification for
+# one key over per-repo: every authorable repo's key would live in the same
+# /run/agenix on this one host, owned by this one user, used by this one
+# forced-command process — so per-repo keys buy no real blast-radius
+# isolation (anyone who can read one can read them all). The per-repo SCOPE
+# is enforced in CODE, not by key scoping: the REPOS allowlist below (+ the
+# daemon's OFFICER_REPOS) decides which repo a request may touch, and the
+# key only ever reaches github through this forced command. So one key is
+# the proxy's single credential — like a reverse proxy holding one backend
+# credential and routing by the request. Rotate once; extend the REPOS map
+# as officers gain scope (#64).
 #
 # The forced command mirrors modules/distributed-builds.nix:78 (the
 # nix-daemon --stdio builder-only key): a pubkey entry restricted to exactly
@@ -98,10 +103,12 @@ in {
       "d /var/lib/bridge-scribe/scratch      0750 bridge-scribe bridge-scribe -"
     ];
 
-    # The shared GitHub deploy key (write, registered on every authorable
-    # repo). Lives ONLY on historian; the daemon on rich-evans never sees it.
-    # The fleet key authenticates as bridge-scribe and the forced command reads
-    # this path via the BRIDGE_SCRIBE_DEPLOY_KEY env the wrapper bakes in.
+    # The shared GitHub key (an mccartykim account SSH key titled
+    # "bridge-scribe service", NOT a per-repo deploy key — write access to
+    # every mccartykim/* repo, no per-repo registration). Lives ONLY on
+    # historian; the daemon on rich-evans never sees it. The fleet key
+    # authenticates as bridge-scribe and the forced command reads this path
+    # via the BRIDGE_SCRIBE_DEPLOY_KEY env the wrapper bakes in.
     age.secrets.deploy-key-bridge-scribe = {
       file = ../../secrets/deploy-key-bridge-scribe.age;
       owner = "bridge-scribe";

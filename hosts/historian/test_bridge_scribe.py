@@ -192,5 +192,22 @@ class ChirurgeonAllowlist(unittest.TestCase):
         self.assertIn("not in allowlist", err)
 
 
+class InterrogatorAllowlist(unittest.TestCase):
+    """The Interrogator (#53) authors its own interrogator_organism repo. A
+    valid envelope against it validates + dies at the key gate (exit 4, NOT
+    the allowlist reject exit 3) — proving the repo is in REPOS + the shared
+    deploy key is the only remaining gate. Mirrors the Chirurgeon case."""
+
+    def test_interrogator_repo_in_allowlist(self):
+        rc, err = run_scribe(good(repo="interrogator_organism"))
+        self.assertEqual(rc, 4)
+        self.assertNotIn("not in allowlist", err)
+
+    def test_interrogator_unrelated_repo_rejected(self):
+        rc, err = run_scribe(good(repo="interrogator_organism-evil"))
+        self.assertEqual(rc, 3)
+        self.assertIn("not in allowlist", err)
+
+
 if __name__ == "__main__":
     unittest.main()
