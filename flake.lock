@@ -1377,11 +1377,11 @@
         "organism": "organism_6"
       },
       "locked": {
-        "lastModified": 1784790895,
-        "narHash": "sha256-cnX871nOKeicBBneqJnGNSwGndQv7S146Y3DQKeXYw4=",
+        "lastModified": 1784791988,
+        "narHash": "sha256-x26/aaAYYBIVytmHlfvZ6IgTDAOYwqBHWsCy31H8pEA=",
         "ref": "refs/heads/main",
-        "rev": "4f8e1aab97f00f42e9fa5a5a4aa269415de768c2",
-        "revCount": 1,
+        "rev": "269585f517a60c2ff3594cc38c522c9c95f748e6",
+        "revCount": 2,
         "type": "git",
         "url": "ssh://git@github.com/mccartykim/navigator_organism.git"
       },

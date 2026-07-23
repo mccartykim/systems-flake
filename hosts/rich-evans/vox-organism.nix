@@ -40,7 +40,10 @@ in {
     # The rooms the daemon joins at startup (officer dialogue rooms + the
     # vox-bridge vigil room + the bridge-events structured bus). The daemon
     # auto-creates any that do not yet exist + invites @kimb:kimb.dev. The
-    # Chirurgeon (#62) joins the crew as the 5th officer dialogue room.
+    # Chirurgeon (#62) joins the crew as the 5th officer dialogue room; the
+    # Navigator (#49) joins as the 6th — the CROSS-HOST officer (hosted on
+    # total-eclipse, SSH-dispatched by the daemon via the routing table's host
+    # column; see deploy/vox-organism.py:_invoke_organic_remote).
     rooms = [
       "#vox-bridge:kimb.dev"
       "#voidmaster:kimb.dev"
@@ -48,6 +51,7 @@ in {
       "#ships-log:kimb.dev"
       "#enginearium:kimb.dev"
       "#chirurgeon:kimb.dev"
+      "#navigator:kimb.dev"
       "#bridge-events:kimb.dev"
     ];
     # Authoring hop: the daemon SSHes to this host (bridge-scribe on historian,
