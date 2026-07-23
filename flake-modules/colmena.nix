@@ -21,7 +21,15 @@
         then "192.168.69.1"
         else "${name}.nebula";
       targetUser = "kimb";
-      buildOnTarget = false;
+      # historian builds its own closure on-target: it's the 24-core build
+      # machine and already holds the heavy store paths its closure references
+      # (e.g. the ROCm aotriton/torch kernels), so building there reuses them
+      # instead of rebuilding from source on the deployer (total-eclipse) after
+      # a local GC evicts them — and without the per-derivation round-trip
+      # latency of nix.distributedBuilds. Other hosts build on the deployer:
+      # rich-evans is too weak to self-build, and its closure is light enough
+      # for total-eclipse. Override per-invocation with --[no-]build-on-target.
+      buildOnTarget = name == "historian";
     };
     imports = self.nixosConfigurations.${name}._module.args.modules;
   };

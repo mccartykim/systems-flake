@@ -269,14 +269,18 @@
               '';
             })
 
-            # deploy: colmena deploy shorthand
-            # Usage: deploy historian         → colmena apply --on historian
-            #        deploy historian,maitred → colmena apply --on historian,maitred
+            # deploy: colmena deploy shorthand. Uses the experimental streaming
+            # evaluator (--evaluator streaming, nix-eval-jobs): nodes evaluate in
+            # parallel and each node's deploy kicks off as soon as it finishes
+            # evaluating, instead of waiting for all nodes to eval. Verified
+            # compatible with the legacy flake.colmena output on colmena 0.4.
+            # Usage: deploy historian         → colmena apply --evaluator streaming --on historian
+            #        deploy historian,maitred → colmena apply --evaluator streaming --on historian,maitred
             (pkgs.writeShellApplication {
               name = "deploy";
               runtimeInputs = [pkgs.colmena];
               text = ''
-                colmena apply --on "$@"
+                colmena apply --evaluator streaming --on "$@"
               '';
             })
 
