@@ -43,120 +43,19 @@
 }: let
   cfg = config.services.bridge-scribe;
 
-  # The materialize logic, in python (json parse + git). Kept in a '' string so
-  # backslash escapes (\n in f-strings) survive verbatim — Nix "" strings would
-  # eat them. Re-validates the envelope on this side of the trust boundary: the
-  # daemon already validated, but this is the last gate before `git push` to a
-  # shared repo, so it never trusts upstream. Branch MUST start with
-  # `proposed/`, repo MUST be in the allowlist map, file paths MUST be relative
-  # and prisoned under the scratch root.
-  materializePy = pkgs.writeText "bridge-scribe-materialize.py" ''
-    import json, os, subprocess, sys, tempfile, shutil
-
-    # repo -> {remote, key_env}. One SHARED deploy key (BRIDGE_SCRIBE_DEPLOY_KEY)
-    # serves every repo — the per-repo scope is this allowlist, not the key. The
-    # key PATH comes from env (set by the shell wrapper, which bakes the agenix
-    # /run/agenix path). Pilot only; add repos here as officers gain scope (#64).
-    REPOS = {
-        "systems-flake": {
-            "remote": "git@github.com:mccartykim/systems-flake.git",
-            "key_env": "BRIDGE_SCRIBE_DEPLOY_KEY",
-        },
-    }
-
-    def die(msg, code=1):
-        sys.stderr.write("bridge-scribe: " + msg + "\n")
-        sys.exit(code)
-
-    def run(args, env=None):
-        return subprocess.run(args, check=True, env=env,
-                               capture_output=True, text=True)
-
-    def main():
-        try:
-            req = json.load(sys.stdin)
-        except Exception as e:
-            die("malformed JSON on stdin: " + str(e), 2)
-        if not isinstance(req, dict):
-            die("envelope is not an object", 2)
-
-        repo = req.get("repo")
-        slug = req.get("slug")
-        branch = req.get("branch")
-        commit_msg = req.get("commit_msg")
-        files = req.get("files")
-
-        if not isinstance(repo, str) or repo not in REPOS:
-            die("repo not in allowlist: " + repr(repo), 3)
-        if not isinstance(slug, str) or not slug:
-            die("missing slug", 3)
-        if not isinstance(branch, str) or not branch.startswith("proposed/"):
-            die("branch must start with proposed/: " + repr(branch), 3)
-        if not isinstance(commit_msg, str) or not commit_msg:
-            die("missing commit_msg", 3)
-        if not isinstance(files, list) or not files:
-            die("files must be a non-empty list", 3)
-
-        key_path = os.environ.get(REPOS[repo]["key_env"])
-        if not key_path or not os.path.isfile(key_path):
-            die("deploy key for " + repo + " not staged", 4)
-
-        remote = REPOS[repo]["remote"]
-        git_env = dict(os.environ)
-        git_env["GIT_SSH_COMMAND"] = (
-            "ssh -i " + key_path +
-            " -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new" +
-            " -o BatchMode=yes"
-        )
-
-        scratch = tempfile.mkdtemp(prefix="scribe-",
-                                   dir="/var/lib/bridge-scribe/scratch")
-        try:
-            # Full clone (not --depth 1): a shallow clone can reject the push of
-            # a new branch on some servers. systems-flake is small; tmpfs is 30G.
-            run(["git", "clone", remote, scratch], env=git_env)
-            os.chdir(scratch)
-            for f in files:
-                if not isinstance(f, dict):
-                    die("file entry is not an object", 3)
-                path = f.get("path")
-                content = f.get("content")
-                if not isinstance(path, str) or not path:
-                    die("bad file path: " + repr(path), 3)
-                if path.startswith("/") or ".." in path.split("/"):
-                    die("file path escapes repo root: " + repr(path), 3)
-                if not isinstance(content, str):
-                    die("bad content for " + repr(path), 3)
-                dest = os.path.join(scratch, path)
-                parent = os.path.dirname(dest)
-                if parent:
-                    os.makedirs(parent, exist_ok=True)
-                with open(dest, "w") as fh:
-                    fh.write(content)
-            run(["git", "add", "-A"])
-            ident_env = dict(os.environ,
-                             GIT_AUTHOR_NAME="bridge-scribe",
-                             GIT_AUTHOR_EMAIL="bridge-scribe@fleet",
-                             GIT_COMMITTER_NAME="bridge-scribe",
-                             GIT_COMMITTER_EMAIL="bridge-scribe@fleet")
-            run(["git", "commit", "-m", commit_msg], env=ident_env)
-            # No --force: a re-push of an existing proposed/<slug> is rejected
-            # (non-fast-forward from a fresh clone). The officer re-slugs. This
-            # honors the standing "no --force on any VCS op" rule.
-            run(["git", "push", "origin", "HEAD:refs/heads/" + branch],
-                env=git_env)
-            sys.stdout.write(branch + "\n")
-        except subprocess.CalledProcessError as e:
-            stderr = (e.stderr or "").strip()
-            if len(stderr) > 600:
-                stderr = stderr[:600]
-            die("git op failed (" + str(e) + "): " + stderr, 5)
-        finally:
-            shutil.rmtree(scratch, ignore_errors=True)
-
-    if __name__ == "__main__":
-        main()
-  '';
+  # The materialize logic, in python (json parse + git). Single source of
+  # truth: the committed ./bridge_scribe_materialize.py, read verbatim into the
+  # store here (no '' string, so no Nix-vs-python drift) and exec'd by the
+  # forced command below. The adversarial exit-code test in
+  # ./test_bridge_scribe.py subprocess-execs that same file. Re-validates the
+  # envelope on this side of the trust boundary: the daemon already validated,
+  # but this is the last gate before `git push` to a shared repo, so it never
+  # trusts upstream. Branch MUST start with `proposed/`, repo MUST be in the
+  # allowlist map, file paths MUST be relative and prisoned under the scratch
+  # root — and the FULL envelope (incl. path-prisoning) is validated BEFORE the
+  # key check + clone, so a malformed envelope dies fast with no side effects.
+  materializePy = pkgs.writeText "bridge-scribe-materialize.py"
+    (builtins.readFile ./bridge_scribe_materialize.py);
 
   # The forced command the fleet key runs. Sets PATH (git/ssh/python/coreutils)
   # + exports the shared deploy-key agenix path as env the python reads, then
