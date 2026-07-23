@@ -108,6 +108,11 @@ in
     # the key indirectly via the forced-command ssh hop — it never sees the key
     # itself. Extend this map as more officers gain authoring scope.
     "deploy-key-systems-flake.age".publicKeys = [hostKeys.historian bootstrap];
+    # Fleet-internal ssh key (rich-evans vox-organism daemon -> historian
+    # bridge-scribe forced-command servitor). Decrypted on rich-evans only
+    # (owned by vox-organism, mode 0400). This is NOT a GitHub key — it never
+    # touches github; it only authenticates the in-fleet hop to the scribe.
+    "bridge-fleet-ssh-key.age".publicKeys = [hostKeys.rich-evans bootstrap];
 
     # ===== MEDIA PIPELINE (historian) =====
     # rclone config with put.io OAuth token

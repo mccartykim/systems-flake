@@ -10,7 +10,7 @@
 # (127.0.0.1:6167, same host as Tuwunel), reusing the existing @vox-bridge:kimb.dev
 # access token — NO @astropath mint, NO registration flip. The .age file is NOT
 # re-encrypted; only the Nix `owner` attr flips from voidmaster-organism to
-# vox-organism so the daemon (uid 992) can read its token.
+# vox-organism so the daemon (uid 998) can read its token.
 {
   config,
   lib,
@@ -20,14 +20,6 @@
 }: {
   services.vox-organism = {
     enable = true;
-    # The live Astropath seed. The daemon parses the routing table from this
-    # file at startup; the module's syncAgentLine copies it from the 40k_bridge
-    # source sample (seeds/astropath.org) on first run + re-syncs the
-    # immutable head each cycle.
-    seedPath = "/var/lib/vox-organism/vox.seed.org";
-    matrixUserId = "@vox-bridge:kimb.dev";
-    matrixHomeserverUrl = "http://127.0.0.1:6167";
-    matrixOwnerMxid = "@kimb:kimb.dev";
     # @vox-bridge:kimb.dev access token — REUSED from Phase 1 (agenix secret;
     # minted via a transient allow_registration flip — see deploy/GO_NOGO.md §3
     # + the matrix-token-mint-requires-registration-flip memory). Only the
@@ -49,15 +41,37 @@
       "#enginearium:kimb.dev"
       "#bridge-events:kimb.dev"
     ];
-    autoCreateRooms = true;
+    # Authoring hop: the daemon SSHes to this host (bridge-scribe on historian,
+    # a forced-command servitor — see hosts/historian/bridge-scribe.nix) to
+    # materialize an officer's `author` request (clone -> commit on
+    # proposed/<slug> -> push). rich-evans is an antique mini PC that must not
+    # run builds or grow clones, so the scratch clone + git push happen on
+    # historian. Fleet-internal, over Nebula.
+    historianHost = "historian.nebula";
+    # The fleet-internal ssh key (agenix below, owned by vox-organism) the
+    # daemon uses for that hop. The per-repo GitHub deploy keys live ONLY on
+    # historian (agenix, owned by bridge-scribe) — this daemon never sees them.
+    fleetSshKeyFile = config.age.secrets.bridge-fleet-ssh-key.path;
   };
 
   # Flip the token owner from voidmaster-organism (Phase 1) to vox-organism
   # (Phase 2). The age-encrypted file (../../secrets/matrix-vox-bridge-token.age)
   # is UNCHANGED — only the decrypted-file owner changes so the daemon (uid
-  # 992) can read it. Rollback: set owner back to "voidmaster-organism".
+  # 998) can read it. Rollback: set owner back to "voidmaster-organism".
   age.secrets.matrix-vox-bridge-token = {
     file = ../../secrets/matrix-vox-bridge-token.age;
+    owner = "vox-organism";
+    mode = "0400";
+  };
+
+  # Fleet-internal ssh key (rich-evans -> historian) the vox-organism daemon
+  # uses to reach the bridge-scribe forced-command servitor and materialize an
+  # officer's `author` request. Owner is vox-organism (the daemon reads it);
+  # mode 0400 (private key). This is NOT a GitHub key — it never touches github;
+  # it only authenticates the in-fleet hop to the scribe. Private half encrypted
+  # to rich-evans + bootstrap in secrets/bridge-fleet-ssh-key.age.
+  age.secrets.bridge-fleet-ssh-key = {
+    file = ../../secrets/bridge-fleet-ssh-key.age;
     owner = "vox-organism";
     mode = "0400";
   };
