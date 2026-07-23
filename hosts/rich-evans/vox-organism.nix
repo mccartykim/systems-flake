@@ -15,9 +15,17 @@
   config,
   lib,
   pkgs,
+  inputs,
   organism,
   ...
-}: {
+}: let
+  # The Chirurgeon's household tools (speak / compel-spirit / ha-get-state /
+  # build-view) live in the chirurgeon_organism package bin; medicae-infer
+  # dispatches them as bare names on PATH. build-view needs org-agent's
+  # emacsclient. Both are mirrored onto the daemon below.
+  org-agent-emacs = inputs.org-agent.packages.${pkgs.system}.emacs;
+  chirurgeon-pkg = inputs.chirurgeon-organism.packages.${pkgs.system}.default;
+in {
   services.vox-organism = {
     enable = true;
     # @vox-bridge:kimb.dev access token — REUSED from Phase 1 (agenix secret;
@@ -76,4 +84,76 @@
     owner = "vox-organism";
     mode = "0400";
   };
+
+  # ------------------------------------------------------------------
+  # #62 fix — let the daemon run the Chirurgeon's CONVERSATION cycle.
+  #
+  # The daemon runs every routed officer's `organic` cycle AS ITS OWN USER
+  # (vox-organism), not as the officer. officer-infer officers (Void-Master,
+  # Factotum, Confessor, Explorator, Astropath) emit #+NOOP every cycle — no
+  # org-merge, no household tools — so they run fine as vox-organism with the
+  # daemon's minimal inherited env (OLLAMA_* + ORG_AGENT_LLM_PROVIDER from
+  # voidmaster-heartbeat via officerEnv). They never noticed the gap.
+  #
+  # medicae-infer (the Chirurgeon) is different: it MERGES (realtime * Regimen
+  # edit needs a group-writable stateDir for the lockfile — fixed in the
+  # chirurgeon_organism module's homeMode 0770) AND dispatches household tools
+  # that need the Chirurgeon's env: the HA auspex (ha-get-state), the calendar
+  # task view (build-view → org-agent emacs socket), and TTS (speak). Without
+  # these, the context blocks hydrate empty, the model sees nothing to tend,
+  # goes quiet (#+NOOP + reply=null), and the room sees the silent-sweep
+  # placeholder instead of a reply.
+  #
+  # Fix: mirror the Chirurgeon's proven `cycleEnv` (chirurgeon_organism/nixos/
+  # module.nix L88-119 — the SAME env the working chirurgeon-heartbeat uses)
+  # into the daemon's service environment + add the chirurgeon package bin +
+  # org-agent-emacs to the daemon's PATH. The daemon's _clean_env_for_organic
+  # strips only MATRIX_* (and overrides OFFICER_STATE=VOX_STATE — harmless:
+  # medicae-infer reads the officer-specific CHIRURGEON_STATE, not OFFICER_STATE),
+  # so HA_TOKEN_FILE / HA_URL / ORG_AGENT_* / TTS_* / CHIRURGEON_STATE pass
+  # straight through to the organic child. Inert for the officer-infer
+  # officers — they don't read these vars.
+  #
+  # Least-privilege: the daemon gets its OWN HA token (ha-vox-organism-token,
+  # vacuum pattern — one .age decrypted for a 4th user, owner vox-organism,
+  # mode 0400, NO agenix re-encryption) so the Chirurgeon's 0400 token is NOT
+  # widened to a group. vox-organism joins life-coach to traverse the 0750
+  # org-agent emacs socket dir (same as the Chirurgeon + Confessor).
+  #
+  # Refactor note: this couples the daemon to the Chirurgeon's env + a 4th HA
+  # token. Acceptable while the Chirurgeon is the only medicae-infer officer.
+  # When a 2nd household officer appears, lift to a sudo-per-officer invoke
+  # (daemon runs `sudo -u <officer> <officer-invoke>` so each officer's context
+  # is self-contained and the daemon carries no officer envs/secrets).
+  # ------------------------------------------------------------------
+  age.secrets.ha-vox-organism-token = {
+    file = ../../secrets/ha-life-coach-token.age;
+    owner = "vox-organism";
+    mode = "0400";
+  };
+  users.users.vox-organism.extraGroups = [ "life-coach" ];
+  systemd.services.vox-organism.environment = {
+    # medicae-infer error-log dir (officer-specific, so the daemon's
+    # OFFICER_STATE=VOX_STATE override doesn't collide).
+    CHIRURGEON_STATE = "/var/lib/chirurgeon-organism";
+    # HA auspex (ha-get-state) + compel-spirit.
+    HA_URL = "http://127.0.0.1:8123";
+    HA_TOKEN_FILE = config.age.secrets.ha-vox-organism-token.path;
+    # Calendar/task view (build-view → org-agent emacs socket).
+    ORG_AGENT_SOCKET = "/var/lib/life-coach-agent/emacs/org-agent";
+    ORG_AGENT_EMACSCLIENT = "${org-agent-emacs}/bin/emacsclient";
+    # speak / lib/tts.py (rung-2 smart-speaker vox).
+    TTS_SERVER = "http://total-eclipse.nebula:8091";
+    TTS_VOICE = "caine";
+    TTS_DEVICE = "Kim's nest hub";
+  };
+  # medicae-infer dispatches speak/compel-spirit/ha-get-state/build-view/log-
+  # observation as bare names → they must be on the daemon's PATH (the
+  # chirurgeon package bin); build-view shells out to emacsclient (org-agent-
+  # emacs). mkAfter appends to the module's own PATH (coreutils/openssh/
+  # org-bridge client/voidmaster bin).
+  systemd.services.vox-organism.path = lib.mkAfter [
+    chirurgeon-pkg
+    org-agent-emacs
+  ];
 }
