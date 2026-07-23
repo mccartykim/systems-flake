@@ -9,7 +9,7 @@
 # a fresh PLAIN-GIT scratch copy of the target repo (NO jj — the officer never
 # touches jj, the user fetches+jj-merges on their own workstation), writes the
 # emitted files verbatim, commits on `proposed/<slug>`, and pushes the named
-# branch with the repo's per-repo GitHub deploy key. The branch name comes
+# branch with the shared GitHub deploy key. The branch name comes
 # back over ssh stdout to the daemon, which posts it to the room.
 #
 # Why historian (not rich-evans): rich-evans is an antique mini PC that must
@@ -18,9 +18,18 @@
 #
 # Pilot tier (locked by the Lord-Captain 2026-07-22): a confined service user +
 # scratch + one deploy key, NO VM, one-pass patch the Lord-Captain reviews on
-# the branch. The repo→deploy-key map below starts with the single pilot repo
-# (systems-flake / Void-Master); extend the map + add deploy-key age.secrets as
-# more officers gain authoring scope (#64 capability matrix).
+# the branch.
+#
+# ONE shared deploy key, NOT one per repo. Justification: every authorable
+# repo's key would live in the same /run/agenix on this one host, owned by this
+# one user, used by this one forced-command process — so per-repo keys buy no
+# real blast-radius isolation (anyone who can read one can read them all). The
+# per-repo SCOPE is enforced in CODE, not by key scoping: the REPOS allowlist
+# below (+ the daemon's OFFICER_REPOS) decides which repo a request may touch,
+# and the key only ever reaches github through this forced command. So one key,
+# registered on every authorable repo (write access), is the proxy's single
+# credential — like a reverse proxy holding one backend credential and routing
+# by the request. Rotate once; extend the REPOS map as officers gain scope (#64).
 #
 # The forced command mirrors modules/distributed-builds.nix:78 (the
 # nix-daemon --stdio builder-only key): a pubkey entry restricted to exactly
@@ -44,12 +53,14 @@
   materializePy = pkgs.writeText "bridge-scribe-materialize.py" ''
     import json, os, subprocess, sys, tempfile, shutil
 
-    # repo -> {remote, key_env}. The deploy-key PATHS come from env (set by the
-    # shell wrapper, which bakes the agenix /run/agenix paths). Pilot only.
+    # repo -> {remote, key_env}. One SHARED deploy key (BRIDGE_SCRIBE_DEPLOY_KEY)
+    # serves every repo — the per-repo scope is this allowlist, not the key. The
+    # key PATH comes from env (set by the shell wrapper, which bakes the agenix
+    # /run/agenix path). Pilot only; add repos here as officers gain scope (#64).
     REPOS = {
         "systems-flake": {
             "remote": "git@github.com:mccartykim/systems-flake.git",
-            "key_env": "SYSTEMS_FLAKE_DEPLOY_KEY",
+            "key_env": "BRIDGE_SCRIBE_DEPLOY_KEY",
         },
     }
 
@@ -148,12 +159,12 @@
   '';
 
   # The forced command the fleet key runs. Sets PATH (git/ssh/python/coreutils)
-  # + exports the deploy-key agenix paths as env the python reads per-repo, then
+  # + exports the shared deploy-key agenix path as env the python reads, then
   # execs the python. stdin (the author JSON) flows straight through.
   materialize = pkgs.writeShellScript "bridge-scribe-materialize" ''
     set -eu
     export PATH=${lib.makeBinPath [pkgs.git pkgs.openssh pkgs.python3 pkgs.coreutils]}
-    export SYSTEMS_FLAKE_DEPLOY_KEY="${config.age.secrets.deploy-key-systems-flake.path}"
+    export BRIDGE_SCRIBE_DEPLOY_KEY="${config.age.secrets.deploy-key-bridge-scribe.path}"
     exec ${pkgs.python3}/bin/python3 ${materializePy}
   '';
 
@@ -188,12 +199,12 @@ in {
       "d /var/lib/bridge-scribe/scratch      0750 bridge-scribe bridge-scribe -"
     ];
 
-    # The systems-flake GitHub deploy key (write, scoped to the one repo). Lives
-    # ONLY on historian; the daemon on rich-evans never sees it. The fleet key
-    # authenticates as bridge-scribe and the forced command reads this path via
-    # the SYSTEMS_FLAKE_DEPLOY_KEY env the wrapper bakes in.
-    age.secrets.deploy-key-systems-flake = {
-      file = ../../secrets/deploy-key-systems-flake.age;
+    # The shared GitHub deploy key (write, registered on every authorable
+    # repo). Lives ONLY on historian; the daemon on rich-evans never sees it.
+    # The fleet key authenticates as bridge-scribe and the forced command reads
+    # this path via the BRIDGE_SCRIBE_DEPLOY_KEY env the wrapper bakes in.
+    age.secrets.deploy-key-bridge-scribe = {
+      file = ../../secrets/deploy-key-bridge-scribe.age;
       owner = "bridge-scribe";
       mode = "0400";
     };

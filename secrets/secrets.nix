@@ -102,25 +102,17 @@ in
     "buildbot-worker-git-netrc.age".publicKeys = [hostKeys.historian bootstrap];
 
     # ===== BRIDGE CREW — AUTHORING SERVITOR (historian) =====
-    # GitHub per-repo deploy keys for the bridge-scribe servitor (#60 PR-authoring
-    # loop). Write-scoped to the single repo. Decrypted on historian only (owned
-    # by bridge-scribe, mode 0400); the vox-organism daemon on rich-evans reaches
-    # the key indirectly via the forced-command ssh hop — it never sees the key
-    # itself. Extend this map as more officers gain authoring scope.
-    "deploy-key-systems-flake.age".publicKeys = [hostKeys.historian bootstrap];
-    # The remaining per-repo GitHub deploy keys are STAGED here (encrypted .age
-    # committed so the private halves persist + the Lord-Captain can register all
-    # 8 pubkeys on GitHub in one sitting) but NOT yet declared as age.secrets on
-    # any host — no host decrypts them until that repo gains authoring scope and
-    # is wired into bridge-scribe's REPOS map (#64 capability matrix). Each is
-    # write-scoped to its single repo on GitHub. Same recipients as systems-flake.
-    "deploy-key-organism.age".publicKeys = [hostKeys.historian bootstrap];
-    "deploy-key-40k_bridge.age".publicKeys = [hostKeys.historian bootstrap];
-    "deploy-key-voidmaster_organism.age".publicKeys = [hostKeys.historian bootstrap];
-    "deploy-key-factotum_organism.age".publicKeys = [hostKeys.historian bootstrap];
-    "deploy-key-confessor_organism.age".publicKeys = [hostKeys.historian bootstrap];
-    "deploy-key-explorator_organism.age".publicKeys = [hostKeys.historian bootstrap];
-    "deploy-key-org_agent.age".publicKeys = [hostKeys.historian bootstrap];
+    # ONE shared GitHub deploy key for the bridge-scribe servitor (#60 PR-authoring
+    # loop), registered (write access) on every authorable repo. Decrypted on
+    # historian only (owned by bridge-scribe, mode 0400); the vox-organism daemon
+    # on rich-evans reaches it indirectly via the forced-command ssh hop — it
+    # never sees the key itself. Per-repo scope is enforced in CODE (the scribe's
+    # REPOS allowlist + the daemon's OFFICER_REPOS), not by key scoping — all
+    # authorable repos share one key because they all live in the same
+    # /run/agenix on one host owned by one user, so per-repo keys would buy no
+    # blast-radius isolation. Rotate once. Add repos to the scribe REPOS map (not
+    # new keys) as officers gain authoring scope (#64).
+    "deploy-key-bridge-scribe.age".publicKeys = [hostKeys.historian bootstrap];
     # Fleet-internal ssh key (rich-evans vox-organism daemon -> historian
     # bridge-scribe forced-command servitor). Decrypted on rich-evans only
     # (owned by vox-organism, mode 0400). This is NOT a GitHub key — it never
