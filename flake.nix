@@ -128,6 +128,14 @@
     explorator-organism.url = "git+ssh://git@github.com/mccartykim/explorator_organism.git";
     explorator-organism.inputs.nixpkgs.follows = "nixpkgs";
 
+    # Chirurgeon Vahan (ship's Medicae, household axis) — the 9th bridge officer
+    # (#62). The hybrid medicae-infer shell: BOTH realtime-editable (org-merge
+    # persists * Regimen edits in-cycle) AND bridge-routed (emits the JSON
+    # envelope the vox-organism daemon parses). Self-contained per-officer
+    # flake pattern, mirrors voidmaster_organism + lifecoach_organism.
+    chirurgeon-organism.url = "git+ssh://git@github.com/mccartykim/chirurgeon_organism.git";
+    chirurgeon-organism.inputs.nixpkgs.follows = "nixpkgs";
+
     # 40k_bridge source tree — NOT a flake (no flake.nix). Consumed for the
     # org-bridge + vox-bridge NixOS modules via `import` of path strings, and
     # for the org-bridge broker/client Python + scope TOML at eval time.

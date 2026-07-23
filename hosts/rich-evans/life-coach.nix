@@ -27,6 +27,17 @@
     mode = "0400";
   };
 
+  # chirurgeon-organism (the 9th bridge officer, #62) reads the same HA token
+  # as its own user — the vacuum pattern again: one .age decrypted for a third
+  # user, NO agenix re-encryption. The Chirurgeon's Auspex (ha-get-state) +
+  # compel-spirit need the token; reusing it avoids minting a new HA long-lived
+  # token.
+  age.secrets.ha-chirurgeon-token = {
+    file = ../../secrets/ha-life-coach-token.age;
+    owner = "chirurgeon-organism";
+    mode = "0400";
+  };
+
   # Matrix access token for life-coach chatbot
   age.secrets.matrix-life-coach-token = {
     file = ../../secrets/matrix-life-coach-token.age;

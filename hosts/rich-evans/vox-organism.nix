@@ -29,16 +29,17 @@
     # flake input. The `organism` specialArg is threaded via rich-evans's
     # extraSpecialArgs in nixos-configurations.nix.
     organicBin = "${organism.packages.x86_64-linux.default}/bin/organic";
-    # The 6 rooms the daemon joins at startup (4 officer dialogue rooms + the
+    # The rooms the daemon joins at startup (officer dialogue rooms + the
     # vox-bridge vigil room + the bridge-events structured bus). The daemon
-    # auto-creates any that do not yet exist + invites @kimb:kimb.dev (the
-    # Phase-2 cutover creates the 5 rooms beyond #voidmaster).
+    # auto-creates any that do not yet exist + invites @kimb:kimb.dev. The
+    # Chirurgeon (#62) joins the crew as the 5th officer dialogue room.
     rooms = [
       "#vox-bridge:kimb.dev"
       "#voidmaster:kimb.dev"
       "#factotum:kimb.dev"
       "#ships-log:kimb.dev"
       "#enginearium:kimb.dev"
+      "#chirurgeon:kimb.dev"
       "#bridge-events:kimb.dev"
     ];
     # Authoring hop: the daemon SSHes to this host (bridge-scribe on historian,

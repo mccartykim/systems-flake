@@ -5,7 +5,7 @@
   self,
   ...
 }: let
-  inherit (inputs) nixpkgs nixos-hardware nixos-facter-modules copyparty nil-flake media-classifier org-life-coach lifecoach-organism vacuum-organism org-crm organism void-master-organism factotum-organism confessor-organism explorator-organism;
+  inherit (inputs) nixpkgs nixos-hardware nixos-facter-modules copyparty nil-flake media-classifier org-life-coach lifecoach-organism vacuum-organism org-crm organism void-master-organism factotum-organism confessor-organism explorator-organism chirurgeon-organism;
   inherit (config.flake.lib) mkDesktop mkServer mkHomeManager commonModules;
 in {
   flake.nixosConfigurations = {
@@ -129,6 +129,12 @@ in {
         # extraSpecialArgs and NO colmena meta.specialArgs change (same shape
         # as the Confessor / Factotum).
         explorator-organism.nixosModules.default
+        # Chirurgeon Vahan (ship's Medicae, household axis) — the 9th bridge
+        # officer (#62). Self-contained module from the chirurgeon_organism
+        # flake — resolves its own package from pkgs.system, so it needs NO
+        # extraSpecialArgs and NO colmena meta.specialArgs change (same shape
+        # as the Confessor / Factotum / Explorator).
+        chirurgeon-organism.nixosModules.default
         (import "${inputs."bridge-crew-src"}/deploy/org-bridge.nix")
         (import "${inputs."bridge-crew-src"}/deploy/vox-bridge.nix")
         # Phase-2 vox-organism: the Astropath comms-bridge daemon (replaces the
@@ -147,6 +153,7 @@ in {
         (self + "/hosts/rich-evans/factotum-organism.nix")
         (self + "/hosts/rich-evans/confessor-organism.nix")
         (self + "/hosts/rich-evans/explorator-organism.nix")
+        (self + "/hosts/rich-evans/chirurgeon-organism.nix")
         (self + "/hosts/rich-evans/org-bridge.nix")
         org-crm.nixosModules.default
         (self + "/hosts/rich-evans/org-crm.nix")
