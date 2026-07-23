@@ -450,14 +450,15 @@ in {
       };
     };
 
-    # Timer: 8am and 9pm Eastern
+    # Timer: every 15 min — the mu index is at most ~15 min stale so a
+    # #interrogator round-trip sees recent dispatches. Twice-daily left the
+    # index up to ~12 h stale. A oneshot can't overlap itself (systemd won't
+    # start a second instance while one runs), and TimeoutStartSec bounds a
+    # slow sync, so a 15-min cadence is safe.
     timers.email-digest = {
       wantedBy = ["timers.target"];
       timerConfig = {
-        OnCalendar = [
-          "*-*-* 08:00:00 America/New_York"
-          "*-*-* 21:00:00 America/New_York"
-        ];
+        OnCalendar = "*:0/15";
         Persistent = true;
       };
     };

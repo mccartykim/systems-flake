@@ -1273,11 +1273,11 @@
         "organism": "organism_5"
       },
       "locked": {
-        "lastModified": 1784836140,
-        "narHash": "sha256-O5XekQN/kZys3NeqVO+z9ewkbkjmf8ZRcckRVQ3kPM4=",
+        "lastModified": 1784839502,
+        "narHash": "sha256-CvynXuL861Np+ntm+iE7CP1Nfzo80eb818mvwN6JRPk=",
         "ref": "refs/heads/main",
-        "rev": "efcde120c5d7d0471c55da6f08d7d68554a18ea4",
-        "revCount": 5,
+        "rev": "eaf3f00f6dd9b3c6dc0e8864f422b7ff5587cf96",
+        "revCount": 7,
         "type": "git",
         "url": "ssh://git@github.com/mccartykim/interrogator_organism.git"
       },
