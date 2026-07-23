@@ -33,6 +33,15 @@
   # emacsclient. Both are mirrored onto the daemon below.
   org-agent-emacs = inputs.org-agent.packages.${pkgs.system}.emacs;
   chirurgeon-pkg = inputs.chirurgeon-organism.packages.${pkgs.system}.default;
+  # The Interrogator's #+AGENT shell (interrogator-infer) lives in the
+  # interrogator_organism package bin; organism resolves `#+AGENT:` as a bare
+  # name on PATH, so the daemon must carry the package bin or the reactive
+  # #interrogator cycle fails ~1ms in (command not found). interrogator-infer
+  # is inference-only (no household tools / HA / TTS / build-view) so unlike the
+  # Chirurgeon it needs NO env additions — only the package bin on PATH (mu is
+  # already on the module's path; the email-digest group membership is roster-
+  # derived). Mirrors the chirurgeon-pkg path addition for the #62 fix.
+  interrogator-pkg = inputs.interrogator-organism.packages.${pkgs.system}.default;
 in {
   services.vox-organism = {
     enable = true;
@@ -174,5 +183,6 @@ in {
   systemd.services.vox-organism.path = lib.mkAfter [
     chirurgeon-pkg
     org-agent-emacs
+    interrogator-pkg
   ];
 }
