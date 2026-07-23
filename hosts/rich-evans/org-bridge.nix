@@ -45,5 +45,11 @@
       "991" = "explorator";
       "998" = "astropath";
     };
+    # vox-organism (998) is the router: it runs every routed officer's organic
+    # cycle under its own uid and forwards their view/append, so it must be
+    # trusted to name the routed officer (strict uid-match would deny every
+    # routed officer). It already controls every cycle, so this adds no
+    # capability beyond router compromise. See org-bridge.nix relayUids.
+    relayUids = [ "998" ];
   };
 }
