@@ -5,7 +5,7 @@
   self,
   ...
 }: let
-  inherit (inputs) nixpkgs nixos-hardware nixos-facter-modules copyparty nil-flake media-classifier org-life-coach lifecoach-organism vacuum-organism org-crm organism void-master-organism factotum-organism confessor-organism explorator-organism chirurgeon-organism;
+  inherit (inputs) nixpkgs nixos-hardware nixos-facter-modules copyparty nil-flake media-classifier org-life-coach lifecoach-organism vacuum-organism org-crm organism void-master-organism factotum-organism confessor-organism explorator-organism chirurgeon-organism navigator-organism;
   inherit (config.flake.lib) mkDesktop mkServer mkHomeManager commonModules;
 in {
   flake.nixosConfigurations = {
@@ -54,7 +54,16 @@ in {
       hostname = "historian";
       extraModules = [media-classifier.nixosModules.default];
     };
-    total-eclipse = mkDesktop {hostname = "total-eclipse";};
+    total-eclipse = mkDesktop {
+      hostname = "total-eclipse";
+      # Navigator Orlena — the cross-host read-only strategic planner (#49).
+      # Self-contained module (provides its own package, mirroring the other
+      # officers) + the config-only host file. No extraSpecialArgs needed.
+      extraModules = [
+        navigator-organism.nixosModules.default
+        (self + "/hosts/total-eclipse/navigator-organism.nix")
+      ];
+    };
 
     marshmallow = mkDesktop {
       hostname = "marshmallow";

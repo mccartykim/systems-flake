@@ -132,6 +132,15 @@
     chirurgeon-organism.url = "git+ssh://git@github.com/mccartykim/chirurgeon_organism.git";
     chirurgeon-organism.inputs.nixpkgs.follows = "nixpkgs";
 
+    # Navigator Orlena (read-only strategic planner) — the CROSS-HOST
+    # officer, hosted on total-eclipse (separate from the rich-evans bridge
+    # crew). Forked from confessor_organism (the read-only template); surveys
+    # the fleet repo ecosystem via PUBLIC github reads. Self-contained
+    # per-officer flake pattern, mirrors the other officers. NB: no fixed uid
+    # (this officer skips org-bridge, so no SO_PEERCRED uid map).
+    navigator-organism.url = "git+ssh://git@github.com/mccartykim/navigator_organism.git";
+    navigator-organism.inputs.nixpkgs.follows = "nixpkgs";
+
     # 40k_bridge source tree — NOT a flake (no flake.nix). Consumed for the
     # org-bridge + vox-bridge NixOS modules via `import` of path strings, and
     # for the org-bridge broker/client Python + scope TOML at eval time.
