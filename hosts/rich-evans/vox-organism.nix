@@ -17,8 +17,16 @@
   pkgs,
   inputs,
   organism,
+  bridgeCrewSrc,
   ...
 }: let
+  # The bridge-crew roster — the single source of truth for officer rooms +
+  # identity (deploy/roster.nix in the 40k_bridge source). The daemon's rooms
+  # (every officer dialogue room incl. the cross-host Navigator + the
+  # vox-bridge vigil room) are DERIVED from it, not hand-listed, so adding an
+  # officer is one roster entry, not an edit here. The structured bus
+  # (#bridge-events) is appended — it is not an officer.
+  roster = import "${bridgeCrewSrc}/deploy/roster.nix" { inherit lib; };
   # The Chirurgeon's household tools (speak / compel-spirit / ha-get-state /
   # build-view) live in the chirurgeon_organism package bin; medicae-infer
   # dispatches them as bare names on PATH. build-view needs org-agent's
@@ -44,16 +52,13 @@ in {
     # Navigator (#49) joins as the 6th — the CROSS-HOST officer (hosted on
     # total-eclipse, SSH-dispatched by the daemon via the routing table's host
     # column; see deploy/vox-organism.py:_invoke_organic_remote).
-    rooms = [
-      "#vox-bridge:kimb.dev"
-      "#voidmaster:kimb.dev"
-      "#factotum:kimb.dev"
-      "#ships-log:kimb.dev"
-      "#enginearium:kimb.dev"
-      "#chirurgeon:kimb.dev"
-      "#navigator:kimb.dev"
-      "#bridge-events:kimb.dev"
-    ];
+    # Roster-DERIVED (deploy/roster.nix): every officer's dialogue room, in
+    # roster order (incl. the cross-host Navigator — the daemon routes
+    # #navigator via SSH, so it joins the room locally) + the vox-bridge
+    # vigil room (the Astropath's own #vox-bridge). The #bridge-events
+    # structured bus is appended; it is not an officer. Adding an officer =
+    # one roster entry, not an edit here.
+    rooms = roster.rooms ++ ["#bridge-events:kimb.dev"];
     # Authoring hop: the daemon SSHes to this host (bridge-scribe on historian,
     # a forced-command servitor — see hosts/historian/bridge-scribe.nix) to
     # materialize an officer's `author` request (clone -> commit on
