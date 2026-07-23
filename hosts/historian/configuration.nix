@@ -30,7 +30,19 @@
     # scheme later). Re-enable by uncommenting this import; the module
     # file (hosts/historian/buildbot-worker.nix) is left intact.
     # ./buildbot-worker.nix
+
+    # bridge-scribe — the #60 authoring servitor. A forced-command ssh target
+    # (rich-evans vox-organism daemon -> historian) that clones a plain-git
+    # scratch copy, commits on proposed/<slug>, and pushes with the repo's
+    # GitHub deploy key. See hosts/historian/bridge-scribe.nix.
+    ./bridge-scribe.nix
   ];
+
+  # Enable the bridge-scribe authoring servitor (#60): the forced-command ssh
+  # target rich-evans's vox-organism daemon reaches to materialize officer
+  # author requests (clone -> commit on proposed/<slug> -> push). See
+  # ./bridge-scribe.nix.
+  services.bridge-scribe.enable = true;
 
   # Syncthing — shared config via kimb.syncthing module
   kimb.syncthing.enable = true;

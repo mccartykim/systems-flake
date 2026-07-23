@@ -101,6 +101,14 @@ in
     # to /root/.netrc on historian — see hosts/historian/buildbot-worker.nix.
     "buildbot-worker-git-netrc.age".publicKeys = [hostKeys.historian bootstrap];
 
+    # ===== BRIDGE CREW — AUTHORING SERVITOR (historian) =====
+    # GitHub per-repo deploy keys for the bridge-scribe servitor (#60 PR-authoring
+    # loop). Write-scoped to the single repo. Decrypted on historian only (owned
+    # by bridge-scribe, mode 0400); the vox-organism daemon on rich-evans reaches
+    # the key indirectly via the forced-command ssh hop — it never sees the key
+    # itself. Extend this map as more officers gain authoring scope.
+    "deploy-key-systems-flake.age".publicKeys = [hostKeys.historian bootstrap];
+
     # ===== MEDIA PIPELINE (historian) =====
     # rclone config with put.io OAuth token
     "rclone-config.age".publicKeys = [hostKeys.historian bootstrap];
