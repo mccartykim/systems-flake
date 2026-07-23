@@ -158,11 +158,11 @@
         "organism": "organism"
       },
       "locked": {
-        "lastModified": 1784786246,
-        "narHash": "sha256-k1MYBD6EdTkyW24vKSemY7HxvSsfLHXgwTNG7KvHPCI=",
+        "lastModified": 1784787496,
+        "narHash": "sha256-GswLxkZEuR7SZIeMf0dEkRQPU6eA0RAwHGt6CmdNMaQ=",
         "ref": "refs/heads/main",
-        "rev": "f26233ad490893bea9d8f629888688a6c85d7f2d",
-        "revCount": 4,
+        "rev": "e4fbdd41487711b01d30502d96222729b28d1b1c",
+        "revCount": 5,
         "type": "git",
         "url": "ssh://git@github.com/mccartykim/chirurgeon_organism.git"
       },
@@ -1901,11 +1901,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1783702368,
-        "narHash": "sha256-LGUkTvGP8XWUiBUMv+09bgrrciCTH4ayXHHuhmEFwGI=",
+        "lastModified": 1784787761,
+        "narHash": "sha256-/HQ3yXYQ22tRyVv13yot9NxT9KiAAHUEztwZJ4LnpOs=",
         "ref": "refs/heads/main",
-        "rev": "f9b49a4086e13584eab3d0f4d1c3652151e46991",
-        "revCount": 71,
+        "rev": "b102230c03b4f11bd3b9ec0f180041353e21a4db",
+        "revCount": 73,
         "type": "git",
         "url": "ssh://git@github.com/mccartykim/org-life-coach.git"
       },
