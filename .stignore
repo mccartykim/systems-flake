@@ -1,5 +1,12 @@
-# Prevent syncthing from corrupting git/jj internals
-.git/objects/
-.jj/repo/
-.jj/working_copy/
+# Prevent syncthing from corrupting git/jj internals.
+#
+# Ignore the ENTIRE .git and .jj directories. Syncing only parts of .git
+# (e.g. refs/HEAD without objects, or objects without refs) leaves each
+# machine with a half-built object store — refs point at objects that were
+# never synced over, which is exactly what produced the "tree not found"
+# corruption that broke jj here. Each machine keeps its own local .git/.jj
+# and syncs commits the normal way (git push/pull).
+.git
+.jj
+.jj.broken-*
 *.sync-conflict-*
