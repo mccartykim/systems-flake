@@ -63,13 +63,33 @@
     (builtins.readFile ./bridge_scribe_materialize.py);
 
   # The forced command the fleet key runs. Sets PATH (git/ssh/python/coreutils)
-  # + exports the shared deploy-key agenix path as env the python reads, then
-  # execs the python. stdin (the author JSON) flows straight through.
+  # + exports the shared deploy-key agenix path + the forge URL + the forge API
+  # token file as env the python reads, then execs the python. stdin (the
+  # author JSON) flows straight through. The forge token is the scribe's REST
+  # API credential for opening PRs (write:repository+write:issue only); push to
+  # the forge uses the SAME deploy key over :2222 (registered on the forge kimb
+  # user), not the token.
   materialize = pkgs.writeShellScript "bridge-scribe-materialize" ''
     set -eu
     export PATH=${lib.makeBinPath [pkgs.git pkgs.openssh pkgs.python3 pkgs.coreutils]}
     export BRIDGE_SCRIBE_DEPLOY_KEY="${config.age.secrets.deploy-key-bridge-scribe.path}"
+    export FORGE_URL="http://10.100.0.10:3000"
+    export FORGE_TOKEN_FILE="${config.age.secrets.forge-bot-token.path}"
     exec ${pkgs.python3}/bin/python3 ${materializePy}
+  '';
+
+  # The bidirectional forge<->github heads sync (#125 Phase D). Single source of
+  # truth: the committed ./bridge_scribe_sync.py, read verbatim into the store
+  # here. Run by the bridge-sync systemd timer below every 10 min; reuses the
+  # same deploy key (authenticates to both remotes). No new secret.
+  syncPy = pkgs.writeText "bridge-scribe-sync.py"
+    (builtins.readFile ./bridge_scribe_sync.py);
+
+  syncRun = pkgs.writeShellScript "bridge-scribe-sync" ''
+    set -eu
+    export PATH=${lib.makeBinPath [pkgs.git pkgs.openssh pkgs.python3 pkgs.coreutils]}
+    export BRIDGE_SCRIBE_DEPLOY_KEY="${config.age.secrets.deploy-key-bridge-scribe.path}"
+    exec ${pkgs.python3}/bin/python3 ${syncPy}
   '';
 
   # The fleet-internal pubkey (rich-evans -> historian). Generated in the same
@@ -113,6 +133,43 @@ in {
       file = ../../secrets/deploy-key-bridge-scribe.age;
       owner = "bridge-scribe";
       mode = "0400";
+    };
+
+    # Forgejo application token for opening PRs on the Nebula-only forge (REST
+    # API only; push uses the shared deploy key over :2222). write:repository +
+    # write:issue, no write:user — decrypted on historian only (owner
+    # bridge-scribe, 0400). See secrets/forge-bot-token.age + the comment there.
+    age.secrets.forge-bot-token = {
+      file = ../../secrets/forge-bot-token.age;
+      owner = "bridge-scribe";
+      mode = "0400";
+    };
+
+    # Bidirectional forge<->github heads sync (#125 Phase D). Runs as the
+    # bridge-scribe service user so it can read the deploy key + forge token in
+    # /run/agenix. No state of its own; the scratch dir is shared with
+    # materialize. 10-min cadence bounds forge/github drift; a oneshot can't
+    # overlap itself (systemd won't start a second instance while one runs).
+    systemd.services.bridge-sync = {
+      description = "bridge-scribe forge<->github mirror sync";
+      after = ["network-online.target"];
+      wants = ["network-online.target"];
+      serviceConfig = {
+        Type = "oneshot";
+        User = "bridge-scribe";
+        Group = "bridge-scribe";
+        ExecStart = "${syncRun}";
+        PrivateTmp = true;
+      };
+    };
+    systemd.timers.bridge-sync = {
+      description = "bridge-scribe forge<->github mirror sync (10 min)";
+      wantedBy = ["timers.target"];
+      timerConfig = {
+        OnBootSec = "2min";
+        OnUnitActiveSec = "10min";
+        Persistent = true;
+      };
     };
 
     assertions = [

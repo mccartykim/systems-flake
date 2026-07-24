@@ -113,6 +113,15 @@ in
     # blast-radius isolation. Rotate once. Add repos to the scribe REPOS map (not
     # new keys) as officers gain authoring scope (#64).
     "deploy-key-bridge-scribe.age".publicKeys = [hostKeys.historian bootstrap];
+    # Forgejo application token for the bridge-scribe (#forge). The scribe
+    # opens PRs/issues on the Nebula-only forge (10.100.0.10:3000) with this
+    # — the REST API credential (push uses the shared mccartykim SSH key
+    # over the forge's built-in :2222; the API uses this token). Two paths,
+    # two purposes. Decrypted on historian only (owner bridge-scribe, 0400),
+    # localhost to the forge. Scoped to the authorable repos; rotate in the
+    # forge webui if it leaks. See hosts/historian/forgejo.nix + 40k_bridge/
+    # forge_tools.
+    "forge-bot-token.age".publicKeys = [hostKeys.historian bootstrap];
     # Fleet-internal ssh key (rich-evans vox-organism daemon -> historian
     # bridge-scribe forced-command servitor). Decrypted on rich-evans only
     # (owned by vox-organism, mode 0400). This is NOT a GitHub key — it never

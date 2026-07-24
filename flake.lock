@@ -115,11 +115,11 @@
     "bridge-crew-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1784878579,
-        "narHash": "sha256-U2Pl1SWbIJ/JLPA2vYWDjV5jyCCYGluRS2fhvAlKlzs=",
+        "lastModified": 1784919823,
+        "narHash": "sha256-t0pdnm63AqrDowOo8w4V+ZfXAle8M9vTEg4H7KdQ/Qo=",
         "ref": "refs/heads/main",
-        "rev": "a93034b0c7300b7f15955698bd423a74e9904036",
-        "revCount": 67,
+        "rev": "8d44574598de13bc77e041d2db6463809b1f280e",
+        "revCount": 68,
         "type": "git",
         "url": "ssh://git@github.com/mccartykim/40k_bridge.git"
       },
