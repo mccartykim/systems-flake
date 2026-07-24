@@ -2687,11 +2687,11 @@
         "organism": "organism_9"
       },
       "locked": {
-        "lastModified": 1784928398,
-        "narHash": "sha256-N68BiQRUPDVDur1sHaz7PCma+jhtWcXaDvYtcNQGhmg=",
+        "lastModified": 1784933962,
+        "narHash": "sha256-J1nsWhr6kdDJqfPbY5FysVe+FcpkdIWp/ABaypjJilE=",
         "ref": "refs/heads/main",
-        "rev": "e5f3ad546b686b4851a9ff1d1d5b04c26709a764",
-        "revCount": 1,
+        "rev": "5bea0babca7745894f0ea2584179e23deb7ec6af",
+        "revCount": 2,
         "type": "git",
         "url": "ssh://git@github.com/mccartykim/remembrancer_organism.git"
       },
