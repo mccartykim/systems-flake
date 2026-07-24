@@ -42,6 +42,15 @@
   # already on the module's path; the email-digest group membership is roster-
   # derived). Mirrors the chirurgeon-pkg path addition for the #62 fix.
   interrogator-pkg = inputs.interrogator-organism.packages.${pkgs.system}.default;
+  # The Remembrancer's #+AGENT shell (remembrancer-infer) lives in the
+  # remembrancer_organism package bin; organism resolves `#+AGENT:` as a bare
+  # name on PATH, so the daemon must carry the package bin or the reactive
+  # #remembrancer cycle fails ~1ms in (command not found) — same gap the
+  # interrogator-pkg addition closed. remembrancer-infer is inference-only
+  # (read_file / officer_view are read-only bash tools already on PATH); it
+  # needs NO env additions, only the package bin on PATH. Mirrors the
+  # interrogator-pkg path addition.
+  remembrancer-pkg = inputs.remembrancer-organism.packages.${pkgs.system}.default;
 in {
   services.vox-organism = {
     enable = true;
@@ -184,5 +193,6 @@ in {
     chirurgeon-pkg
     org-agent-emacs
     interrogator-pkg
+    remembrancer-pkg
   ];
 }
