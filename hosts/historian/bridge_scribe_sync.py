@@ -43,6 +43,23 @@ REPOS = {
         "github": "git@github.com:mccartykim/interrogator_organism.git",
         "forge": "ssh://forgejo@10.100.0.10:2222/kimb/interrogator_organism.git",
     },
+    # The Remembrancer's prose + seed repos — mirror the SAME THREE entries
+    # here as in bridge_scribe_materialize.py (kept in sync by hand; no
+    # codegen links them). Forgetting a sync entry means a merged forge PR for
+    # a prose repo won't propagate back to github. The shared
+    # BRIDGE_SCRIBE_DEPLOY_KEY auths to all three (mccartykim account key).
+    "remembrancer_organism": {
+        "github": "git@github.com:mccartykim/remembrancer_organism.git",
+        "forge": "ssh://forgejo@10.100.0.10:2222/kimb/remembrancer_organism.git",
+    },
+    "kimb-blog-content": {
+        "github": "git@github.com:mccartykim/kimb-blog-content.git",
+        "forge": "ssh://forgejo@10.100.0.10:2222/kimb/kimb-blog-content.git",
+    },
+    "mist-blog": {
+        "github": "git@github.com:mccartykim/mist-blog.git",
+        "forge": "ssh://forgejo@10.100.0.10:2222/kimb/mist-blog.git",
+    },
 }
 
 

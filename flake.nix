@@ -150,6 +150,19 @@
     interrogator-organism.url = "git+ssh://git@github.com/mccartykim/interrogator_organism.git";
     interrogator-organism.inputs.nixpkgs.follows = "nixpkgs";
 
+    # Remembrancer Olesia (chronicler of the public record, the writer officer)
+    # — the 11th bridge officer, on rich-evans. Composes public-facing prose
+    # (README copy, blog posts, dispatches) + proposes it via the bridge-scribe
+    # PR loop; does NOT push directly or mutate the fleet. On-request (no
+    # heartbeat): the vox-organism daemon runs cycles under uid 998. Self-
+    # contained per-officer flake pattern, mirrors the other officers.
+    # Officer git creds are a separate code path from nix (the bootstrap-cycle
+    # invariant forbids repointing systems-flake's own inputs at the forge, and
+    # officer inputs MUST stay git+ssh on github, NEVER git+https). The repo is
+    # private; nix fetches it over ssh via the user's github account key.
+    remembrancer-organism.url = "git+ssh://git@github.com/mccartykim/remembrancer_organism.git";
+    remembrancer-organism.inputs.nixpkgs.follows = "nixpkgs";
+
     # 40k_bridge source tree — NOT a flake (no flake.nix). Consumed for the
     # org-bridge + vox-bridge NixOS modules via `import` of path strings, and
     # for the org-bridge broker/client Python + scope TOML at eval time.

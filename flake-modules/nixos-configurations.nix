@@ -5,7 +5,7 @@
   self,
   ...
 }: let
-  inherit (inputs) nixpkgs nixos-hardware nixos-facter-modules copyparty nil-flake media-classifier org-life-coach lifecoach-organism vacuum-organism org-crm organism void-master-organism factotum-organism confessor-organism explorator-organism chirurgeon-organism navigator-organism interrogator-organism;
+  inherit (inputs) nixpkgs nixos-hardware nixos-facter-modules copyparty nil-flake media-classifier org-life-coach lifecoach-organism vacuum-organism org-crm organism void-master-organism factotum-organism confessor-organism explorator-organism chirurgeon-organism navigator-organism interrogator-organism remembrancer-organism;
   inherit (config.flake.lib) mkDesktop mkServer mkHomeManager commonModules;
 in {
   flake.nixosConfigurations = {
@@ -152,6 +152,14 @@ in {
         # organism daemon runs its `organic` cycle under uid 998 (a member of
         # interrogator-organism + email-digest) to read the mu index.
         interrogator-organism.nixosModules.default
+        # Remembrancer Olesia (chronicler of the public record, the writer
+        # officer). Self-contained module from the remembrancer_organism flake
+        # (resolves its own package from pkgs.system, NO extraSpecialArgs, NO
+        # colmena meta.specialArgs change — same shape as the other self-
+        # contained officer modules). On-request (no heartbeat): the vox-
+        # organism daemon runs its `organic` cycle under uid 998 (a member of
+        # remembrancer-organism) to compose prose + propose via the PR loop.
+        remembrancer-organism.nixosModules.default
         (import "${inputs."bridge-crew-src"}/deploy/org-bridge.nix")
         (import "${inputs."bridge-crew-src"}/deploy/vox-bridge.nix")
         # Phase-2 vox-organism: the Astropath comms-bridge daemon (replaces the
@@ -172,6 +180,7 @@ in {
         (self + "/hosts/rich-evans/explorator-organism.nix")
         (self + "/hosts/rich-evans/chirurgeon-organism.nix")
         (self + "/hosts/rich-evans/interrogator-organism.nix")
+        (self + "/hosts/rich-evans/remembrancer-organism.nix")
         (self + "/hosts/rich-evans/org-bridge.nix")
         org-crm.nixosModules.default
         (self + "/hosts/rich-evans/org-crm.nix")

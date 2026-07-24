@@ -69,6 +69,28 @@ REPOS = {
         "forge": "ssh://forgejo@10.100.0.10:2222/kimb/interrogator_organism.git",
         "key_env": "BRIDGE_SCRIBE_DEPLOY_KEY",
     },
+    # The Remembrancer (writer officer) authors prose across its own seed
+    # repo (structural self-edits) + the two prose repos. The shared
+    # BRIDGE_SCRIBE_DEPLOY_KEY (mccartykim account key) already auths to every
+    # mccartykim/* repo — NO new key registration. The excluded prose repos
+    # (fiction, commonplace_book, writerdeck_builder, borges_book_warehouse,
+    # broken_mist_blog) are deliberately absent — OFFICER_REPOS default-denies
+    # them; the persona declines by name.
+    "remembrancer_organism": {
+        "github": "git@github.com:mccartykim/remembrancer_organism.git",
+        "forge": "ssh://forgejo@10.100.0.10:2222/kimb/remembrancer_organism.git",
+        "key_env": "BRIDGE_SCRIBE_DEPLOY_KEY",
+    },
+    "kimb-blog-content": {
+        "github": "git@github.com:mccartykim/kimb-blog-content.git",
+        "forge": "ssh://forgejo@10.100.0.10:2222/kimb/kimb-blog-content.git",
+        "key_env": "BRIDGE_SCRIBE_DEPLOY_KEY",
+    },
+    "mist-blog": {
+        "github": "git@github.com:mccartykim/mist-blog.git",
+        "forge": "ssh://forgejo@10.100.0.10:2222/kimb/mist-blog.git",
+        "key_env": "BRIDGE_SCRIBE_DEPLOY_KEY",
+    },
 }
 
 FORGE_URL_DEFAULT = "http://10.100.0.10:3000"
