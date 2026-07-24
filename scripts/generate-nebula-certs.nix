@@ -18,19 +18,34 @@ in
 
     # Parse arguments
     DRY_RUN=false
-    for arg in "$@"; do
-      case "$arg" in
+    # CA_DIR: if set, source the CA cert+key from <dir>/ca.crt + <dir>/ca.key
+    # (the flake_keys bypass -- renewal without a YubiKey, per
+    # hosts/nebula-registry.nix). When unset, decrypt the YubiKey-encrypted
+    # secrets/nebula-ca-master.age (the original path).
+    CA_DIR=""
+    while [ $# -gt 0 ]; do
+      case "$1" in
         --dry-run|-n)
           DRY_RUN=true
+          shift
           ;;
+        --ca-dir)
+          CA_DIR="$2"; shift 2 ;;
+        --ca-dir=*)
+          CA_DIR="''${1#--ca-dir=}"; shift ;;
         --help|-h)
-          echo "Usage: nix run .#generate-nebula-certs [--dry-run]"
+          echo "Usage: nix run .#generate-nebula-certs [--dry-run] [--ca-dir <dir>]"
           echo ""
           echo "Options:"
           echo "  --dry-run, -n  Show what would be done without making changes"
+          echo "  --ca-dir <dir> Source the CA from <dir>/ca.crt + <dir>/ca.key"
+          echo "                 instead of decrypting secrets/nebula-ca-master.age"
+          echo "                 (the flake_keys bypass -- no YubiKey needed)"
           echo "  --help, -h     Show this help"
           exit 0
           ;;
+        *)
+          echo "Unknown argument: $1" >&2; exit 1 ;;
       esac
     done
 
@@ -70,7 +85,11 @@ in
       exit 0
     fi
 
-    echo "Requirements: YubiKey with age identity must be plugged in"
+    if [ -n "$CA_DIR" ]; then
+      echo "Sourcing CA from $CA_DIR (flake_keys bypass, no YubiKey)"
+    else
+      echo "Requirements: YubiKey with age identity must be plugged in"
+    fi
     echo ""
 
     # Check for required tools
@@ -81,34 +100,47 @@ in
     TMPDIR=$(mktemp -d)
     trap "rm -rf $TMPDIR" EXIT
 
-    # Decrypt CA from YubiKey-encrypted file
-    echo "Decrypting CA (touch YubiKey if prompted)..."
-    CA_FILE="secrets/nebula-ca-master.age"
-    if [ ! -f "$CA_FILE" ]; then
-      echo "Error: $CA_FILE not found"
-      echo "Make sure you've encrypted the CA with YubiKeys first"
-      exit 1
+    if [ -n "$CA_DIR" ]; then
+      # flake_keys bypass: CA cert+key already on disk (plaintext).
+      if [ ! -f "$CA_DIR/ca.crt" ] || [ ! -f "$CA_DIR/ca.key" ]; then
+        echo "Error: $CA_DIR/ca.crt or $CA_DIR/ca.key not found"
+        exit 1
+      fi
+      cp "$CA_DIR/ca.crt" "$TMPDIR/ca.crt"
+      cp "$CA_DIR/ca.key" "$TMPDIR/ca.key"
+      chmod 600 "$TMPDIR/ca.key"
+      echo "CA sourced from $CA_DIR"
+      echo ""
+    else
+      # Decrypt CA from YubiKey-encrypted file
+      echo "Decrypting CA (touch YubiKey if prompted)..."
+      CA_FILE="secrets/nebula-ca-master.age"
+      if [ ! -f "$CA_FILE" ]; then
+        echo "Error: $CA_FILE not found"
+        echo "Make sure you've encrypted the CA with YubiKeys first"
+        exit 1
+      fi
+
+      # age-plugin-yubikey must be in PATH for age to find it
+      export PATH="${pkgs.age-plugin-yubikey}/bin:$PATH"
+
+      # Decrypt using YubiKey identity files (plugin needs explicit identity)
+      ${pkgs.age}/bin/age -d \
+        -i "${yubikeyIdentity1}" \
+        -i "${yubikeyIdentity2}" \
+        "$CA_FILE" > "$TMPDIR/ca-combined.pem" || {
+        echo "Error: Failed to decrypt CA. Is your YubiKey plugged in?"
+        echo "Make sure age-plugin-yubikey is available (enter nix develop first)"
+        exit 1
+      }
+
+      # Split CA into key and cert
+      ${pkgs.gnused}/bin/sed -n '1,/END NEBULA ED25519 PRIVATE KEY/p' "$TMPDIR/ca-combined.pem" > "$TMPDIR/ca.key"
+      ${pkgs.gnused}/bin/sed -n '/BEGIN NEBULA CERTIFICATE/,/END NEBULA CERTIFICATE/p' "$TMPDIR/ca-combined.pem" > "$TMPDIR/ca.crt"
+
+      echo "CA decrypted successfully!"
+      echo ""
     fi
-
-    # age-plugin-yubikey must be in PATH for age to find it
-    export PATH="${pkgs.age-plugin-yubikey}/bin:$PATH"
-
-    # Decrypt using YubiKey identity files (plugin needs explicit identity)
-    ${pkgs.age}/bin/age -d \
-      -i "${yubikeyIdentity1}" \
-      -i "${yubikeyIdentity2}" \
-      "$CA_FILE" > "$TMPDIR/ca-combined.pem" || {
-      echo "Error: Failed to decrypt CA. Is your YubiKey plugged in?"
-      echo "Make sure age-plugin-yubikey is available (enter nix develop first)"
-      exit 1
-    }
-
-    # Split CA into key and cert
-    ${pkgs.gnused}/bin/sed -n '1,/END NEBULA ED25519 PRIVATE KEY/p' "$TMPDIR/ca-combined.pem" > "$TMPDIR/ca.key"
-    ${pkgs.gnused}/bin/sed -n '/BEGIN NEBULA CERTIFICATE/,/END NEBULA CERTIFICATE/p' "$TMPDIR/ca-combined.pem" > "$TMPDIR/ca.crt"
-
-    echo "CA decrypted successfully!"
-    echo ""
 
     # Bootstrap key for re-encryption
     BOOTSTRAP_KEY="${bootstrapKey}"
