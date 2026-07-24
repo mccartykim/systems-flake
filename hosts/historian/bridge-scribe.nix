@@ -38,8 +38,11 @@
 #
 # The forced command mirrors modules/distributed-builds.nix:78 (the
 # nix-daemon --stdio builder-only key): a pubkey entry restricted to exactly
-# this materialize script, no pty, no forwarding. The fleet key authenticates
-# as the bridge-scribe user and can do NOTHING else.
+# this dispatch router, no pty, no forwarding. The fleet key authenticates as
+# the bridge-scribe user and can reach only `materialize` (author) + `read` /
+# `grep` (read-only investigation) — verbs the dispatcher allowlists; anything
+# else dies at the boundary. The author verb is unchanged; the read verbs
+# (#127 follow-up) let the Remembrancer see its authorable repos.
 {
   config,
   lib,
@@ -62,20 +65,40 @@
   materializePy = pkgs.writeText "bridge-scribe-materialize.py"
     (builtins.readFile ./bridge_scribe_materialize.py);
 
-  # The forced command the fleet key runs. Sets PATH (git/ssh/python/coreutils)
-  # + exports the shared deploy-key agenix path + the forge URL + the forge API
-  # token file as env the python reads, then execs the python. stdin (the
-  # author JSON) flows straight through. The forge token is the scribe's REST
-  # API credential for opening PRs (write:repository+write:issue only); push to
-  # the forge uses the SAME deploy key over :2222 (registered on the forge kimb
-  # user), not the token.
-  materialize = pkgs.writeShellScript "bridge-scribe-materialize" ''
+  # The read-only investigation verb (#127 follow-up): the Remembrancer's
+  # read_file / grep tools reach repo content over the SAME forced-command hop
+  # as the author path. Read-only by construction (shallow clone + cat/grep, no
+  # push/commit/forge). REPOS is imported from materializePy below so the
+  # allowlist stays a single source of truth (no drift between verbs).
+  readPy = pkgs.writeText "bridge-scribe-read.py"
+    (builtins.readFile ./bridge_scribe_read.py);
+
+  # The router that the fleet key's forced command runs. One key -> one forced
+  # command (sshd matches the first authorized_keys line for a key), so serving
+  # BOTH the author verb (materialize) AND the read verbs (read/grep) needs a
+  # dispatcher: verb from $SSH_ORIGINAL_COMMAND (empty -> materialize, so the
+  # daemon's command-less author hop is unchanged), args via stdin. See
+  # bridge_scribe_dispatch.py.
+  dispatchPy = pkgs.writeText "bridge-scribe-dispatch.py"
+    (builtins.readFile ./bridge_scribe_dispatch.py);
+
+  # The forced command the fleet key runs. Sets PATH (git/ssh/python/coreutils/
+  # gnugrep -- grep for the read verb) + exports the shared deploy-key agenix
+  # path + the forge URL + the forge API token file + the child-script store
+  # paths, then execs the dispatcher. stdin flows straight through to the
+  # chosen child. The forge token is the scribe's REST API credential for
+  # opening PRs (write:repository+write:issue only); push to the forge uses the
+  # SAME deploy key over :2222 (registered on the forge kimb user), not the
+  # token. read.py needs no forge token, but it shares this env harmlessly.
+  dispatch = pkgs.writeShellScript "bridge-scribe-dispatch" ''
     set -eu
-    export PATH=${lib.makeBinPath [pkgs.git pkgs.openssh pkgs.python3 pkgs.coreutils]}
+    export PATH=${lib.makeBinPath [pkgs.git pkgs.openssh pkgs.python3 pkgs.coreutils pkgs.gnugrep]}
     export BRIDGE_SCRIBE_DEPLOY_KEY="${config.age.secrets.deploy-key-bridge-scribe.path}"
     export FORGE_URL="http://10.100.0.10:3000"
     export FORGE_TOKEN_FILE="${config.age.secrets.forge-bot-token.path}"
-    exec ${pkgs.python3}/bin/python3 ${materializePy}
+    export BRIDGE_MATERIALIZE_PY="${materializePy}"
+    export BRIDGE_READ_PY="${readPy}"
+    exec ${pkgs.python3}/bin/python3 ${dispatchPy}
   '';
 
   # The bidirectional forge<->github heads sync (#125 Phase D). Single source of
@@ -113,7 +136,7 @@ in {
       # by the shell.
       shell = pkgs.bash;
       openssh.authorizedKeys.keys = [
-        ''command="${materialize}",no-pty,no-port-forwarding,no-agent-forwarding,no-X11-forwarding ${fleetKey}''
+        ''command="${dispatch}",no-pty,no-port-forwarding,no-agent-forwarding,no-X11-forwarding ${fleetKey}''
       ];
     };
     users.groups.bridge-scribe = {};
