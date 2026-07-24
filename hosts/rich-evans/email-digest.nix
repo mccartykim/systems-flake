@@ -201,13 +201,14 @@
         # Widen the mu xapian dirs BEFORE mu index. mu index can take >30min
         # against the Seagate Maildir post-#109 (the move reset every file's
         # mtime, so the first post-move run re-indexes the whole store), and
-        # the 30-min TimeoutStartSec kills the run before it reaches the
-        # post-index chmod below — leaving xapian at mu's default 0700 so the
-        # Interrogator (email-digest group, uid 998) can't traverse it
-        # ("Couldn't stat xapian", Interrogator blind). Chmod here too so the
-        # index is group-readable even when mu index is killed mid-run. The
-        # post-index chmod below is kept as a belt-and-suspenders re-widen for
-        # the case where mu index re-inits a corrupt db mid-run. Idempotent.
+        # the (now 90-min) TimeoutStartSec can still kill a genuinely-hung run
+        # before it reaches the post-index chmod below — leaving xapian at mu's
+        # default 0700 so the Interrogator (email-digest group, uid 998) can't
+        # traverse it ("Couldn't stat xapian", Interrogator blind). Chmod here
+        # too so the index is group-readable even when mu index is killed
+        # mid-run. The post-index chmod below is kept as a belt-and-suspenders
+        # re-widen for the case where mu index re-inits a corrupt db mid-run.
+        # Idempotent.
         chmod g+rX "$STATE_DIR/.cache" "$STATE_DIR/.cache/mu" "$STATE_DIR/.cache/mu/xapian" 2>/dev/null || true
         mu index 2>&1
 
@@ -459,7 +460,17 @@ in {
         ExecStart = "${digestScript}";
         User = "email-digest";
         Group = "email-digest";
-        TimeoutStartSec = "30min";
+        # 90 min, not 30: the FIRST mu index after the #109 Seagate move re-indexes
+        # the whole 27G Maildir (the move reset every file's mtime, so mu sees all
+        # mail as new). 30 min killed that first pass mid-run (#126) — leaving
+        # xapian half-built and the Interrogator blind. 90 min lets the first full
+        # pass complete; subsequent runs are incremental (only new messages) and
+        # finish in well under 30, so 90 is a ceiling that normal cycles never
+        # approach. Lord-Captain chose to KEEP [Gmail]/All Mail (full archive
+        # search) over dropping it to shrink the index, so the generous timeout is
+        # the lever instead. A oneshot can't overlap itself, so a long run just
+        # skips the next timer tick — no pile-up.
+        TimeoutStartSec = "90min";
         ProtectHome = "read-only";
         ProtectSystem = "strict";
         ReadWritePaths = [stateDir mailDir];

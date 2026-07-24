@@ -186,11 +186,18 @@ in {
     netbootxyz.enable = true;
   };
 
-  # Mount external storage
+  # Mount external storage. commit=60 raises the ext4 journal commit interval
+  # from the default 5s to 60s: mbsync writes a flood of small Maildir files
+  # without fsync-per-message, and mu index writes to the xapian db — both are
+  # write-heavy workloads that stall on jbd2's periodic 5s commit blocking
+  # writers. A 60s commit amortizes those flushes (acceptable: at worst 60s of
+  # recently-written mail/index is lost on a crash, and the mail source of
+  # truth is the IMAP server, re-synced next cycle). Helps the backlog drain
+  # + the first full mu index clear the 30-min timeout window.
   fileSystems."/mnt/seagate" = {
     device = "/dev/disk/by-uuid/980870c5-7397-45dd-9f01-972f9b51d0f6";
     fsType = "ext4";
-    options = ["defaults" "nofail"];
+    options = ["defaults" "nofail" "commit=60"];
   };
 
   nixpkgs.overlays = [inputs.copyparty.overlays.default];
