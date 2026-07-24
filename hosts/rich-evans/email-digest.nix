@@ -198,6 +198,17 @@
         if [ ! -d "$HOME/.cache/mu/xapian" ]; then
           mu init --maildir="$MAIL_DIR" --my-address=mccartykim@zoho.com --my-address=mccarty.tim@gmail.com --my-address=kimb@kimb.dev 2>&1
         fi
+        # Widen the mu xapian dirs BEFORE mu index. mu index can take >30min
+        # against the Seagate Maildir post-#109 (the move reset every file's
+        # mtime, so the first post-move run re-indexes the whole store), and
+        # the 30-min TimeoutStartSec kills the run before it reaches the
+        # post-index chmod below — leaving xapian at mu's default 0700 so the
+        # Interrogator (email-digest group, uid 998) can't traverse it
+        # ("Couldn't stat xapian", Interrogator blind). Chmod here too so the
+        # index is group-readable even when mu index is killed mid-run. The
+        # post-index chmod below is kept as a belt-and-suspenders re-widen for
+        # the case where mu index re-inits a corrupt db mid-run. Idempotent.
+        chmod g+rX "$STATE_DIR/.cache" "$STATE_DIR/.cache/mu" "$STATE_DIR/.cache/mu/xapian" 2>/dev/null || true
         mu index 2>&1
 
         # Widen the mu xapian dirs to group-traversable so the Interrogator
