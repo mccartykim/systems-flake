@@ -64,6 +64,18 @@
         REQUIRE_SIGNIN_VIEW = true;
       };
 
+      repository = {
+        # Push-to-create: the bridge-scribe's sync timer (every 10 min) pushes
+        # refs/heads/* to the forge for every repo in its REPOS allowlist. With
+        # this on, a repo that does not yet exist on the forge is auto-created
+        # under the pushing user (kimb, via the shared account deploy key) on
+        # first push — so landing a new officer repo in REPOS seeds the forge
+        # with no manual `POST /api/v1/user/repos` (which the narrow forge-bot
+        # token cannot do: it lacks write:user). Nebula-only + single admin
+        # user, so the open-create surface is just the scribe's own push path.
+        ENABLE_PUSH_CREATE_USER = true;
+      };
+
       # Quiet the default telemetry; this is a private fleet forge.
       other.SHOW_FOOTER_VERSION = false;
     };
