@@ -31,15 +31,17 @@ import tempfile
 REPOS = {
     "systems-flake": {
         "github": "git@github.com:mccartykim/systems-flake.git",
-        "forge": "ssh://git@10.100.0.10:2222/kimb/systems-flake.git",
+        # forge SSH user is `forgejo` (NixOS RUN_USER), not `git` — see
+        # bridge_scribe_materialize.py for the rationale.
+        "forge": "ssh://forgejo@10.100.0.10:2222/kimb/systems-flake.git",
     },
     "chirurgeon_organism": {
         "github": "git@github.com:mccartykim/chirurgeon_organism.git",
-        "forge": "ssh://git@10.100.0.10:2222/kimb/chirurgeon_organism.git",
+        "forge": "ssh://forgejo@10.100.0.10:2222/kimb/chirurgeon_organism.git",
     },
     "interrogator_organism": {
         "github": "git@github.com:mccartykim/interrogator_organism.git",
-        "forge": "ssh://git@10.100.0.10:2222/kimb/interrogator_organism.git",
+        "forge": "ssh://forgejo@10.100.0.10:2222/kimb/interrogator_organism.git",
     },
 }
 
