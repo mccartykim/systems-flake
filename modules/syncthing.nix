@@ -15,6 +15,14 @@
       openDefaultPorts = true;
       user = "kimb";
       dataDir = "/home/kimb";
+      # Folder/device config is managed in the web UI (config.xml), not here.
+      # The encrypted folders carry encryption passwords that must NOT live in
+      # the flake (public repo). overrideFolders/overrideDevices=false tells
+      # the NixOS module never to rewrite or wipe the UI-managed config —
+      # without this, a nixpkgs bump that (re)introduces the syncthing-init
+      # oneshot would wipe all folders+devices on every restart.
+      overrideFolders = false;
+      overrideDevices = false;
     };
   };
 }
