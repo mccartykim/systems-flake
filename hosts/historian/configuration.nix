@@ -36,6 +36,10 @@
     # scratch copy, commits on proposed/<slug>, and pushes with the repo's
     # GitHub deploy key. See hosts/historian/bridge-scribe.nix.
     ./bridge-scribe.nix
+
+    # Forgejo — the Nebula-only git forge (#forge). Officers propose here;
+    # the Lord-Captain reviews + merges instead of GitHub. See ./forgejo.nix.
+    ./forgejo.nix
   ];
 
   # Enable the bridge-scribe authoring servitor (#60): the forced-command ssh
@@ -112,6 +116,17 @@
           port = 8088;
           proto = "tcp";
           host = "maitred";
+        }
+        # Forgejo HTTP API (#forge): rich-evans is a *server*, not a personal
+        # device, so openToPersonalDevices doesn't cover it — officers/daemon
+        # there need an explicit rule to reach the forge on 10.100.0.10:3000.
+        # Personal-device webui access is already covered by
+        # openToPersonalDevices; SSH :2222 is scribe-localhost + personal
+        # devices, so no rule for it.
+        {
+          port = 3000;
+          proto = "tcp";
+          group = "servers";
         }
       ];
     };
