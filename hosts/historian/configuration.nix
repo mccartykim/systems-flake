@@ -36,6 +36,11 @@
     # scratch copy, commits on proposed/<slug>, and pushes with the repo's
     # GitHub deploy key. See hosts/historian/bridge-scribe.nix.
     ./bridge-scribe.nix
+
+    # Forgejo forge — Nebula-only self-hosted git surface for the bridge-crew
+    # bots (#110 Phase-2 hosting). Plain HTTP + built-in SSH over the mesh;
+    # hosts crew repo mirrors + the scribe push target. See ./forgejo.nix.
+    ./forgejo.nix
   ];
 
   # Enable the bridge-scribe authoring servitor (#60): the forced-command ssh
@@ -112,6 +117,20 @@
           port = 8088;
           proto = "tcp";
           host = "maitred";
+        }
+        # Forgejo forge HTTP API (verbs from rich-evans/total-eclipse + the
+        # scribe) and built-in SSH (scribe push to 10.100.0.10:2222). Scoped
+        # explicitly even though openToPersonalDevices=true already allows
+        # desktops/laptops — the forge is a server-grade service.
+        {
+          port = 3000;
+          proto = "tcp";
+          host = "any";
+        }
+        {
+          port = 2222;
+          proto = "tcp";
+          host = "any";
         }
       ];
     };
@@ -431,7 +450,7 @@
       # ollama instance; otherwise benchmark/agent requests queue behind it.
       # Strix Point iGPU has enough unified memory for multiple concurrent slots.
       environmentVariables = {
-        OLLAMA_IGPU_ENABLE = "1";  # Required for Strix Point iGPU (Radeon 890M)
+        OLLAMA_IGPU_ENABLE = "1"; # Required for Strix Point iGPU (Radeon 890M)
         OLLAMA_NUM_PARALLEL = "4";
         OLLAMA_FLASH_ATTENTION = "1";
         OLLAMA_KV_CACHE_TYPE = "q8_0";
@@ -511,6 +530,19 @@
     mode = "0440";
   };
 
+  # Forgejo application token (scope write:repository + write:issue) for the
+  # bridge-scribe bash verbs that file issues/PRs against the crew repos on
+  # this forge over the Nebula-only HTTP API. Consumed entirely outside
+  # forgejo (NOT a services.forgejo.secrets app.ini key). Decrypted on
+  # historian only, owned by bridge-scribe, mode 0400 — the verbs run as
+  # bridge-scribe. Ships as a PLACEHOLDER; mint the real value POST-APPLY
+  # (from the live forge) and re-encrypt this .age, then redeploy.
+  age.secrets.forge-bot-token = {
+    file = ../../secrets/forge-bot-token.age;
+    owner = "bridge-scribe";
+    mode = "0400";
+  };
+
   # === Media pipeline systemd services ===
 
   # rclone sync from put.io (every 15 minutes)
@@ -581,10 +613,9 @@
   # Override ExecStartPost to read Jellyfin API key from agenix secret
   # (the module's jellyfinApiKey option embeds the key in the Nix store,
   # so we leave it empty and supply our own file-based implementation)
-  systemd.services.media-classifier.serviceConfig.ExecStartPost =
-    let
-      jellyfinApiKeyFile = config.age.secrets.jellyfin-api-key.path;
-    in
+  systemd.services.media-classifier.serviceConfig.ExecStartPost = let
+    jellyfinApiKeyFile = config.age.secrets.jellyfin-api-key.path;
+  in
     pkgs.writeShellScript "trigger-jellyfin-scan" ''
       API_KEY="$(cat ${jellyfinApiKeyFile})"
       ${pkgs.curl}/bin/curl -sf -X POST \

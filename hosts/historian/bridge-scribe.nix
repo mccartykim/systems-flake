@@ -59,16 +59,24 @@
   # allowlist map, file paths MUST be relative and prisoned under the scratch
   # root — and the FULL envelope (incl. path-prisoning) is validated BEFORE the
   # key check + clone, so a malformed envelope dies fast with no side effects.
-  materializePy = pkgs.writeText "bridge-scribe-materialize.py"
+  materializePy =
+    pkgs.writeText "bridge-scribe-materialize.py"
     (builtins.readFile ./bridge_scribe_materialize.py);
 
   # The forced command the fleet key runs. Sets PATH (git/ssh/python/coreutils)
   # + exports the shared deploy-key agenix path as env the python reads, then
-  # execs the python. stdin (the author JSON) flows straight through.
+  # execs the python. stdin (the author JSON) flows straight through. Also
+  # exports FORGE_URL + FORGE_TOKEN_FILE so the scribe execution env (and any
+  # forge verbs on PATH) can reach the Forgejo HTTP API — see ./forgejo.nix.
+  # The token file is the agenix secret in configuration.nix, owned by
+  # bridge-scribe, mode 0400; readable only by this user, so the verbs (which
+  # run as bridge-scribe via this forced command) can cat it.
   materialize = pkgs.writeShellScript "bridge-scribe-materialize" ''
     set -eu
     export PATH=${lib.makeBinPath [pkgs.git pkgs.openssh pkgs.python3 pkgs.coreutils]}
     export BRIDGE_SCRIBE_DEPLOY_KEY="${config.age.secrets.deploy-key-bridge-scribe.path}"
+    export FORGE_URL="http://10.100.0.10:3000"
+    export FORGE_TOKEN_FILE="${config.age.secrets.forge-bot-token.path}"
     exec ${pkgs.python3}/bin/python3 ${materializePy}
   '';
 

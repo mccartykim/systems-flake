@@ -119,6 +119,17 @@ in
     # touches github; it only authenticates the in-fleet hop to the scribe.
     "bridge-fleet-ssh-key.age".publicKeys = [hostKeys.rich-evans bootstrap];
 
+    # ===== FORGEJO FORGE BOT TOKEN (historian) =====
+    # Forgejo application token (write:repository + write:issue) for the
+    # bridge-scribe bash verbs (forge-issue/forge-pr/forge-list) that talk to
+    # the crew repos on the historian forge over the Nebula-only HTTP API.
+    # Decrypted on historian only, owned by bridge-scribe, mode 0400 — the
+    # verbs run as bridge-scribe. This is NOT a forgejo app.ini secret
+    # (services.forgejo.secrets handles those); it is a per-bot API token
+    # consumed entirely outside forgejo. Ships as a PLACEHOLDER; mint the real
+    # value POST-APPLY and re-encrypt this file.
+    "forge-bot-token.age".publicKeys = [hostKeys.historian bootstrap];
+
     # ===== MEDIA PIPELINE (historian) =====
     # rclone config with put.io OAuth token
     "rclone-config.age".publicKeys = [hostKeys.historian bootstrap];
