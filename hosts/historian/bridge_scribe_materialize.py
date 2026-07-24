@@ -23,29 +23,39 @@ import subprocess
 import sys
 import tempfile
 
-# repo -> {remote, key_env}. The scribe authenticates to GitHub with ONE key
+# repo -> {remote, key_env}. The scribe authenticates with ONE key
 # (BRIDGE_SCRIBE_DEPLOY_KEY) that is registered as a mccartykim ACCOUNT SSH
-# key (titled "bridge-scribe service"), NOT a per-repo deploy key — so it has
-# write access to every mccartykim/* repo and needs NO per-repo registration.
-# (GitHub enforces one-key-one-repo for deploy keys, which is why a "shared
-# deploy key" would not work; the account key sidesteps that.) The per-repo
-# SCOPE is this allowlist, not the key. The key PATH comes from env (set by the
-# shell wrapper, which bakes the agenix /run/agenix path). The Chirurgeon (#62)
-# + Interrogator (#53) author their own seed repos for structural self-edits
-# (routine tweaks persist in-cycle via org-merge; only the immutable head /
-# bin / flake go through this PR loop). Add repos here as officers gain scope
-# (#64).
+# key (titled "bridge-scribe service") — write access to every mccartykim/*
+# repo on BOTH GitHub and the historian forge (one key, two targets; the
+# public half is registered on the mccartykim forge user post-apply). The
+# per-repo SCOPE is this allowlist, not the key. The key PATH comes from env
+# (set by the shell wrapper, which bakes the agenix /run/agenix path).
+#
+# Option A push-mirror flow: the scribe clones from + pushes proposed/<slug>
+# to the FORGE (ssh://forgejo@10.100.0.10:2222/mccartykim/<repo>.git), which
+# is a pull-mirror of GitHub (so it has content). The forge-pr verb opens the
+# PR there; on merge the forge push-mirrors main back to mccartykim/<repo> on
+# GitHub. The Chirurgeon (#62) + Interrogator (#53) author their own seed
+# repos for structural self-edits (routine tweaks persist in-cycle via
+# org-merge; only the immutable head / bin / flake go through this PR loop).
+# Add repos here as officers gain scope (#64).
+#
+# DEPLOY ORDER: this origin switch must be deployed AFTER the historian
+# forge is live, the crew repos are pull-mirrored into it, AND the scribe
+# pubkey is registered on the mccartykim forge user — otherwise the scribe
+# clones from a non-existent forge and every author request fails. See
+# docs/FORGE_HOSTING_BRIEF.md post-apply STEP 5.
 REPOS = {
     "systems-flake": {
-        "remote": "git@github.com:mccartykim/systems-flake.git",
+        "remote": "ssh://forgejo@10.100.0.10:2222/mccartykim/systems-flake.git",
         "key_env": "BRIDGE_SCRIBE_DEPLOY_KEY",
     },
     "chirurgeon_organism": {
-        "remote": "git@github.com:mccartykim/chirurgeon_organism.git",
+        "remote": "ssh://forgejo@10.100.0.10:2222/mccartykim/chirurgeon_organism.git",
         "key_env": "BRIDGE_SCRIBE_DEPLOY_KEY",
     },
     "interrogator_organism": {
-        "remote": "git@github.com:mccartykim/interrogator_organism.git",
+        "remote": "ssh://forgejo@10.100.0.10:2222/mccartykim/interrogator_organism.git",
         "key_env": "BRIDGE_SCRIBE_DEPLOY_KEY",
     },
 }
