@@ -138,10 +138,13 @@ def main():
             try:
                 # -I: skip binary files; -r: recursive; -n: line numbers; --:
                 # end opts so a pattern starting with `-` is a pattern, not a flag.
+                # cwd=scratch + repo-relative target => grep prints repo-relative
+                # paths (content/blog/x.md:4:...), NOT the ephemeral scratch prefix
+                # the LLM shouldn't parse (and can't reuse -- it changes per call).
                 proc = subprocess.run(
-                    ["grep", "-rIn", "--", pattern, full],
+                    ["grep", "-rIn", "--", pattern, target],
                     capture_output=True, text=True, errors="replace",
-                    timeout=60, env=dict(os.environ))
+                    timeout=60, env=dict(os.environ), cwd=scratch)
                 out = proc.stdout or ""
                 sys.stdout.write(out[:READ_CAP])
                 if len(out) > READ_CAP:
