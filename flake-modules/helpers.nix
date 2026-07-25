@@ -67,6 +67,16 @@ in {
         networking.extraHosts =
           builtins.concatStringsSep "\n"
           (builtins.map (name: "${registry.nodes.${name}.ip} ${name}.nebula") names);
+        # Pin mochi's SSH host key fleet-wide. mochi is a nebula host but NOT
+        # NixOS-managed (AVF Debian), so its host key never enters via the normal
+        # NixOS host-key path — without this, every `ssh …@mochi.nebula` is a
+        # TOFU prompt. Key is the registry's mochi.publicKey (verified 2026-07-25
+        # to match `ssh-keyscan mochi.nebula` byte-for-byte; the AVF restore script
+        # bakes this STABLE key so it survives wipes).
+        programs.ssh.knownHosts.mochi = {
+          hostNames = ["mochi.nebula" "10.100.0.8"];
+          publicKey = registry.nodes.mochi.publicKey;
+        };
       })
     ];
 
