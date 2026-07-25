@@ -177,4 +177,31 @@ in {
     '';
     deps = [];
   };
+
+  # ------------------------------------------------------------------
+  # Phase-4 cutover (#62): the Chirurgeon now owns the regimen + day's
+  # ledger judgment (seed un-gated in chirurgeon_organism). Turn OFF
+  # lifecoach's PROACTIVE cadence so the two do not double-nudge. The
+  # lifecoach-organism module stays enabled for the reactive sidecars
+  # (button-monitor / dashboard / discord-bot / watchdog), so the timer
+  # UNIT FILES still exist — wantedBy=mkForce[] only stops them starting
+  # at boot. An activation script stops the currently-running instances
+  # now, same pattern as stop-old-org-life-coach above. Reversible:
+  # revert this block and `systemctl start lifecoach-heartbeat.timer
+  # lifecoach-scheduler.timer` — the seed is untouched, so full proactive
+  # lifecoach returns instantly as the fallback.
+  # ------------------------------------------------------------------
+  systemd.timers.lifecoach-heartbeat.wantedBy = lib.mkForce [];
+  systemd.timers.lifecoach-scheduler.wantedBy = lib.mkForce [];
+  system.activationScripts.stop-lifecoach-proactive = {
+    text = ''
+      for t in lifecoach-heartbeat.timer lifecoach-scheduler.timer; do
+        if /run/current-system/sw/bin/systemctl is-active --quiet "$t" 2>/dev/null; then
+          echo "stopping proactive $t (phase-4 cutover to the Chirurgeon)"
+          /run/current-system/sw/bin/systemctl stop "$t" || true
+        fi
+      done
+    '';
+    deps = [];
+  };
 }
