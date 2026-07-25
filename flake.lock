@@ -3599,11 +3599,11 @@
         "organism": "organism_11"
       },
       "locked": {
-        "lastModified": 1784930392,
-        "narHash": "sha256-38bYKODgSjF+NvfwlwWQcWJnfHvywGVZeYIQBV1Vxnk=",
+        "lastModified": 1784940192,
+        "narHash": "sha256-1wZtYdL8X1TQIias8dPhgxQ7xoTsnl1zPCwe8kYny+c=",
         "ref": "refs/heads/main",
-        "rev": "d8eeb4958c2d61b72ebd62768242c29b6ad2c041",
-        "revCount": 12,
+        "rev": "0a9b6d055a71ab1863d3750bb0f7e75e9f4baea9",
+        "revCount": 13,
         "type": "git",
         "url": "ssh://git@github.com/mccartykim/voidmaster_organism.git"
       },
