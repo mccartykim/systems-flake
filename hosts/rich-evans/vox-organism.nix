@@ -29,9 +29,11 @@
   roster = import "${bridgeCrewSrc}/deploy/roster.nix" { inherit lib; };
   # The Chirurgeon's household tools (speak / compel-spirit / ha-get-state /
   # build-view) live in the chirurgeon_organism package bin; medicae-infer
-  # dispatches them as bare names on PATH. build-view needs org-agent's
-  # emacsclient. Both are mirrored onto the daemon below.
+  # dispatches them as bare names on PATH. build-view cold-starts org-agent's
+  # emacs (binary + init.el) — no daemon, no socket. Both are mirrored onto
+  # the daemon below.
   org-agent-emacs = inputs.org-agent.packages.${pkgs.system}.emacs;
+  org-agent-init = "${inputs.org-agent}/elisp/init.el";
   chirurgeon-pkg = inputs.chirurgeon-organism.packages.${pkgs.system}.default;
   # The Interrogator's #+AGENT shell (interrogator-infer) lives in the
   # interrogator_organism package bin; organism resolves `#+AGENT:` as a bare
@@ -143,13 +145,16 @@ in {
   #
   # Fix: mirror the Chirurgeon's proven `cycleEnv` (chirurgeon_organism/nixos/
   # module.nix L88-119 — the SAME env the working chirurgeon-heartbeat uses)
-  # into the daemon's service environment + add the chirurgeon package bin +
-  # org-agent-emacs to the daemon's PATH. The daemon's _clean_env_for_organic
-  # strips only MATRIX_* (and overrides OFFICER_STATE=VOX_STATE — harmless:
-  # medicae-infer reads the officer-specific CHIRURGEON_STATE, not OFFICER_STATE),
-  # so HA_TOKEN_FILE / HA_URL / ORG_AGENT_* / TTS_* / CHIRURGEON_STATE pass
-  # straight through to the organic child. Inert for the officer-infer
-  # officers — they don't read these vars.
+  # into the daemon's service environment + add the chirurgeon package bin to
+  # the daemon's PATH. build-view cold-starts the org-agent emacs via the
+  # absolute $ORG_AGENT_EMACS the env pins (NO emacs on the daemon PATH, NO
+  # daemon, NO socket — that 0700-socket path was EACCES for non-owners,
+  # #82/#83). The daemon's _clean_env_for_organic strips only MATRIX_* (and
+  # overrides OFFICER_STATE=VOX_STATE — harmless: medicae-infer reads the
+  # officer-specific CHIRURGEON_STATE, not OFFICER_STATE), so HA_TOKEN_FILE /
+  # HA_URL / ORG_AGENT_* / TTS_* / CHIRURGEON_STATE pass straight through to
+  # the organic child. Inert for the officer-infer officers — they don't read
+  # these vars.
   #
   # Least-privilege: the daemon gets its OWN HA token (ha-vox-organism-token,
   # vacuum pattern — one .age decrypted for a 4th user, owner vox-organism,
@@ -176,9 +181,13 @@ in {
     # HA auspex (ha-get-state) + compel-spirit.
     HA_URL = "http://127.0.0.1:8123";
     HA_TOKEN_FILE = config.age.secrets.ha-vox-organism-token.path;
-    # Calendar/task view (build-view → org-agent emacs socket).
-    ORG_AGENT_SOCKET = "/var/lib/life-coach-agent/emacs/org-agent";
-    ORG_AGENT_EMACSCLIENT = "${org-agent-emacs}/bin/emacsclient";
+    # Regimen view — build-view cold-starts `emacs --batch` (NO daemon, NO
+    # socket; sidesteps the 0700-socket-dir rule that broke the old
+    # emacsclient path for non-owners, #82/#83). The daemon (in the life-coach
+    # group) reads the 0644 regimen file under /var/lib/life-coach-agent.
+    ORG_AGENT_EMACS = "${org-agent-emacs}/bin/emacs";
+    ORG_AGENT_INIT = org-agent-init;
+    ORG_AGENT_FILE = "/var/lib/life-coach-agent/agent.org";
     # speak / lib/tts.py (rung-2 smart-speaker vox).
     TTS_SERVER = "http://total-eclipse.nebula:8091";
     TTS_VOICE = "caine";
@@ -186,12 +195,12 @@ in {
   };
   # medicae-infer dispatches speak/compel-spirit/ha-get-state/build-view/log-
   # observation as bare names → they must be on the daemon's PATH (the
-  # chirurgeon package bin); build-view shells out to emacsclient (org-agent-
-  # emacs). mkAfter appends to the module's own PATH (coreutils/openssh/
-  # org-bridge client/voidmaster bin).
+  # chirurgeon package bin); build-view cold-starts the org-agent emacs via
+  # the absolute $ORG_AGENT_EMACS env (no emacsclient, no daemon). mkAfter
+  # appends to the module's own PATH (coreutils/openssh/org-bridge
+  # client/voidmaster bin).
   systemd.services.vox-organism.path = lib.mkAfter [
     chirurgeon-pkg
-    org-agent-emacs
     interrogator-pkg
     remembrancer-pkg
   ];

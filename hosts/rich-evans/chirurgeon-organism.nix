@@ -14,7 +14,7 @@
 # resolves its own package from pkgs.system, so this file is CONFIG-ONLY and
 # needs NO extraSpecialArgs (same shape as the Confessor/Factotum/Explorator
 # host files). `inputs` is available via mkServer's specialArgs (used for the
-# org-agent emacsclient, same as lifecoach-organism.nix).
+# org-agent emacs binary + init.el that build-view cold-starts).
 #
 # Rollback: `services.chirurgeon-organism.enable = false` (one line) + revert
 # the routing row / scope stanza / OFFICER_REPOS entry in 40k_bridge + rebuild.
@@ -28,6 +28,7 @@
   ...
 }: let
   org-agent-emacs = inputs.org-agent.packages.${pkgs.system}.emacs;
+  org-agent-init = "${inputs.org-agent}/elisp/init.el";
 in {
   services.chirurgeon-organism = {
     enable = true;
@@ -53,14 +54,15 @@ in {
     haUrl = "http://127.0.0.1:8123";
     haTokenFile = config.age.secrets.ha-chirurgeon-token.path;
 
-    # org-agent emacs daemon (run by the life-coach user at
-    # /var/lib/life-coach-agent). build-view reaches the calendar/task view
-    # through this fixed-path socket. The chirurgeon-organism user is in the
-    # life-coach group (extraGroups, set in the module) so it can traverse
-    # the 0750 socket dir — the established cross-officer pattern (the
-    # Confessor already does this and works).
-    orgAgentSocket = "/var/lib/life-coach-agent/emacs/org-agent";
-    orgAgentEmacsclient = "${org-agent-emacs}/bin/emacsclient";
+    # org-agent regimen view — build-view cold-starts a fresh `emacs --batch`
+    # per call (NO daemon, NO socket), sidestepping emacs's 0700-socket-dir
+    # rule that locked non-owners out of the old emacsclient path (#82/#83).
+    # The chirurgeon-organism user is in the life-coach group (extraGroups,
+    # set in the module) so it can traverse /var/lib/life-coach-agent (0750)
+    # and READ the 0644 regimen file. lifecoach's daemon stays the WRITER.
+    orgAgentEmacs = "${org-agent-emacs}/bin/emacs";
+    orgAgentInit = org-agent-init;
+    orgAgentFile = "/var/lib/life-coach-agent/agent.org";
 
     # TTS — speak / lib/tts.py (rung-2 smart-speaker vox). Same Qwen3-TTS
     # server + Nest device as lifecoach; the voice is the Chirurgeon's own.
