@@ -1,8 +1,25 @@
 # Email Digest Agent
 #
 # Twice-daily email summary DM'd to Kimb on Discord.
-# Syncs mail via mbsync (pull-only), summarizes with Ollama (gemma4:12b),
+# Syncs mail via mbsync (pull-only), summarizes with Ollama (gemma4:31b-cloud),
 # sends via Discord bot API.
+#
+# Architecture (decoupled 2026-07-26, #126): TWO services.
+#   email-digest-index — mbsync pull + chmod + mu index. SLOW (mu index re-reads
+#     the 30G/590K-message Seagate Maildir every pass; a full incremental takes
+#     ~50min on spinning rust). Hourly timer, 120min timeout so a pass finishes
+#     cleanly (a SIGTERM mid-index is what left xapian half-built and the
+#     Interrogator blind under the old 90min ceiling). This service ALSO feeds
+#     the Interrogator (#53), which queries the same xapian index read-only.
+#   email-digest       — mu find + Ollama + Discord. FAST (~2min). Hourly timer.
+#     No mbsync, no mu index — it only queries whatever the index service last
+#     refreshed. If the index is stale/absent, mu find returns nothing and the
+#     digest sends "No new mail" — benign degradation, strictly better than the
+#     old behavior where a slow index hung the digest up to the 90min ceiling
+#     and timed out the whole service.
+# The old single-service design ran mu index every 15min, but each pass took
+# ~68min, so runs chained back-to-back and the 15min cadence was never real;
+# the decouple makes both cadences honest.
 {
   config,
   lib,
@@ -134,38 +151,32 @@
     - Do NOT suggest replying, forwarding, or acting on emails
   '';
 
-  digestScript = pkgs.writeShellScript "email-digest" ''
-        set -euo pipefail
+  # Shared PATH for both the index + digest scripts.
+  # timeout(1) lives in coreutils; mu/jq/curl/isync/findutils per their pkgs.
+  binPath = lib.makeBinPath [
+    pkgs.coreutils
+    pkgs.gnugrep
+    pkgs.gawk
+    pkgs.jq
+    pkgs.curl
+    pkgs.isync
+    pkgs.mu
+    pkgs.findutils
+  ];
 
-        export PATH="${lib.makeBinPath [
-      pkgs.coreutils
-      pkgs.gnugrep
-      pkgs.gawk
-      pkgs.jq
-      pkgs.curl
-      pkgs.isync
-      pkgs.mu
-      pkgs.findutils
-    ]}:$PATH"
+  # --- Index service script: mbsync pull + chmod + mu index. SLOW. ---
+  # This is the refresh phase split out of the old monolithic digest. It feeds
+  # both the digest (via the xapian index) and the Interrogator officer (#53,
+  # which queries this same index read-only). Bounded: each mbsync account is
+  # capped at 8min so a stalled IMAP/TLS connection can't hang the index
+  # forever; the service TimeoutStartSec is the outer ceiling.
+  indexScript = pkgs.writeShellScript "email-digest-index" ''
+        set -euo pipefail
+        export PATH="${binPath}:$PATH"
 
         MBSYNCRC="${mbsyncrc}"
         STATE_DIR="${stateDir}"
         MAIL_DIR="${mailDir}"
-        DISCORD_TOKEN_FILE="${config.age.secrets.discord-email-digest-token.path}"
-        DISCORD_USER_ID="${discordUserId}"
-        ORG_NOTES_DIR="${orgNotesDir}"
-
-        # Read last-run timestamp; default to 24 hours ago
-        LAST_RUN_FILE="$STATE_DIR/last-run"
-        NOW=$(date +%s)
-        if [ -f "$LAST_RUN_FILE" ]; then
-          LAST_RUN=$(cat "$LAST_RUN_FILE")
-        else
-          LAST_RUN=$((NOW - 86400))
-        fi
-
-        # Format date for mu query
-        SINCE_DATE=$(date -d "@$LAST_RUN" +%Y%m%d)
 
         # Ensure Maildir structure exists for mbsync
         for acct in zoho gmail fastmail; do
@@ -175,9 +186,12 @@
         # Clean stale lock files from interrupted runs
         find "$MAIL_DIR" -name '.lock' -delete 2>/dev/null || true
 
-        # Sync mail (continue on failure for each account)
+        # Sync mail (continue on failure for each account; 8min cap each so a
+        # stalled IMAP/TLS connection can't hang the index indefinitely — the
+        # old unbounded mbsync was a secondary hang vector behind the 90min
+        # service timeout).
         for account in zoho gmail fastmail; do
-          mbsync -c "$MBSYNCRC" "$account" 2>&1 || echo "WARNING: $account sync failed" >&2
+          timeout 8m mbsync -c "$MBSYNCRC" "$account" 2>&1 || echo "WARNING: $account sync failed (or timed out)" >&2
         done
 
         # Widen the freshly-synced Maildir to group-readable so the Interrogator
@@ -199,18 +213,29 @@
           mu init --maildir="$MAIL_DIR" --my-address=mccartykim@zoho.com --my-address=mccarty.tim@gmail.com --my-address=kimb@kimb.dev 2>&1
         fi
         # Widen the mu xapian dirs BEFORE mu index. mu index can take >30min
-        # against the Seagate Maildir post-#109 (the move reset every file's
-        # mtime, so the first post-move run re-indexes the whole store), and
-        # the (now 90-min) TimeoutStartSec can still kill a genuinely-hung run
-        # before it reaches the post-index chmod below — leaving xapian at mu's
-        # default 0700 so the Interrogator (email-digest group, uid 998) can't
-        # traverse it ("Couldn't stat xapian", Interrogator blind). Chmod here
-        # too so the index is group-readable even when mu index is killed
-        # mid-run. The post-index chmod below is kept as a belt-and-suspenders
-        # re-widen for the case where mu index re-inits a corrupt db mid-run.
-        # Idempotent.
+        # against the Seagate Maildir (30G/590K messages on spinning rust; a
+        # full incremental pass re-reads ~35G), and the service TimeoutStartSec
+        # can still kill a genuinely-hung run before it reaches the post-index
+        # chmod below — leaving xapian at mu's default 0700 so the Interrogator
+        # (email-digest group, uid 998) can't traverse it ("Couldn't stat
+        # xapian", Interrogator blind). Chmod here too so the index is
+        # group-readable even when mu index is killed mid-run. The post-index
+        # chmod below is kept as a belt-and-suspenders re-widen for the case
+        # where mu index re-inits a corrupt db mid-run. Idempotent.
         chmod g+rX "$STATE_DIR/.cache" "$STATE_DIR/.cache/mu" "$STATE_DIR/.cache/mu/xapian" 2>/dev/null || true
-        mu index 2>&1
+        # --lazy-check (mu source: mu-indexer.cc:237-244,284-288): skip whole
+        # unchanged cur/new dirs by dirstamp + skip unchanged files by ctime vs
+        # last_index. Steady state is O(dirs) stats, not O(messages) body reads.
+        # CRITICAL: last_index + dirstamps persist ONLY on a clean completion
+        # (mu-indexer.cc:411-435); a SIGTERM'd run leaves them unset so the next
+        # run full-re-reads every body (the 35G/50min death spiral we had under
+        # the 90min ceiling). --lazy-check with a stale/absent checkpoint simply
+        # degrades to a full pass (no skips fire) — safe to use always. The
+        # 120min service timeout lets that first full pass finish + persist the
+        # checkpoint; every subsequent run is then O(dirs). Note mu keys on
+        # st_ctime (inode change time), so any tool that rewrites a message
+        # bumps ctime and re-indexes just that message — fine.
+        mu index --lazy-check 2>&1
 
         # Widen the mu xapian dirs to group-traversable so the Interrogator
         # officer (#53) can read this index read-only. The vox-organism daemon
@@ -225,20 +250,49 @@
         # Mirrors the officer modules' "chmod g+r the seed for cross-officer
         # daemon access" pattern.
         chmod g+rX "$STATE_DIR/.cache" "$STATE_DIR/.cache/mu" "$STATE_DIR/.cache/mu/xapian" 2>/dev/null || true
+  '';
 
-        # Find new messages
+  # --- Digest service script: mu find + Ollama + Discord. FAST. ---
+  # No mbsync, no mu index — it only queries the xapian index the
+  # email-digest-index service refreshes. If the index is stale/absent, mu
+  # find returns nothing and the digest sends "No new mail" — benign.
+  digestScript = pkgs.writeShellScript "email-digest" ''
+        set -euo pipefail
+        export PATH="${binPath}:$PATH"
+
+        STATE_DIR="${stateDir}"
+        DISCORD_TOKEN_FILE="${config.age.secrets.discord-email-digest-token.path}"
+        DISCORD_USER_ID="${discordUserId}"
+        ORG_NOTES_DIR="${orgNotesDir}"
+
+        # Read last-run timestamp; default to 24 hours ago
+        LAST_RUN_FILE="$STATE_DIR/last-run"
+        NOW=$(date +%s)
+        if [ -f "$LAST_RUN_FILE" ]; then
+          LAST_RUN=$(cat "$LAST_RUN_FILE")
+        else
+          LAST_RUN=$((NOW - 86400))
+        fi
+
+        # Format date for mu query
+        SINCE_DATE=$(date -d "@$LAST_RUN" +%Y%m%d)
+
+        # Find new messages (queries the xapian index the email-digest-index
+        # service refreshes; concurrent reads are safe — xapian supports them).
         MESSAGES=$(mu find "date:$SINCE_DATE.." --fields='d f s l' --sortfield=date 2>/dev/null || true)
 
         # Read Discord token
         DISCORD_TOKEN=$(cat "$DISCORD_TOKEN_FILE")
 
-        # Helper: send Discord DM
+        # Helper: send Discord DM. Every curl is bounded (--max-time 30) so a
+        # stalled Discord API can't hang the digest (the old unbounded curl
+        # was a secondary hang vector).
         send_discord_dm() {
           local content="$1"
 
           # Create/get DM channel
           local channel_id
-          channel_id=$(curl -sf \
+          channel_id=$(curl -sf --max-time 30 \
             -X POST \
             -H "Authorization: Bot $DISCORD_TOKEN" \
             -H "Content-Type: application/json" \
@@ -254,7 +308,7 @@
           local chunk=""
           while IFS= read -r line; do
             if [ $(( ''${#chunk} + ''${#line} + 1 )) -gt 1990 ]; then
-              curl -sf \
+              curl -sf --max-time 30 \
                 -X POST \
                 -H "Authorization: Bot $DISCORD_TOKEN" \
                 -H "Content-Type: application/json" \
@@ -271,7 +325,7 @@
 
           # Send remaining chunk
           if [ -n "$chunk" ]; then
-            curl -sf \
+            curl -sf --max-time 30 \
               -X POST \
               -H "Authorization: Bot $DISCORD_TOKEN" \
               -H "Content-Type: application/json" \
@@ -439,38 +493,32 @@ in {
     # so a rule under /mnt/seagate (a `nofail` mount) would create the dir on
     # the empty SSD mountpoint when the drive is absent — the mount-trap that
     # shadows real data on remount. The Seagate Maildir is created at runtime
-    # by the script's `mkdir -p "$MAIL_DIR/..."` (only runs when the service
-    # runs, which RequiresMountsFor gates on the drive being mounted).
+    # by the index script's `mkdir -p "$MAIL_DIR/..."` (only runs when the
+    # service runs, which RequiresMountsFor gates on the drive being mounted).
     tmpfiles.rules = [
       "d ${stateDir} 0750 email-digest email-digest -"
     ];
 
-    # Oneshot service
-    services.email-digest = {
-      description = "Email Digest Agent";
+    # --- Index service: mbsync pull + mu index. SLOW (~50min/pass). ---
+    # Hourly cadence feeds both the digest (via xapian) and the Interrogator
+    # (#53, read-only). 120min timeout: a full incremental pass on the 30G/
+    # 590K-message Seagate Maildir re-reads ~35G and takes ~50-68min on
+    # spinning rust; 120min lets a pass FINISH cleanly so mu checkpoints and
+    # the next pass is genuinely incremental. The old 90min ceiling killed
+    # long passes mid-write — the death spiral that left xapian half-built
+    # and the Interrogator blind. A oneshot can't overlap itself, so a long
+    # run just skips the next timer tick — no pile-up.
+    services.email-digest-index = {
+      description = "Email Digest — mail sync + mu index (refresh)";
       after = ["network-online.target"];
       wants = ["network-online.target"];
       path = ["/run/current-system/sw"];
-      environment = {
-        OLLAMA_HOST = "http://historian.nebula:11434";
-        OLLAMA_MODEL = "gemma4:31b-cloud";
-      };
       serviceConfig = {
         Type = "oneshot";
-        ExecStart = "${digestScript}";
+        ExecStart = "${indexScript}";
         User = "email-digest";
         Group = "email-digest";
-        # 90 min, not 30: the FIRST mu index after the #109 Seagate move re-indexes
-        # the whole 27G Maildir (the move reset every file's mtime, so mu sees all
-        # mail as new). 30 min killed that first pass mid-run (#126) — leaving
-        # xapian half-built and the Interrogator blind. 90 min lets the first full
-        # pass complete; subsequent runs are incremental (only new messages) and
-        # finish in well under 30, so 90 is a ceiling that normal cycles never
-        # approach. Lord-Captain chose to KEEP [Gmail]/All Mail (full archive
-        # search) over dropping it to shrink the index, so the generous timeout is
-        # the lever instead. A oneshot can't overlap itself, so a long run just
-        # skips the next timer tick — no pile-up.
-        TimeoutStartSec = "90min";
+        TimeoutStartSec = "120min";
         ProtectHome = "read-only";
         ProtectSystem = "strict";
         ReadWritePaths = [stateDir mailDir];
@@ -494,15 +542,68 @@ in {
       };
     };
 
-    # Timer: every 15 min — the mu index is at most ~15 min stale so a
-    # #interrogator round-trip sees recent dispatches. Twice-daily left the
-    # index up to ~12 h stale. A oneshot can't overlap itself (systemd won't
-    # start a second instance while one runs), and TimeoutStartSec bounds a
-    # slow sync, so a 15-min cadence is safe.
+    # --- Digest service: mu find + Ollama + Discord. FAST (~2min). ---
+    # No mbsync, no mu index — queries the xapian index the index service
+    # refreshes. 5min timeout is a generous ceiling for find + ollama + DM.
+    services.email-digest = {
+      description = "Email Digest Agent (summarize + DM)";
+      after = ["network-online.target"];
+      wants = ["network-online.target"];
+      path = ["/run/current-system/sw"];
+      environment = {
+        OLLAMA_HOST = "http://historian.nebula:11434";
+        OLLAMA_MODEL = "gemma4:31b-cloud";
+      };
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = "${digestScript}";
+        User = "email-digest";
+        Group = "email-digest";
+        # 5 min: the digest only does mu find (fast, reads the SSD xapian
+        # index) + one Ollama call (--max-time 180) + Discord DMs (--max-time
+        # 30 each). No mbsync, no mu index — the slow paths live in
+        # email-digest-index now. 5min is a ceiling normal runs never approach.
+        TimeoutStartSec = "5min";
+        ProtectHome = "read-only";
+        ProtectSystem = "strict";
+        ReadWritePaths = [stateDir];
+        # The digest reads the xapian index + maildir the index service
+        # populates; it writes only its own stateDir (last-run). The Seagate
+        # mount-trap guard applies (read paths under /mnt/seagate); if the
+        # drive is absent, mu find returns nothing → "No new mail" DM (benign).
+        RequiresMountsFor = ["/mnt/seagate"];
+        PrivateTmp = true;
+        NoNewPrivileges = true;
+        StateDirectory = "email-digest";
+        UMask = "027";
+      };
+    };
+
+    # Index timer: hourly. Feeds the Interrogator a ~hourly-fresh index (the
+    # old 15min timer was never real — each pass took ~68min, so runs chained
+    # back-to-back at ~hourly anyway; this makes the cadence honest). A oneshot
+    # can't overlap itself, and 120min TimeoutStartSec bounds a slow pass.
+    timers.email-digest-index = {
+      wantedBy = ["timers.target"];
+      timerConfig = {
+        OnBootSec = "3min";
+        OnUnitActiveSec = "1h";
+        Persistent = true;
+      };
+    };
+
+    # Digest timer: hourly at :30 (offset from the index timer's :00-on-boot-
+    # then-+1h cadence so the digest typically runs against a freshly-indexed
+    # xapian; concurrent reads are safe regardless). The original design was
+    # twice-daily; #106 moved to 15min for index freshness — but 15min was
+    # unreachable at 68min/pass and produced a DM every ~68min anyway. Hourly
+    # preserves the EFFECTIVE cadence and the decouple makes it real. Tune
+    # down to twice-daily (OnCalendar = "09:00,21:00") if hourly DMs are too
+    # chatty — the index timer, not this one, gates Interrogator freshness.
     timers.email-digest = {
       wantedBy = ["timers.target"];
       timerConfig = {
-        OnCalendar = "*:0/15";
+        OnCalendar = "*-*-* *:30:00";
         Persistent = true;
       };
     };
