@@ -55,19 +55,22 @@
   # 0.0.0.0:8666 so the Nest hub can fetch it over the LAN. musicDirectory
   # is the EXISTING /mnt/seagate/music_compressed (currently encrypted-
   # receive; becomes a real library after the runtime syncthing flip).
+  # audio_output is the declarative RFC42 form (services.mpd.settings, a
+  # list of attrsets — each renders an `audio_output { ... }` block); the
+  # old `extraConfig` string was removed in current nixpkgs.
   services.mpd = {
     enable = true;
     musicDirectory = "/mnt/seagate/music_compressed";
-    extraConfig = ''
-      audio_output {
-        type "httpd"
-        name "rich-evans choirmaster stream"
-        port "8666"
-        bind_to_address "0.0.0.0"
-        encoder "lame"
-        bitrate "192"
-        format "44100:16:2"
+    settings.audio_output = [
+      {
+        type = "httpd";
+        name = "rich-evans choirmaster stream";
+        port = "8666";
+        bind_to_address = "0.0.0.0";
+        encoder = "lame";
+        bitrate = "192";
+        format = "44100:16:2";
       }
-    '';
+    ];
   };
 }
