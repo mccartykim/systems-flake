@@ -26,18 +26,19 @@
 # the daemon. The Choirmaster can also play direct URLs via `mpc add
 # <url>` (internet radio etc.) independent of the local library.
 #
-# music_compressed is currently a syncthing ENCRYPTED-receive folder on
-# rich-evans (folder fgp3e-2t6j7, 7 plain senders fleet-wide). While
-# encrypted, MPD scans only .syncthing-enc blocks → an empty library
-# (honest inert MVP: the Choirmaster plays direct URLs / internet radio
-# meanwhile). The user authorized flipping that folder to PLAIN receive
-# across the 7 senders + rich-evans so MPD gets a real library; that flip
-# is a RUNTIME syncthing operation (no NixOS rebuild) — tracked separately
-# from this wiring. After it lands, MPD's next rescan reads the real
-# .flac/.mp3 set. Music Originals (69p3x-vpttj) stays encrypted-receive as
-# the lossless backup; only the derived compressed set goes plain. MPD
-# reads the dir via the "other" read bit (syncthing writes 0644/0755); no
-# group juggling needed.
+# Both music folders are PLAIN sendreceive on rich-evans's Seagate as of
+# 2026-07-26 (a RUNTIME syncthing flip — no NixOS rebuild). Compressed
+# (fgp3e-2t6j7, 367 .opus, 1.6G) + Music Originals (69p3x-vpttj, 365
+# .flac/.mp3, 17G) sync plain from historian (sole source for originals) +
+# total-eclipse (compressed). The encryption lived on the SENDER side
+# (<encryptionPassword> on rich-evans's device entry in each sender's
+# folder); flipping receiveencrypted→sendreceive in-place wedged the
+# index DB (rescan 500'd) until the folder's index-v2 SQLite db was
+# deleted + syncthing restarted. creme/marshmallow/cheesecake were
+# offline at flip time + Pixel/kmccarty-YM2K aren't SSHable — those still
+# encrypt to rich-evans (harmless; the plain senders populate the
+# library). MPD reads the dir via the "other" read bit (syncthing writes
+# 0644/0755); no group juggling needed.
 #
 # Routing to #choirmaster (room + route + daemon extraGroups + org-bridge
 # scope stanza + bridge-log heading) ships from 40k_bridge; roster-DERIVED.
