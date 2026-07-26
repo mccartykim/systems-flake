@@ -5,7 +5,7 @@
   self,
   ...
 }: let
-  inherit (inputs) nixpkgs nixos-hardware nixos-facter-modules copyparty nil-flake media-classifier org-life-coach lifecoach-organism vacuum-organism org-crm organism void-master-organism factotum-organism confessor-organism explorator-organism chirurgeon-organism navigator-organism interrogator-organism remembrancer-organism;
+  inherit (inputs) nixpkgs nixos-hardware nixos-facter-modules copyparty nil-flake media-classifier org-life-coach lifecoach-organism vacuum-organism org-crm organism void-master-organism factotum-organism confessor-organism explorator-organism chirurgeon-organism navigator-organism interrogator-organism remembrancer-organism savant-organism choirmaster-organism factor-organism;
   inherit (config.flake.lib) mkDesktop mkServer mkHomeManager commonModules;
 in {
   flake.nixosConfigurations = {
@@ -160,6 +160,26 @@ in {
         # organism daemon runs its `organic` cycle under uid 998 (a member of
         # remembrancer-organism) to compose prose + propose via the PR loop.
         remembrancer-organism.nixosModules.default
+        # Savant Quine — read-only reference librarian (web/ebook/print),
+        # 12th bridge officer. Self-contained module (resolves its own
+        # package from pkgs.system, NO extraSpecialArgs, NO colmena
+        # meta.specialArgs change — same shape as the other self-contained
+        # officer modules). On-request (no heartbeat): the vox-organism
+        # daemon runs its `organic` cycle under uid 998 (a member of
+        # savant-organism + borges) to read the web + the borges ebook db.
+        savant-organism.nixosModules.default
+        # Choirmaster Cassiel — on-demand music officer (MPD httpd + cast),
+        # 13th bridge officer. Self-contained (same shape). On-request (NO
+        # heartbeat): find + start only; the Lord-Captain stops manually.
+        # The MPD httpd stream it casts lives on rich-evans:8666 (configured
+        # in the host file below).
+        choirmaster-organism.nixosModules.default
+        # Factor Voss — ship's Treasurer (finance axis, hledger), 14th bridge
+        # officer. Self-contained (same shape). Proactive heartbeat wired-
+        # but-OFF at first deploy (enableHeartbeat=false in the host file)
+        # until the user's first #factor round-trip validates the persona;
+        # the reactive #factor cycle runs via the daemon now.
+        factor-organism.nixosModules.default
         (import "${inputs."bridge-crew-src"}/deploy/org-bridge.nix")
         (import "${inputs."bridge-crew-src"}/deploy/vox-bridge.nix")
         # Phase-2 vox-organism: the Astropath comms-bridge daemon (replaces the
@@ -181,6 +201,9 @@ in {
         (self + "/hosts/rich-evans/chirurgeon-organism.nix")
         (self + "/hosts/rich-evans/interrogator-organism.nix")
         (self + "/hosts/rich-evans/remembrancer-organism.nix")
+        (self + "/hosts/rich-evans/savant-organism.nix")
+        (self + "/hosts/rich-evans/choirmaster-organism.nix")
+        (self + "/hosts/rich-evans/factor-organism.nix")
         (self + "/hosts/rich-evans/org-bridge.nix")
         org-crm.nixosModules.default
         (self + "/hosts/rich-evans/org-crm.nix")

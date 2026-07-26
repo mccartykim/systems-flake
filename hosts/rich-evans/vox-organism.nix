@@ -53,6 +53,34 @@
   # needs NO env additions, only the package bin on PATH. Mirrors the
   # interrogator-pkg path addition.
   remembrancer-pkg = inputs.remembrancer-organism.packages.${pkgs.system}.default;
+  # Savant Quine — read-only reference librarian + print. savant-infer is
+  # the #+AGENT shell (interrogator-infer fork); organism resolves it as a
+  # bare name on PATH, so the daemon must carry the package bin or the
+  # reactive #savant cycle fails ~1ms in (command not found) — same gap the
+  # interrogator-pkg addition closed. The bare print-file tool calls `lp`
+  # (cups) + `file`/`pdftotext` (poppler-utils) as bare names, so those go on
+  # the daemon PATH below too. NO env additions (savant-infer reads OFFICER_STATE
+  # for logging like the Interrogator; print-file's printer defaults are baked).
+  savant-pkg = inputs.savant-organism.packages.${pkgs.system}.default;
+  # Choirmaster Cassiel — on-demand music. choirmaster-infer is the #+AGENT
+  # shell (medicae-infer fork); organism resolves it as a bare name on PATH.
+  # Every choirmaster bin is wrapped with its runtime deps (mpc, python
+  # w/ pychromecast+requests, CHOIRMASTER_LIB_PARENT) so the daemon needs ONLY
+  # the package bin on PATH — cast-stream auto-detects the LAN IP + defaults
+  # port 8666 + the Nest hub device. CHOIRMASTER_STATE is mirrored for clean
+  # logging (parity with CHIRURGEON_STATE); MPD_HOST/MPD_HTTP_PORT/TTS_DEVICE
+  # all have working defaults.
+  choirmaster-pkg = inputs.choirmaster-organism.packages.${pkgs.system}.default;
+  # Factor Voss — finance axis. factor-infer is the #+AGENT shell (medicae-
+  # infer fork); organism resolves it as a bare name on PATH. The package
+  # wrap deliberately EXCLUDES hledger/git/poppler (they reach runtime via
+  # the module's servicePath — but the daemon path doesn't use the module's
+  # servicePath), so hledger/hledger-utils/git MUST go on the daemon PATH
+  # below for the reactive #factor cycle to read/write the real ledger.
+  # FACTOR_STATE/FACTOR_LEDGER/FACTOR_CSV_DIR are ESSENTIAL env (without
+  # them the ledger defaults to /tmp/factor/ledger.journal + the finance
+  # duty breaks); mirrored below.
+  factor-pkg = inputs.factor-organism.packages.${pkgs.system}.default;
 in {
   services.vox-organism = {
     enable = true;
@@ -192,6 +220,29 @@ in {
     TTS_SERVER = "http://total-eclipse.nebula:8091";
     TTS_VOICE = "jet2";
     TTS_DEVICE = "Kim's nest hub";
+    # Choirmaster error-log dir (officer-specific, parity with CHIRURGEON_STATE
+    # above). choirmaster-infer logs to CHOIRMASTER_STATE (NOT OFFICER_STATE);
+    # the daemon (in the choirmaster-organism group) can write here. The music
+    # tools (cast-stream/play/mpd-status) carry their own env via the package
+    # wrap (CHOIRMASTER_LIB_PARENT) + sensible defaults (MPD_HOST auto-LAN-IP,
+    # MPD_HTTP_PORT 8666, TTS_DEVICE "Kim's nest hub") — no extra env needed.
+    CHOIRMASTER_STATE = "/var/lib/choirmaster-organism";
+    # Factor finance-axis env (ESSENTIAL — factor-infer + the hledger tools
+    # read these, NOT OFFICER_STATE). Without FACTOR_LEDGER the ledger
+    # defaults to /tmp/factor/ledger.journal + the reactive #factor cycle
+    # reads/writes a throwaway. The daemon (in the factor-organism group) can
+    # write the ledger + the git-versioned .git ledger-commit manages. CSV
+    # dir is the future scraper drop (empty at MVP).
+    FACTOR_STATE = "/var/lib/factor-organism";
+    FACTOR_LEDGER = "/var/lib/factor-organism/ledger.journal";
+    FACTOR_CSV_DIR = "/var/lib/factor-organism/csv";
+    # matrix-history allowlist (Summarizer leg-a, grafted into interrogator-
+    # infer): comma-separated room IDs the daemon may backfill via /messages
+    # when the Interrogator/Summarizer asks "summarize #<room>". DERIVED from
+    # the roster (deploy/roster.nix voxHistoryRooms — every officer dialogue
+    # room, EXCLUDING #bridge-events). Fail-closed per room. The NON-MATRIX_
+    # name passes _clean_env_for_organic (see bin/matrix-history).
+    VOX_HISTORY_ROOMS = lib.concatStringsSep "," roster.voxHistoryRooms;
   };
   # medicae-infer dispatches speak/compel-spirit/ha-get-state/build-view/log-
   # observation as bare names → they must be on the daemon's PATH (the
@@ -203,5 +254,31 @@ in {
     chirurgeon-pkg
     interrogator-pkg
     remembrancer-pkg
+    # Savant/Choirmaster/Factor #+AGENT shells (savant-infer/choirmaster-infer/
+    # factor-infer) resolve as bare names on PATH — same gap the
+    # interrogator-pkg addition closed. Choirmaster's bins are self-wrapped
+    # (runtime deps incl. python/pychromecast/mpc carried via makeWrapper), so
+    # choirmaster-pkg is sufficient on PATH. Savant's print-file + Factor's
+    # hledger tools are bare + call `lp`/`file`/`hledger`/`git` as bare names,
+    # so those runtime deps are added explicitly below.
+    savant-pkg
+    choirmaster-pkg
+    factor-pkg
+    # Savant print-file: lp client (cups) + PDF mime validation (poppler-utils
+    # for pdftotext/pdfinfo) + file(1) for `file -b --mime-type`. print is
+    # non-functional at MVP (no write tool — the Savant can't place a file in
+    # the stateDir prison to print), but the deps are forward-wired so a
+    # future write-tool round-trip doesn't redeploy for PATH.
+    pkgs.cups
+    pkgs.poppler-utils
+    pkgs.file
+    # Factor finance tools: the package wrap deliberately excludes hledger/
+    # git/poppler (the module's servicePath carries them — but the daemon
+    # path doesn't use the module servicePath). hledger + hledger-utils for
+    # hledger-bal/reg/import; git for ledger-commit (local, NO remote/push).
+    # poppler-utils deferred (OCR/PDF source not built at MVP).
+    pkgs.hledger
+    pkgs.hledger-utils
+    pkgs.git
   ];
 }

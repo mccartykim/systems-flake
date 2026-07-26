@@ -163,6 +163,22 @@
     remembrancer-organism.url = "git+ssh://git@github.com/mccartykim/remembrancer_organism.git";
     remembrancer-organism.inputs.nixpkgs.follows = "nixpkgs";
 
+    # Three new routed officers (2026-07-26): the Savant Quine (read-only
+    # reference librarian + print), Choirmaster Cassiel (on-demand music,
+    # MPD httpd + cast), Factor Voss (finance axis, hledger). All self-
+    # contained modules (resolve their own package from pkgs.system, NO
+    # extraSpecialArgs, NO colmena meta.specialArgs change — same shape as
+    # the other self-contained officer modules). On-request via the
+    # vox-organism daemon (uid 998); the daemon's extraGroups + rooms + PATH
+    # auto-derive from the roster + the host file edits. Private repos,
+    # git+ssh on github (officer inputs NEVER https).
+    savant-organism.url = "git+ssh://git@github.com/mccartykim/savant_organism.git";
+    savant-organism.inputs.nixpkgs.follows = "nixpkgs";
+    choirmaster-organism.url = "git+ssh://git@github.com/mccartykim/choirmaster_organism.git";
+    choirmaster-organism.inputs.nixpkgs.follows = "nixpkgs";
+    factor-organism.url = "git+ssh://git@github.com/mccartykim/factor_organism.git";
+    factor-organism.inputs.nixpkgs.follows = "nixpkgs";
+
     # 40k_bridge source tree — NOT a flake (no flake.nix). Consumed for the
     # org-bridge + vox-bridge NixOS modules via `import` of path strings, and
     # for the org-bridge broker/client Python + scope TOML at eval time.
