@@ -190,7 +190,7 @@ in {
     ORG_AGENT_FILE = "/var/lib/life-coach-agent/agent.org";
     # speak / lib/tts.py (rung-2 smart-speaker vox).
     TTS_SERVER = "http://total-eclipse.nebula:8091";
-    TTS_VOICE = "caine";
+    TTS_VOICE = "jet2";
     TTS_DEVICE = "Kim's nest hub";
   };
   # medicae-infer dispatches speak/compel-spirit/ha-get-state/build-view/log-

@@ -67,7 +67,7 @@ in {
     # TTS — speak / lib/tts.py (rung-2 smart-speaker vox). Same Qwen3-TTS
     # server + Nest device as lifecoach; the voice is the Chirurgeon's own.
     ttsServer = "http://total-eclipse.nebula:8091";
-    ttsVoice = "caine";
+    ttsVoice = "jet2";
     ttsDevice = "Kim's nest hub";
   };
 }
