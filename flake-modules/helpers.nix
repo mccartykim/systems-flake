@@ -63,20 +63,29 @@ in {
       (_: let
         registry = import (self + "/hosts/nebula-registry.nix");
         names = builtins.attrNames registry.nodes;
+        # Nodes that carry an SSH host key in the registry (tachikoma doesn't).
+        pinned = builtins.filter (n: (registry.nodes.${n}.publicKey or null) != null) names;
       in {
         networking.extraHosts =
           builtins.concatStringsSep "\n"
           (builtins.map (name: "${registry.nodes.${name}.ip} ${name}.nebula") names);
-        # Pin mochi's SSH host key fleet-wide. mochi is a nebula host but NOT
-        # NixOS-managed (AVF Debian), so its host key never enters via the normal
-        # NixOS host-key path — without this, every `ssh …@mochi.nebula` is a
-        # TOFU prompt. Key is the registry's mochi.publicKey (verified 2026-07-25
-        # to match `ssh-keyscan mochi.nebula` byte-for-byte; the AVF restore script
-        # bakes this STABLE key so it survives wipes).
-        programs.ssh.knownHosts.mochi = {
-          hostNames = ["mochi.nebula" "10.100.0.8"];
-          publicKey = registry.nodes.mochi.publicKey;
-        };
+        # Pin every fleet host's SSH host key fleet-wide so `ssh …@<host>.nebula`
+        # never TOFU-prompts and never breaks when a host rekeys. This caught
+        # oracle 2026-07-25: total-eclipse had drifted off oracle's key and colmena
+        # couldn't SSH to it → oracle's authorized_keys went stale → phone→oracle
+        # failed auth. mochi is included here too — it's a nebula host but NOT
+        # NixOS-managed (AVF Debian), so its key never enters via the normal NixOS
+        # host-key path; the AVF restore script bakes this STABLE key. Registry
+        # keys verified 2026-07-25 to match live `ssh-keyscan` for oracle +
+        # historian + mochi.
+        programs.ssh.knownHosts =
+          builtins.listToAttrs (builtins.map (n: {
+            name = n;
+            value = {
+              hostNames = ["${n}.nebula" registry.nodes.${n}.ip];
+              publicKey = registry.nodes.${n}.publicKey;
+            };
+          }) pinned);
       })
     ];
 
