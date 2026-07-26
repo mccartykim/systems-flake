@@ -10,7 +10,12 @@ let
     total-eclipse = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJY8TB1PRV5e8e8QgdwFRPbuRIzjeS1oFY1WOUKTYnrj mccartykim@zoho.com";
     cheesecake = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKQgFzMg37QTeFE2ybQRHfVEQwW/Wz7lK6jPPmctFd/U kimb@surface3go";
     marshmallow = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICwE1JLDrS+C2GcUcFb8ZvDRJX0lF+e0CLhJhFK8DpTO mccartykim@zoho.com";
-    mochi = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHBSIfvPHC+UmMq6pghmdsjCTje/lOeiTVo2vDmyoNbf root@mochi";
+    # phone outbound (AVF Debian). droid = normal login; mochi-root = root
+    # shell on the phone. Both generated 2026-07-25, replacing the stale
+    # pre-keygen root@mochi key. Verified by sshing in as droid@mochi.nebula
+    # and reading ~droid/.ssh + /root/.ssh.
+    mochi = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBtxm6qwUb6E5HWBBk6W6DA8O1zqGjxi8b6x/WFbvcym droid@debian";
+    mochi-root = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIH6WwLEhWKuh0tmUmLm8ipH6cbuPeWb4hiDvRxjSFWmR root@debian";
     creme = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPgRTonCa57ppntb8BrN1Pu9thHb6Yv1HxLwtR4M8N53 kimb@creme";
   };
 
