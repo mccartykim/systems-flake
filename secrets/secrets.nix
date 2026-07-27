@@ -130,7 +130,7 @@ in
 
     # ===== MEDIA PIPELINE (historian) =====
     # rclone config with put.io OAuth token
-    "rclone-config.age".publicKeys = [hostKeys.historian bootstrap];
+    "rclone-config.age".publicKeys = [hostKeys.historian hostKeys.rich-evans bootstrap];
     # Jellyfin API key for media-classifier library rescan trigger
     "jellyfin-api-key.age".publicKeys = [hostKeys.historian bootstrap];
     # ===== RESTIC BACKUPS (Backblaze B2) =====

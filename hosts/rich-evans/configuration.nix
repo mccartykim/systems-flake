@@ -200,6 +200,21 @@ in {
     options = ["defaults" "nofail" "commit=60"];
   };
 
+  # Media-migration bootstrap: decrypt the shared put.io rclone config here so
+  # rich-evans can pull the put.io library down to /mnt/seagate ahead of the
+  # rclone-putio-sync service+timer being ported over from historian. Same .age
+  # file / path / owner as historian's declaration (see hosts/historian/
+  # configuration.nix); rekeyed to rich-evans's host key in secrets/secrets.nix.
+  # The sync service itself is NOT wired up here yet — only the secret, for the
+  # one-off `rclone copy` bootstrap. The full port (--backup-dir, NFS export,
+  # media-classifier repoint) lands in a follow-up.
+  age.secrets.rclone-config = {
+    file = ../../secrets/rclone-config.age;
+    path = "/run/agenix/rclone-config";
+    mode = "0400";
+    owner = "kimb";
+  };
+
   nixpkgs.overlays = [inputs.copyparty.overlays.default];
 
   # Server-specific services
