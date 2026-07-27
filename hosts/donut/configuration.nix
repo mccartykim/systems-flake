@@ -63,8 +63,13 @@
       desktopSession = "plasma"; # Switch to Plasma desktop when leaving Gaming Mode
     };
 
-    # Enable Steam Deck UI (gamescope)
-    decky-loader.enable = true; # Plugin framework for Gaming Mode
+    # decky-loader (plugin framework for Gaming Mode) DISABLED: jovian builds
+    # its React/TS frontend with pnpm_9 (= pnpm-9.15.9), which nixpkgs-unstable
+    # marks insecure (CVE-2026-50014..50017, -50573, -55699, -59194..59196).
+    # Disabling sidesteps the pnpm build dependency entirely. Re-enable once
+    # jovian moves decky-loader to pnpm_10 (or you opt into
+    # permittedInsecurePackages = ["pnpm-9.15.9"]).
+    decky-loader.enable = false;
   };
 
   services.openssh = {
