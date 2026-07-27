@@ -583,10 +583,24 @@
   # Media classifier module (external flake)
   services.media-classifier = {
     enable = true;
+    # Backstop timer (every 6h by default). The rclone-putio-sync ExecStartPost
+    # already triggers media-classifier.service after each sync, but this ensures
+    # classification + Jellyfin rescan run even when no sync fires (put.io idle,
+    # sync stalled, etc.).
+    timer.enable = true;
     sourceDirs = [
       "/mnt/media-drive/putio/chill.institute"
       "/mnt/media-drive/putio/Items shared with you/Parsimony"
     ];
+    # Pin shows the heuristics/AniList/LLM scorer mis-bins as TV. The pin is
+    # checked before scoring, so it survives rescans — the classifier recreates
+    # every symlink at its stored type each run, and the upcoming media-drive →
+    # NFS migration changes source paths → a full reclassify → a manual move
+    # would be reverted. See media-classifier module.nix `categoryOverrides`.
+    categoryOverrides = {
+      "ONE PIECE" = "anime";
+      "Gachiakuta" = "anime";
+    };
     ollamaHost = "http://total-eclipse.nebula:11434";
     ollamaModel = "qwen3:8b";
     user = "kimb";
@@ -626,9 +640,17 @@
       ExecStart = pkgs.writeShellScript "media-jellyfin-index-check" ''
         set -uo pipefail
         DB="/var/lib/jellyfin/data/jellyfin.db"
-        GRACE_MIN=15 # only flag symlinks older than this — let scans run first
+        GRACE_MIN=15 # only flag live symlinks older than this — let scans run first
 
-        # Paths Jellyfin has indexed (read-only; WAL-safe concurrent read)
+        is_video() {
+          local low="''${1,,}"
+          case "$low" in
+            *.mkv|*.mp4|*.avi|*.m4v|*.mov|*.wmv|*.flv|*.webm|*.ts|*.m2ts|*.mpg|*.mpeg|*.vob|*.ogv|*.3gp|*.rm|*.rmvb) return 0 ;;
+            *) return 1 ;;
+          esac
+        }
+
+        # Paths Jellyfin has indexed under /srv/media (read-only; WAL-safe concurrent read)
         tmp="$(mktemp)"
         trap 'rm -f "$tmp"' EXIT
         ${pkgs.sqlite}/bin/sqlite3 "$DB" -readonly \
@@ -636,15 +658,13 @@
           | sort -u > "$tmp"
 
         missing=0
+        # Direction A: live symlinks in /srv/media that Jellyfin has NOT indexed —
+        # symptom of the scan-abort bug blocking NEW items from appearing.
         while IFS= read -r -d "" link; do
-          # Only video files are indexed as Jellyfin BaseItems; subtitles
-          # (.srt/.vtt/.ass), images, and .nfo are streams/metadata, not items.
-          low="''${link,,}"
-          case "$low" in
-            *.mkv|*.mp4|*.avi|*.m4v|*.mov|*.wmv|*.flv|*.webm|*.ts|*.m2ts|*.mpg|*.mpeg|*.vob|*.ogv|*.3gp|*.rm|*.rmvb) ;;
-            *) continue ;;
-          esac
-          # Skip dead symlinks (media-symlink-cleanup handles those)
+          is_video "$link" || continue
+          # Skip dead symlinks here: media-symlink-cleanup prunes them, and
+          # Direction B below catches the case that actually matters (Jellyfin
+          # still referencing a now-gone path).
           target="$(${pkgs.coreutils}/bin/readlink -f -- "$link")"
           [ -r "$target" ] || continue
           if ! ${pkgs.gnugrep}/bin/grep -Fxq -- "$link" "$tmp"; then
@@ -655,8 +675,28 @@
           "/srv/media/TV Shows" "/srv/media/Anime" "/srv/media/Movies" \
           -type l -mmin "+$GRACE_MIN" -print0 2>/dev/null)
 
-        if [ "$missing" -eq 1 ]; then
-          echo "Jellyfin is missing indexed media — likely the scan-abort bug. Runbook: stop jellyfin, DELETE FROM BaseItems WHERE Path LIKE '/srv/media/TV Shows/<show>%'; + orphaned UserData/AncestorIds, restart, trigger scan." >&2
+        stale=0
+        # Direction B: Jellyfin BaseItems whose /srv/media path no longer exists
+        # on disk. This was the dead-symlink blind spot — media-symlink-cleanup
+        # deletes dead symlinks every ~3 min (inside the rclone sync
+        # ExecStartPost), so walking /srv/media can't see source-side deletions:
+        # the symlink is gone before this check runs. But Jellyfin's BaseItems row
+        # persists (the DeleteItem SQLite bug aborts the scan that would prune
+        # it), so a BaseItem whose path is missing on disk is the durable signal
+        # that media the user expects has silently vanished (the
+        # anime-disappearing symptom). Without this direction the check was
+        # blind to exactly the failure mode that prompted it.
+        while IFS= read -r jpath; do
+          [ -n "$jpath" ] || continue
+          is_video "$jpath" || continue
+          if [ ! -e "$jpath" ]; then
+            echo "JELLYFIN STALE ENTRY (file gone on disk): $jpath" >&2
+            stale=1
+          fi
+        done < "$tmp"
+
+        if [ "$missing" -eq 1 ] || [ "$stale" -eq 1 ]; then
+          echo "Jellyfin index drift detected (missing=$missing stale=$stale) — likely the scan-abort (DeleteItem UNIQUE-constraint) bug. Runbook: stop jellyfin; DELETE stale BaseItems rows whose Path is gone on disk + orphaned UserData/AncestorIds; restart; trigger scan." >&2
           exit 1
         fi
         exit 0
