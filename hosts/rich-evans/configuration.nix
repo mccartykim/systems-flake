@@ -227,22 +227,6 @@ in {
       };
     };
 
-    # Mesh networking
-    yggdrasil = {
-      enable = false;
-      persistentKeys = true;
-      openMulticastPort = true;
-      group = "wheel";
-      settings = {
-        Peers = [
-          "tcp://longseason.1200bps.xyz:13121"
-          "tls://longseason.1200bps.xyz:13122"
-          "quic://198.23.229.154:9003"
-        ];
-        LinkLocalTCPPort = 65535;
-      };
-    };
-
     # Print server configuration
     printing = {
       browsing = true;
