@@ -130,6 +130,32 @@
   # CUDA support
   nixpkgs.config.cudaSupport = true;
 
+  # nixpkgs#545286: setupCudaHook sets CUDAToolkit_ROOT to a malformed
+  # concatenation of cuda output paths WITHOUT nvcc, so ollama's embedded
+  # llama.cpp CUDA build fails at configure with "CUDA Toolkit not found"
+  # / "Could not find `nvcc` in CUDAToolkit_ROOT=...". Unset the var so
+  # CMake falls back to CUDA_PATH (which the ollama derivation sets to a
+  # merged toolkit that *does* include nvcc). Verified still broken at
+  # nixpkgs 38a4887 / ollama 0.32.4 (PR #545542 not landed). The
+  # services.ollama module builds pkgs.ollama (which cudaSupport makes
+  # equivalent to ollama-cuda), so override BOTH attrs. Drop this overlay
+  # once nixpkgs PR #545542 (setupCudaHook: include nvcc in
+  # CUDAToolkit_ROOT) lands on nixpkgs-unstable.
+  nixpkgs.overlays = [
+    (final: prev: {
+      ollama = prev.ollama.overrideAttrs (old: {
+        preBuild = ''
+          unset CUDAToolkit_ROOT
+        '' + (old.preBuild or "");
+      });
+      ollama-cuda = prev.ollama-cuda.overrideAttrs (old: {
+        preBuild = ''
+          unset CUDAToolkit_ROOT
+        '' + (old.preBuild or "");
+      });
+    })
+  ];
+
   # Hardware configuration
   hardware = {
     nvidia = {
