@@ -539,6 +539,20 @@
       Group = "media";
       ExecStart = let
         syncScript = pkgs.writeShellScript "rclone-putio-sync" ''
+          # Unidirectional put.io -> local PNY drive (/mnt/media-drive), kept as
+          # the live sync until the rich-evans spinning-drive bootstrap copy
+          # completes (see media-migration-to-rich-evans memory). rclone sync is
+          # incremental, so a non-zero exit is NOT fatal here:
+          #   - --max-duration 1h is a SOFT cap (stop here, resume next tick) but
+          #     rclone reports it as a fatal error, exit 1;
+          #   - transient put.io throttle drops ("unexpected EOF") also exit 1.
+          # Both are recovered by the next 3-min timer tick. Swallow the exit
+          # code with `|| true` so the oneshot ExecStart SUCCEEDS and
+          # ExecStartPost (symlink cleanup + empty-dir prune + media-classifier
+          # + Jellyfin rescan) runs every cycle. Without this, the fatal
+          # max-duration exit skipped ExecStartPost entirely — new downloads
+          # sat unclassified and never appeared in Jellyfin. rclone's own ERROR
+          # lines remain in the journal for diagnosis.
           ${pkgs.rclone}/bin/rclone sync \
             --config /run/agenix/rclone-config \
             putio:chill.institute \
@@ -546,7 +560,7 @@
             --verbose --stats 30s --size-only \
             --no-update-modtime --no-update-dir-modtime \
             --delete-before --fast-list --checkers 16 --transfers 16 \
-            --max-transfer 50G --cutoff-mode CAUTIOUS --max-duration 1h
+            --max-transfer 50G --cutoff-mode CAUTIOUS --max-duration 1h || true
 
           ${pkgs.rclone}/bin/rclone sync \
             --config /run/agenix/rclone-config \
@@ -555,7 +569,7 @@
             --verbose --stats 30s --size-only \
             --no-update-modtime --no-update-dir-modtime \
             --delete-before --fast-list --checkers 16 --transfers 16 \
-            --max-transfer 50G --cutoff-mode CAUTIOUS --max-duration 1h
+            --max-transfer 50G --cutoff-mode CAUTIOUS --max-duration 1h || true
         '';
       in "${syncScript}";
       ExecStartPost = let
