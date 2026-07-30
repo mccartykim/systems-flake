@@ -280,13 +280,6 @@
   # AMD-specific configuration
   nixpkgs.config.rocmSupport = true;
 
-  # Wait for Thunderbolt dock before starting display manager
-  # (CalDigit TS3 Plus needs time to establish DP tunnel over USB4)
-  systemd.services.display-manager = {
-    after = ["bolt.service"];
-    wants = ["bolt.service"];
-  };
-
   # Jellyfin system user has home=/var/empty (read-only), so Mesa/Vulkan
   # shader cache writes fail and the Vulkan subtitle overlay pipeline deadlocks.
   systemd.services.jellyfin.environment.XDG_CACHE_HOME = "/var/cache/jellyfin";
@@ -367,18 +360,6 @@
       Persistent = true;
     };
   };
-
-  # Auto-login for TV use
-  services.displayManager.autoLogin = {
-    enable = true;
-    user = "tv";
-  };
-
-  # Disable screen lock and blanking for TV
-  services.xserver.displayManager.sessionCommands = ''
-    ${pkgs.xset}/bin/xset s off
-    ${pkgs.xset}/bin/xset dpms 0 0 0
-  '';
 
   # TV user for living room - Steam Big Picture, Firefox, Flatpak
   users.users.tv = {
@@ -531,6 +512,14 @@
   # rclone sync from put.io (every 15 minutes)
   systemd.services.rclone-putio-sync = {
     description = "Sync put.io to local media drive";
+    # Timer-driven oneshot (every 3 min): a deploy that changes this unit's
+    # store path would otherwise `systemctl restart` it and block the switch
+    # until ExecStart finishes — up to --max-duration 1h per batch — which
+    # hangs nixos-rebuild/colmena for ages and interrupts the in-flight rclone.
+    # restartIfChanged=false leaves the running instance alone; the unit
+    # definition still updates on disk and the next 3-min tick runs the new
+    # version. Standard NixOS pattern for timer-driven oneshots.
+    restartIfChanged = false;
     after = ["network-online.target"];
     wants = ["network-online.target"];
     serviceConfig = {
