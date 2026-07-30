@@ -115,11 +115,11 @@
     "bridge-crew-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1785042711,
-        "narHash": "sha256-0Q3tW88r8GuyDDww3pzJswfj3onT+6xxiFQ19CB5x9o=",
+        "lastModified": 1785449384,
+        "narHash": "sha256-GcDKiExpd6feSj0rJBdqi291ItxjulIIW5Yt2BoK/Yg=",
         "ref": "refs/heads/main",
-        "rev": "a1b66aaaa722adc5b4c28a16e749d53c8ee01506",
-        "revCount": 72,
+        "rev": "e38cb006ecb9a7c9333d15be5cecff56f2ed802f",
+        "revCount": 74,
         "type": "git",
         "url": "ssh://git@github.com/mccartykim/40k_bridge.git"
       },
@@ -158,11 +158,11 @@
         "organism": "organism"
       },
       "locked": {
-        "lastModified": 1784957801,
-        "narHash": "sha256-Yc2taSsmdnbHEdkzg7zNVe7O4kc207pUVanFwWKXxLg=",
+        "lastModified": 1785449367,
+        "narHash": "sha256-lX5xCDvmnshxyPECV7OYA7XSWOJZF1PxxeQ04RDM+w8=",
         "ref": "refs/heads/main",
-        "rev": "495cf9079ad71d2ea8a022170ccd6d9e43d93704",
-        "revCount": 7,
+        "rev": "e5b714228fd398aab36e871c030c1a4671e25d02",
+        "revCount": 8,
         "type": "git",
         "url": "ssh://git@github.com/mccartykim/chirurgeon_organism.git"
       },
