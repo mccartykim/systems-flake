@@ -53,21 +53,6 @@
   kimb.maitredNameservers.enable = true;
   kimb.zaiApiKey.enable = true;
 
-  # External media drive (exFAT — ownership set at mount time)
-  fileSystems."/mnt/media-drive" = {
-    device = "/dev/disk/by-uuid/4A44-E68C";
-    fsType = "exfat";
-    options = [
-      "nofail" # Don't block boot if drive absent
-      "x-systemd.automount"
-      "x-systemd.idle-timeout=0"
-      "uid=1000" # kimb
-      "gid=${toString config.users.groups.media.gid}"
-      "dmask=0027" # rwxr-x--- dirs
-      "fmask=0137" # rw-r----- files
-    ];
-  };
-
   # Expose music library to Jellyfin (read-only bind mount)
   fileSystems."/var/lib/jellyfin/music" = {
     device = "/home/kimb/Music";
@@ -75,13 +60,17 @@
     options = ["bind" "ro"];
   };
 
-  # NFS mount of rich-evans's seagate (post-migration put.io source). Read-only,
-  # automounted on access, soft+timeo so a rich-evans outage fails operations
-  # instead of hanging Jellyfin. media-classifier reads this as sourceDirs;
-  # Jellyfin reads via /srv/media symlinks that resolve into this tree. vers=4.1
-  # = port 2049 only (no rpcbind/mountd); fsid=0 on the export makes the seagate
-  # the v4 pseudo-root, hence the mount device is "10.100.0.40:/".
-  fileSystems."/mnt/rich-evans-seagate" = {
+  # NFS mount of rich-evans's seagate, mounted at /mnt/media-drive — the SAME
+  # path the retired PNY exFAT drive occupied. All 1774 existing /srv/media
+  # symlinks target /mnt/media-drive/putio/..., so mounting the seagate here
+  # makes them resolve to the NFS tree AUTOMATICALLY: no symlink repoint, and the
+  # media-classifier `processed` state keys (str(filepath)) are unchanged → no
+  # mass ollama reclassify of existing shows (only genuinely-new content —
+  # ChromeCastellaneta, future shares — gets classified). Read-only, automounted
+  # on access, soft+timeo so a rich-evans outage fails operations instead of
+  # hanging Jellyfin. vers=4.1 = port 2049 only (no rpcbind/mountd); fsid=0 on the
+  # export makes the seagate the v4 pseudo-root, hence "10.100.0.40:/".
+  fileSystems."/mnt/media-drive" = {
     device = "10.100.0.40:/";
     fsType = "nfs";
     options = [
@@ -532,97 +521,39 @@
 
   # === Media pipeline systemd services ===
 
-  # rclone sync from put.io (every 15 minutes)
-  systemd.services.rclone-putio-sync = {
-    description = "Sync put.io to local media drive";
-    # Timer-driven oneshot (every 3 min): a deploy that changes this unit's
-    # store path would otherwise `systemctl restart` it and block the switch
-    # until ExecStart finishes — up to --max-duration 1h per batch — which
-    # hangs nixos-rebuild/colmena for ages and interrupts the in-flight rclone.
-    # restartIfChanged=false leaves the running instance alone; the unit
-    # definition still updates on disk and the next 3-min tick runs the new
-    # version. Standard NixOS pattern for timer-driven oneshots.
-    restartIfChanged = false;
-    after = ["network-online.target"];
-    wants = ["network-online.target"];
-    serviceConfig = {
-      Type = "oneshot";
-      User = "kimb";
-      Group = "media";
-      ExecStart = let
-        syncScript = pkgs.writeShellScript "rclone-putio-sync" ''
-          # Unidirectional put.io -> local PNY drive (/mnt/media-drive), kept as
-          # the live sync until the rich-evans spinning-drive bootstrap copy
-          # completes (see media-migration-to-rich-evans memory). rclone sync is
-          # incremental, so a non-zero exit is NOT fatal here:
-          #   - --max-duration 1h is a SOFT cap (stop here, resume next tick) but
-          #     rclone reports it as a fatal error, exit 1;
-          #   - transient put.io throttle drops ("unexpected EOF") also exit 1.
-          # Both are recovered by the next 3-min timer tick. Swallow the exit
-          # code with `|| true` so the oneshot ExecStart SUCCEEDS and
-          # ExecStartPost (symlink cleanup + empty-dir prune + media-classifier
-          # + Jellyfin rescan) runs every cycle. Without this, the fatal
-          # max-duration exit skipped ExecStartPost entirely — new downloads
-          # sat unclassified and never appeared in Jellyfin. rclone's own ERROR
-          # lines remain in the journal for diagnosis.
-          ${pkgs.rclone}/bin/rclone sync \
-            --config /run/agenix/rclone-config \
-            putio:chill.institute \
-            /mnt/media-drive/putio/chill.institute/ \
-            --verbose --stats 30s --size-only \
-            --no-update-modtime --no-update-dir-modtime \
-            --delete-before --fast-list --checkers 16 --transfers 16 \
-            --max-transfer 50G --cutoff-mode CAUTIOUS --max-duration 1h || true
+  # rclone-putio-sync MOVED to rich-evans (whole-account mirror to /mnt/seagate,
+  # see hosts/rich-evans/configuration.nix). Historian no longer syncs put.io — it
+  # reads the seagate via the NFS mount above. Reactivity now comes from the
+  # media-classifier timer below (replacing this unit's ExecStartPost trigger).
+  # At the cutover deploy, stop the transient rclone-criminal-intent.service
+  # (the dedicated PNY pull) too — it's obsolete once the seagate sync is live.
 
-          ${pkgs.rclone}/bin/rclone sync \
-            --config /run/agenix/rclone-config \
-            "putio:Items shared with you/Parsimony" \
-            "/mnt/media-drive/putio/Items shared with you/Parsimony/" \
-            --verbose --stats 30s --size-only \
-            --no-update-modtime --no-update-dir-modtime \
-            --delete-before --fast-list --checkers 16 --transfers 16 \
-            --max-transfer 50G --cutoff-mode CAUTIOUS --max-duration 1h || true
-        '';
-      in "${syncScript}";
-      ExecStartPost = let
-        postSync = pkgs.writeShellScript "post-sync" ''
-          # Clean up broken symlinks then classify new media
-          ${pkgs.systemd}/bin/systemctl start media-symlink-cleanup.service
-          # Prune empty show/season dirs so Jellyfin drops the library entries.
-          # mindepth 2 protects the Anime/Movies/TV Shows roots.
-          ${pkgs.findutils}/bin/find /srv/media -mindepth 2 -type d -empty -delete || true
-          ${pkgs.systemd}/bin/systemctl start media-classifier.service
-        '';
-      in "+${postSync}";
-    };
-  };
-
-  systemd.timers.rclone-putio-sync = {
-    wantedBy = ["timers.target"];
-    timerConfig = {
-      OnCalendar = "*:0/3"; # Every 3 minutes
-      RandomizedDelaySec = "30s";
-      Persistent = true;
-    };
-  };
-
-  # Media classifier module (external flake)
+  # Media classifier module (external flake). Scans the NFS-mounted seagate at
+  # /mnt/media-drive/putio — the same path the old PNY occupied, so existing
+  # /srv/media symlinks resolve to the seagate unchanged and the classifier's
+  # `processed` state keys (str(filepath)) don't change → no mass ollama
+  # reclassify of existing shows; only genuinely-new content (ChromeCastellaneta,
+  # future shares) gets classified. Whole-tree sourceDir (was a 2-dir allow-list
+  # that mirrored the PNY's capacity-driven cherry-pick).
   services.media-classifier = {
     enable = true;
-    # Backstop timer (every 6h by default). The rclone-putio-sync ExecStartPost
-    # already triggers media-classifier.service after each sync, but this ensures
-    # classification + Jellyfin rescan run even when no sync fires (put.io idle,
-    # sync stalled, etc.).
+    # Now the PRIMARY trigger (was a 6h backstop while rclone-putio-sync's
+    # ExecStartPost drove classification). The sync moved to rich-evans, so the
+    # classifier polls the NFS tree itself. 1-min cadence: most polls hit the NFS
+    # dir cache and don't round-trip to rich-evans. New content lands on the
+    # seagate every 3 min (rich-evans sync), so 1-min polling catches it within a
+    # minute. The Jellyfin Refresh in ExecStartPost is throttled to 3 min (below)
+    # so this faster cadence doesn't 3x the library-scan rate.
     timer.enable = true;
+    timer.onCalendar = "*:0/1"; # was 6h
     sourceDirs = [
-      "/mnt/media-drive/putio/chill.institute"
-      "/mnt/media-drive/putio/Items shared with you/Parsimony"
+      "/mnt/media-drive/putio"
     ];
-    # Pin shows the heuristics/AniList/LLM scorer mis-bins as TV. The pin is
-    # checked before scoring, so it survives rescans — the classifier recreates
-    # every symlink at its stored type each run, and the upcoming media-drive →
-    # NFS migration changes source paths → a full reclassify → a manual move
-    # would be reverted. See media-classifier module.nix `categoryOverrides`.
+    # Pin shows the heuristics/AniList/LLM scorer mis-bins as TV. Checked before
+    # scoring, so it survives rescans. (The old comment about a source-path change
+    # forcing a full reclassify + reverting manual moves was wrong: create_symlink
+    # is additive-only and the classifier keys state on the full filepath — and
+    # the mount-swap keeps that filepath stable anyway.)
     categoryOverrides = {
       "ONE PIECE" = "anime";
       "Gachiakuta" = "anime";
@@ -633,18 +564,40 @@
     group = "media";
   };
 
-  # Override ExecStartPost to read Jellyfin API key from agenix secret
-  # (the module's jellyfinApiKey option embeds the key in the Nix store,
-  # so we leave it empty and supply our own file-based implementation)
+  # The module hardcodes RandomizedDelaySec="30m" in the classifier timer
+  # (module.nix line 160) — at 1-min cadence that's up to 30m skew, defeating the
+  # point. Override to 5s. Also speed up the broken-symlink cleanup timer from the
+  # module's "daily" default to 3 min, so dead symlinks (source-side deletes) don't
+  # linger in Jellyfin's library between daily runs.
+  systemd.timers.media-classifier.timerConfig.RandomizedDelaySec = lib.mkForce "5s";
+  systemd.timers.media-symlink-cleanup.timerConfig.OnCalendar = lib.mkForce "*:0/3";
+
+  # Override ExecStartPost: prune empty show/season dirs (was the rclone-putio-sync
+  # ExecStartPost's job; the sync moved to rich-evans) + trigger a Jellyfin library
+  # refresh. The refresh is THROTTLED to every 3 min via a stamp file — the
+  # classifier ticks every 1 min, but a full Library/Refresh each tick would 3x the
+  # old 3-min scan cadence and prod the DeleteItem scan-abort bug (see the
+  # media-jellyfin-index-check service below). The module's jellyfinApiKey option
+  # embeds the key in the Nix store, so we leave it empty and read it from the
+  # agenix secret here instead. Runs as kimb:media (no `+`): kimb owns /srv/media
+  # and the StateDirectory, and is in `media` so it can read the 0440 API-key secret.
   systemd.services.media-classifier.serviceConfig.ExecStartPost =
     let
       jellyfinApiKeyFile = config.age.secrets.jellyfin-api-key.path;
     in
     pkgs.writeShellScript "trigger-jellyfin-scan" ''
-      API_KEY="$(cat ${jellyfinApiKeyFile})"
-      ${pkgs.curl}/bin/curl -sf -X POST \
-        "http://localhost:8096/Library/Refresh?api_key=$API_KEY" \
-        || echo "Warning: Jellyfin scan trigger failed (non-fatal)"
+      # mindepth 2 protects the Anime/Movies/TV Shows roots.
+      ${pkgs.findutils}/bin/find /srv/media -mindepth 2 -type d -empty -delete || true
+      STAMP=/var/lib/media-classifier/jellyfin-scan.stamp
+      NOW=$(${pkgs.coreutils}/bin/date +%s)
+      LAST=$(cat "$STAMP" 2>/dev/null || echo 0)
+      if [ $((NOW - LAST)) -ge 180 ]; then
+        API_KEY="$(cat ${jellyfinApiKeyFile})"
+        ${pkgs.curl}/bin/curl -sf -X POST \
+          "http://localhost:8096/Library/Refresh?api_key=$API_KEY" \
+          || echo "Warning: Jellyfin scan trigger failed (non-fatal)"
+        echo "$NOW" > "$STAMP"
+      fi
     '';
 
   # === Jellyfin index drift detector ===
