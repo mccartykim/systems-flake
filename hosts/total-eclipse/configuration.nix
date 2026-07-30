@@ -127,32 +127,60 @@
     Option "ConnectedMonitor" "DFP-0"
   '';
 
-  # CUDA support
+  # CUDA support — kept GLOBAL on purpose. nixpkgs.config.cudaSupport = true is
+  # load-bearing for the cache match of the GPU packages (ollama, torchWithCuda):
+  # hydra builds the cuda-cache artifacts on cache.nixos-cuda.org in a
+  # cudaSupport=true context, so a cuda package forced from a cudaSupport=false
+  # global context resolves to different transitive drv hashes (e.g.
+  # cuda12.9-libnvshmem) than hydra cached -> it falls off the cuda cache and
+  # compiles from source. We tried opt-in (global false + explicit
+  # ollama-cuda/torchWithCuda) on 2026-07-29 and it regressed python3.14-torch
+  # (torchWithCuda) + libnvshmem from FETCHED to BUILT-from-source — a net loss,
+  # since torch-cuda is a far bigger compile than the onnxruntime build the
+  # opt-in was meant to avoid. So: global true stays, and the packages that
+  # DON'T need GPU (onnxruntime/openvino/opencv, pulled by paperless) are de-cuda'd
+  # with the targeted chained override below instead.
   nixpkgs.config.cudaSupport = true;
 
-  # nixpkgs#545286: setupCudaHook sets CUDAToolkit_ROOT to a malformed
-  # concatenation of cuda output paths WITHOUT nvcc, so ollama's embedded
-  # llama.cpp CUDA build fails at configure with "CUDA Toolkit not found"
-  # / "Could not find `nvcc` in CUDAToolkit_ROOT=...". Unset the var so
-  # CMake falls back to CUDA_PATH (which the ollama derivation sets to a
-  # merged toolkit that *does* include nvcc). Verified still broken at
-  # nixpkgs 38a4887 / ollama 0.32.4 (PR #545542 not landed). The
-  # services.ollama module builds pkgs.ollama (which cudaSupport makes
-  # equivalent to ollama-cuda), so override BOTH attrs. Drop this overlay
-  # once nixpkgs PR #545542 (setupCudaHook: include nvcc in
-  # CUDAToolkit_ROOT) lands on nixpkgs-unstable.
+  # onnxruntime is pulled transitively by paperless (document classification
+  # via small ONNX models — CPU inference is plenty, no CUDA needed). With the
+  # global cudaSupport=true above it would otherwise build the CUDA variant,
+  # which is NOT on cache.nixos-cuda.org (HTTP 404 as of 2026-07-29) and so
+  # compiles from source — a long C++ build. Forcing non-CUDA makes it
+  # substitute from cache.nixos.org instead (HTTP 200).
+  #
+  # The override is a CHAIN because cudaSupport is transitive here:
+  # openvino's `cudaSupport ? opencv.cudaSupport or false`
+  # (openvino/package.nix:5), so under global cudaSupport=true, openvino is
+  # CUDA because opencv is CUDA, and onnxruntime depends on openvino. Overriding
+  # only onnxruntime's cudaSupport yields a non-cuda onnxruntime linked against
+  # CUDA openvino — a hybrid on no cache, still built from source. To reproduce
+  # the cached non-cuda onnxruntime, de-cuda the whole sub-chain: onnxruntime +
+  # its openvino input + that openvino's opencv input. Each is the cached
+  # non-cuda variant on cache.nixos.org (verified 2026-07-29 to produce
+  # zhdpsvvk-onnxruntime-1.27.1). The top-level opencv4/openvino stay CUDA
+  # (cached on cache.nixos-cuda.org) for other consumers; only onnxruntime's
+  # private sub-chain is non-cuda. NB: onnxruntime's arg is `cudaSupport`
+  # (package.nix:26), opencv4's is `enableCuda` (4.x.nix:45) — they differ. The
+  # python onnxruntime package wraps the lib's wheel (`src = onnxruntime.dist`),
+  # so overriding the lib propagates to python313Packages.onnxruntime paperless
+  # uses. arg `python3Packages` (not `python3`) selects the python version.
+  #
+  # MAINTENANCE: this is an optimization (build -> download), not correctness —
+  # worst case on a nixpkgs bump is onnxruntime silently rebuilding from source
+  # (if a new cuda-resolved dep joins the chain) or a loud eval error (if an arg
+  # is renamed). Catch regressions with: nix build --dry-run .#nixosConfigurations\
+  # .total-eclipse.config.system.build.toplevel 2>&1 | grep onnxruntime
   nixpkgs.overlays = [
     (final: prev: {
-      ollama = prev.ollama.overrideAttrs (old: {
-        preBuild = ''
-          unset CUDAToolkit_ROOT
-        '' + (old.preBuild or "");
-      });
-      ollama-cuda = prev.ollama-cuda.overrideAttrs (old: {
-        preBuild = ''
-          unset CUDAToolkit_ROOT
-        '' + (old.preBuild or "");
-      });
+      onnxruntime = prev.onnxruntime.override {
+        cudaSupport = false;
+        openvino = prev.openvino.override {
+          cudaSupport = false;
+          opencv = prev.opencv4.override { enableCuda = false; };
+        };
+        python3Packages = final.python313.pkgs;
+      };
     })
   ];
 
