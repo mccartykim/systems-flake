@@ -173,6 +173,14 @@ in {
         proto = "tcp";
         host = "maitred";
       }
+      # NFSv4 over Nebula — historian reads the seagate media library (read-only).
+      # NFSv4 = port 2049 only (no mountd/lockd/statd); the host firewall already
+      # trusts nebula1, so this Nebula rule is the sole gate.
+      {
+        port = 2049;
+        proto = "tcp";
+        host = "historian";
+      }
     ];
   };
 
@@ -198,6 +206,21 @@ in {
     device = "/dev/disk/by-uuid/980870c5-7397-45dd-9f01-972f9b51d0f6";
     fsType = "ext4";
     options = ["defaults" "nofail" "commit=60"];
+  };
+
+  # NFS export of the seagate to historian (10.100.0.10) over Nebula, so Jellyfin
+  # (on historian) can read the put.io library. Read-only — rich-evans is the
+  # single writer (rclone writes /mnt/seagate locally); historian only reads via
+  # this mount. NFSv4.1 (TCP-only, one port — fits Nebula): fsid=0 makes this
+  # export the v4 pseudo-root, so the client mounts 10.100.0.40:/ and sees the
+  # seagate's contents (e.g. /mnt/rich-evans-seagate/putio == /mnt/seagate/putio).
+  # The host firewall trusts nebula1 (trustedInterfaces), so only the Nebula
+  # rule above gates it — no networking.firewall entry needed.
+  services.nfs.server = {
+    enable = true;
+    exports = ''
+      /mnt/seagate 10.100.0.10(ro,no_subtree_check,sync,fsid=0)
+    '';
   };
 
   # Media-migration bootstrap: decrypt the shared put.io rclone config here so

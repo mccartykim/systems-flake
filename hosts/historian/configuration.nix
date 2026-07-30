@@ -75,6 +75,29 @@
     options = ["bind" "ro"];
   };
 
+  # NFS mount of rich-evans's seagate (post-migration put.io source). Read-only,
+  # automounted on access, soft+timeo so a rich-evans outage fails operations
+  # instead of hanging Jellyfin. media-classifier reads this as sourceDirs;
+  # Jellyfin reads via /srv/media symlinks that resolve into this tree. vers=4.1
+  # = port 2049 only (no rpcbind/mountd); fsid=0 on the export makes the seagate
+  # the v4 pseudo-root, hence the mount device is "10.100.0.40:/".
+  fileSystems."/mnt/rich-evans-seagate" = {
+    device = "10.100.0.40:/";
+    fsType = "nfs";
+    options = [
+      "ro"
+      "noatime"
+      "vers=4.1"
+      "proto=tcp"
+      "x-systemd.automount"
+      "x-systemd.idle-timeout=5min"
+      "x-systemd.mount-timeout=30"
+      "soft"
+      "timeo=30"
+      "retrans=2"
+    ];
+  };
+
   kimb = {
     # Restic backups
     restic.enable = true;
