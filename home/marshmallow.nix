@@ -34,7 +34,6 @@
     packages = with pkgs; [
       nerd-fonts.symbols-only
       noto-fonts-monochrome-emoji
-      poetry
       zettlr
       claude-code
       # Erlang/Elixir/Gleam development
