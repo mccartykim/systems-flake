@@ -87,6 +87,24 @@
     ];
   };
 
+  # PNY PRO ELITE V2 (1TB USB 3.2 flash) — games / Steam library volume. This
+  # drive was /mnt/media-drive's exFAT put.io copy pre-migration; put.io is now
+  # mirrored on the rich-evans seagate (the live NFS source), so the PNY copy
+  # was redundant and got reformatted. ext4 over exFAT: Proton needs POSIX perms
+  # + symlinks + case-sensitivity, none of which exFAT provides — Proton breaks
+  # on exFAT. ext4 is the robust pick for a *removable* USB drive (journals
+  # through an unclean unmount, the main risk for a yanked cable; btrfs is
+  # intolerant of unclean shutdown and CoW-fragments big game files, f2fs is
+  # flash-optimized but the PNY's own FTL already wear-levels + it's less
+  # mainstream/recoverable). nofail so an unplugged drive doesn't break boot;
+  # noatime to spare flash write endurance on reads. Steam library wiring is a
+  # separate, deferred step — for now this just mounts the volume.
+  fileSystems."/mnt/games" = {
+    device = "/dev/disk/by-uuid/ad6c50d2-1c09-4b16-8dcb-4e7690ee61e8";
+    fsType = "ext4";
+    options = ["nofail" "noatime"];
+  };
+
   kimb = {
     # Restic backups
     restic.enable = true;
