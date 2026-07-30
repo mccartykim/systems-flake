@@ -54,6 +54,16 @@ in {
     haUrl = "http://127.0.0.1:8123";
     haTokenFile = config.age.secrets.ha-chirurgeon-token.path;
 
+    # Matrix — the durable bridge-room delivery rung (matrix-page / lib/matrix.py
+    # in the chirurgeon package). REUSES the @vox-bridge token (the vacuum pattern
+    # again: the same matrix-vox-bridge-token.age decrypted for chirurgeon-organism
+    # as matrix-chirurgeon-token, owner chirurgeon-organism 0400 — see the stanza
+    # in vox-organism.nix). The room (#chirurgeon:kimb.dev) + homeserver URL default
+    # to loopback tuwunel in the module. This is the linchpin of the 2026-07-30
+    # outage fix: gives the heartbeat a Matrix egress so med nudges reach the one
+    # durable channel instead of dying with the HA/Cast/phone stack.
+    matrixTokenFile = config.age.secrets.matrix-chirurgeon-token.path;
+
     # org-agent regimen view — build-view cold-starts a fresh `emacs --batch`
     # per call (NO daemon, NO socket), sidestepping emacs's 0700-socket-dir
     # rule that locked non-owners out of the old emacsclient path (#82/#83).

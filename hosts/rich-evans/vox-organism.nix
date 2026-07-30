@@ -140,6 +140,22 @@ in {
     mode = "0400";
   };
 
+  # Vacuum pattern (the fleet's proven token-reuse shape, mirroring
+  # ha-chirurgeon-token in life-coach.nix): the SAME .age file decrypted a
+  # SECOND time to a new runtime path owned by chirurgeon-organism (0400), so
+  # the Chirurgeon's matrix-page tool can read the @vox-bridge token WITHOUT
+  # re-encrypting the secret or loosening the daemon's own 0400 copy. No
+  # secrets.nix change (the .age is already encrypted to hostKeys.rich-evans +
+  # bootstrap); no Matrix registration flip (the @vox-bridge account already
+  # exists). This is the linchpin of the 2026-07-30 outage fix: gives the
+  # Chirurgeon heartbeat a Matrix egress so med nudges reach the one durable
+  # channel instead of dying with the HA/Cast/phone stack.
+  age.secrets.matrix-chirurgeon-token = {
+    file = ../../secrets/matrix-vox-bridge-token.age;
+    owner = "chirurgeon-organism";
+    mode = "0400";
+  };
+
   # Fleet-internal ssh key (rich-evans -> historian) the vox-organism daemon
   # uses to reach the bridge-scribe forced-command servitor and materialize an
   # officer's `author` request. Owner is vox-organism (the daemon reads it);
