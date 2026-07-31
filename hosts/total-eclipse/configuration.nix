@@ -226,6 +226,8 @@
       toolbox
       tealdeer
       orca-slicer
+      # Manual cross-file content dedup for the btrfs bulk volume
+      duperemove
     ];
   };
 
@@ -245,6 +247,56 @@
       size = 32 * 1024; # 32GB
     }
   ];
+
+  # 4TB Seagate SATA — was NTFS "gamejail" (old Windows/AI/game backups + the
+  # roommate's CactrotRapido .vdi/clonezilla images). Personal data (user's +
+  # roommate's) was carved out to the rich-evans seagate first, then the drive
+  # was reformatted 2026-07-30. btrfs + zstd transparent compression is the
+  # "deduping compressed fs": btrfs CoW + zstd dedups zero/identical extents
+  # inline; duperemove (in systemPackages, below) handles cross-file content
+  # dedup on demand. Internal spinning disk — nofail so a failed/disconnected
+  # drive doesn't hang boot; noatime spares seek traffic. Hourly snapshots via
+  # services.btrbk. NB: mount name changed from "gamejail" since this is no
+  # longer a games volume.
+  fileSystems."/mnt/bulk" = {
+    device = "/dev/disk/by-uuid/5ee39351-9fe4-4c91-ab7c-44323938f90b";
+    fsType = "btrfs";
+    options = ["nofail" "noatime" "compress=zstd"];
+  };
+
+  # Hourly btrfs snapshots of the bulk volume, with a rolling ~48h retention.
+  # Custom timer instead of services.btrbk: the btrbk NixOS module adds a sudo
+  # rule for a `btrbk` user, which trips security.sudo.execWheelOnly (set by the
+  # desktop profile). Running the snapshot as root needs no sudo and no extra
+  # user. Snapshots the top-level subvolume (id 5); btrfs does not recurse into
+  # nested subvolumes when snapshotting, so prior snapshots in .snapshots show
+  # up as empty dirs in each new snapshot (no duplication, no recursion).
+  # Snapshots are CoW so they cost nothing until files diverge.
+  systemd.services.btrfs-snapshot-bulk = {
+    description = "btrfs readonly snapshot of /mnt/bulk";
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = pkgs.writeShellScript "btrfs-snapshot-bulk" ''
+        set -euo pipefail
+        ${pkgs.util-linux}/bin/mountpoint -q /mnt/bulk || exit 0
+        ${pkgs.coreutils}/bin/mkdir -p /mnt/bulk/.snapshots
+        snap=/mnt/bulk/.snapshots/snap-$(${pkgs.coreutils}/bin/date +%Y%m%d-%H%M%S)
+        ${pkgs.btrfs-progs}/bin/btrfs subvolume snapshot -r /mnt/bulk "$snap"
+        # prune readonly snapshots older than 48h (2880 min)
+        ${pkgs.findutils}/bin/find /mnt/bulk/.snapshots -maxdepth 1 -name 'snap-*' -mmin +2880 \
+          -exec ${pkgs.btrfs-progs}/bin/btrfs subvolume delete -C {} +
+      '';
+    };
+  };
+
+  systemd.timers.btrfs-snapshot-bulk = {
+    description = "hourly btrfs snapshot of /mnt/bulk";
+    wantedBy = ["timers.target"];
+    timerConfig = {
+      OnCalendar = "hourly";
+      Persistent = true;
+    };
+  };
 
   # Services configuration
   services = {
