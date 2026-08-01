@@ -146,6 +146,12 @@ in {
     # we keep true to preserve the emacs daemon). So we also need the
     # activation script below to stop it imperatively during switch.
     { org-life-coach.wantedBy = lib.mkForce []; }
+    # Phase-4 assign-only heartbeat (#162): lights overdue bound buttons
+    # amber, then stops — no speak/vision/judgment. The Chirurgeon is the
+    # sole nudger; this keeps the deterministic LED-assignment path (the
+    # only thing that creates PENDING buttons) alive. See the gate in
+    # lifecoach-mechanical handle_heartbeat + the phase-4 block below.
+    { lifecoach-heartbeat.environment.LIFECOACH_ASSIGN_ONLY = "1"; }
   ];
 
   # ------------------------------------------------------------------
@@ -179,28 +185,27 @@ in {
   };
 
   # ------------------------------------------------------------------
-  # Phase-4 cutover (#62): the Chirurgeon now owns the regimen + day's
-  # ledger judgment (seed un-gated in chirurgeon_organism). Turn OFF
-  # lifecoach's PROACTIVE cadence so the two do not double-nudge. The
-  # lifecoach-organism module stays enabled for the reactive sidecars
-  # (button-monitor / dashboard / discord-bot / watchdog), so the timer
-  # UNIT FILES still exist — wantedBy=mkForce[] only stops them starting
-  # at boot. An activation script stops the currently-running instances
-  # now, same pattern as stop-old-org-life-coach above. Reversible:
-  # revert this block and `systemctl start lifecoach-heartbeat.timer
-  # lifecoach-scheduler.timer` — the seed is untouched, so full proactive
-  # lifecoach returns instantly as the fallback.
+  # Phase-4 cutover (#62): the Chirurgeon owns the regimen + day's ledger
+  # judgment (seed un-gated in chirurgeon_organism) and is the SOLE nudger.
+  # The lifecoach-heartbeat timer stays ON but runs assign-only
+  # (LIFECOACH_ASSIGN_ONLY above + the gate in lifecoach-mechanical): it
+  # lights overdue bound buttons amber and stops — no speak/vision/judgment
+  # — so the deterministic LED-assignment path (the only thing that creates
+  # PENDING buttons for the button-monitor to ack) stays alive without any
+  # double-nudging. The SCHEDULER timer stays OFF (its proactive next_wake
+  # nudging is the duty the Chirurgeon absorbed). The lifecoach-organism
+  # module stays enabled for the reactive sidecars (button-monitor /
+  # dashboard / discord-bot / watchdog). Reversible: unset
+  # LIFECOACH_ASSIGN_ONLY + revert this block — full proactive lifecoach
+  # returns instantly as the fallback (seed untouched).
   # ------------------------------------------------------------------
-  systemd.timers.lifecoach-heartbeat.wantedBy = lib.mkForce [];
   systemd.timers.lifecoach-scheduler.wantedBy = lib.mkForce [];
   system.activationScripts.stop-lifecoach-proactive = {
     text = ''
-      for t in lifecoach-heartbeat.timer lifecoach-scheduler.timer; do
-        if /run/current-system/sw/bin/systemctl is-active --quiet "$t" 2>/dev/null; then
-          echo "stopping proactive $t (phase-4 cutover to the Chirurgeon)"
-          /run/current-system/sw/bin/systemctl stop "$t" || true
-        fi
-      done
+      if /run/current-system/sw/bin/systemctl is-active --quiet lifecoach-scheduler.timer 2>/dev/null; then
+        echo "stopping proactive lifecoach-scheduler.timer (phase-4 cutover to the Chirurgeon)"
+        /run/current-system/sw/bin/systemctl stop lifecoach-scheduler.timer || true
+      fi
     '';
     deps = [];
   };
