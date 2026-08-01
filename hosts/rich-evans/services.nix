@@ -88,103 +88,16 @@ in {
         ];
       };
       api = {};
-      # Shell commands for life-coach agent button press interrupts
-      # One per button since shell_command doesn't support templating
-      shell_command = {
-        signal_desk_button = "/etc/life-coach-agent/signal_button_press.sh desk_button";
-        signal_desk_task_1 = "/etc/life-coach-agent/signal_button_press.sh desk_task_1";
-        signal_desk_task_2 = "/etc/life-coach-agent/signal_button_press.sh desk_task_2";
-        signal_desk_task_3 = "/etc/life-coach-agent/signal_button_press.sh desk_task_3";
-        signal_bathroom = "/etc/life-coach-agent/signal_button_press.sh bathroom";
-        signal_litterbox = "/etc/life-coach-agent/signal_button_press.sh litterbox";
-        signal_shower_button = "/etc/life-coach-agent/signal_button_press.sh shower_button";
-        signal_bass_guitar = "/etc/life-coach-agent/signal_button_press.sh bass_guitar";
-        signal_garage_button = "/etc/life-coach-agent/signal_button_press.sh garage_button";
-        signal_kitchen_front_door = "/etc/life-coach-agent/signal_button_press.sh kitchen_front_door";
-        signal_user_input = "/etc/life-coach-agent/signal_user_input.sh";
-        # Location change signals for geofencing automation
-        signal_location_home = "/etc/life-coach-agent/signal_location_change.sh home";
-        signal_location_office = "/etc/life-coach-agent/signal_location_change.sh at_office";
-        signal_location_away = "/etc/life-coach-agent/signal_location_change.sh away";
-      };
-      # Nix-managed automations
-      "automation manual" = [
-        {
-          alias = "Life Coach - Location Tracking";
-          trigger = [
-            {
-              platform = "state";
-              entity_id = "sensor.pixel_9_pro_geocoded_location";
-            }
-          ];
-          action = [
-            {
-              choose = [
-                {
-                  conditions = [
-                    {
-                      condition = "template";
-                      value_template = ''
-                        {% set lat = state_attr('sensor.pixel_9_pro_geocoded_location', 'location')[0] %}
-                        {% set lon = state_attr('sensor.pixel_9_pro_geocoded_location', 'location')[1] %}
-                        {{ distance(lat, lon, states.zone.home) < 0.1 }}
-                      '';
-                    }
-                  ];
-                  sequence = [{service = "shell_command.signal_location_home";}];
-                }
-                {
-                  conditions = [
-                    {
-                      condition = "template";
-                      value_template = ''
-                        {% set lat = state_attr('sensor.pixel_9_pro_geocoded_location', 'location')[0] %}
-                        {% set lon = state_attr('sensor.pixel_9_pro_geocoded_location', 'location')[1] %}
-                        {{ distance(lat, lon, states.zone.work) < 0.1 }}
-                      '';
-                    }
-                  ];
-                  sequence = [{service = "shell_command.signal_location_office";}];
-                }
-              ];
-              default = [{service = "shell_command.signal_location_away";}];
-            }
-          ];
-        }
-        {
-          alias = "Life Coach - Submit User Input";
-          trigger = [
-            {
-              platform = "state";
-              entity_id = "input_button.life_coach_submit";
-            }
-          ];
-          action = [
-            {service = "shell_command.signal_user_input";}
-          ];
-        }
-      ];
       # UI-defined automations (existing)
       "automation ui" = "!include automations.yaml";
       script = "!include scripts.yaml";
       scene = "!include scenes.yaml";
-      # Text input for life-coach agent user prompts
-      input_text = {
-        life_coach_input = {
-          name = "Life Coach Input";
-          max = 255;
-          mode = "text";
-          icon = "mdi:message-text";
-        };
-        # An input_text.vacuum_location_hint can be added here if a
-        # free-text room hint should accompany find-me button presses.
-      };
-      # Submit button for life-coach input (pressing Enter or this button submits)
+      # Submit buttons for the vacuum organism (find-me / belay). The old
+      # life-coach shell_command/automation/input_text/input_button blocks
+      # (signal_*.sh -> dead org-life-coach SQLite interrupt_events table)
+      # were removed: the org-life-coach daemon is stopped and the
+      # button-monitor sidecar polls HA REST directly.
       input_button = {
-        life_coach_submit = {
-          name = "Send to Life Coach";
-          icon = "mdi:send";
-        };
         vacuum_find_me = {
           name = "Vacuum: Come Find Me";
           icon = "mdi:map-marker-account";
@@ -219,12 +132,6 @@ in {
       }
     ];
   };
-
-  # Allow HA to write to life-coach-agent state directory for button interrupts
-  # (HA uses ProtectSystem=strict by default, limiting writes to /var/lib/hass)
-  systemd.services.home-assistant.serviceConfig.ReadWritePaths = [
-    "/var/lib/life-coach-agent"
-  ];
 
   # Homepage dashboard (host service) - local only
   services.homepage-dashboard = lib.mkIf cfg.services.homepage.enable {
