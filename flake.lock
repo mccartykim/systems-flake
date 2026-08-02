@@ -193,6 +193,24 @@
         "url": "ssh://git@github.com/mccartykim/choirmaster_organism.git"
       }
     },
+    "claude-wrapper": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1785711504,
+        "narHash": "sha256-7q5dNiNJFoq/X8QwzR+UhOKxNFPTYgYMuHHcMeiG+xY=",
+        "path": "/home/kimb/projects/claude-wrapper",
+        "type": "path"
+      },
+      "original": {
+        "owner": "mccartykim",
+        "repo": "claude-wrapper",
+        "type": "github"
+      }
+    },
     "cloudflare-ddns": {
       "locked": {
         "lastModified": 1783173272,
@@ -2995,6 +3013,7 @@
         "buildbot-nix": "buildbot-nix",
         "chirurgeon-organism": "chirurgeon-organism",
         "choirmaster-organism": "choirmaster-organism",
+        "claude-wrapper": "claude-wrapper",
         "cloudflare-ddns": "cloudflare-ddns",
         "confessor-organism": "confessor-organism",
         "copyparty": "copyparty",

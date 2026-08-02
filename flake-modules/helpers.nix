@@ -4,7 +4,7 @@
   self,
   ...
 }: let
-  inherit (inputs) nixpkgs home-manager srvos nix-index-database firefox-nightly nix-topology lix-module;
+  inherit (inputs) nixpkgs home-manager srvos nix-index-database firefox-nightly nix-topology lix-module claude-wrapper;
 
   # Overlay to fix Python packages with build/test issues
   pythonFixesOverlay = final: prev: {
@@ -61,8 +61,9 @@ in {
       # kimb.* option declarations + per-host service auto-injection
       (self + "/modules/kimb-services.nix")
       (self + "/services/default.nix")
-      # Fix Python packages with strict version bounds + Firefox Nightly
-      {nixpkgs.overlays = [pythonFixesOverlay firefoxNightlyOverlay];}
+      # Fix Python packages with strict version bounds + Firefox Nightly +
+      # the generic claude-code wrapper generator (pkgs.mkClaudeWrapper).
+      {nixpkgs.overlays = [pythonFixesOverlay firefoxNightlyOverlay claude-wrapper.overlays.default];}
       # Infrastructure/network diagram generation
       nix-topology.nixosModules.default
       # Static nebula host entries so hostname.nebula resolves without maitred DNS

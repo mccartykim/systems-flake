@@ -64,6 +64,11 @@
     system-manager.url = "github:numtide/system-manager";
     system-manager.inputs.nixpkgs.follows = "nixpkgs";
 
+    # Generic claude-code wrapper generator (mkClaudeWrapper). Exposes
+    # overlays.default so pkgs.mkClaudeWrapper reaches home/modules/ai-tools.nix.
+    claude-wrapper.url = "github:mccartykim/claude-wrapper";
+    claude-wrapper.inputs.nixpkgs.follows = "nixpkgs";
+
     # All private mccartykim/* inputs use git+https:// so the buildbot
     # worker's PAT (in /var/lib/buildbot-worker/.netrc) can authenticate
     # the fetch. ssh:// would need an SSH key on the worker, which we

@@ -11,6 +11,29 @@ with lib; let
     baseUrl = cfg.ollamaPiBaseUrl;
     models = cfg.ollamaPiModels;
   };
+  # claude-code -> local ollama (anthropic-native), via the generic
+  # mkClaudeWrapper generator (claude-wrapper overlay). The opus variant uses
+  # the text-only glm-5.2 and the proxy reroutes its image requests to kimi; the
+  # k3 variant uses the multimodal kimi-k3 as opus so the reroute is a no-op
+  # (it is also billing-blocked until extra-usage balance is added at
+  # ollama.com/settings).
+  claude-ollama = pkgs.mkClaudeWrapper.override {
+    name = "claude-ollama";
+    endpoint = cfg.claudeOllamaEndpoint;
+    opusModel = "glm-5.2:cloud";
+    sonnetModel = "kimi-k2.7-code:cloud";
+    haikuModel = "qwen3.5:397b-cloud";
+    opusImageModel = "kimi-k2.7-code:cloud"; # glm-5.2 can't see images -> kimi
+    dummyAuth = "ollama";
+  };
+  claude-ollama-k3 = pkgs.mkClaudeWrapper.override {
+    name = "claude-ollama-k3";
+    endpoint = cfg.claudeOllamaEndpoint;
+    opusModel = "kimi-k3:cloud"; # multimodal -> imageModels all default to themselves
+    sonnetModel = "kimi-k2.7-code:cloud";
+    haikuModel = "qwen3.5:397b-cloud";
+    dummyAuth = "ollama";
+  };
 in {
   options.modules.ai-tools = {
     enable = mkEnableOption "AI development tools";
@@ -39,6 +62,16 @@ in {
         launch default. Only models the endpoint actually serves will work.
       '';
     };
+
+    claudeOllama = mkEnableOption "claude-ollama wrapper (claude-code via local anthropic-native Ollama, opus=glm-5.2, images rerouted to kimi)";
+
+    claudeOllamaK3 = mkEnableOption "claude-ollama-k3 wrapper (claude-code via Ollama, opus=kimi-k3 multimodal; needs extra-usage balance)";
+
+    claudeOllamaEndpoint = mkOption {
+      type = types.str;
+      default = "http://localhost:11434";
+      description = "Anthropic-native Ollama base URL (no /v1) the claude-ollama wrappers target.";
+    };
   };
 
   config = mkIf cfg.enable {
@@ -47,6 +80,8 @@ in {
         claude-code
       ]
       ++ lib.optional cfg.claudeZai claude-zai
-      ++ lib.optional cfg.ollamaPi ollama-pi;
+      ++ lib.optional cfg.ollamaPi ollama-pi
+      ++ lib.optional cfg.claudeOllama claude-ollama
+      ++ lib.optional cfg.claudeOllamaK3 claude-ollama-k3;
   };
 }
