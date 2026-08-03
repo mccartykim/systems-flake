@@ -200,10 +200,12 @@
         ]
       },
       "locked": {
-        "lastModified": 1785711504,
-        "narHash": "sha256-7q5dNiNJFoq/X8QwzR+UhOKxNFPTYgYMuHHcMeiG+xY=",
-        "path": "/home/kimb/projects/claude-wrapper",
-        "type": "path"
+        "lastModified": 1785711496,
+        "narHash": "sha256-UtVn2WX0ZyajExZ2Csl+vGP1HRsmagZj6tUzJwv6g7s=",
+        "owner": "mccartykim",
+        "repo": "claude-wrapper",
+        "rev": "896dca82da472d8bf2c3b4476613455a669ca041",
+        "type": "github"
       },
       "original": {
         "owner": "mccartykim",
