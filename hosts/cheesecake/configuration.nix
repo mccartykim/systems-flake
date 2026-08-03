@@ -41,6 +41,16 @@
     VDPAU_DRIVER = "va_gl";
   };
 
+  # Desktop: keep Plasma 6 (from profiles/desktop.nix) and add LXQt as a
+  # lighter alternate session. cheesecake is a passively-cooled 4.5W Surface
+  # Go 3; Plasma 6's always-on services (Baloo file indexing, Akonadi PIM)
+  # are a meaningful CPU/RAM/thermal load. LXQt keeps the Qt look/feel
+  # without the KDE Frameworks daemons. Both sessions appear at the SDDM
+  # login screen — log into LXQt to compare, fall back to Plasma for tablet
+  # mode (auto-rotation, on-screen keyboard). Drop the plasma6 import to
+  # commit to LXQt full-time.
+  services.xserver.desktopManager.lxqt.enable = true;
+
   # Consider linux-surface kernel for better Surface Go 3 support
   # boot.kernelPackages = pkgs.linuxKernel.packages.linux_surface;
 
