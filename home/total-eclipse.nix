@@ -46,6 +46,8 @@
     gaming.enable = true;
     ai-tools.enable = true;
     ai-tools.ollamaPi = true;
+    ai-tools.claudeOllama = true; # opus=glm-5.2 (text-only), images rerouted to kimi-k2.7-code
+    ai-tools.claudeOllamaK3 = true; # opus=kimi-k3 (multimodal, expensive; needs ollama cloud balance)
     fish-functions = {
       enable = true;
       includeJjPrompt = true;
