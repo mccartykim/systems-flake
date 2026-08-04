@@ -53,7 +53,7 @@ in {
 
     # TTS
     ttsServer = "http://total-eclipse.nebula:8091";
-    ttsVoice = "caine";
+    ttsVoice = "jet2";
     ttsDevice = "Kim's nest hub";
 
     # Full cutover: everything on.
