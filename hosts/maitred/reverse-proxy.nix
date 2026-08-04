@@ -146,29 +146,6 @@ in {
                 reverse_proxy 192.168.69.177:80
               '';
             };
-
-            # MPD httpd stream proxy for the Chirurgeon's wake_music cast. The
-            # Cast device plays the connect chime but leaves media IDLE on a
-            # raw-LAN-IP http URL (http://192.168.69.200:8666) — a Cast spec
-            # quirk, not AP isolation (confirmed on both Nest devices). It WILL
-            # pull a hostname+HTTPS URL, so expose rich-evans's MPD httpd as
-            # https://music.kimb.dev. NO auth: the Cast device fetches the URL
-            # headless (no browser/session for Authelia). LAN clients resolve
-            # music.kimb.dev → 192.168.69.1 via split-brain DNS (the unbound
-            # musicEntry in configuration.nix — hairpin NAT is disabled here).
-            # The *.kimb.dev wildcard also makes it public, but the stream only
-            # serves while MPD is actively playing (the wake-up window), is
-            # listen-only (the mpc control port stays loopback), and carries no
-            # secrets — acceptable exposure, revisit if it bites. flush_interval
-            # -1 streams unbuffered so the device gets bytes immediately instead
-            # of timing out to IDLE.
-            "music.${cfg.domain}" = {
-              extraConfig = ''
-                reverse_proxy 192.168.69.200:8666 {
-                  flush_interval -1
-                }
-              '';
-            };
           };
       };
 
