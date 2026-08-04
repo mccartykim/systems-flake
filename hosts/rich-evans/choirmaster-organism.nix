@@ -62,6 +62,14 @@
   services.mpd = {
     enable = true;
     musicDirectory = "/mnt/seagate/music_compressed";
+    # auto_update: inotify-rescan the music_directory on change so newly
+    # syncthing-synced tracks are searchable without a manual `mpc update`.
+    # Without this, the tag DB goes stale after a sync and the Choirmaster /
+    # Chirurgeon wake_music track find silently misses tracks that ARE on
+    # disk (found live 2026-08-04: 42 tracks on disk but absent from the DB
+    # after the 2026-07-26 compressed-folder flip, including the wake-up
+    # acceptance track "Nobody Speak").
+    settings.auto_update = "yes";
     settings.audio_output = [
       {
         type = "httpd";
