@@ -265,6 +265,13 @@ in {
         # Allow reverse-proxy container to access vacuum only (by source IP)
         iptables -A FORWARD -s ${proxyIP} -o enp2s0 -d 192.168.69.177 -j ACCEPT
 
+        # Allow reverse-proxy container to reach rich-evans's MPD httpd stream
+        # (music.kimb.dev -> reverse_proxy 192.168.69.200:8666). The Cast device
+        # won't play a raw-LAN-IP http URL, so Caddy proxies the stream over
+        # hostname+HTTPS; this rule lets the container reach the upstream.
+        # Port 8666 only (least privilege — the vacuum rule above is broader).
+        iptables -A FORWARD -s ${proxyIP} -o enp2s0 -d 192.168.69.200 -p tcp --dport 8666 -j ACCEPT
+
         # Allow LAN to WAN
         iptables -A FORWARD -i enp2s0 -o enp3s0 -j ACCEPT
 
