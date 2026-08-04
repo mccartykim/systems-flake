@@ -1496,11 +1496,11 @@
         "organism": "organism_7"
       },
       "locked": {
-        "lastModified": 1785040677,
-        "narHash": "sha256-oCFLEyaZbCfa92bJwNOcqr5L8Lj76o1nHePrhY6f+vc=",
+        "lastModified": 1785805878,
+        "narHash": "sha256-uecZ+YpbVKzqkjF7oOD4VT0YZCzmqZMC5mCWn0a6pNo=",
         "ref": "refs/heads/main",
-        "rev": "d514075e5a10dff22036920c23c1e98587e01b88",
-        "revCount": 9,
+        "rev": "b13c1f545c872275d55335765a40b749127d47ea",
+        "revCount": 10,
         "type": "git",
         "url": "ssh://git@github.com/mccartykim/interrogator_organism.git"
       },

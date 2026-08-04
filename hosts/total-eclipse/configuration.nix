@@ -29,6 +29,11 @@
     # Paperless-ngx document management (scanned mail from maitred)
     ./paperless.nix
 
+    # sms-history: read-only SMS reader (KDE Connect D-Bus) prisoned behind a
+    # forced command on kimb's authorized_keys for the Interrogator's fleet
+    # key. See ./sms-history.nix.
+    ./sms-history.nix
+
     # Switch emulator (Eden master, x86-64-v3 generic profile)
     ./emulation.nix
   ];
