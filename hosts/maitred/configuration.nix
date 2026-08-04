@@ -470,8 +470,15 @@ in {
 
             # Vacuum entry - point to router for Caddy proxy
             vacuumEntry = ["\"vacuum.${cfg.domain}. A 192.168.69.1\""];
+
+            # Music stream proxy entry - mirrors vacuumEntry. Lets LAN Cast
+            # devices resolve music.kimb.dev → 192.168.69.1 (the Caddy proxy)
+            # instead of the public WAN IP, since hairpin NAT is disabled in
+            # favor of split-brain DNS. See the music.${cfg.domain} vhost in
+            # reverse-proxy.nix.
+            musicEntry = ["\"music.${cfg.domain}. A 192.168.69.1\""];
           in
-            nebula-hosts ++ rootDomain ++ serviceDomains ++ vacuumEntry;
+            nebula-hosts ++ rootDomain ++ serviceDomains ++ vacuumEntry ++ musicEntry;
         };
       };
     };
