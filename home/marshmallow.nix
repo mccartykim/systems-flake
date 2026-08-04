@@ -61,6 +61,8 @@
       enable = true;
       claudeZai = true;
       ollamaPi = true;
+      claudeOllama = true; # opus=glm-5.2 (text-only), images rerouted to kimi-k2.7-code
+      claudeOllamaK3 = true; # opus=kimi-k3 (multimodal, expensive; needs ollama cloud balance)
     };
     fish-functions = {
       enable = true;
