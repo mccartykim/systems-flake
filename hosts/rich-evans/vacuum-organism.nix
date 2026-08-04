@@ -49,4 +49,9 @@
   # dispatch.org. The vacuum-organism module makes the state dir
   # group-writable; this puts the lifecoach service user in that group.
   users.users.life-coach.extraGroups = ["vacuum-organism"];
+  # Likewise let the Chirurgeon's dispatch-servoskull wrapper (runs as the
+  # vox-organism user) file :WAKE dispatches into the same dispatch.org —
+  # the final wake-up escalation rung. Pure file-write; the vacuum organism
+  # (its own user) does the driving.
+  users.users.vox-organism.extraGroups = ["vacuum-organism"];
 }

@@ -158,11 +158,11 @@
         "organism": "organism"
       },
       "locked": {
-        "lastModified": 1785875766,
-        "narHash": "sha256-wTun6Keb38DxYwRTU1qG9qdMVdObR4Th7cDvUihh4mI=",
+        "lastModified": 1785876505,
+        "narHash": "sha256-QQrdxtboXjdE1/1UYdrfrsjJcSU68TA9+vVclD8UqDQ=",
         "ref": "refs/heads/main",
-        "rev": "f697248c408f0342ea17cc6a3b7c957c7b2a1f33",
-        "revCount": 13,
+        "rev": "aedf0fe3973494a0d1739097b4bb138f87c3cacb",
+        "revCount": 14,
         "type": "git",
         "url": "ssh://git@github.com/mccartykim/chirurgeon_organism.git"
       },
@@ -3951,11 +3951,11 @@
         "vacuum-skills": "vacuum-skills"
       },
       "locked": {
-        "lastModified": 1783703841,
-        "narHash": "sha256-mkOphKeev88oKxCTZeKy6RIntn84jOHmGRNfk2P/RVo=",
+        "lastModified": 1785876853,
+        "narHash": "sha256-3Qe5hjmRWTYptUDdtmRxNeTDToNAI3pC1QbVJMYFZYo=",
         "ref": "refs/heads/main",
-        "rev": "5bcf19c75b04ebbf448d10ce1c68e1bf73df0cea",
-        "revCount": 38,
+        "rev": "0d63f801123c01ba8034f2386ccc192b80d62fa5",
+        "revCount": 39,
         "type": "git",
         "url": "ssh://git@github.com/mccartykim/vacuum_organism.git"
       },

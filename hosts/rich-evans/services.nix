@@ -68,6 +68,7 @@ in {
       "tplink" # TP-Link Kasa switches + Tapo cameras
       "vacuum" # Vacuum base
       "mqtt" # MQTT for Valetudo
+      "ibeacon" # BLE iBeacon → distance/RSSI sensor for the Pixel transmitter
     ];
 
     config = {
