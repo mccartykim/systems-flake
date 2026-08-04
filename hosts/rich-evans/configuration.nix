@@ -380,6 +380,13 @@ in {
       3990 # Copyparty additional
       4822 # Guacamole daemon
       8080 # Guacamole web interface
+      8666 # MPD httpd stream — fetched by the bedroom Nest (wake_music cast)
+            # and by the Caddy proxy on maitred (music.kimb.dev → 192.168.69.200:8666).
+            # This was the real root cause of the wake-music "ding but no audio":
+            # the stream was bound 0.0.0.0:8666 but the firewall dropped LAN
+            # inbound, so the Cast device (and Caddy) got connection-timeout →
+            # media stayed IDLE behind the connect chime. LAN-only (rich-evans
+            # has no WAN interface; maitred gates the internet).
     ];
     allowedTCPPortRanges = [
       {
