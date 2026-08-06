@@ -46,7 +46,6 @@ globals:
 sensor:
   - platform: template
     id: press_count
-    entity_id: sensor.bathroom_press_count
     name: "Press Count"
     icon: mdi:counter
     accuracy_decimals: 0
