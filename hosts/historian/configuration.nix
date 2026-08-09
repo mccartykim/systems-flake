@@ -576,8 +576,12 @@
       "ONE PIECE" = "anime";
       "Gachiakuta" = "anime";
     };
-    ollamaHost = "http://total-eclipse.nebula:11434";
-    ollamaModel = "qwen3:8b";
+    # Use the cloud ollama subscription via historian's proxy. Local qwen3:8b on
+    # total-eclipse emits only thinking tokens and returns an empty response field
+    # for /api/generate even with /no_think; kimi-k2.7-code:cloud works when the
+    # classifier sends "think": false (media-classifier fix).
+    ollamaHost = "http://historian.nebula:11434";
+    ollamaModel = "kimi-k2.7-code:cloud";
     user = "kimb";
     group = "media";
   };
