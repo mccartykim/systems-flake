@@ -158,11 +158,11 @@
         "organism": "organism"
       },
       "locked": {
-        "lastModified": 1786262258,
-        "narHash": "sha256-7o36RDzFW7uSn6WKtQKoHilk5t0W6VPe9m4wOQfCRlE=",
+        "lastModified": 1786263057,
+        "narHash": "sha256-Nd/umFhzmtq4UOS0BaTzxJb7IhwcQrChEZu7VtKrloM=",
         "ref": "refs/heads/main",
-        "rev": "8c50a6cfa377fa6bc0ec3cfb575eb9bc9bff2f3d",
-        "revCount": 18,
+        "rev": "68b066793772f41ffee162980a0be5665b75fc83",
+        "revCount": 19,
         "type": "git",
         "url": "ssh://git@github.com/mccartykim/chirurgeon_organism.git"
       },
