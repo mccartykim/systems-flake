@@ -75,9 +75,12 @@ in {
     orgAgentFile = "/var/lib/life-coach-agent/agent.org";
 
     # TTS — speak / lib/tts.py (rung-2 smart-speaker vox). Same Qwen3-TTS
-    # server + Nest device as lifecoach; the voice is the Chirurgeon's own.
+    # server as lifecoach; the voice is the Chirurgeon's own. Device is the
+    # bedroom Nest ("Living Room speaker") — the only reliably-castable
+    # speaker; the kitchen "Kim's nest hub" is chronically unavailable, and
+    # the Captain sleeps in the bedroom so the wake must target it.
     ttsServer = "http://total-eclipse.nebula:8091";
     ttsVoice = "jet2";
-    ttsDevice = "Kim's nest hub";
+    ttsDevice = "Living Room speaker";
   };
 }
