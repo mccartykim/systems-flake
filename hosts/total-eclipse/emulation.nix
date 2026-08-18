@@ -4,7 +4,7 @@
 # and is not managed by Nix.
 {pkgs, inputs, ...}: {
   environment.systemPackages = [
-    inputs.eden-nightly-flake.packages.x86_64-linux.eden-nightly
+    # inputs.eden-nightly-flake.packages.x86_64-linux.eden-nightly
     pkgs.flycast
   ];
 }
