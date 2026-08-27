@@ -35,18 +35,23 @@ INSTALLER="${INSTALLER:-$(nix path-info "$SF#mochi-installer" 2>/dev/null)/bin/m
 AGE_BIN="$(command -v age || true)"
 [ -n "$AGE_BIN" ] || AGE_BIN="$(nix build nixpkgs#age --no-link --print-out-paths 2>/dev/null)/bin/age"
 [ -x "$AGE_BIN" ] || { echo "age not available" >&2; exit 1; }
+# The fido2-hmac plugin must be on PATH for age to invoke it (decrypting the
+# YubiKey-sealed keys). Token + touch required at those decryptions.
+FIDO_PLUGIN="$(command -v age-plugin-fido2-hmac || true)"
+if [ -z "$FIDO_PLUGIN" ]; then
+  FIDO_DIR="$(nix build nixpkgs#age-plugin-fido2-hmac --no-link --print-out-paths 2>/dev/null)"
+  [ -n "$FIDO_DIR" ] && export PATH="$FIDO_DIR/bin:$PATH"
+fi
+YK_IDENTITY="${YK_IDENTITY:-$FK/ssh/mochi_host_yubikey_identity.txt}"
 
-# --- gather the host key (prefer age-encrypted copy in flake_keys) ----------
+# --- gather the host key (prefer the YubiKey-sealed copy) ------------------
 tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT; chmod 700 "$tmp"
 if [ -f "$FK/ssh/mochi_host_ed25519_key.age" ]; then
-  echo "flake_keys has an age-encrypted host key — decrypting"
-  if [ -n "${HOST_KEY_AGE_IDENTITY:-}" ]; then
-    "$AGE_BIN" -d -i "$HOST_KEY_AGE_IDENTITY" -o "$tmp/host_key" "$FK/ssh/mochi_host_ed25519_key.age"
-  else
-    "$AGE_BIN" -d -o "$tmp/host_key" "$FK/ssh/mochi_host_ed25519_key.age"   # passphrase prompt
-  fi
+  echo "flake_keys has a YubiKey-sealed host key — decrypting (touch the token)"
+  "$AGE_BIN" -d -i "${HOST_KEY_AGE_IDENTITY:-$YK_IDENTITY}" -o "$tmp/host_key" \
+    "$FK/ssh/mochi_host_ed25519_key.age"
 elif [ -f "$FK/ssh/mochi_host_ed25519_key" ]; then
-  echo "NOTE: flake_keys host key is PLAINTEXT — consider the YubiKey/age upgrade" >&2
+  echo "NOTE: falling back to PLAINTEXT host key — prefer the YubiKey-sealed .age" >&2
   cp "$FK/ssh/mochi_host_ed25519_key" "$tmp/host_key"
 else
   echo "missing mochi host key in $FK/ssh/" >&2; exit 1
@@ -54,19 +59,29 @@ fi
 cp "$FK/ssh/mochi_host_ed25519_key.pub" "$tmp/host_key.pub"
 chmod 600 "$tmp/host_key"
 
-# --- encrypt host key + (optional) git key to the restore passphrase -------
+# --- gather the git identity (prefer the YubiKey-sealed copy) --------------
+GITKEY_STASH=0
+if [ -f "$FK/ssh/mochi_git_ed25519_key.age" ]; then
+  echo "decrypting YubiKey-sealed git identity (touch the token)"
+  "$AGE_BIN" -d -i "${HOST_KEY_AGE_IDENTITY:-$YK_IDENTITY}" -o "$tmp/git_key" \
+    "$FK/ssh/mochi_git_ed25519_key.age"
+  GITKEY_STASH=1
+elif [ -f "$FK/ssh/mochi_git_ed25519_key" ]; then
+  echo "NOTE: falling back to PLAINTEXT git identity — prefer the YubiKey-sealed .age" >&2
+  cp "$FK/ssh/mochi_git_ed25519_key" "$tmp/git_key"
+  GITKEY_STASH=1
+fi
+# --- seal both keys to the restore passphrase ------------------------------
 # age -p reads the passphrase from the tty (enter + confirm). Both blobs use
 # the SAME passphrase; the restore script prompts for it exactly twice.
 "$AGE_BIN" -p -o "$tmp/host_key.age" "$tmp/host_key"
 HOSTKEY_AGE_B64="$(base64 -w0 "$tmp/host_key.age")"
 HOSTKEY_PUB_B64="$(base64 -w0 "$tmp/host_key.pub")"
 
-GITKEY_STASH=0
-if [ -f "$FK/ssh/mochi_git_ed25519_key" ]; then
-  "$AGE_BIN" -p -o "$tmp/git_key.age" "$FK/ssh/mochi_git_ed25519_key"
+if [ "$GITKEY_STASH" = 1 ] && [ -f "$tmp/git_key" ]; then
+  "$AGE_BIN" -p -o "$tmp/git_key.age" "$tmp/git_key"
   GITKEY_AGE_B64="$(base64 -w0 "$tmp/git_key.age")"
   GITKEY_PUB_B64="$(base64 -w0 "$FK/ssh/mochi_git_ed25519_key.pub")"
-  GITKEY_STASH=1
 fi
 
 [ -f "$INSTALLER" ] || { echo "missing installer: $INSTALLER (build .#mochi-installer)" >&2; exit 1; }
