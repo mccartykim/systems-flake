@@ -99,60 +99,35 @@ fi
 mkdir -p "$(dirname "$OUT")"
 cat > "$OUT" <<'HDR'
 #!/usr/bin/env bash
-# mochi AVF quick-restore — keys travel as age blobs sealed to TWO
-# independent recipients (YubiKey fido2-hmac, restore passphrase); this
+# mochi AVF quick-restore — keys travel ONLY as age envelopes sealed to two
+# independent recipients (YubiKey fido2-hmac / restore passphrase); this
 # script contains NO usable private key material. Either one opens them
-# alone: token+touch where the plugin exists, passphrase anywhere.
-# The passphrase lives in a SEPARATE Bitwarden entry. GENERATED; never commit.
+# alone: the key-restore stage (Stage 3b, inside a nix shell) tries the
+# YubiKey (USB-OTG, touch) first and falls back to the passphrase. The
+# passphrase lives in a SEPARATE Bitwarden entry. GENERATED; never commit.
 # Run on a fresh mochi AVF Debian shell (as droid or root; sudo needed).
 set -euo pipefail
+umask 077
 
-# Either-or decrypt: try the YubiKey envelope (plugin + token), fall back to
-# the passphrase envelope. Usage: restore_either <fido2blob> <passblob> <out> <label>
-restore_either() {
-  local fido="$1" pass="$2" out="$3" label="$4"
-  if command -v age-plugin-fido2-hmac >/dev/null 2>&1; then
-    echo ">>> $label: touch the YubiKey (or skip to the passphrase with Ctrl-C) <<<"
-    if age -d -i /root/.mochi-yk-identity.txt -o "$out" "$fido" 2>/dev/null; then
-      echo "$label: decrypted via YubiKey"; return 0
-    fi
-    echo "$label: YubiKey path failed — falling back to passphrase"
-  fi
-  age -d -o "$out" "$pass"   # prompts for the restore passphrase
-}
-
-# Stage 0-pre: age (Debian bookworm+/trixie) for the encrypted-key restore.
-sudo apt-get update -qq
-sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq age curl ca-certificates sudo
-
-# The YubiKey identity handle — inert without the physical token.
-cat > /root/.mochi-yk-identity.txt <<'YKID'
+# Stage 0: stash the sealed envelopes + the (inert) YubiKey identity handle.
+# Actual decryption happens in Stage 3b, inside a nix shell (age + fido2
+# plugin from the aarch64 binary cache).
+install -d -m 700 /tmp/mochi-restore
+printf '%s' "HOSTKEY_PUB_PLACEHOLDER"  | base64 -d > /tmp/mochi-restore/host-key.pub
+printf '%s' "HOSTKEY_FIDO_PLACEHOLDER" | base64 -d > /tmp/mochi-restore/host-key.fido2.age
+printf '%s' "HOSTKEY_PASS_PLACEHOLDER" | base64 -d > /tmp/mochi-restore/host-key.pass.age
+cat > /tmp/mochi-restore/yk-identity.txt <<'YKID'
 YK_IDENTITY_PLACEHOLDER
 YKID
-chmod 600 /root/.mochi-yk-identity.txt
-
-# Stage 0a: restore mochi's STABLE SSH host key — YubiKey (touch) OR restore
-# passphrase, whichever is available. This key is the age identity
-# nebula-secrets.service later uses to decrypt the nebula cert/key/ca — no
-# rotation dance, no plaintext in notes.
-sudo install -d -m 755 /etc/ssh
-printf '%s' "HOSTKEY_PUB_PLACEHOLDER" | base64 -d | sudo tee /etc/ssh/ssh_host_ed25519_key.pub >/dev/null
-printf '%s' "HOSTKEY_FIDO_PLACEHOLDER" | base64 -d > /tmp/mochi-host-key.fido2.age
-printf '%s' "HOSTKEY_PASS_PLACEHOLDER" | base64 -d > /tmp/mochi-host-key.pass.age
-restore_either /tmp/mochi-host-key.fido2.age /tmp/mochi-host-key.pass.age /tmp/mochi-host-ed25519 "host key"
-sudo install -m 600 /tmp/mochi-host-ed25519 /etc/ssh/ssh_host_ed25519_key
-rm -f /tmp/mochi-host-ed25519 /tmp/mochi-host-key.*.age
-printf 'host key restored: '; ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub || true
 HDR
 
 if [ "$GITKEY_STASH" = 1 ]; then
   cat >> "$OUT" <<GITSTASH
-# Stage 0b: stash the git identity (installed in Stage final for root + kimb).
-# Sealed to BOTH recipients (YubiKey / restore passphrase); .pub is public.
-printf '%s' "$GITKEY_PUB_B64" | base64 -d > /root/.mochi-git-key.pub
-printf '%s' "$GITKEY_FIDO_B64" | base64 -d > /root/.mochi-git-key.fido2.age
-printf '%s' "$GITKEY_AGE_B64" | base64 -d > /root/.mochi-git-key.pass.age
-chmod 600 /root/.mochi-git-key.*.age
+# Stage 0b: stash the git identity (decrypted in Stage 3b, installed in
+# Stage final for root + kimb). Sealed to BOTH recipients; .pub is public.
+printf '%s' "$GITKEY_PUB_B64" | base64 -d > /tmp/mochi-restore/git-key.pub
+printf '%s' "$GITKEY_FIDO_B64" | base64 -d > /tmp/mochi-restore/git-key.fido2.age
+printf '%s' "$GITKEY_AGE_B64" | base64 -d > /tmp/mochi-restore/git-key.pass.age
 GITSTASH
 fi
 
@@ -171,22 +146,26 @@ else
   echo "nebula0 not up yet — check: sudo systemctl status nebula-mainnet nebula-secrets"
   echo "decrypt errors = .age recipient mismatch: sudo journalctl -u nebula-secrets -b --no-pager"
 fi
-if [ -f /root/.mochi-git-key.pass.age ]; then
+if [ -f /root/.mochi-git-key ]; then
   # Install the git identity for root (nix fetches of ssh://git@github.com
   # flake inputs run as root during `system-manager switch`) and for kimb.
-  restore_either /root/.mochi-git-key.fido2.age /root/.mochi-git-key.pass.age /root/.mochi-git-key "git identity"
+  # Stage 3b already decrypted it (or a bare install generated it).
   sudo install -d -m 700 /root/.ssh /home/kimb/.ssh
   sudo install -m 600 /root/.mochi-git-key /root/.ssh/id_ed25519
   sudo install -m 644 /root/.mochi-git-key.pub /root/.ssh/id_ed25519.pub
   sudo install -m 600 /root/.mochi-git-key /home/kimb/.ssh/id_ed25519
-  sudo install -m 644 /root/.mochi-git-key.pub /home/kimb/.ssh/id_ed25519.pub
+  if [ -f /tmp/mochi-restore/git-key.pub ]; then
+    sudo install -m 644 /tmp/mochi-restore/git-key.pub /home/kimb/.ssh/id_ed25519.pub
+  else
+    sudo install -m 644 /root/.mochi-git-key.pub /home/kimb/.ssh/id_ed25519.pub
+  fi
   sudo chown -R kimb:kimb /home/kimb/.ssh
   printf 'Host github.com\n  User git\n  IdentityFile ~/.ssh/id_ed25519\n  IdentitiesOnly yes\n' \
     | sudo tee /root/.ssh/config >/dev/null
   printf 'Host github.com\n  User git\n  IdentityFile ~/.ssh/id_ed25519\n  IdentitiesOnly yes\n' \
     | sudo tee /home/kimb/.ssh/config >/dev/null
   sudo chown kimb:kimb /home/kimb/.ssh/config
-  sudo rm -f /root/.mochi-git-key /root/.mochi-git-key.pub /root/.mochi-git-key.*.age
+  sudo rm -rf /tmp/mochi-restore /root/.mochi-git-key /root/.mochi-git-key.pub
   echo "git identity installed for root + kimb. GitHub registration (one-time):"
   echo "  $(cat /home/kimb/.ssh/id_ed25519.pub)"
 fi
