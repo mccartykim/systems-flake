@@ -46,7 +46,9 @@ in {
   # Home Assistant smart home platform (native NixOS service)
   services.home-assistant = lib.mkIf cfg.services.homeassistant.enable {
     enable = true;
-    openFirewall = true;
+    # nixpkgs dropped services.home-assistant.openFirewall (frontend port
+    # moved to YAML and can't be determined at eval time); open the default
+    # HA frontend port explicitly below to keep LAN access parity.
 
     customLovelaceModules = with pkgs.home-assistant-custom-lovelace-modules; [
       valetudo-map-card
