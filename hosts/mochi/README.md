@@ -9,9 +9,12 @@ so the bootstrap path is designed for fast, idempotent recovery.
 **Debian + system-manager**, not nixos-avf. nixos-avf was tried and never
 got stable; AVF's tendency to wipe images makes "one-command rebuild" more
 valuable than a fully declarative root. The system-manager layer manages
-nebula, secrets, and the nix-built dev tooling; XFCE/lightdm and zed come
-from native installers because their cross-compile stories on aarch64 are
-not worth the closure size.
+nebula, secrets, sshd hardening, fleet /etc/hosts, and the nix-built dev
+tooling; **barebones weston** comes from apt because it is the only
+compositor with usable touchpad-via-screen behavior on the AVF Terminal
+display (KDE and XFCE customization never stuck), and zed comes from its
+official installer because the nixpkgs aarch64 closure is not worth the
+trouble for a one-off device.
 
 ## Running the installer
 
@@ -31,7 +34,10 @@ curl -fsSL <url-to-prebuilt-script> | bash
 
 The script is idempotent and re-runnable. It does, in order:
 
-1. `apt-get install` XFCE/lightdm + curl/git/ca-certificates/xz-utils/sudo
+1. `apt-get install` weston + curl/git/ca-certificates/xz-utils/sudo
+2. sshd nopw hardening + `kimb` admin user (pubkeys from github) + lock of
+   the default `droid` account's password — so ssh is key-only from the
+   first minute even before system-manager touches anything
 2. Determinate Nix installer (multi-user) if `nix` is absent
 3. Writes `/etc/nix/nix.custom.conf` with the `mccartykim.cachix.org`
    substituter + flakes feature flag, and `!include`s it from `/etc/nix/nix.conf`
@@ -76,17 +82,22 @@ regenerates `/etc/ssh/ssh_host_ed25519_key` and leaves the registry's
 
 ## Reaching mochi after first switch
 
-Once `system-manager switch --flake .#mochi` lands the hardening drop-in
-(`/etc/ssh/sshd_config.d/10-mochi-hardening.conf`), sshd is bound to
-`10.100.0.8` only — no LAN, no localhost, no password auth, no root.
-Mochi is reachable exclusively over the nebula mesh:
+The hardening drop-ins (`/etc/ssh/sshd_config.d/00-mochi-nopw.conf` from
+the installer, `10-mochi-hardening.conf` from system-manager) mean sshd is
+password-auth-disabled, root-login-disabled, and restricted to `AllowUsers
+kimb` on ALL interfaces. sshd does NOT pin to the nebula IP: the wildcard
+bind covers nebula0 whenever it appears AND the LAN, so the phone can be
+smoke-tested from a laptop before the mesh is up (the AVF VM is NATed
+behind Android, so LAN exposure is inherently limited).
 
 ```bash
-ssh kimb@mochi.nebula
+ssh kimb@mochi.nebula        # over the mesh
+ssh kimb@<vm-lan-address>    # during bootstrap smoke tests
 ```
 
-`ssh.service` is wired `Requires=/After=nebula-mainnet.service` via a
-drop-in, so it won't try to bind before nebula0 exists.
+The `nebula-hosts` oneshot re-splices the fleet's `hostname.nebula` entries
+into /etc/hosts at every boot (marker-managed block), so mochi can reach
+peers by name even though its nebula config uses no DNS.
 
 ## Local AI tooling
 
@@ -98,17 +109,27 @@ today, so populate that file manually (`mkdir -p /run/agenix && install
 -m 0400 /path/to/key /run/agenix/zai-api-key`) or override `keyFile` if
 you actually want to use the wrapper. `ollama serve` runs on demand.
 
-## Why XFCE + zed go outside system-manager
+## Why weston + zed go outside system-manager
 
-- **XFCE / lightdm via apt**: system-manager doesn't manage display
-  managers / X session glue well, and apt's xfce4 metapackage handles
-  PAM, polkit, and seat assignment correctly out of the box.
+- **weston via apt**: barebones weston is the only compositor whose
+  touchpad-via-screen behavior works on the AVF Terminal display; KDE/XFCE
+  customization never stuck. system-manager doesn't manage session/seat
+  glue well anyway, and Debian's weston package pulls the right stack.
 - **zed via zed.dev**: nixpkgs' zed-editor on aarch64-linux is large and
   has had build flakes; the official aarch64 prebuilt is the path of
   least surprise for a one-off device.
 
 If/when nixos-avf becomes stable, both of these can move into the nix
 layer — but for now, recover-fast wins.
+
+## File bridge (phone_projects)
+
+Files move desktop↔phone via the syncthing folder `phone_projects`
+(id `nzjer-77q4e`, shared with the Pixel 9 Pro's syncthing app) and reach
+the VM through AVF's shared directories — the VM sees Android storage
+directly, so NO syncthing service runs inside the VM. Copy out of the
+shared dir into `$HOME` when durability matters: Android data survives
+AVF wipes better than the VM image does.
 
 ## Adding more portable hosts
 

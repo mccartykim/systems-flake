@@ -82,11 +82,53 @@
 
         log() { printf '\n=== %s ===\n' "$*"; }
 
-        # Stage 1: apt prerequisites + (optional) XFCE desktop.
+        # Stage 1: apt prerequisites + weston (no desktop meta-packages: only
+        # barebones weston behaves on the AVF Terminal display).
         log "Stage 1: apt packages"
         sudo apt-get update
         # shellcheck disable=SC2086
         sudo DEBIAN_FRONTEND=noninteractive apt-get install -y ${aptList}
+
+        # Stage 1b: admin user + sshd nopw hardening. Runs BEFORE anything
+        # can start sshd so the "ssh MUST be nopw" guarantee holds from the
+        # first second: even if the default AVF account (droid@droid) fails
+        # to get locked, password login is impossible and only `kimb` (with
+        # the owner's pubkeys) may connect. Idempotent across wipes/re-runs.
+        log "Stage 1b: admin user + sshd nopw"
+        sudo mkdir -p /etc/ssh/sshd_config.d
+        printf '%s\n' \
+          'PasswordAuthentication no' \
+          'KbdInteractiveAuthentication no' \
+          'PermitRootLogin no' \
+          'PubkeyAuthentication yes' \
+          'AllowUsers kimb' \
+          | sudo tee /etc/ssh/sshd_config.d/00-mochi-nopw.conf >/dev/null
+        if ! id kimb >/dev/null 2>&1; then
+          sudo useradd -m -s /bin/bash kimb
+        fi
+        # Passwordless sudo for kimb — mirrors the AVF default account so
+        # restore/ops scripts behave identically under either user.
+        printf '%s\n' 'kimb ALL=(ALL) NOPASSWD:ALL' \
+          | sudo tee /etc/sudoers.d/90-kimb >/dev/null
+        sudo chmod 440 /etc/sudoers.d/90-kimb
+        # Lock the default account's password (pubkey/sudo still work; there
+        # simply is no password to brute-force). Best-effort: some AVF
+        # images may not have a `droid` user to lock.
+        if id droid >/dev/null 2>&1; then
+          sudo usermod -L droid 2>/dev/null || true
+        fi
+        # Inbound keys are PUBLIC (github.com/mccartykim.keys) — fetched at
+        # install time so re-runs stay current.
+        sudo install -d -m 700 -o kimb -g kimb /home/kimb/.ssh
+        curl -fsSL https://github.com/mccartykim.keys \
+          | sudo tee /home/kimb/.ssh/authorized_keys >/dev/null
+        sudo chown kimb:kimb /home/kimb/.ssh/authorized_keys
+        sudo chmod 600 /home/kimb/.ssh/authorized_keys
+        # Apply the hardening to any already-running sshd (openssh-server's
+        # postinst auto-starts it; restart picks up the drop-in).
+        sudo systemctl restart ssh 2>/dev/null \
+          || sudo systemctl restart sshd 2>/dev/null \
+          || true
 
         # Stage 2: Determinate Nix installer (multi-user) if nix is absent.
         log "Stage 2: Nix"
@@ -146,18 +188,18 @@
         cat <<'NEXTSTEPS'
         The system-manager config is now applied. Remaining manual steps:
 
-          1. SSH host key (used to decrypt agenix secrets):
+          1. SSH host key — SKIP if you ran the quick-restore script (it
+             pre-bakes the STABLE host key, which is also the age identity
+             nebula-secrets.service decrypts with). Only for a BARE install
+             (no pre-baked key):
                sudo ssh-keygen -A
                cat /etc/ssh/ssh_host_ed25519_key.pub
-             Send that pubkey to the mayor so they can:
-               - update hosts/nebula-registry.nix
-               - rerun `nix run .#generate-nebula-certs`
-               - rerun `agenix-rekey` so this host can decrypt its secrets
-             Until then, nebula-secrets.service will fail to decrypt and
-             nebula won't come up.
+             then update hosts/nebula-registry.nix, re-encrypt the nebula
+             .age secrets, redeploy, and rotate any baked copies.
 
-          2. (XFCE only) reboot or `sudo systemctl start lightdm` to get
-             a graphical session.
+          2. (weston) run `weston` inside the VM for the barebones
+             compositor — the Terminal display + touchpad-via-screen combo
+             that actually works (KDE/XFCE do not).
 
           3. Verify nebula:  nebula-cert print -path /run/nebula-secrets/*/*.crt
                               ip -4 addr show nebula0
@@ -260,17 +302,24 @@
   installerHosts = {
     mochi = {
       hostName = "mochi";
+      # Headless + barebones weston: only weston has usable touchpad-via-
+      # screen behavior on the AVF Terminal display; KDE/XFCE customization
+      # never stuck, so no desktop meta-packages, no display manager.
+      enableXfce = false;
+      extraAptPackages = ["weston"];
       # The system-manager config hardens sshd (sshd_config.d + ssh.service
       # After=nebula-mainnet) but assumes ssh.service exists; a fresh AVF
       # Debian image doesn't ship openssh-server. Install it here so the
       # pre-baked stable host key (Stage 0a of the restore script) is picked
       # up by ssh-keygen -A's "only generate missing" logic, not clobbered.
+      # openssh-server so the pre-baked stable host key (Stage 0a of the
+      # restore script) is picked up by ssh-keygen -A's "only generate
+      # missing" logic, not clobbered.
       # NO apt `age`: nebula-secrets.service decrypts the cert/key/ca
       # on-device via ${pkgs.age}/bin/age (nix age, present after switch)
       # using /etc/ssh/ssh_host_ed25519_key as the age identity. The restore
       # script (scripts/mochi-restore-bake.sh) bakes ONLY the SSH host key;
       # the .age blobs come from the cloned repo. See hosts/mochi/README.md.
-      extraAptPackages = ["openssh-server"];
     };
   };
 in {

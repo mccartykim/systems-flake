@@ -8,6 +8,12 @@
       key = ../../secrets/nebula-mochi-key.age;
     };
   };
+
+  # /etc/hosts block for the fleet, derived from the authoritative registry.
+  registry = import ../nebula-registry.nix;
+  hostsBlock =
+    pkgs.lib.concatStrings
+    (pkgs.lib.mapAttrsToList (name: n: "${n.ip} ${name}.nebula ${name}\n") registry.nodes);
 in {
   config = {
     nixpkgs.hostPlatform = "aarch64-linux";
@@ -45,23 +51,19 @@ in {
       ];
 
       etc = {
-        # sshd hardening: bind to nebula address only, key-only auth, no root.
-        # Mochi is reachable via the nebula mesh as `kimb@mochi.nebula`.
+        # sshd hardening: key-only auth ("ssh MUST be nopw" — if the default
+        # droid account ever fails to get locked, password login must be
+        # impossible), no root. No ListenAddress pin: the wildcard bind covers
+        # nebula0 whenever it appears AND the LAN, which is what lets the
+        # phone be smoke-tested from a laptop before the mesh is up (the AVF
+        # VM is NATed behind Android, so exposure is limited anyway).
+        # Mochi is reachable as `kimb@mochi.nebula` and via syncthing.
         "ssh/sshd_config.d/10-mochi-hardening.conf".text = ''
-          ListenAddress 10.100.0.8
-          AddressFamily inet
           PasswordAuthentication no
+          KbdInteractiveAuthentication no
           PermitRootLogin no
           PubkeyAuthentication yes
-          KbdInteractiveAuthentication no
-        '';
-
-        # ssh.service must wait for nebula0 to come up, otherwise the
-        # ListenAddress=10.100.0.8 bind will fail at boot.
-        "systemd/system/ssh.service.d/10-after-nebula.conf".text = ''
-          [Unit]
-          After=nebula-mainnet.service
-          Requires=nebula-mainnet.service
+          AllowUsers kimb
         '';
 
         # Encrypted secrets in /etc
@@ -109,13 +111,43 @@ in {
               - port: any
                 proto: any
                 host: any
+            # Desktop/laptop privilege parity (cf. modules/nebula-node.nix
+            # personalDevicesRules): every personal device can reach every
+            # port on mochi. Android's own NAT is the actual firewall.
             inbound:
               - port: any
+                proto: any
+                group: desktops
+              - port: any
+                proto: any
+                group: laptops
+              - port: any
+                proto: any
+                group: mobile
+              - port: icmp
                 proto: icmp
                 host: any
-              - port: 22
-                proto: tcp
-                host: any
+        '';
+      };
+    };
+
+    # Fleet nebula names in /etc/hosts (marker-managed block re-applied at
+    # boot — AVF image updates can clobber /etc/hosts, so a oneshot re-splices
+    # it; same approach as the pre-system-manager restore script). Gives mochi
+    # desktop/laptop-style name resolution for every peer on the mesh.
+    systemd.services.nebula-hosts = {
+      description = "Maintain nebula mesh entries in /etc/hosts";
+      wantedBy = ["multi-user.target"];
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+        ExecStart = pkgs.writeShellScript "nebula-hosts" ''
+          set -euo pipefail
+          sed -i '/# mochi-nebula-begin/,/# mochi-nebula-end/d' /etc/hosts
+          cat >> /etc/hosts <<'BLOCK'
+          # mochi-nebula-begin
+          ${hostsBlock}# mochi-nebula-end
+          BLOCK
         '';
       };
     };
