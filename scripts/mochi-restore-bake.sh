@@ -71,16 +71,26 @@ elif [ -f "$FK/ssh/mochi_git_ed25519_key" ]; then
   cp "$FK/ssh/mochi_git_ed25519_key" "$tmp/git_key"
   GITKEY_STASH=1
 fi
-# --- seal both keys to the restore passphrase ------------------------------
-# age -p reads the passphrase from the tty (enter + confirm). Both blobs use
-# the SAME passphrase; the restore script prompts for it exactly twice.
-"$AGE_BIN" -p -o "$tmp/host_key.age" "$tmp/host_key"
-HOSTKEY_AGE_B64="$(base64 -w0 "$tmp/host_key.age")"
+# --- seal both keys to TWO independent recipients (either opens alone) -----
+# age refuses to mix passphrase recipients with others in one file, so each
+# key gets two sibling envelopes:
+#   <key>.pass.age   — age -p (scrypt)   → the restore passphrase
+#   <key>.fido2.age  — age -r <fido2 recipient> (offline seal; token+touch to open)
+# The restore script tries the fido2 blob first, falls back to the passphrase.
+FIDO_R="$("$AGE_BIN" 2>/dev/null; age-plugin-fido2-hmac -y "$YK_IDENTITY" 2>/dev/null | grep -oP "age1\\S+" | head -1)"
+[ -n "$FIDO_R" ] || { echo "could not derive fido2 recipient from $YK_IDENTITY" >&2; exit 1; }
+
+"$AGE_BIN" -p -o "$tmp/host_key.pass.age" "$tmp/host_key"
+"$AGE_BIN" -r "$FIDO_R" -o "$tmp/host_key.fido2.age" "$tmp/host_key"
+HOSTKEY_AGE_B64="$(base64 -w0 "$tmp/host_key.pass.age")"
+HOSTKEY_FIDO_B64="$(base64 -w0 "$tmp/host_key.fido2.age")"
 HOSTKEY_PUB_B64="$(base64 -w0 "$tmp/host_key.pub")"
 
 if [ "$GITKEY_STASH" = 1 ] && [ -f "$tmp/git_key" ]; then
-  "$AGE_BIN" -p -o "$tmp/git_key.age" "$tmp/git_key"
-  GITKEY_AGE_B64="$(base64 -w0 "$tmp/git_key.age")"
+  "$AGE_BIN" -p -o "$tmp/git_key.pass.age" "$tmp/git_key"
+  "$AGE_BIN" -r "$FIDO_R" -o "$tmp/git_key.fido2.age" "$tmp/git_key"
+  GITKEY_AGE_B64="$(base64 -w0 "$tmp/git_key.pass.age")"
+  GITKEY_FIDO_B64="$(base64 -w0 "$tmp/git_key.fido2.age")"
   GITKEY_PUB_B64="$(base64 -w0 "$FK/ssh/mochi_git_ed25519_key.pub")"
 fi
 
@@ -89,35 +99,60 @@ fi
 mkdir -p "$(dirname "$OUT")"
 cat > "$OUT" <<'HDR'
 #!/usr/bin/env bash
-# mochi AVF quick-restore — keys travel ONLY as passphrase-encrypted age
-# blobs; this script contains NO usable private key material. The restore
-# passphrase lives in a SEPARATE Bitwarden entry. GENERATED; never commit.
+# mochi AVF quick-restore — keys travel as age blobs sealed to TWO
+# independent recipients (YubiKey fido2-hmac, restore passphrase); this
+# script contains NO usable private key material. Either one opens them
+# alone: token+touch where the plugin exists, passphrase anywhere.
+# The passphrase lives in a SEPARATE Bitwarden entry. GENERATED; never commit.
 # Run on a fresh mochi AVF Debian shell (as droid or root; sudo needed).
 set -euo pipefail
+
+# Either-or decrypt: try the YubiKey envelope (plugin + token), fall back to
+# the passphrase envelope. Usage: restore_either <fido2blob> <passblob> <out> <label>
+restore_either() {
+  local fido="$1" pass="$2" out="$3" label="$4"
+  if command -v age-plugin-fido2-hmac >/dev/null 2>&1; then
+    echo ">>> $label: touch the YubiKey (or skip to the passphrase with Ctrl-C) <<<"
+    if age -d -i /root/.mochi-yk-identity.txt -o "$out" "$fido" 2>/dev/null; then
+      echo "$label: decrypted via YubiKey"; return 0
+    fi
+    echo "$label: YubiKey path failed — falling back to passphrase"
+  fi
+  age -d -o "$out" "$pass"   # prompts for the restore passphrase
+}
 
 # Stage 0-pre: age (Debian bookworm+/trixie) for the encrypted-key restore.
 sudo apt-get update -qq
 sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq age curl ca-certificates sudo
 
-# Stage 0a: restore mochi's STABLE SSH host key from the passphrase-encrypted
-# blob. This key is the age identity nebula-secrets.service later uses to
-# decrypt the nebula cert/key/ca — no rotation dance, no plaintext in notes.
+# The YubiKey identity handle — inert without the physical token.
+cat > /root/.mochi-yk-identity.txt <<'YKID'
+YK_IDENTITY_PLACEHOLDER
+YKID
+chmod 600 /root/.mochi-yk-identity.txt
+
+# Stage 0a: restore mochi's STABLE SSH host key — YubiKey (touch) OR restore
+# passphrase, whichever is available. This key is the age identity
+# nebula-secrets.service later uses to decrypt the nebula cert/key/ca — no
+# rotation dance, no plaintext in notes.
 sudo install -d -m 755 /etc/ssh
 printf '%s' "HOSTKEY_PUB_PLACEHOLDER" | base64 -d | sudo tee /etc/ssh/ssh_host_ed25519_key.pub >/dev/null
-printf '%s' "HOSTKEY_AGE_PLACEHOLDER" | base64 -d > /tmp/mochi-host-key.age
-age -d -o /tmp/mochi-host-ed25519 /tmp/mochi-host-key.age   # prompts for the restore passphrase
+printf '%s' "HOSTKEY_FIDO_PLACEHOLDER" | base64 -d > /tmp/mochi-host-key.fido2.age
+printf '%s' "HOSTKEY_PASS_PLACEHOLDER" | base64 -d > /tmp/mochi-host-key.pass.age
+restore_either /tmp/mochi-host-key.fido2.age /tmp/mochi-host-key.pass.age /tmp/mochi-host-ed25519 "host key"
 sudo install -m 600 /tmp/mochi-host-ed25519 /etc/ssh/ssh_host_ed25519_key
-rm -f /tmp/mochi-host-ed25519 /tmp/mochi-host-key.age
+rm -f /tmp/mochi-host-ed25519 /tmp/mochi-host-key.*.age
 printf 'host key restored: '; ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub || true
 HDR
 
 if [ "$GITKEY_STASH" = 1 ]; then
   cat >> "$OUT" <<GITSTASH
 # Stage 0b: stash the git identity (installed in Stage final for root + kimb).
-# Encrypted with the SAME restore passphrase; the .pub is public material.
+# Sealed to BOTH recipients (YubiKey / restore passphrase); .pub is public.
 printf '%s' "$GITKEY_PUB_B64" | base64 -d > /root/.mochi-git-key.pub
-printf '%s' "$GITKEY_AGE_B64" | base64 -d > /root/.mochi-git-key.age
-chmod 600 /root/.mochi-git-key.age
+printf '%s' "$GITKEY_FIDO_B64" | base64 -d > /root/.mochi-git-key.fido2.age
+printf '%s' "$GITKEY_AGE_B64" | base64 -d > /root/.mochi-git-key.pass.age
+chmod 600 /root/.mochi-git-key.*.age
 GITSTASH
 fi
 
@@ -136,10 +171,10 @@ else
   echo "nebula0 not up yet — check: sudo systemctl status nebula-mainnet nebula-secrets"
   echo "decrypt errors = .age recipient mismatch: sudo journalctl -u nebula-secrets -b --no-pager"
 fi
-if [ -f /root/.mochi-git-key.age ]; then
+if [ -f /root/.mochi-git-key.pass.age ]; then
   # Install the git identity for root (nix fetches of ssh://git@github.com
   # flake inputs run as root during `system-manager switch`) and for kimb.
-  age -d -o /root/.mochi-git-key /root/.mochi-git-key.age   # restore passphrase (2nd prompt)
+  restore_either /root/.mochi-git-key.fido2.age /root/.mochi-git-key.pass.age /root/.mochi-git-key "git identity"
   sudo install -d -m 700 /root/.ssh /home/kimb/.ssh
   sudo install -m 600 /root/.mochi-git-key /root/.ssh/id_ed25519
   sudo install -m 644 /root/.mochi-git-key.pub /root/.ssh/id_ed25519.pub
@@ -151,7 +186,7 @@ if [ -f /root/.mochi-git-key.age ]; then
   printf 'Host github.com\n  User git\n  IdentityFile ~/.ssh/id_ed25519\n  IdentitiesOnly yes\n' \
     | sudo tee /home/kimb/.ssh/config >/dev/null
   sudo chown kimb:kimb /home/kimb/.ssh/config
-  sudo rm -f /root/.mochi-git-key /root/.mochi-git-key.pub /root/.mochi-git-key.age
+  sudo rm -f /root/.mochi-git-key /root/.mochi-git-key.pub /root/.mochi-git-key.*.age
   echo "git identity installed for root + kimb. GitHub registration (one-time):"
   echo "  $(cat /home/kimb/.ssh/id_ed25519.pub)"
 fi
@@ -160,12 +195,18 @@ FINAL
 
 # Splice the baked blobs into the placeholders (keeps plaintext out of every
 # heredoc above; only ciphertext + public keys are embedded in the output).
-HOSTKEY_AGE_B64="$HOSTKEY_AGE_B64" HOSTKEY_PUB_B64="$HOSTKEY_PUB_B64" python3 - "$OUT" <<'SPLICE'
+HOSTKEY_AGE_B64="$HOSTKEY_AGE_B64" HOSTKEY_FIDO_B64="$HOSTKEY_FIDO_B64" \
+HOSTKEY_PUB_B64="$HOSTKEY_PUB_B64" GITKEY_FIDO_B64="$GITKEY_FIDO_B64" \
+YK_IDENTITY_TEXT="$(cat "$YK_IDENTITY")" python3 - "$OUT" <<'SPLICE'
 import os, sys
 path = sys.argv[1]
 s = open(path).read()
-s = s.replace("HOSTKEY_AGE_PLACEHOLDER", os.environ["HOSTKEY_AGE_B64"])
-s = s.replace("HOSTKEY_PUB_PLACEHOLDER", os.environ["HOSTKEY_PUB_B64"])
+for var, ph in [("HOSTKEY_AGE_B64","HOSTKEY_PASS_PLACEHOLDER"),
+                ("HOSTKEY_FIDO_B64","HOSTKEY_FIDO_PLACEHOLDER"),
+                ("HOSTKEY_PUB_B64","HOSTKEY_PUB_PLACEHOLDER"),
+                ("GITKEY_FIDO_B64","GITKEY_FIDO_PLACEHOLDER"),
+                ("YK_IDENTITY_TEXT","YK_IDENTITY_PLACEHOLDER")]:
+    s = s.replace(ph, os.environ[var])
 open(path, "w").write(s)
 SPLICE
 chmod 600 "$OUT"
