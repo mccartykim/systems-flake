@@ -49,21 +49,41 @@ The script is idempotent and re-runnable. It does, in order:
 ## Post-install: nebula comes up without a key rotation
 
 The quick-restore script (`scripts/mochi-restore-bake.sh`) pre-installs
-mochi's **STABLE** SSH host key from `flake_keys`. That key is the age
-identity `nebula-secrets.service` uses to `age -d -i
+mochi's **STABLE** SSH host key from `flake_keys` — but encrypted: the key
+travels ONLY as an age blob sealed to a restore passphrase chosen at bake
+time, so the Bitwarden note carries **no usable private key material**.
+The passphrase lives in a SEPARATE Bitwarden entry (the note alone is
+inert; the passphrase alone is inert). At restore, the script prompts for
+it twice (host key + git identity).
+
+That key is the age identity `nebula-secrets.service` uses to `age -d -i
 /etc/ssh/ssh_host_ed25519_key` the Nebula cert/key/ca from the public `.age`
 blobs that system-manager deploys to `/etc/nebula/mainnet/encrypted/`. So
 after `system-manager switch --flake .#mochi` + `systemctl restart
 nebula-secrets`, nebula comes up with NO `ssh-keygen -A` /
 `generate-nebula-certs` / `agenix-rekey` ceremony — the host's identity
-survives AVF wipes, and only the SSH host key (the one secret) is baked
-into the Bitwarden note.
+survives AVF wipes, and only the SSH host key is baked (sealed).
 
-Prerequisite (already done in this offshoot): `secrets/nebula-ca.age` must
-be encrypted to mochi's ssh pubkey (the cert/key `.age` already are).
-`ca.age` is re-encrypted to the full registry `hostKeys` + bootstrap
-superset — `ca.crt` is the CA's *public* cert, so re-encrypting it from
-`flake_keys` plaintext needs no secret.
+The bake script ALSO seals mochi's **git identity**
+(`flake_keys/ssh/mochi_git_ed25519_key`) into the note — installed for root
+and kimb so nix can fetch the `ssh://git@github.com` flake inputs
+(organisms, blog, knitwork, …) during the switch. Register that key on
+GitHub ONCE (Settings → SSH keys); re-bakes reuse the same key, so no
+re-registration after wipes. If you instead run a bare
+`nix run ...#mochi-installer`, a fresh git key is generated and must be
+registered after every wipe.
+
+flake_keys upgrade path: store the host key as `mochi_host_ed25519_key.age`
+(encrypted to your YubiKey via age-plugin-yubikey); the bake script prefers
+it and decrypts with `HOST_KEY_AGE_IDENTITY` at bake time — then flake_keys
+holds no plaintext host key either.
+
+Prerequisite (already done): `secrets/nebula-ca.age` is encrypted to
+mochi's ssh pubkey (cert/key `.age` too — re-sealed 2026-08 to the
+post-rotation pair from flake_keys; the superseded pair is stashed as
+`flake_keys/nebula/mochi-superseded-2026-08-02.*`). `ca.crt` is the CA's
+*public* cert, so re-encrypting it from `flake_keys` plaintext needs no
+secret.
 
 The rotation dance below is only needed if you bootstrap WITHOUT the
 restore script (e.g. a bare `nix run ...#mochi-installer`), which

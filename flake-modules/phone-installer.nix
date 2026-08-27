@@ -124,6 +124,15 @@
           | sudo tee /home/kimb/.ssh/authorized_keys >/dev/null
         sudo chown kimb:kimb /home/kimb/.ssh/authorized_keys
         sudo chmod 600 /home/kimb/.ssh/authorized_keys
+        # Git identity for GitHub (ssh:// flake inputs are fetched as root
+        # during the system-manager switch). The quick-restore script stashes
+        # one at /root/.mochi-git-key — prefer it so GitHub registration is a
+        # ONE-TIME step. Bare installs (no bake) generate a fresh key that
+        # must be (re-)registered after every wipe.
+        if [ ! -f /root/.mochi-git-key ] && [ ! -f /home/kimb/.ssh/id_ed25519 ]; then
+          sudo ssh-keygen -t ed25519 -N "" -f /root/.mochi-git-key \
+            -C "$HOST_NAME AVF git identity (generated, not registered)" -q
+        fi
         # Apply the hardening to any already-running sshd (openssh-server's
         # postinst auto-starts it; restart picks up the drop-in).
         sudo systemctl restart ssh 2>/dev/null \
@@ -201,7 +210,11 @@
              compositor — the Terminal display + touchpad-via-screen combo
              that actually works (KDE/XFCE do not).
 
-          3. Verify nebula:  nebula-cert print -path /run/nebula-secrets/*/*.crt
+          3. If /root/.mochi-git-key was generated (not restored from the
+             quick-restore script), register its pubkey on GitHub
+             (Settings → SSH keys) so the ssh:// flake inputs fetch.
+
+          4. Verify nebula:  nebula-cert print -path /run/nebula-secrets/*/*.crt
                               ip -4 addr show nebula0
         NEXTSTEPS
       '';
