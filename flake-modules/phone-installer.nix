@@ -117,13 +117,26 @@
         if id droid >/dev/null 2>&1; then
           sudo usermod -L droid 2>/dev/null || true
         fi
-        # Inbound keys are PUBLIC (github.com/mccartykim.keys) — fetched at
-        # install time so re-runs stay current.
+        # Inbound keys are PUBLIC. Order of preference: (1) keys stashed by
+        # the quick-restore header (baked at bake time — zero network
+        # dependency), (2) live fetch from github with retries. Never a hard
+        # failure: sshd is key-only ("nopw" is absolute), so if neither
+        # source lands, warn loudly — console access still works.
         sudo install -d -m 700 -o kimb -g kimb /home/kimb/.ssh
-        curl -fsSL https://github.com/mccartykim.keys \
-          | sudo tee /home/kimb/.ssh/authorized_keys >/dev/null
-        sudo chown kimb:kimb /home/kimb/.ssh/authorized_keys
-        sudo chmod 600 /home/kimb/.ssh/authorized_keys
+        if [ -s /tmp/mochi-restore/authorized_keys ]; then
+          sudo install -m 600 -o kimb -g kimb /tmp/mochi-restore/authorized_keys \
+            /home/kimb/.ssh/authorized_keys
+          echo "authorized_keys: baked keys installed"
+        elif curl -fsSL --retry 3 --retry-delay 2 --max-time 30 \
+             https://github.com/mccartykim.keys \
+             | sudo tee /home/kimb/.ssh/authorized_keys >/dev/null; then
+          sudo chmod 600 /home/kimb/.ssh/authorized_keys
+          echo "authorized_keys: fetched from github"
+        else
+          echo "!!! WARNING: no authorized_keys source available — ssh stays" >&2
+          echo "!!! locked out (nopw) until keys are added manually via console:" >&2
+          echo "!!!   curl -fsSL https://github.com/mccartykim.keys | sudo tee /home/kimb/.ssh/authorized_keys" >&2
+        fi
         # Git identity for GitHub (ssh:// flake inputs are fetched as root
         # during the system-manager switch). The quick-restore script stashes
         # one at /root/.mochi-git-key — prefer it so GitHub registration is a

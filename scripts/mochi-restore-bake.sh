@@ -44,6 +44,13 @@ if [ -z "$FIDO_PLUGIN" ]; then
 fi
 YK_IDENTITY="${YK_IDENTITY:-$FK/ssh/mochi_host_yubikey_identity.txt}"
 
+# Owner's PUBLIC keys — baked so authorized_keys provisioning never depends
+# on restore-time network. Refreshed from github at bake time; flake_keys
+# copy as fallback.
+OWNER_KEYS="$(curl -fsSL --retry 2 --max-time 20 https://github.com/mccartykim.keys 2>/dev/null || true)"
+[ -n "$OWNER_KEYS" ] || OWNER_KEYS="$(cat "$FK/ssh/authorized_keys" 2>/dev/null || true)"
+[ -n "$OWNER_KEYS" ] || { echo "no authorized_keys source (github unreachable, no flake_keys/ssh/authorized_keys)" >&2; exit 1; }
+
 # --- gather the host key (prefer the YubiKey-sealed copy) ------------------
 tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT; chmod 700 "$tmp"
 if [ -f "$FK/ssh/mochi_host_ed25519_key.age" ]; then
@@ -119,6 +126,9 @@ printf '%s' "HOSTKEY_PASS_PLACEHOLDER" | base64 -d > /tmp/mochi-restore/host-key
 cat > /tmp/mochi-restore/yk-identity.txt <<'YKID'
 YK_IDENTITY_PLACEHOLDER
 YKID
+cat > /tmp/mochi-restore/authorized_keys <<'OKEYS'
+AUTHORIZED_KEYS_PLACEHOLDER
+OKEYS
 HDR
 
 if [ "$GITKEY_STASH" = 1 ]; then
@@ -176,7 +186,7 @@ FINAL
 # heredoc above; only ciphertext + public keys are embedded in the output).
 HOSTKEY_AGE_B64="$HOSTKEY_AGE_B64" HOSTKEY_FIDO_B64="$HOSTKEY_FIDO_B64" \
 HOSTKEY_PUB_B64="$HOSTKEY_PUB_B64" GITKEY_FIDO_B64="$GITKEY_FIDO_B64" \
-YK_IDENTITY_TEXT="$(cat "$YK_IDENTITY")" python3 - "$OUT" <<'SPLICE'
+YK_IDENTITY_TEXT="$(cat "$YK_IDENTITY")" OWNER_KEYS_TEXT="$OWNER_KEYS" python3 - "$OUT" <<'SPLICE'
 import os, sys
 path = sys.argv[1]
 s = open(path).read()
@@ -184,7 +194,8 @@ for var, ph in [("HOSTKEY_AGE_B64","HOSTKEY_PASS_PLACEHOLDER"),
                 ("HOSTKEY_FIDO_B64","HOSTKEY_FIDO_PLACEHOLDER"),
                 ("HOSTKEY_PUB_B64","HOSTKEY_PUB_PLACEHOLDER"),
                 ("GITKEY_FIDO_B64","GITKEY_FIDO_PLACEHOLDER"),
-                ("YK_IDENTITY_TEXT","YK_IDENTITY_PLACEHOLDER")]:
+                ("YK_IDENTITY_TEXT","YK_IDENTITY_PLACEHOLDER"),
+                ("OWNER_KEYS_TEXT","AUTHORIZED_KEYS_PLACEHOLDER")]:
     s = s.replace(ph, os.environ[var])
 open(path, "w").write(s)
 SPLICE
