@@ -130,6 +130,7 @@
         # failure: sshd is key-only ("nopw" is absolute), so if neither
         # source lands, warn loudly — console access still works.
         install -d -m 700 -o kimb -g kimb /home/kimb/.ssh
+        rm -f /home/kimb/.ssh/authorized_keys
         if [ -s /tmp/mochi-restore/authorized_keys ]; then
           install -m 600 -o kimb -g kimb /tmp/mochi-restore/authorized_keys \
             /home/kimb/.ssh/authorized_keys
@@ -159,15 +160,19 @@
           || systemctl restart sshd 2>/dev/null \
           || true
 
-        # Stage 2: Determinate Nix installer (multi-user) if nix is absent.
-        log "Stage 2: Nix"
+        # Stage 2: STOCK Nix installer (multi-user) if nix is absent.
+        # The Determinate installer's erofs+overlay store setup fails on the
+        # AVF pVM kernel ("operation not supported"); the stock daemon path
+        # is the boring one that works there.
+        log "Stage 2: Nix (stock, multi-user)"
         if ! command -v nix >/dev/null 2>&1; then
           curl --proto '=https' --tlsv1.2 -sSf -L \
-            https://install.determinate.systems/nix \
-            | sh -s -- install --determinate --no-confirm
+            https://nixos.org/nix/install -o /tmp/nix-install.sh
+          sh /tmp/nix-install.sh --daemon --no-channel-add
           # Source the nix profile in the current shell so later stages see it.
           # shellcheck disable=SC1091
-          . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
+          . /etc/profile.d/nix.sh 2>/dev/null || true
+          export PATH="/nix/var/nix/profiles/default/bin:$PATH"
         else
           echo "nix already installed at $(command -v nix)"
         fi
@@ -190,6 +195,9 @@
         if ! grep -q '^!include nix.custom.conf' /etc/nix/nix.conf 2>/dev/null; then
           echo '!include nix.custom.conf' | tee -a /etc/nix/nix.conf >/dev/null
         fi
+                tee /etc/profile.d/nix.sh >/dev/null <<'PROF'
+          [ -e /nix/var/nix/profiles/default/etc/profile.d/nix.sh ] && . /nix/var/nix/profiles/default/etc/profile.d/nix.sh
+        PROF
         systemctl restart nix-daemon || true
 
         # Stage 3b: install the STABLE host key + git identity stashed by
@@ -198,17 +206,29 @@
         # masters). Bare installs skip: fresh keys are generated in Stage 1b.
         if [ -f /tmp/mochi-restore/host-key ]; then
           log "Stage 3b: install stabled host key + git identity"
-          install -m 600 /tmp/mochi-restore/host-key /etc/ssh/ssh_host_ed25519_key
-          install -m 644 /tmp/mochi-restore/host-key.pub /etc/ssh/ssh_host_ed25519_key.pub
+          install -d -m 755 /etc/ssh
+          rm -f /etc/ssh/ssh_host_ed25519_key /etc/ssh/ssh_host_ed25519_key.pub
+          cat /tmp/mochi-restore/host-key > /etc/ssh/ssh_host_ed25519_key
+          cat /tmp/mochi-restore/host-key.pub > /etc/ssh/ssh_host_ed25519_key.pub
+          chmod 600 /etc/ssh/ssh_host_ed25519_key
+          chmod 644 /etc/ssh/ssh_host_ed25519_key.pub
           printf 'host key installed: '; ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub || true
           if [ -f /tmp/mochi-restore/git-key ]; then
-            install -m 600 /tmp/mochi-restore/git-key /root/.mochi-git-key
-            install -m 644 /tmp/mochi-restore/git-key.pub /root/.mochi-git-key.pub
+            rm -f /root/.mochi-git-key /root/.mochi-git-key.pub
+            cat /tmp/mochi-restore/git-key > /root/.mochi-git-key
+            cat /tmp/mochi-restore/git-key.pub > /root/.mochi-git-key.pub
+            chmod 600 /root/.mochi-git-key
           fi
+        else
+          echo "WARNING: no stashed host key (bare install?) — a throwaway key will be generated" >&2
         fi
 
         # Stage 4: clone (or fast-forward) the systems-flake repo.
         log "Stage 4: systems-flake repo"
+        if [ -d "$REPO_DIR" ] && [ ! -d "$REPO_DIR/.git" ]; then
+          echo "$REPO_DIR exists but is not a git repo — removing and re-cloning"
+          rm -rf "$REPO_DIR"
+        fi
         if [ -d "$REPO_DIR/.git" ]; then
           git -C "$REPO_DIR" fetch --all --prune
           git -C "$REPO_DIR" pull --ff-only

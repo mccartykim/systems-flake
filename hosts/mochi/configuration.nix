@@ -124,7 +124,8 @@ in {
               - port: any
                 proto: any
                 group: mobile
-              - port: icmp
+              # ICMP: nebula wants port any/0 — "port: icmp" is a parse error
+              - port: any
                 proto: icmp
                 host: any
         '';
