@@ -101,7 +101,12 @@ cat > "$OUT" <<'HDR'
 # alone: the key-restore stage (Stage 3b, inside a nix shell) tries the
 # YubiKey (USB-OTG, touch) first and falls back to the passphrase. The
 # passphrase lives in a SEPARATE Bitwarden entry. GENERATED; never commit.
-# Run on a fresh mochi AVF Debian shell (as droid or root; sudo needed).
+# Run as ROOT on the AVF console (sudo is broken on the pVM kernel:
+# "operation not supported" — everything here runs root-native).
+if [ "$(id -u)" != "0" ]; then
+  echo "ERROR: run as root (the AVF console user) — sudo is unsupported here" >&2
+  exit 1
+fi
 set -euo pipefail
 umask 077
 
@@ -132,35 +137,35 @@ tail -n +2 "$INSTALLER" >> "$OUT"
 
 cat >> "$OUT" <<'FINAL'
 # Stage final: restart nebula against the restored host key + verify.
-sudo systemctl restart nebula-secrets.service 2>/dev/null || true
-sudo systemctl restart nebula-mainnet.service 2>/dev/null || true
+systemctl restart nebula-secrets.service 2>/dev/null || true
+systemctl restart nebula-mainnet.service 2>/dev/null || true
 sleep 2
 if ip -4 addr show nebula0 >/dev/null 2>&1; then
   echo "mochi is on the mesh: $(ip -4 -o addr show nebula0 | awk '{print $4}')"
 else
-  echo "nebula0 not up yet — check: sudo systemctl status nebula-mainnet nebula-secrets"
-  echo "decrypt errors = .age recipient mismatch: sudo journalctl -u nebula-secrets -b --no-pager"
+  echo "nebula0 not up yet — check: systemctl status nebula-mainnet nebula-secrets"
+  echo "decrypt errors = .age recipient mismatch: journalctl -u nebula-secrets -b --no-pager"
 fi
 if [ -f /root/.mochi-git-key ]; then
   # Install the git identity for root (nix fetches of ssh://git@github.com
   # flake inputs run as root during `system-manager switch`) and for kimb.
   # Stage 3b already decrypted it (or a bare install generated it).
-  sudo install -d -m 700 /root/.ssh /home/kimb/.ssh
-  sudo install -m 600 /root/.mochi-git-key /root/.ssh/id_ed25519
-  sudo install -m 644 /root/.mochi-git-key.pub /root/.ssh/id_ed25519.pub
-  sudo install -m 600 /root/.mochi-git-key /home/kimb/.ssh/id_ed25519
+  install -d -m 700 /root/.ssh /home/kimb/.ssh
+  install -m 600 /root/.mochi-git-key /root/.ssh/id_ed25519
+  install -m 644 /root/.mochi-git-key.pub /root/.ssh/id_ed25519.pub
+  install -m 600 /root/.mochi-git-key /home/kimb/.ssh/id_ed25519
   if [ -f /tmp/mochi-restore/git-key.pub ]; then
-    sudo install -m 644 /tmp/mochi-restore/git-key.pub /home/kimb/.ssh/id_ed25519.pub
+    install -m 644 /tmp/mochi-restore/git-key.pub /home/kimb/.ssh/id_ed25519.pub
   else
-    sudo install -m 644 /root/.mochi-git-key.pub /home/kimb/.ssh/id_ed25519.pub
+    install -m 644 /root/.mochi-git-key.pub /home/kimb/.ssh/id_ed25519.pub
   fi
-  sudo chown -R kimb:kimb /home/kimb/.ssh
+  chown -R kimb:kimb /home/kimb/.ssh
   printf 'Host github.com\n  User git\n  IdentityFile ~/.ssh/id_ed25519\n  IdentitiesOnly yes\n' \
-    | sudo tee /root/.ssh/config >/dev/null
+    | tee /root/.ssh/config >/dev/null
   printf 'Host github.com\n  User git\n  IdentityFile ~/.ssh/id_ed25519\n  IdentitiesOnly yes\n' \
-    | sudo tee /home/kimb/.ssh/config >/dev/null
-  sudo chown kimb:kimb /home/kimb/.ssh/config
-  sudo rm -rf /tmp/mochi-restore /root/.mochi-git-key /root/.mochi-git-key.pub
+    | tee /home/kimb/.ssh/config >/dev/null
+  chown kimb:kimb /home/kimb/.ssh/config
+  rm -rf /tmp/mochi-restore /root/.mochi-git-key /root/.mochi-git-key.pub
   echo "git identity installed for root + kimb. GitHub registration (one-time):"
   echo "  $(cat /home/kimb/.ssh/id_ed25519.pub)"
 fi

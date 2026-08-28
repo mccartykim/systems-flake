@@ -73,6 +73,12 @@
         set -euo pipefail
 
         HOST_NAME=${lib.escapeShellArg hostName}
+        # AVF console = root; sudo is broken on the pVM kernel (seccomp/ptrace
+        # unsupported → "operation not supported"), so everything runs as root.
+        if [ "$(id -u)" != "0" ]; then
+          echo "ERROR: run as root (the AVF console user) — sudo is unsupported here" >&2
+          exit 1
+        fi
         REPO_URL=${lib.escapeShellArg repoUrl}
         REPO_DIR="''${HOME}/systems-flake"
         ENABLE_ZED=${
@@ -86,9 +92,9 @@
         # Stage 1: apt prerequisites + weston (no desktop meta-packages: only
         # barebones weston behaves on the AVF Terminal display).
         log "Stage 1: apt packages"
-        sudo apt-get update
+        apt-get update
         # shellcheck disable=SC2086
-        sudo DEBIAN_FRONTEND=noninteractive apt-get install -y ${aptList}
+        DEBIAN_FRONTEND=noninteractive apt-get install -y ${aptList}
 
         # Stage 1b: admin user + sshd nopw hardening. Runs BEFORE anything
         # can start sshd so the "ssh MUST be nopw" guarantee holds from the
@@ -96,47 +102,47 @@
         # to get locked, password login is impossible and only `kimb` (with
         # the owner's pubkeys) may connect. Idempotent across wipes/re-runs.
         log "Stage 1b: admin user + sshd nopw"
-        sudo mkdir -p /etc/ssh/sshd_config.d
+        mkdir -p /etc/ssh/sshd_config.d
         printf '%s\n' \
           'PasswordAuthentication no' \
           'KbdInteractiveAuthentication no' \
           'PermitRootLogin no' \
           'PubkeyAuthentication yes' \
           'AllowUsers kimb' \
-          | sudo tee /etc/ssh/sshd_config.d/00-mochi-nopw.conf >/dev/null
+          | tee /etc/ssh/sshd_config.d/00-mochi-nopw.conf >/dev/null
         if ! id kimb >/dev/null 2>&1; then
-          sudo useradd -m -s /bin/bash kimb
+          useradd -m -s /bin/bash kimb
         fi
         # Passwordless sudo for kimb — mirrors the AVF default account so
         # restore/ops scripts behave identically under either user.
         printf '%s\n' 'kimb ALL=(ALL) NOPASSWD:ALL' \
-          | sudo tee /etc/sudoers.d/90-kimb >/dev/null
-        sudo chmod 440 /etc/sudoers.d/90-kimb
+          | tee /etc/sudoers.d/90-kimb >/dev/null
+        chmod 440 /etc/sudoers.d/90-kimb
         # Lock the default account's password (pubkey/sudo still work; there
         # simply is no password to brute-force). Best-effort: some AVF
         # images may not have a `droid` user to lock.
         if id droid >/dev/null 2>&1; then
-          sudo usermod -L droid 2>/dev/null || true
+          usermod -L droid 2>/dev/null || true
         fi
         # Inbound keys are PUBLIC. Order of preference: (1) keys stashed by
         # the quick-restore header (baked at bake time — zero network
         # dependency), (2) live fetch from github with retries. Never a hard
         # failure: sshd is key-only ("nopw" is absolute), so if neither
         # source lands, warn loudly — console access still works.
-        sudo install -d -m 700 -o kimb -g kimb /home/kimb/.ssh
+        install -d -m 700 -o kimb -g kimb /home/kimb/.ssh
         if [ -s /tmp/mochi-restore/authorized_keys ]; then
-          sudo install -m 600 -o kimb -g kimb /tmp/mochi-restore/authorized_keys \
+          install -m 600 -o kimb -g kimb /tmp/mochi-restore/authorized_keys \
             /home/kimb/.ssh/authorized_keys
           echo "authorized_keys: baked keys installed"
         elif curl -fsSL --retry 3 --retry-delay 2 --max-time 30 \
              https://github.com/mccartykim.keys \
-             | sudo tee /home/kimb/.ssh/authorized_keys >/dev/null; then
-          sudo chmod 600 /home/kimb/.ssh/authorized_keys
+             | tee /home/kimb/.ssh/authorized_keys >/dev/null; then
+          chmod 600 /home/kimb/.ssh/authorized_keys
           echo "authorized_keys: fetched from github"
         else
           echo "!!! WARNING: no authorized_keys source available — ssh stays" >&2
           echo "!!! locked out (nopw) until keys are added manually via console:" >&2
-          echo "!!!   curl -fsSL https://github.com/mccartykim.keys | sudo tee /home/kimb/.ssh/authorized_keys" >&2
+          echo "!!!   curl -fsSL https://github.com/mccartykim.keys | tee /home/kimb/.ssh/authorized_keys" >&2
         fi
         # Git identity for GitHub (ssh:// flake inputs are fetched as root
         # during the system-manager switch). The quick-restore script stashes
@@ -144,13 +150,13 @@
         # ONE-TIME step. Bare installs (no bake) generate a fresh key that
         # must be (re-)registered after every wipe.
         if [ ! -f /root/.mochi-git-key ] && [ ! -f /home/kimb/.ssh/id_ed25519 ]; then
-          sudo ssh-keygen -t ed25519 -N "" -f /root/.mochi-git-key \
+          ssh-keygen -t ed25519 -N "" -f /root/.mochi-git-key \
             -C "$HOST_NAME AVF git identity (generated, not registered)" -q
         fi
         # Apply the hardening to any already-running sshd (openssh-server's
         # postinst auto-starts it; restart picks up the drop-in).
-        sudo systemctl restart ssh 2>/dev/null \
-          || sudo systemctl restart sshd 2>/dev/null \
+        systemctl restart ssh 2>/dev/null \
+          || systemctl restart sshd 2>/dev/null \
           || true
 
         # Stage 2: Determinate Nix installer (multi-user) if nix is absent.
@@ -170,8 +176,10 @@
         # Determinate Nix manages /etc/nix/nix.conf itself; write our extras
         # to nix.custom.conf and reference it via extra-trusted-substituters.
         log "Stage 3: nix.conf"
-        sudo mkdir -p /etc/nix
-        sudo tee /etc/nix/nix.custom.conf >/dev/null <<EOF
+        mkdir -p /etc/nix
+        tee /etc/nix/nix.custom.conf >/dev/null <<EOF
+                # AVF pVM kernel: sandboxing syscalls unsupported ("operation not supported")
+        sandbox = false
         experimental-features = nix-command flakes
         extra-substituters = ${substituterUrls}
         extra-trusted-substituters = ${substituterUrls}
@@ -179,10 +187,10 @@
         EOF
         # Make sure the main config includes our extras. Determinate already
         # writes extra-trusted-users; we just need to ensure include works.
-        if ! sudo grep -q '^!include nix.custom.conf' /etc/nix/nix.conf 2>/dev/null; then
-          echo '!include nix.custom.conf' | sudo tee -a /etc/nix/nix.conf >/dev/null
+        if ! grep -q '^!include nix.custom.conf' /etc/nix/nix.conf 2>/dev/null; then
+          echo '!include nix.custom.conf' | tee -a /etc/nix/nix.conf >/dev/null
         fi
-        sudo systemctl restart nix-daemon || true
+        systemctl restart nix-daemon || true
 
         # Stage 3b: install the STABLE host key + git identity stashed by
         # the quick-restore header (PLAINTEXT by design — the bootstrap
@@ -190,12 +198,12 @@
         # masters). Bare installs skip: fresh keys are generated in Stage 1b.
         if [ -f /tmp/mochi-restore/host-key ]; then
           log "Stage 3b: install stabled host key + git identity"
-          sudo install -m 600 /tmp/mochi-restore/host-key /etc/ssh/ssh_host_ed25519_key
-          sudo install -m 644 /tmp/mochi-restore/host-key.pub /etc/ssh/ssh_host_ed25519_key.pub
-          printf 'host key installed: '; sudo ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub || true
+          install -m 600 /tmp/mochi-restore/host-key /etc/ssh/ssh_host_ed25519_key
+          install -m 644 /tmp/mochi-restore/host-key.pub /etc/ssh/ssh_host_ed25519_key.pub
+          printf 'host key installed: '; ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub || true
           if [ -f /tmp/mochi-restore/git-key ]; then
-            sudo install -m 600 /tmp/mochi-restore/git-key /root/.mochi-git-key
-            sudo install -m 644 /tmp/mochi-restore/git-key.pub /root/.mochi-git-key.pub
+            install -m 600 /tmp/mochi-restore/git-key /root/.mochi-git-key
+            install -m 644 /tmp/mochi-restore/git-key.pub /root/.mochi-git-key.pub
           fi
         fi
 
@@ -215,14 +223,14 @@
         if [ "''${MOCHI_RESTORE_TEST:-0}" = "1" ]; then
           log "Stage 5 (TEST MODE): system-manager eval assertion"
           NIX_BIN="$(command -v nix)"
-          sudo "$NIX_BIN" eval --impure --raw \
+          "$NIX_BIN" eval --impure --raw \
             --extra-experimental-features 'nix-command flakes' \            ".#systemConfigs.$HOST_NAME.config.systemd.services.nebula-mainnet.description"
           echo "test-mode: system-manager config evals OK"
         else
         log "Stage 5: system-manager switch"
         cd "$REPO_DIR"
         NIX_BIN="$(command -v nix)"
-        sudo "$NIX_BIN" run --extra-experimental-features 'nix-command flakes' \
+        "$NIX_BIN" run --extra-experimental-features 'nix-command flakes' \
           github:numtide/system-manager -- switch --flake ".#$HOST_NAME"
 
         fi
@@ -242,7 +250,7 @@
              pre-bakes the STABLE host key, which is also the age identity
              nebula-secrets.service decrypts with). Only for a BARE install
              (no pre-baked key):
-               sudo ssh-keygen -A
+               ssh-keygen -A
                cat /etc/ssh/ssh_host_ed25519_key.pub
              then update hosts/nebula-registry.nix, re-encrypt the nebula
              .age secrets, redeploy, and rotate any baked copies.
@@ -327,24 +335,24 @@
         HDR
         cat >> "$OUT" <<STAGE0
         # Stage 0: pre-staged Nebula secrets → nebula up with NO SSH-key rotation.
-        sudo install -d -m 700 /run/nebula-secrets/mainnet
-        printf '%s' "''${CA_B64}" | base64 -d | sudo tee /run/nebula-secrets/mainnet/ca.crt >/dev/null
-        printf '%s' "''${CERT_B64}" | base64 -d | sudo tee /run/nebula-secrets/mainnet/mochi.crt >/dev/null
-        printf '%s' "''${KEY_B64}" | base64 -d | sudo tee /run/nebula-secrets/mainnet/mochi.key >/dev/null
-        sudo chmod 600 /run/nebula-secrets/mainnet/*
+        install -d -m 700 /run/nebula-secrets/mainnet
+        printf '%s' "''${CA_B64}" | base64 -d | tee /run/nebula-secrets/mainnet/ca.crt >/dev/null
+        printf '%s' "''${CERT_B64}" | base64 -d | tee /run/nebula-secrets/mainnet/mochi.crt >/dev/null
+        printf '%s' "''${KEY_B64}" | base64 -d | tee /run/nebula-secrets/mainnet/mochi.key >/dev/null
+        chmod 600 /run/nebula-secrets/mainnet/*
         STAGE0
         # Append the mochi-installer body (drop its nix-store shebang; the body is
         # portable bash using only system-PATH tools — apt-get/curl/git/sudo).
         tail -n +2 "${installerBin}" >> "$OUT"
         cat >> "$OUT" <<'FINAL'
         # Stage final: (re)start nebula against the pre-staged keys + verify.
-        sudo systemctl restart nebula-secrets.service 2>/dev/null || true
-        sudo systemctl restart nebula-mainnet.service 2>/dev/null || true
+        systemctl restart nebula-secrets.service 2>/dev/null || true
+        systemctl restart nebula-mainnet.service 2>/dev/null || true
         sleep 2
         if ip -4 addr show nebula0 >/dev/null 2>&1; then
           echo "mochi is on the mesh: $(ip -4 -o addr show nebula0 | awk '{print $4}')"
         else
-          echo "nebula0 not up yet — check: sudo systemctl status nebula-mainnet nebula-secrets"
+          echo "nebula0 not up yet — check: systemctl status nebula-mainnet nebula-secrets"
         fi
         FINAL
         chmod 600 "$OUT"
