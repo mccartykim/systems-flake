@@ -184,47 +184,19 @@
         fi
         sudo systemctl restart nix-daemon || true
 
-        # Stage 3b: restore the STABLE host key + git identity (quick-restore
-        # flow only — bare installs skip). Runs INSIDE a nix shell so the
-        # fido2 plugin needs no Debian packaging: with the YubiKey on
-        # USB-OTG, decryption is just a touch; without it, the passphrase.
-        # Either envelope opens the keys alone.
-        if [ -f /tmp/mochi-restore/host-key.fido2.age ] || [ -f /tmp/mochi-restore/host-key.pass.age ]; then
-          log "Stage 3b: restore keys (YubiKey or passphrase)"
-          # Runs INSIDE a nix shell so the fido2 plugin needs no Debian
-          # packaging: with the YubiKey on USB-OTG, decryption is a touch;
-          # without it, the passphrase. Either envelope opens the keys alone.
-          #!/usr/bin/env bash
-          set -euo pipefail
-          restore_either() {
-            local fido="$1" pass="$2" out="$3" label="$4"
-            if command -v age-plugin-fido2-hmac >/dev/null 2>&1 && [ -f /tmp/mochi-restore/yk-identity.txt ]; then
-              echo ">>> $label: touch the YubiKey <<<"
-              if age -d -i /tmp/mochi-restore/yk-identity.txt -o "$out" "$fido" 2>/dev/null; then
-                echo "$label: decrypted via YubiKey"; return 0
-              fi
-              echo "$label: YubiKey path failed - falling back to passphrase"
-            fi
-            age -d -o "$out" "$pass"   # prompts for the restore passphrase
-          }
-          restore_either /tmp/mochi-restore/host-key.fido2.age /tmp/mochi-restore/host-key.pass.age /tmp/mochi-host-ed25519 "host key"
-          install -m 600 /tmp/mochi-host-ed25519 /etc/ssh/ssh_host_ed25519_key
-          install -m 644 /tmp/mochi-restore/host-key.pub /etc/ssh/ssh_host_ed25519_key.pub
-          printf 'host key restored: '; ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub || true
-          if [ -f /tmp/mochi-restore/git-key.fido2.age ] || [ -f /tmp/mochi-restore/git-key.pass.age ]; then
-            restore_either /tmp/mochi-restore/git-key.fido2.age /tmp/mochi-restore/git-key.pass.age /root/.mochi-git-key "git identity"
-            chmod 600 /root/.mochi-git-key
+        # Stage 3b: install the STABLE host key + git identity stashed by
+        # the quick-restore header (PLAINTEXT by design — the bootstrap
+        # script lives in a PRIVATE repo; flake_keys keeps the YubiKey-sealed
+        # masters). Bare installs skip: fresh keys are generated in Stage 1b.
+        if [ -f /tmp/mochi-restore/host-key ]; then
+          log "Stage 3b: install stabled host key + git identity"
+          sudo install -m 600 /tmp/mochi-restore/host-key /etc/ssh/ssh_host_ed25519_key
+          sudo install -m 644 /tmp/mochi-restore/host-key.pub /etc/ssh/ssh_host_ed25519_key.pub
+          printf 'host key installed: '; sudo ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub || true
+          if [ -f /tmp/mochi-restore/git-key ]; then
+            sudo install -m 600 /tmp/mochi-restore/git-key /root/.mochi-git-key
+            sudo install -m 644 /tmp/mochi-restore/git-key.pub /root/.mochi-git-key.pub
           fi
-        KRESTORE
-          # Root: the fido2 token needs /dev/hidraw; nix shell brings age +
-          # the plugin from the aarch64 binary cache. If the nix shell
-          # itself fails on-device, retry with the apt-provided age
-          # (passphrase path only — no plugin, no token).
-          if ! sudo nix shell nixpkgs#age nixpkgs#age-plugin-fido2-hmac -c bash /tmp/mochi-key-restore.sh; then
-            echo "nix shell decrypt failed — retrying with system age (passphrase path)"
-            sudo bash /tmp/mochi-key-restore.sh
-          fi
-          rm -f /tmp/mochi-key-restore.sh /tmp/mochi-host-ed25519
         fi
 
         # Stage 4: clone (or fast-forward) the systems-flake repo.

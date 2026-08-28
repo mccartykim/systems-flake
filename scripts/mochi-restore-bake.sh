@@ -120,24 +120,20 @@ umask 077
 # Actual decryption happens in Stage 3b, inside a nix shell (age + fido2
 # plugin from the aarch64 binary cache).
 install -d -m 700 /tmp/mochi-restore
+printf '%s' "HOSTKEY_B64_PLACEHOLDER"   | base64 -d > /tmp/mochi-restore/host-key
 printf '%s' "HOSTKEY_PUB_PLACEHOLDER"  | base64 -d > /tmp/mochi-restore/host-key.pub
-printf '%s' "HOSTKEY_FIDO_PLACEHOLDER" | base64 -d > /tmp/mochi-restore/host-key.fido2.age
-printf '%s' "HOSTKEY_PASS_PLACEHOLDER" | base64 -d > /tmp/mochi-restore/host-key.pass.age
-cat > /tmp/mochi-restore/yk-identity.txt <<'YKID'
-YK_IDENTITY_PLACEHOLDER
-YKID
 cat > /tmp/mochi-restore/authorized_keys <<'OKEYS'
 AUTHORIZED_KEYS_PLACEHOLDER
 OKEYS
+# NOTE: this script contains the mochi SSH host key + git identity in
+# PLAINTEXT. Keep it in a PRIVATE repo; delete copies when done.
 HDR
 
 if [ "$GITKEY_STASH" = 1 ]; then
   cat >> "$OUT" <<GITSTASH
-# Stage 0b: stash the git identity (decrypted in Stage 3b, installed in
-# Stage final for root + kimb). Sealed to BOTH recipients; .pub is public.
+# Stage 0b: stash the git identity (installed in Stage final for root + kimb).
 printf '%s' "$GITKEY_PUB_B64" | base64 -d > /tmp/mochi-restore/git-key.pub
-printf '%s' "$GITKEY_FIDO_B64" | base64 -d > /tmp/mochi-restore/git-key.fido2.age
-printf '%s' "$GITKEY_AGE_B64" | base64 -d > /tmp/mochi-restore/git-key.pass.age
+printf '%s' "$GITKEY_B64" | base64 -d > /tmp/mochi-restore/git-key
 GITSTASH
 fi
 
@@ -190,11 +186,9 @@ YK_IDENTITY_TEXT="$(cat "$YK_IDENTITY")" OWNER_KEYS_TEXT="$OWNER_KEYS" python3 -
 import os, sys
 path = sys.argv[1]
 s = open(path).read()
-for var, ph in [("HOSTKEY_AGE_B64","HOSTKEY_PASS_PLACEHOLDER"),
-                ("HOSTKEY_FIDO_B64","HOSTKEY_FIDO_PLACEHOLDER"),
+for var, ph in [("HOSTKEY_B64","HOSTKEY_B64_PLACEHOLDER"),
                 ("HOSTKEY_PUB_B64","HOSTKEY_PUB_PLACEHOLDER"),
-                ("GITKEY_FIDO_B64","GITKEY_FIDO_PLACEHOLDER"),
-                ("YK_IDENTITY_TEXT","YK_IDENTITY_PLACEHOLDER"),
+                ("GITKEY_B64","GITKEY_B64_PLACEHOLDER"),
                 ("OWNER_KEYS_TEXT","AUTHORIZED_KEYS_PLACEHOLDER")]:
     s = s.replace(ph, os.environ[var])
 open(path, "w").write(s)
