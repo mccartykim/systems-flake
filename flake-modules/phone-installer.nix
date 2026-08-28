@@ -27,6 +27,7 @@
     "ca-certificates"
     "xz-utils"
     "sudo"
+    "age"
   ];
 
   xfceAptPackages = [
@@ -216,8 +217,13 @@
           fi
         KRESTORE
           # Root: the fido2 token needs /dev/hidraw; nix shell brings age +
-          # the plugin from the aarch64 binary cache.
-          sudo nix shell nixpkgs#age nixpkgs#age-plugin-fido2-hmac -c bash /tmp/mochi-key-restore.sh
+          # the plugin from the aarch64 binary cache. If the nix shell
+          # itself fails on-device, retry with the apt-provided age
+          # (passphrase path only — no plugin, no token).
+          if ! sudo nix shell nixpkgs#age nixpkgs#age-plugin-fido2-hmac -c bash /tmp/mochi-key-restore.sh; then
+            echo "nix shell decrypt failed — retrying with system age (passphrase path)"
+            sudo bash /tmp/mochi-key-restore.sh
+          fi
           rm -f /tmp/mochi-key-restore.sh /tmp/mochi-host-ed25519
         fi
 
@@ -231,14 +237,26 @@
         fi
 
         # Stage 5: apply the system-manager config for this host.
+        # MOCHI_RESTORE_TEST=1 (QEMU harness): skip the on-device switch (a
+        # foreign-arch closure can't build here and the VM must not join the
+        # real mesh) and assert the flake + host config evaluate instead.
+        if [ "''${MOCHI_RESTORE_TEST:-0}" = "1" ]; then
+          log "Stage 5 (TEST MODE): system-manager eval assertion"
+          NIX_BIN="$(command -v nix)"
+          sudo "$NIX_BIN" eval --impure --raw \
+            --extra-experimental-features 'nix-command flakes' \            ".#systemConfigs.$HOST_NAME.config.systemd.services.nebula-mainnet.description"
+          echo "test-mode: system-manager config evals OK"
+        else
         log "Stage 5: system-manager switch"
         cd "$REPO_DIR"
         NIX_BIN="$(command -v nix)"
         sudo "$NIX_BIN" run --extra-experimental-features 'nix-command flakes' \
           github:numtide/system-manager -- switch --flake ".#$HOST_NAME"
 
+        fi
+
         # Stage 6: zed (official installer; nixpkgs aarch64 story is shaky).
-        if [ "$ENABLE_ZED" = "1" ] && ! command -v zed >/dev/null 2>&1; then
+        if [ "''${MOCHI_RESTORE_TEST:-0}" != "1" ] && [ "$ENABLE_ZED" = "1" ] && ! command -v zed >/dev/null 2>&1; then
           log "Stage 6: zed"
           curl --proto '=https' --tlsv1.2 -sSf https://zed.dev/install.sh | sh
         fi
