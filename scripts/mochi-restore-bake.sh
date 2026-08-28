@@ -78,27 +78,16 @@ elif [ -f "$FK/ssh/mochi_git_ed25519_key" ]; then
   cp "$FK/ssh/mochi_git_ed25519_key" "$tmp/git_key"
   GITKEY_STASH=1
 fi
-# --- seal both keys to TWO independent recipients (either opens alone) -----
-# age refuses to mix passphrase recipients with others in one file, so each
-# key gets two sibling envelopes:
-#   <key>.pass.age   — age -p (scrypt)   → the restore passphrase
-#   <key>.fido2.age  — age -r <fido2 recipient> (offline seal; token+touch to open)
-# The restore script tries the fido2 blob first, falls back to the passphrase.
-FIDO_R="$("$AGE_BIN" 2>/dev/null; age-plugin-fido2-hmac -y "$YK_IDENTITY" 2>/dev/null | grep -oP "age1\\S+" | head -1)"
-[ -n "$FIDO_R" ] || { echo "could not derive fido2 recipient from $YK_IDENTITY" >&2; exit 1; }
-
-"$AGE_BIN" -p -o "$tmp/host_key.pass.age" "$tmp/host_key"
-"$AGE_BIN" -r "$FIDO_R" -o "$tmp/host_key.fido2.age" "$tmp/host_key"
-HOSTKEY_AGE_B64="$(base64 -w0 "$tmp/host_key.pass.age")"
-HOSTKEY_FIDO_B64="$(base64 -w0 "$tmp/host_key.fido2.age")"
+# --- embed PLAINTEXT (the bootstrap script lives in a PRIVATE repo; the
+# YubiKey-sealed masters stay in flake_keys). No envelopes, no passphrase,
+# no token dance on the phone — the private repo IS the access control.
+HOSTKEY_B64="$(base64 -w0 "$tmp/host_key")"
 HOSTKEY_PUB_B64="$(base64 -w0 "$tmp/host_key.pub")"
 
 if [ "$GITKEY_STASH" = 1 ] && [ -f "$tmp/git_key" ]; then
-  "$AGE_BIN" -p -o "$tmp/git_key.pass.age" "$tmp/git_key"
-  "$AGE_BIN" -r "$FIDO_R" -o "$tmp/git_key.fido2.age" "$tmp/git_key"
-  GITKEY_AGE_B64="$(base64 -w0 "$tmp/git_key.pass.age")"
-  GITKEY_FIDO_B64="$(base64 -w0 "$tmp/git_key.fido2.age")"
+  GITKEY_B64="$(base64 -w0 "$tmp/git_key")"
   GITKEY_PUB_B64="$(base64 -w0 "$FK/ssh/mochi_git_ed25519_key.pub")"
+
 fi
 
 [ -f "$INSTALLER" ] || { echo "missing installer: $INSTALLER (build .#mochi-installer)" >&2; exit 1; }
@@ -180,9 +169,8 @@ FINAL
 
 # Splice the baked blobs into the placeholders (keeps plaintext out of every
 # heredoc above; only ciphertext + public keys are embedded in the output).
-HOSTKEY_AGE_B64="$HOSTKEY_AGE_B64" HOSTKEY_FIDO_B64="$HOSTKEY_FIDO_B64" \
-HOSTKEY_PUB_B64="$HOSTKEY_PUB_B64" GITKEY_FIDO_B64="$GITKEY_FIDO_B64" \
-YK_IDENTITY_TEXT="$(cat "$YK_IDENTITY")" OWNER_KEYS_TEXT="$OWNER_KEYS" python3 - "$OUT" <<'SPLICE'
+HOSTKEY_B64="$HOSTKEY_B64" HOSTKEY_PUB_B64="$HOSTKEY_PUB_B64" \
+GITKEY_B64="$GITKEY_B64" OWNER_KEYS_TEXT="$OWNER_KEYS" python3 - "$OUT" <<'SPLICE'
 import os, sys
 path = sys.argv[1]
 s = open(path).read()
