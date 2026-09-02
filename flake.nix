@@ -118,10 +118,6 @@
         org-agent.follows = "org-agent";
       };
     };
-    lifecoach-organism.url = "git+ssh://git@github.com/mccartykim/lifecoach_organism.git";
-    lifecoach-organism.inputs.nixpkgs.follows = "nixpkgs";
-    vacuum-organism.url = "git+ssh://git@github.com/mccartykim/vacuum_organism.git";
-    vacuum-organism.inputs.nixpkgs.follows = "nixpkgs";
 
     # The organism primitive — the stateful-agent CLI (bin/organic). Consumed
     # by the voidmaster-vox-bridge host file's organicBin. See
@@ -129,84 +125,18 @@
     organism.url = "git+ssh://git@github.com/mccartykim/organism.git";
     organism.inputs.nixpkgs.follows = "nixpkgs";
 
-    # The Void-Master officer agent (Idran, fleet-fixer). Exposes
-    # nixosModules.default, self-contained (mirrors vacuum_organism).
-    void-master-organism.url = "git+ssh://git@github.com/mccartykim/voidmaster_organism.git";
-    void-master-organism.inputs.nixpkgs.follows = "nixpkgs";
-
-    # The High Factotum officer agent (Severin, bookkeeper). Read-only
-    # status dashboard for the fleet — counts and names, deploys nothing.
-    # Exposes nixosModules.default, self-contained (mirrors
-    # voidmaster_organism minus the write-scope PATH tools). Same git+ssh
-    # convention as the Void-Master.
-    factotum-organism.url = "git+ssh://git@github.com/mccartykim/factotum_organism.git";
-    factotum-organism.inputs.nixpkgs.follows = "nixpkgs";
-
-    # Ship's Confessor (Aurelian, fleet chronicler) — read-only officer,
-    # same per-officer flake pattern as the Factotum.
-    confessor-organism.url = "git+ssh://git@github.com/mccartykim/confessor_organism.git";
-    confessor-organism.inputs.nixpkgs.follows = "nixpkgs";
-
-    # Magos Explorator (Velan, machine-spirit diagnostician) — read-only,
-    # diagnose-not-deploy officer, same per-officer flake pattern as the
-    # Confessor.
-    explorator-organism.url = "git+ssh://git@github.com/mccartykim/explorator_organism.git";
-    explorator-organism.inputs.nixpkgs.follows = "nixpkgs";
-
-    # Chirurgeon Vahan (ship's Medicae, household axis) — the 9th bridge officer
-    # (#62). The hybrid medicae-infer shell: BOTH realtime-editable (org-merge
-    # persists * Regimen edits in-cycle) AND bridge-routed (emits the JSON
-    # envelope the vox-organism daemon parses). Self-contained per-officer
-    # flake pattern, mirrors voidmaster_organism + lifecoach_organism.
-    chirurgeon-organism.url = "git+ssh://git@github.com/mccartykim/chirurgeon_organism.git";
-    chirurgeon-organism.inputs.nixpkgs.follows = "nixpkgs";
-
-    # Navigator Orlena (read-only strategic planner) — the CROSS-HOST
-    # officer, hosted on total-eclipse (separate from the rich-evans bridge
-    # crew). Forked from confessor_organism (the read-only template); surveys
-    # the fleet repo ecosystem via PUBLIC github reads. Self-contained
-    # per-officer flake pattern, mirrors the other officers. NB: no fixed uid
-    # (this officer skips org-bridge, so no SO_PEERCRED uid map).
-    navigator-organism.url = "git+ssh://git@github.com/mccartykim/navigator_organism.git";
-    navigator-organism.inputs.nixpkgs.follows = "nixpkgs";
-
-    # Interrogator Voke (the read-only mail reader, #53) — the 10th bridge
-    # officer, on rich-evans. Reads the mu index + Maildir the email-digest
-    # service already maintains (no new sync), replies with an org-mode table;
-    # authors PRs against its own repo via the #60 loop. Self-contained per-
-    # officer flake pattern (resolves its own package from pkgs.system), mirrors
-    # the other self-contained officer modules.
-    interrogator-organism.url = "git+ssh://git@github.com/mccartykim/interrogator_organism.git";
-    interrogator-organism.inputs.nixpkgs.follows = "nixpkgs";
-
-    # Remembrancer Olesia (chronicler of the public record, the writer officer)
-    # — the 11th bridge officer, on rich-evans. Composes public-facing prose
-    # (README copy, blog posts, dispatches) + proposes it via the bridge-scribe
-    # PR loop; does NOT push directly or mutate the fleet. On-request (no
-    # heartbeat): the vox-organism daemon runs cycles under uid 998. Self-
-    # contained per-officer flake pattern, mirrors the other officers.
-    # Officer git creds are a separate code path from nix (the bootstrap-cycle
-    # invariant forbids repointing systems-flake's own inputs at the forge, and
-    # officer inputs MUST stay git+ssh on github, NEVER git+https). The repo is
-    # private; nix fetches it over ssh via the user's github account key.
-    remembrancer-organism.url = "git+ssh://git@github.com/mccartykim/remembrancer_organism.git";
-    remembrancer-organism.inputs.nixpkgs.follows = "nixpkgs";
-
-    # Three new routed officers (2026-07-26): the Savant Quine (read-only
-    # reference librarian + print), Choirmaster Cassiel (on-demand music,
-    # MPD httpd + cast), Factor Voss (finance axis, hledger). All self-
-    # contained modules (resolve their own package from pkgs.system, NO
-    # extraSpecialArgs, NO colmena meta.specialArgs change — same shape as
-    # the other self-contained officer modules). On-request via the
-    # vox-organism daemon (uid 998); the daemon's extraGroups + rooms + PATH
-    # auto-derive from the roster + the host file edits. Private repos,
-    # git+ssh on github (officer inputs NEVER https).
-    savant-organism.url = "git+ssh://git@github.com/mccartykim/savant_organism.git";
-    savant-organism.inputs.nixpkgs.follows = "nixpkgs";
-    choirmaster-organism.url = "git+ssh://git@github.com/mccartykim/choirmaster_organism.git";
-    choirmaster-organism.inputs.nixpkgs.follows = "nixpkgs";
-    factor-organism.url = "git+ssh://git@github.com/mccartykim/factor_organism.git";
-    factor-organism.inputs.nixpkgs.follows = "nixpkgs";
+    # === Bridge crew agents ===
+    # The 13 self-contained `*-organism` flakes (lifecoach, vacuum, + the 11
+    # bridge officers) are aggregated behind one input to keep this inputs
+    # block manageable. Each is self-contained: its nixosModules.default
+    # resolves its own package from pkgs.system, no extraSpecialArgs, no
+    # colmena meta.specialArgs change. Consume as
+    #   bridge-crew.nixosModules."<name>-organism"
+    # Officer repos stay private on github over git+ssh (fine-grained PATs
+    # can't read archive URLs; ssh keys are what consumers have). See
+    # ~/projects/bridge-crew-flake for the roster + what stays un-aggregated.
+    bridge-crew.url = "git+ssh://git@github.com/mccartykim/bridge-crew-flake.git";
+    bridge-crew.inputs.nixpkgs.follows = "nixpkgs";
 
     # 40k_bridge source tree — NOT a flake (no flake.nix). Consumed for the
     # org-bridge + vox-bridge NixOS modules via `import` of path strings, and

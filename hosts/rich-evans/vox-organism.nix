@@ -26,7 +26,7 @@
   # vox-bridge vigil room) are DERIVED from it, not hand-listed, so adding an
   # officer is one roster entry, not an edit here. The structured bus
   # (#bridge-events) is appended — it is not an officer.
-  roster = import "${bridgeCrewSrc}/deploy/roster.nix" { inherit lib; };
+  roster = import "${bridgeCrewSrc}/deploy/roster.nix" {inherit lib;};
   # The Chirurgeon's household tools (speak / compel-spirit / ha-get-state /
   # build-view) live in the chirurgeon_organism package bin; medicae-infer
   # dispatches them as bare names on PATH. build-view cold-starts org-agent's
@@ -34,7 +34,7 @@
   # the daemon below.
   org-agent-emacs = inputs.org-agent.packages.${pkgs.system}.emacs;
   org-agent-init = "${inputs.org-agent}/elisp/init.el";
-  chirurgeon-pkg = inputs.chirurgeon-organism.packages.${pkgs.system}.default;
+  chirurgeon-pkg = inputs.bridge-crew.packages.${pkgs.system}."chirurgeon-organism";
   # The Interrogator's #+AGENT shell (interrogator-infer) lives in the
   # interrogator_organism package bin; organism resolves `#+AGENT:` as a bare
   # name on PATH, so the daemon must carry the package bin or the reactive
@@ -43,7 +43,7 @@
   # Chirurgeon it needs NO env additions — only the package bin on PATH (mu is
   # already on the module's path; the email-digest group membership is roster-
   # derived). Mirrors the chirurgeon-pkg path addition for the #62 fix.
-  interrogator-pkg = inputs.interrogator-organism.packages.${pkgs.system}.default;
+  interrogator-pkg = inputs.bridge-crew.packages.${pkgs.system}."interrogator-organism";
   # The Remembrancer's #+AGENT shell (remembrancer-infer) lives in the
   # remembrancer_organism package bin; organism resolves `#+AGENT:` as a bare
   # name on PATH, so the daemon must carry the package bin or the reactive
@@ -52,7 +52,7 @@
   # (read_file / officer_view are read-only bash tools already on PATH); it
   # needs NO env additions, only the package bin on PATH. Mirrors the
   # interrogator-pkg path addition.
-  remembrancer-pkg = inputs.remembrancer-organism.packages.${pkgs.system}.default;
+  remembrancer-pkg = inputs.bridge-crew.packages.${pkgs.system}."remembrancer-organism";
   # Savant Quine — read-only reference librarian + print. savant-infer is
   # the #+AGENT shell (interrogator-infer fork); organism resolves it as a
   # bare name on PATH, so the daemon must carry the package bin or the
@@ -61,7 +61,7 @@
   # (cups) + `file`/`pdftotext` (poppler-utils) as bare names, so those go on
   # the daemon PATH below too. NO env additions (savant-infer reads OFFICER_STATE
   # for logging like the Interrogator; print-file's printer defaults are baked).
-  savant-pkg = inputs.savant-organism.packages.${pkgs.system}.default;
+  savant-pkg = inputs.bridge-crew.packages.${pkgs.system}."savant-organism";
   # Choirmaster Cassiel — on-demand music. choirmaster-infer is the #+AGENT
   # shell (medicae-infer fork); organism resolves it as a bare name on PATH.
   # Every choirmaster bin is wrapped with its runtime deps (mpc, python
@@ -70,7 +70,7 @@
   # port 8666 + the Nest hub device. CHOIRMASTER_STATE is mirrored for clean
   # logging (parity with CHIRURGEON_STATE); MPD_HOST/MPD_HTTP_PORT/TTS_DEVICE
   # all have working defaults.
-  choirmaster-pkg = inputs.choirmaster-organism.packages.${pkgs.system}.default;
+  choirmaster-pkg = inputs.bridge-crew.packages.${pkgs.system}."choirmaster-organism";
   # Factor Voss — finance axis. factor-infer is the #+AGENT shell (medicae-
   # infer fork); organism resolves it as a bare name on PATH. The package
   # wrap deliberately EXCLUDES hledger/git/poppler (they reach runtime via
@@ -80,7 +80,7 @@
   # FACTOR_STATE/FACTOR_LEDGER/FACTOR_CSV_DIR are ESSENTIAL env (without
   # them the ledger defaults to /tmp/factor/ledger.journal + the finance
   # duty breaks); mirrored below.
-  factor-pkg = inputs.factor-organism.packages.${pkgs.system}.default;
+  factor-pkg = inputs.bridge-crew.packages.${pkgs.system}."factor-organism";
 in {
   services.vox-organism = {
     enable = true;
@@ -217,7 +217,7 @@ in {
     owner = "vox-organism";
     mode = "0400";
   };
-  users.users.vox-organism.extraGroups = [ "life-coach" ];
+  users.users.vox-organism.extraGroups = ["life-coach"];
   systemd.services.vox-organism.environment = {
     # medicae-infer error-log dir (officer-specific, so the daemon's
     # OFFICER_STATE=VOX_STATE override doesn't collide).

@@ -5,7 +5,7 @@
   self,
   ...
 }: let
-  inherit (inputs) nixpkgs nixos-hardware nixos-facter-modules copyparty nil-flake media-classifier org-life-coach lifecoach-organism vacuum-organism org-crm organism void-master-organism factotum-organism confessor-organism explorator-organism chirurgeon-organism navigator-organism interrogator-organism remembrancer-organism savant-organism choirmaster-organism factor-organism;
+  inherit (inputs) nixpkgs nixos-hardware nixos-facter-modules copyparty nil-flake media-classifier org-life-coach org-crm organism bridge-crew;
   inherit (config.flake.lib) mkDesktop mkServer mkHomeManager commonModules;
 in {
   flake.nixosConfigurations = {
@@ -60,7 +60,7 @@ in {
       # Self-contained module (provides its own package, mirroring the other
       # officers) + the config-only host file. No extraSpecialArgs needed.
       extraModules = [
-        navigator-organism.nixosModules.default
+        bridge-crew.nixosModules."navigator-organism"
         (self + "/hosts/total-eclipse/navigator-organism.nix")
       ];
     };
@@ -111,13 +111,13 @@ in {
       extraModules = [
         copyparty.nixosModules.default
         org-life-coach.nixosModules.default
-        lifecoach-organism.nixosModules.default
-        vacuum-organism.nixosModules.default
+        bridge-crew.nixosModules."lifecoach-organism"
+        bridge-crew.nixosModules."vacuum-organism"
         # Phase-1 bridge crew: the Void-Master officer agent (self-contained
         # module from the voidmaster_organism flake) + the org-bridge broker
         # + vox-bridge Matrix transport (imported from the 40k_bridge source
         # tree). See 40k_bridge/deploy/SYSTEMS_FLAKE_PATCH.md.
-        void-master-organism.nixosModules.default
+        bridge-crew.nixosModules."void-master-organism"
         # High Factotum officer agent (Severin, read-only bookkeeper).
         # Self-contained module from the factotum_organism flake — it
         # resolves its own package from pkgs.system, so it needs NO
@@ -125,25 +125,25 @@ in {
         # bridgeCrewSrc/organism). Consequently NO colmena meta.specialArgs
         # change is required (the prior colmena break was a missing
         # specialArgs; this module adds none).
-        factotum-organism.nixosModules.default
+        bridge-crew.nixosModules."factotum-organism"
         # Ship's Confessor officer agent (Aurelian, read-only fleet
         # chronicler). Self-contained module from the confessor_organism
         # flake — resolves its own package from pkgs.system, so it needs
         # NO extraSpecialArgs and NO colmena meta.specialArgs change
         # (same shape as the Factotum).
-        confessor-organism.nixosModules.default
+        bridge-crew.nixosModules."confessor-organism"
         # Magos Explorator officer agent (Velan, read-only machine-spirit
         # diagnostician). Self-contained module from the explorator_organism
         # flake — resolves its own package from pkgs.system, so it needs NO
         # extraSpecialArgs and NO colmena meta.specialArgs change (same shape
         # as the Confessor / Factotum).
-        explorator-organism.nixosModules.default
+        bridge-crew.nixosModules."explorator-organism"
         # Chirurgeon Vahan (ship's Medicae, household axis) — the 9th bridge
         # officer (#62). Self-contained module from the chirurgeon_organism
         # flake — resolves its own package from pkgs.system, so it needs NO
         # extraSpecialArgs and NO colmena meta.specialArgs change (same shape
         # as the Confessor / Factotum / Explorator).
-        chirurgeon-organism.nixosModules.default
+        bridge-crew.nixosModules."chirurgeon-organism"
         # Interrogator Voke (the read-only mail reader, #53) — the 10th bridge
         # officer. Self-contained module from the interrogator_organism flake
         # (resolves its own package from pkgs.system, NO extraSpecialArgs, NO
@@ -151,7 +151,7 @@ in {
         # contained officer modules). On-request (no heartbeat): the vox-
         # organism daemon runs its `organic` cycle under uid 998 (a member of
         # interrogator-organism + email-digest) to read the mu index.
-        interrogator-organism.nixosModules.default
+        bridge-crew.nixosModules."interrogator-organism"
         # Remembrancer Olesia (chronicler of the public record, the writer
         # officer). Self-contained module from the remembrancer_organism flake
         # (resolves its own package from pkgs.system, NO extraSpecialArgs, NO
@@ -159,7 +159,7 @@ in {
         # contained officer modules). On-request (no heartbeat): the vox-
         # organism daemon runs its `organic` cycle under uid 998 (a member of
         # remembrancer-organism) to compose prose + propose via the PR loop.
-        remembrancer-organism.nixosModules.default
+        bridge-crew.nixosModules."remembrancer-organism"
         # Savant Quine — read-only reference librarian (web/ebook/print),
         # 12th bridge officer. Self-contained module (resolves its own
         # package from pkgs.system, NO extraSpecialArgs, NO colmena
@@ -167,19 +167,19 @@ in {
         # officer modules). On-request (no heartbeat): the vox-organism
         # daemon runs its `organic` cycle under uid 998 (a member of
         # savant-organism + borges) to read the web + the borges ebook db.
-        savant-organism.nixosModules.default
+        bridge-crew.nixosModules."savant-organism"
         # Choirmaster Cassiel — on-demand music officer (MPD httpd + cast),
         # 13th bridge officer. Self-contained (same shape). On-request (NO
         # heartbeat): find + start only; the Lord-Captain stops manually.
         # The MPD httpd stream it casts lives on rich-evans:8666 (configured
         # in the host file below).
-        choirmaster-organism.nixosModules.default
+        bridge-crew.nixosModules."choirmaster-organism"
         # Factor Voss — ship's Treasurer (finance axis, hledger), 14th bridge
         # officer. Self-contained (same shape). Proactive heartbeat wired-
         # but-OFF at first deploy (enableHeartbeat=false in the host file)
         # until the user's first #factor round-trip validates the persona;
         # the reactive #factor cycle runs via the daemon now.
-        factor-organism.nixosModules.default
+        bridge-crew.nixosModules."factor-organism"
         (import "${inputs."bridge-crew-src"}/deploy/org-bridge.nix")
         (import "${inputs."bridge-crew-src"}/deploy/vox-bridge.nix")
         # Phase-2 vox-organism: the Astropath comms-bridge daemon (replaces the
