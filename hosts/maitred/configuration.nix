@@ -503,6 +503,9 @@ in {
     initialPassword = "changeme"; # CRITICAL: Change this password immediately after deployment!
   };
 
+  # Fix /boot overfilling with old kernels
+  boot.loader.systemd-boot.configurationLimit = 3;
+
   # Allow trusted users for remote deployment
   nix.settings.trusted-users = ["kimb" "root"];
 

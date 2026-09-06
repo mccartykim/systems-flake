@@ -66,19 +66,11 @@
         # 2. CK FMHA primarily targets gfx9 (CDNA); on gfx1151 kernel
         #    generation fails later anyway, and AOTriton (the preferred SDPA
         #    backend) supports RDNA, so disable CK SDPA.
-        # 3. Restrict build to gfx1151 to avoid compiling every ROCm arch.
-        torchWithRocm = pyPrev.torchWithRocm.overrideAttrs (old: {
         # 3. Restrict build to gfx1151 via gpuTargets override.
         torchWithRocm = (pyPrev.torchWithRocm.override {
           # Setting PYTORCH_ROCM_ARCH via env would be pointless: the torch
           # derivation re-exports it from gpuTargets (which takes priority),
           # so override gpuTargets directly.
-          gpuTargets = ["gfx1151"];
-        }).overrideAttrs (old: {
-        # 3. Restrict build to gfx1151 via gpuTargets override.
-        #    Setting PYTORCH_ROCM_ARCH via env would be pointless: the torch
-        #    derivation re-exports it from gpuTargets (which takes priority).
-        torchWithRocm = (pyPrev.torchWithRocm.override {
           gpuTargets = ["gfx1151"];
         }).overrideAttrs (old: {
           postPatch =
@@ -89,7 +81,6 @@
           env =
             (old.env or {})
             // {
-              PYTORCH_ROCM_ARCH = "gfx1151";
               USE_ROCM_CK_SDPA = "0";
             };
         });
