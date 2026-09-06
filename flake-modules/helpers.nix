@@ -8,6 +8,37 @@
 
   # Overlay to fix Python packages with build/test issues
   pythonFixesOverlay = final: prev: {
+    # torch 2.13 requires AOTriton 0.12b (v3-only API: LazyTensor cookie,
+    # attn_options.deterministic, VarlenType::StridedVarlen, seq_strides_*).
+    # nixpkgs still ships 0.11.1b, so the ROCm attention sources fail to
+    # compile against it. Bump aotriton; torch picks it up via
+    # AOTRITON_INSTALLED_PREFIX = rocmPackages.aotriton.
+    rocmPackages = prev.rocmPackages.overrideScope (rfinal: rprev: {
+      aotriton = (rprev.aotriton.override {
+        # Only build kernels for Strix Point; full default target list is slow.
+        gpuTargets = ["gfx1151"];
+      }).overrideAttrs (old: rec {
+        version = "0.12b";
+        src = prev.fetchFromGitHub {
+          owner = "ROCm";
+          repo = "aotriton";
+          tag = version;
+          hash = "sha256-KOc+xAoWABjokIEq5n9olpln3JUqVFYGADLwqV/H2Zc=";
+          leaveDotGit = true;
+          # Same postFetch as nixpkgs: all submodules except the ~500MB
+          # unused triton one.
+          postFetch = ''
+            cd $out
+            git reset --hard HEAD
+            for submodule in $(git config --file .gitmodules --get-regexp path | awk '{print $2}' | grep '^third_party/' | grep -v '^third_party/triton$'); do
+              git submodule update --init --recursive "$submodule"
+            done
+            find "$out" -name .git -print0 | xargs -0 rm -rf
+          '';
+        };
+      });
+    });
+
     python3Packages = prev.python3Packages.override {
       overrides = pyFinal: pyPrev: {
         # extract_msg requires beautifulsoup4<4.14 but nixpkgs has 4.14.x
@@ -26,6 +57,41 @@
         # works fine; only the test suite has compatibility issues.
         duckdb-engine = pyPrev.duckdb-engine.overridePythonAttrs (old: {
           doCheck = false;
+        });
+
+        # torchWithRocm (torch 2.13, python3.14) fails on historian (Strix
+        # Point, gfx1151):
+        # 1. Upstream CK flash-attn script add_make_kernel_pt.sh has a
+        #    #!/bin/bash shebang that doesn't exist in the sandbox — patch it.
+        # 2. CK FMHA primarily targets gfx9 (CDNA); on gfx1151 kernel
+        #    generation fails later anyway, and AOTriton (the preferred SDPA
+        #    backend) supports RDNA, so disable CK SDPA.
+        # 3. Restrict build to gfx1151 to avoid compiling every ROCm arch.
+        torchWithRocm = pyPrev.torchWithRocm.overrideAttrs (old: {
+        # 3. Restrict build to gfx1151 via gpuTargets override.
+        torchWithRocm = (pyPrev.torchWithRocm.override {
+          # Setting PYTORCH_ROCM_ARCH via env would be pointless: the torch
+          # derivation re-exports it from gpuTargets (which takes priority),
+          # so override gpuTargets directly.
+          gpuTargets = ["gfx1151"];
+        }).overrideAttrs (old: {
+        # 3. Restrict build to gfx1151 via gpuTargets override.
+        #    Setting PYTORCH_ROCM_ARCH via env would be pointless: the torch
+        #    derivation re-exports it from gpuTargets (which takes priority).
+        torchWithRocm = (pyPrev.torchWithRocm.override {
+          gpuTargets = ["gfx1151"];
+        }).overrideAttrs (old: {
+          postPatch =
+            (old.postPatch or "")
+            + ''
+              patchShebangs aten/src/ATen/native/transformers/hip/flash_attn/ck/
+            '';
+          env =
+            (old.env or {})
+            // {
+              PYTORCH_ROCM_ARCH = "gfx1151";
+              USE_ROCM_CK_SDPA = "0";
+            };
         });
       };
     };
