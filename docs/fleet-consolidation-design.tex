@@ -36,7 +36,7 @@
 \title{Fleet Consolidation Design}
 \subtitle{Retiring rich-evans and maitred: historian as the single always-on machine}
 \author{Kimberly McCarty}
-\date{September 2026 \textbullet{} v1.0 \textbullet{} tracker: \texttt{systems-flake-a3j}}
+\date{September 2026 \textbullet{} v1.1 \textbullet{} tracker: \texttt{systems-flake-a3j}}
 
 \begin{document}
 \maketitle
@@ -48,12 +48,13 @@ The fleet currently runs four always-on machines---\texttt{historian},
 two are 2015-era silicon with no headroom. This document specifies the
 consolidation of nearly all services onto \texttt{historian}, a fast,
 efficient mini-PC, with \texttt{total-eclipse} reduced to a wake-on-demand
-gaming and compute box, and with \texttt{rich-evans} and \texttt{maitred}
-powered off as cold spares. The work is ordered from lowest to highest
-risk, is reversible at every phase, and is tracked as
-\texttt{systems-flake-a3j} (epic) with ten dependency-linked issues.
-Hardware findings that shaped the design are included verbatim so the plan
-can be re-evaluated against reality as it ages.
+gaming and compute box, \texttt{rich-evans} slimmed to a quiet bedroom
+camera appliance, and \texttt{maitred} powered off as a cold spare. The
+work is ordered from lowest to highest risk, is reversible at every phase,
+and is tracked as \texttt{systems-flake-a3j} (epic) with ten
+dependency-linked issues. Hardware findings that shaped the design are
+included verbatim so the plan can be re-evaluated against reality as it
+ages.
 \end{abstract}
 
 \section{Current State}
@@ -124,14 +125,18 @@ External Nebula lighthouse + relay. \emph{Unchanged by this design.} \\
         stateful services on a weak CPU and a nearly-full SSD.
   \item total-eclipse, the loudest machine in the house, stays on mostly
         to serve TTS, paper scans, SMS reads, and one agent.
+  \item The bedroom box hosts a spinning 5.5\,TB drive --- noise where
+        quiet matters most.
 \end{itemize}
 
 \section{Goals}
 
 \begin{itemize}
-  \item \textbf{G1:} One always-on machine (\texttt{historian});
-        total-eclipse wake-on-demand; rich-evans and maitred retired as
-        cold spares.
+  \item \textbf{G1:} Two always-on machines: \texttt{historian} as the
+        consolidated services host (and eventually the router --- it sits
+        at the FiOS drop) plus \texttt{rich-evans} slimmed to a quiet
+        bedroom camera appliance; \texttt{total-eclipse} wake-on-demand;
+        \texttt{maitred} retired as a cold spare.
   \item \textbf{G2:} Reliability through isolation: services run in
         declarative nspawn containers on dom0, with Xen domUs where
         blast-radius isolation earns its keep.
@@ -178,10 +183,17 @@ total-eclipse (off) &
 Gaming, CUDA compute, Waydroid. Clean power-off; Moonlight's native
 Wake-on-LAN wakes it for streaming; an SSH helper on historian covers
 non-gaming wakes. \\
-Cold spares &
-rich-evans and maitred keep their NixOS configs deployed
-(\texttt{enable = false}) and their SSH host keys in the registry;
-revival is a power-on and a colmena apply. \\
+\addlinespace
+\texttt{rich-evans} (bedroom appliance) &
+The webcam snapshot server (desk + bed cameras) and, if convenient,
+interactive ESPHome flashing. Everything else migrates away; the
+5.5\,TB drive moves out, leaving a quiet, low-power camera appliance
+physically placed where the cameras watch. \\
+\addlinespace
+Cold spare &
+\texttt{maitred} keeps its NixOS config deployed \texttt{(enable =
+false)} and its SSH host key in the registry; revival is a power-on
+and a colmena apply. \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -300,8 +312,8 @@ follow: borges, mpd, knitwork + BFF (proxy/DNS flip via
 mautrix-discord, copyparty, email-digest, org-crm + Emacs daemons. \\
 4 & a3j.7, a3j.9 & total-eclipse's always-on duties first (TTS
 $\rightarrow$ historian CPU, Paperless, sms-history, Navigator); then
-the organism fleet into its own Xen domU. Camera placement decision
-required. \\
+the organism fleet into its own Xen domU. Cameras stay on rich-evans
+(decided: placement) and are fetched over Nebula as today. \\
 5 & a3j.8 & maitred retirement in sub-phases: monitoring $\rightarrow$
 public edge (DDNS/Caddy/Authelia) $\rightarrow$ router core (DHCP/DNS/
 NAT/lighthouse; dual-NIC hardware confirmed) $\rightarrow$ printer/
@@ -342,6 +354,20 @@ Power policy: clean power-off rather than suspend (phantom-wake history),
 woken by Moonlight's native WoL for gaming --- the port is already armed
 in firmware and NixOS --- with an SSH helper on historian for other wakes.
 Boot-to-sunshine latency ($\sim$30\,s) is the only cost.
+
+\subsection{Phase 4 detail: cameras stay in the bedroom}
+
+The camera decision resolved in favor of placement: the desk and bed
+webcams stay on \texttt{rich-evans}, which is quiet, lives in the
+bedroom, and needs no passthrough or USB surgery. The organisms migrate
+to the historian domU and continue fetching snapshots over Nebula HTTP,
+exactly as they do today --- the webcam server is already a network
+service, so nothing about the dependency changes shape. rich-evans's
+end-state service list is the snapshot server alone (plus optional
+interactive ESPHome flashing), with the 5.5\,TB drive relocated to
+historian. If Home Assistant loses Pixel iBeacon BLE range from its new
+living-room home, an ESPHome Bluetooth proxy in the bedroom bridges the
+radio --- to be tested at the HA cutover.
 
 \section{Data and Secrets}
 
@@ -386,12 +412,15 @@ regenerable put.io mirror and VM images stay excluded.
 \section{End State and Retirement}
 
 \begin{itemize}
-  \item \textbf{Always-on:} historian alone (plus free-tier oracle).
+  \item \textbf{Always-on:} \texttt{historian} (living room, at the
+        FiOS drop: consolidated services, eventually the router) plus
+        \texttt{rich-evans} (bedroom: cameras) --- two boxes, each
+        doing exactly what its physical placement makes natural.
+        Oracle (free tier) remains the external lighthouse.
   \item \textbf{On-demand:} total-eclipse via WoL; laptops and portables
         unchanged.
-  \item \textbf{Cold spares:} rich-evans and maitred, configs deployed
-        disabled, host keys retained, old B2 restic snapshots retained
-        as archive.
+  \item \textbf{Cold spare:} maitred, config deployed disabled, host key
+        retained, old B2 restic snapshots retained as archive.
   \item \textbf{Nebula:} oracle already provides external lighthouse +
         relay redundancy; at phase 5c the fleet's lighthouse list
         changes from \{oracle, maitred\} to \{oracle\} (or adds
@@ -402,14 +431,11 @@ regenerable put.io mirror and VM images stay excluded.
 \section{Open Decisions}
 
 \begin{enumerate}
-  \item \textbf{Cameras:} the desk and bed webcams are physically placed
-        where they watch; either they move to historian (USB
-        passthrough or dom0 attach) or rich-evans stays as a dumb
-        camera appliance --- the only role that could keep it powered.
   \item \textbf{Thread/OTBR:} the HA OpenThread border router may
         depend on a USB radio on rich-evans; audit before HA moves.
-  \item \textbf{BLE placement:} historian has a Bluetooth adapter, but
-        the Pixel iBeacon range from its location is untested.
+  \item \textbf{BLE placement:} the Pixel iBeacon range from the living
+        room is untested; an ESPHome Bluetooth proxy in the bedroom is
+        the fallback (see phase 4 detail).
   \item \textbf{Tor relay:} keep (on the new edge), or retire.
   \item \textbf{Printer/scanner:} move the USB devices to historian with
         the router phase, or keep maitred as a minimal print/scan
