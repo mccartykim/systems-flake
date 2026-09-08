@@ -23,3 +23,8 @@ secrets/.age-recipients.backup
 
 # marimo notebook cache
 __marimo__/
+
+# Beads / Dolt files (added by bd init)
+.dolt/
+*.db
+.beads-credential-key
