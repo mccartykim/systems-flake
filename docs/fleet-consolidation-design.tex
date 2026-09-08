@@ -1,0 +1,432 @@
+% fleet-consolidation-design.tex
+% Design doc: consolidating the kimb.dev fleet onto historian.
+% Build: nix-shell -p 'texlive.combine { inherit (texlive) scheme-basic
+%   latexmk koma-script microtype booktabs enumitem geometry hyperref
+%   titlesec etoolbox xcolor caption; }' --run 'latexmk -pdf docs/fleet-consolidation-design.tex'
+\documentclass[11pt,letterpaper,headings=small]{scrartcl}
+
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=1in]{geometry}
+\usepackage{microtype}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{etoolbox}
+\usepackage{xcolor}
+\usepackage[hidelinks]{hyperref}
+
+% Grayscale accents (the HL-L2400D is a monochrome laser)
+\definecolor{rulegray}{gray}{0.35}
+\definecolor{softgray}{gray}{0.92}
+
+\setkomafont{title}{\normalfont\bfseries\Large}
+\setkomafont{subtitle}{\normalfont\large\itshape}
+\setkomafont{section}{\normalfont\bfseries\large}
+\setkomafont{subsection}{\normalfont\bfseries\normalsize}
+
+% Compact, elegant itemize
+\setlist[itemize]{leftmargin=1.4em, itemsep=2pt, topsep=3pt}
+\setlist[enumerate]{leftmargin=1.6em, itemsep=2pt, topsep=3pt}
+
+% A quiet "note" environment: thin rules above/below, small text
+\newenvironment{note}[1][Note]{%
+  \par\medskip\noindent{\small\bfseries #1.}\begin{small}\par\nopagebreak
+}{\end{small}\par\medskip}
+
+\title{Fleet Consolidation Design}
+\subtitle{Retiring rich-evans and maitred: historian as the single always-on machine}
+\author{Kimberly McCarty}
+\date{September 2026 \textbullet{} v1.0 \textbullet{} tracker: \texttt{systems-flake-a3j}}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+The fleet currently runs four always-on machines---\texttt{historian},
+\texttt{rich-evans}, \texttt{maitred}, and \texttt{total-eclipse}---of which
+two are 2015-era silicon with no headroom. This document specifies the
+consolidation of nearly all services onto \texttt{historian}, a fast,
+efficient mini-PC, with \texttt{total-eclipse} reduced to a wake-on-demand
+gaming and compute box, and with \texttt{rich-evans} and \texttt{maitred}
+powered off as cold spares. The work is ordered from lowest to highest
+risk, is reversible at every phase, and is tracked as
+\texttt{systems-flake-a3j} (epic) with ten dependency-linked issues.
+Hardware findings that shaped the design are included verbatim so the plan
+can be re-evaluated against reality as it ages.
+\end{abstract}
+
+\section{Current State}
+
+\subsection{Inventory}
+
+All figures verified live over SSH on 2026-09-07/08.
+
+\begin{center}
+\small
+\begin{tabular}{@{}lp{2.6in}p{2.9in}@{}}
+\toprule
+\textbf{Host} & \textbf{Hardware} & \textbf{Always-on duties} \\
+\midrule
+\texttt{historian} &
+GmkTec NucBox EVO-X1; Ryzen AI 9 HX 370 (24C/24T), Radeon 890M,
+58\,GiB RAM. Dual Intel 2.5\,GbE (\texttt{igc}); AMD-Vi active with 33
+IOMMU groups; SVM on. Root NVMe 852\,G at 89\% full; PNY 1\,TB USB
+mounted, effectively empty; one dead internal NVMe. Up 47\,d. &
+Jellyfin (VA-API), Ollama cloud proxy, Syncthing, Forgejo,
+bridge-scribe, knit-web container, media-classifier, Moonlight host,
+desktop. \\
+\addlinespace
+\texttt{rich-evans} &
+HP ProDesk 600 G2 DM; i3-6100T (4T), 15\,GiB RAM. SSD 228\,G at
+85\%; Seagate Expansion 5.5\,TB USB (1.7\,TB used) at
+\texttt{/mnt/seagate}, NFS-exported read-only to historian. &
+HA + Mosquitto, Tuwunel Matrix + mautrix-discord, copyparty, MPD,
+email-digest (mbsync + mu), vox-organism + 12 officer organisms,
+org-crm + two org-agent Emacs daemons, borges, knitwork + BFF, two USB
+webcams, rclone put.io sync (3\,min). \\
+\addlinespace
+\texttt{maitred} &
+Datto 1000; AMD GX-415GA (4T), 7.2\,GiB RAM. SSD 234\,G at 16\%. Up
+31\,d. &
+Edge router (WAN DHCP from FiOS, LAN 192.168.69.0/24, NAT),
+unbound split-brain DNS, DHCP server, Nebula lighthouse + relay,
+DDNS, Tor relay, CUPS/Samba print server (USB Brother HL-L2400D),
+Fujitsu scanner, Authelia, Prometheus/Grafana/blackbox, Caddy
+reverse proxy (container), blog container, socat service proxies. \\
+\addlinespace
+\texttt{total-eclipse} &
+Costco gaming PC; RTX 4060 6\,GB, 15\,GiB RAM. NVMe 1.8\,TB at 70\%;
+internal 4\,TB btrfs (\texttt{/mnt/bulk}, 420\,GB used). WoL armed on
+\texttt{eno2}; suspend disabled (phantom wakes). &
+Qwen3-TTS voice cloning server (:8091, socket-activated CUDA) ---
+four organism consumers; Paperless-ngx (:28981, fed by maitred's
+scanner); sms-history (KDE Connect SMS reader for the Interrogator);
+Navigator organism (cross-host officer lives here); Ollama;
+Syncthing; Sunshine game streaming; Waydroid. \\
+\addlinespace
+\texttt{oracle} &
+Oracle Cloud VM (free tier). &
+External Nebula lighthouse + relay. \emph{Unchanged by this design.} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Problems}
+
+\begin{itemize}
+  \item Four always-on boxes burn power; two of them are decade-old
+        silicon that would struggle with any single modern service.
+  \item Services are scattered; the organism fleet on rich-evans depends
+        on three other hosts, so a sleepless dependency web keeps
+        everything awake.
+  \item Historian's fast hardware idles while rich-evans runs the heavy
+        stateful services on a weak CPU and a nearly-full SSD.
+  \item total-eclipse, the loudest machine in the house, stays on mostly
+        to serve TTS, paper scans, SMS reads, and one agent.
+\end{itemize}
+
+\section{Goals}
+
+\begin{itemize}
+  \item \textbf{G1:} One always-on machine (\texttt{historian});
+        total-eclipse wake-on-demand; rich-evans and maitred retired as
+        cold spares.
+  \item \textbf{G2:} Reliability through isolation: services run in
+        declarative nspawn containers on dom0, with Xen domUs where
+        blast-radius isolation earns its keep.
+  \item \textbf{G3:} Every migration phase independently reversible;
+        maitred stays powered through the final phase's burn-in.
+  \item \textbf{G4:} No user-visible service regression: same kimb.dev
+        subdomains, same Nebula names, same printers and scanners.
+  \item \textbf{G5:} Secrets and state migrate deliberately --- pre-keyed
+        ahead of time, snapshotted at every cutover, never value-rotated
+        where identity depends on the value.
+\end{itemize}
+
+\begin{note}[Non-goals]
+Re-architecting the organism/bridge-crew software, and any change to
+\texttt{oracle}. Multi-tenancy beyond what the consolidation itself needs.
+\end{note}
+
+\section{Target Architecture}
+
+\subsection{Roles}
+
+Historian becomes the consolidated services host, and eventually the
+router. The end-state topology:
+
+\begin{center}
+\small
+\begin{tabular}{@{}lp{4.4in}@{}}
+\toprule
+\textbf{Tier} & \textbf{Contents} \\
+\midrule
+Xen dom0 (historian OS) &
+Desktop + trusted core: Jellyfin, Ollama proxy, Syncthing, Forgejo,
+Caddy (future), restic, monitoring, Moonlight. Kept as close to
+today's configuration as possible. \\
+Nebula + nspawn containers &
+Migrated services in the proven \texttt{kimb} container pattern
+(private network + NAT + socat/proxy exposure). First homes for
+borges, knitwork, paperless, HA, Matrix, copyparty, etc. \\
+Xen domUs (PVH) &
+Where isolation matters: the bridge-crew organism fleet (phase~4),
+and possibly a future dedicated router domU. Disk images on the PNY
+volume; NAT networking via systemd-networkd. \\
+total-eclipse (off) &
+Gaming, CUDA compute, Waydroid. Clean power-off; Moonlight's native
+Wake-on-LAN wakes it for streaming; an SSH helper on historian covers
+non-gaming wakes. \\
+Cold spares &
+rich-evans and maitred keep their NixOS configs deployed
+(\texttt{enable = false}) and their SSH host keys in the registry;
+revival is a power-on and a colmena apply. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Storage layout}
+
+\begin{itemize}
+  \item \textbf{Historian NVMe (852\,G):} OS, desktop, fast indexes ---
+        the mu xapian index, postgres, HA database. Cleanup target
+        $<$80\% (currently 89\%).
+  \item \textbf{PNY 1\,TB USB (fallow, 869\,G free):} Xen domU disk
+        images and nspawn roots. Currently mounted at
+        \texttt{/mnt/games}; steam library wiring was already deferred,
+        so the volume is effectively free.
+  \item \textbf{Seagate 5.5\,TB (moves physically from rich-evans):}
+        all bulk data --- put.io mirror, music, photos, Maildir,
+        copyparty storage, org bulk. Mounted on historian at
+        \texttt{/mnt/media-drive}, the \emph{same} path the NFS mount
+        occupies today, so 1{,}774 media symlinks and the
+        media-classifier's filepath-keyed state survive the move with
+        zero re-keying.
+  \item \textbf{Dead ADATA NVMe:} removed. It periodically logs AMD-Vi
+        IO\_PAGE\_FAULT events --- unwelcome noise on a future
+        hypervisor host.
+\end{itemize}
+
+\subsection{Network}
+
+Historian has \emph{dual} 2.5\,GbE ports (both \texttt{igc}); the second
+(\texttt{enp100s0}) is simply uncabled and down today. This resolves the
+single-NIC concern for eventually taking over maitred's router duties:
+one port for WAN (FiOS), one for LAN (the TP-Link AP in bridge mode).
+Both ports out-class maitred's gigabit links. The port is named
+\texttt{enp100s0} (PCI bus 100), not \texttt{eno2} --- worth remembering
+when writing the router config.
+
+DomU networking: the nixpkgs Xen module's bridge options were removed
+(``set up your own bridge manually''), so domUs get a NAT network via
+systemd-networkd + iptables for \texttt{vif-*} interfaces, mirroring the
+existing maitred container pattern, with NetworkManager left untouched.
+
+\section{Xen Assessment (from the nixpkgs source)}
+
+The plan deliberately does not bet any migration phase on Xen booting
+flawlessly on this consumer Zen~5 platform; instead Xen is a reversible
+experiment whose result gates only the domU parts.
+
+\subsection{What the source says}
+
+Pinned nixpkgs (\texttt{unstable-small}, rev
+\texttt{8c809a1}) ships Xen \textbf{4.22.0}; module:
+\texttt{nixos/modules/virtualisation/xen-dom0.nix}.
+
+\begin{itemize}
+  \item \texttt{virtualisation.xen.enable} asserts x86\_64,
+        \texttt{systemd-boot}, and \texttt{boot.initrd.systemd.enable} ---
+        \emph{historian already passes all three}.
+  \item Enabling Xen \emph{adds} boot entries alongside the normal
+        per-generation entries. Rollback is booting the non-Xen entry.
+        This makes the trial the lowest-risk possible experiment.
+  \item Unprivileged domains are \emph{imperative only} today: \texttt{xl
+        create}, autostart via \texttt{xendomains}. The declarative
+        libxenlight PR \#363388 was closed unmerged (2026-02); successor
+        PRs \#483205/\#483278 remain open. Plan accordingly: domUs are
+        xl.cfg files plus qcow2 images, outside colmena.
+  \item Module docs require SLAT (AMD NPT: yes) and IOMMU for non-PV
+        guests (AMD-Vi: active, 33 groups: yes).
+\end{itemize}
+
+\subsection{The risk stack}
+
+The dom0 is also the daily desktop, and the riskiest combination is
+ROCm-on-iGPU under a PVH dom0: \texttt{OLLAMA\_IGPU\_ENABLE},
+\texttt{amdgpu.gttsize=57344}, and Xen memory ballooning interact in
+untested ways. Mitigation: the trial boots with
+\texttt{dom0Resources} at defaults (all RAM to dom0), and the existing
+\texttt{ollama-health-probe} service verifies inference within minutes of
+boot. If ROCm misbehaves under Xen, the desktop/ollama stack stays on the
+non-Xen entry and only nspawn-based consolidation proceeds --- no phase is
+blocked by a failed Xen trial.
+
+\subsection{Trial protocol (phase 1)}
+
+\begin{enumerate}
+  \item Add \texttt{virtualisation.xen = \{ enable = true;
+        boot.builderVerbosity = "info"; \};}
+  \item \texttt{nixos-rebuild boot} (not switch); boot the Xen entry.
+  \item Verify: \texttt{xl info}; Plasma + autologin; Moonlight;
+        Jellyfin VA-API transcode; ollama probe metrics; restic;
+        syncthing.
+  \item On any failure: boot the normal entry; Xen stays parked.
+\end{enumerate}
+
+\section{Migration Phases (lowest risk first)}
+
+Phases 0--3 do not require Xen. Each phase is a colmena deploy pair
+(enable on historian, disable on the source, one push), preceded by
+pre-migration restic snapshots and followed by a burn-in window.
+
+\begin{center}
+\small
+\begin{tabular}{@{}rlp{4.0in}@{}}
+\toprule
+\textbf{Phase} & \textbf{Tracker} & \textbf{Contents} \\
+\midrule
+0 & a3j.1 & Ground prep: pull dead NVMe, reclaim root disk to
+$<$80\%, stage PNY as the VM/state volume. \\
+1 & a3j.2 & Xen boot trial (dual systemd-boot entry; reversible). \\
+1.5 & a3j.3 & DomU networking: systemd-networkd NAT/bridge for
+\texttt{vif-*}. \\
+2 & a3j.4, a3j.5 & Seagate physically moves to historian
+(\texttt{/mnt/media-drive}); rclone sync ports over. Low-risk services
+follow: borges, mpd, knitwork + BFF (proxy/DNS flip via
+\texttt{kimb.services} host field). \\
+3 & a3j.6 & Medium-risk stateful: HA + Mosquitto, Tuwunel +
+mautrix-discord, copyparty, email-digest, org-crm + Emacs daemons. \\
+4 & a3j.7, a3j.9 & total-eclipse's always-on duties first (TTS
+$\rightarrow$ historian CPU, Paperless, sms-history, Navigator); then
+the organism fleet into its own Xen domU. Camera placement decision
+required. \\
+5 & a3j.8 & maitred retirement in sub-phases: monitoring $\rightarrow$
+public edge (DDNS/Caddy/Authelia) $\rightarrow$ router core (DHCP/DNS/
+NAT/lighthouse; dual-NIC hardware confirmed) $\rightarrow$ printer/
+scanner USB $\rightarrow$ Tor relay go/no-go. maitred stays powered
+as cold spare. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Phase 2 detail: the seagate move}
+
+The cleanest migration in the plan is a physical one: unplug the 5.5\,TB
+drive from rich-evans, plug it into historian, mount at
+\texttt{/mnt/media-drive}. Because that path is already what the NFS
+mount occupies, every downstream consumer keeps working without path
+changes --- and the drive's put.io sync job (\texttt{rclone-putio-sync},
+with its SMR-friendly \texttt{-{}-transfers 2} tuning) ports verbatim,
+since the rclone config secret is already keyed for historian.
+
+\subsection{Phase 4 detail: total-eclipse wake-on-demand}
+
+The loud gaming PC stops being infrastructure once four duties move:
+\begin{itemize}
+  \item \textbf{Qwen3-TTS} $\rightarrow$ historian via
+        \texttt{faster-qwen3-tts}'s official GGML CPU backend
+        (\texttt{qwentts-cpp-python==0.3.1+cpu}); same server script,
+        simpler nix overlay, voice cloning preserved; the four organism
+        consumers repoint with one config flip.
+  \item \textbf{Paperless-ngx} (2.5\,G) $\rightarrow$ historian
+        nspawn; maitred's scanner rsync repoints.
+  \item \textbf{sms-history} $\rightarrow$ historian's existing
+        auto-login Plasma session pairs KDE Connect with the Pixel;
+        the forced command moves with it.
+  \item \textbf{Navigator organism} $\rightarrow$ historian;
+        \texttt{roster.nix} host field flips.
+\end{itemize}
+Power policy: clean power-off rather than suspend (phantom-wake history),
+woken by Moonlight's native WoL for gaming --- the port is already armed
+in firmware and NixOS --- with an SSH helper on historian for other wakes.
+Boot-to-sunshine latency ($\sim$30\,s) is the only cost.
+
+\section{Data and Secrets}
+
+\subsection{Principles}
+
+\begin{itemize}
+  \item \textbf{Pre-key ahead of time:} one batch agenix session adds
+        historian to the recipient lists of every migrating secret
+        \emph{before} any cutover, so migration days carry zero secret
+        ceremony. Deploy, then confirm decryption on historian.
+  \item \textbf{Re-encrypt, don't rotate:} migration changes
+        \emph{recipients}, not secret values.
+  \item \textbf{Explicit do-not-rotate list:} Tuwunel's Matrix signing
+        keys (federation identity breaks otherwise); retiring hosts' SSH
+        host keys (kept in the registry forever = cold-spare
+        decryptability); the bridge-fleet SSH key's value (only its
+        authorized-keys placement moves); the bridge-scribe GitHub
+        deploy key (stays on historian).
+  \item \textbf{Placement-only SSH moves:} maitred's host pubkey joins
+        historian's kimb for the paperless rsync; the bridge-fleet
+        forced commands (navigator-summon, sms-history) move with their
+        services.
+\end{itemize}
+
+\subsection{Cutover mechanics}
+
+Per service: pre-migration restic snapshot on the source (the rollback
+anchor) $\rightarrow$ initial rsync while live $\rightarrow$ stop source,
+delta rsync (\texttt{rsync -aHAX -{}-numeric-ids} over Nebula) $\rightarrow$
+one colmena push enabling on historian and disabling on the source
+$\rightarrow$ verify $\rightarrow$ post-migration snapshot $\rightarrow$
+burn-in $\rightarrow$ delete source state. Postgres (Tuwunel) is never
+file-rsynced live: stop, then \texttt{pg\_dump} unless the major version
+matches. Syncthing-replicated directories are not double-rsynced ---
+historian simply becomes a folder peer where needed. Ollama cloud auth
+stays userland by choice, provisioned over SSH per machine.
+
+Restic coverage grows on historian with each migrated state directory and
+with the seagate's irreplaceables (Maildir, org, photos); the
+regenerable put.io mirror and VM images stay excluded.
+
+\section{End State and Retirement}
+
+\begin{itemize}
+  \item \textbf{Always-on:} historian alone (plus free-tier oracle).
+  \item \textbf{On-demand:} total-eclipse via WoL; laptops and portables
+        unchanged.
+  \item \textbf{Cold spares:} rich-evans and maitred, configs deployed
+        disabled, host keys retained, old B2 restic snapshots retained
+        as archive.
+  \item \textbf{Nebula:} oracle already provides external lighthouse +
+        relay redundancy; at phase 5c the fleet's lighthouse list
+        changes from \{oracle, maitred\} to \{oracle\} (or adds
+        historian), a config change only --- no certificate ceremony
+        (the fleet CA runs to 2036).
+\end{itemize}
+
+\section{Open Decisions}
+
+\begin{enumerate}
+  \item \textbf{Cameras:} the desk and bed webcams are physically placed
+        where they watch; either they move to historian (USB
+        passthrough or dom0 attach) or rich-evans stays as a dumb
+        camera appliance --- the only role that could keep it powered.
+  \item \textbf{Thread/OTBR:} the HA OpenThread border router may
+        depend on a USB radio on rich-evans; audit before HA moves.
+  \item \textbf{BLE placement:} historian has a Bluetooth adapter, but
+        the Pixel iBeacon range from its location is untested.
+  \item \textbf{Tor relay:} keep (on the new edge), or retire.
+  \item \textbf{Printer/scanner:} move the USB devices to historian with
+        the router phase, or keep maitred as a minimal print/scan
+        appliance.
+  \item \textbf{total-eclipse bulk leftovers:} \texttt{/mnt/bulk}'s
+        Mail/Downloads/shared\_projects may be stale copies; verify
+        before retirement (data survives power-off; only backup
+        coverage pauses).
+\end{enumerate}
+
+\section*{Appendix: Tracker}
+
+The plan is tracked in beads as epic \texttt{systems-flake-a3j} with
+children a3j.1--a3j.10, dependency-linked so \texttt{bd ready} always
+shows actionable work: ground prep (a3j.1) and the pre-keying runbook
+(a3j.10) are unblocked now; service migrations depend on the seagate
+move; the organism domU depends on Xen's trial, networking, and
+total-eclipse's retirement; maitred's retirement is last.
+
+\end{document}
