@@ -36,7 +36,7 @@
 \title{Fleet Consolidation Design}
 \subtitle{Retiring rich-evans and maitred: historian as the single always-on machine}
 \author{Kimberly McCarty}
-\date{September 2026 \textbullet{} v1.1 \textbullet{} tracker: \texttt{systems-flake-a3j}}
+\date{September 2026 \textbullet{} v1.2 \textbullet{} tracker: \texttt{systems-flake-a3j}}
 
 \begin{document}
 \maketitle
@@ -306,8 +306,8 @@ $<$80\%, stage PNY as the VM/state volume. \\
 \texttt{vif-*}. \\
 2 & a3j.4, a3j.5 & Seagate physically moves to historian
 (\texttt{/mnt/media-drive}); rclone sync ports over. Low-risk services
-follow: borges, mpd, knitwork + BFF (proxy/DNS flip via
-\texttt{kimb.services} host field). \\
+follow: borges, mpd, knitwork + BFF, scan-processor, homepage
+(proxy/DNS flip via \texttt{kimb.services} host field). \\
 3 & a3j.6 & Medium-risk stateful: HA + Mosquitto, Tuwunel +
 mautrix-discord, copyparty, email-digest, org-crm + Emacs daemons. \\
 4 & a3j.7, a3j.9 & total-eclipse's always-on duties first (TTS
@@ -316,8 +316,9 @@ the organism fleet into its own Xen domU. Cameras stay on rich-evans
 (decided: placement) and are fetched over Nebula as today. \\
 5 & a3j.8 & maitred retirement in sub-phases: monitoring $\rightarrow$
 public edge (DDNS/Caddy/Authelia) $\rightarrow$ router core (DHCP/DNS/
-NAT/lighthouse; dual-NIC hardware confirmed) $\rightarrow$ printer/
-scanner USB $\rightarrow$ Tor relay go/no-go. maitred stays powered
+NAT/lighthouse; dual-NIC hardware confirmed) $\rightarrow$ printer +
+scanner USB move to historian (CUPS/Samba/Bonjour port, scan pipeline
+goes single-host) $\rightarrow$ Tor relay go/no-go. maitred stays powered
 as cold spare. \\
 \bottomrule
 \end{tabular}
@@ -368,6 +369,22 @@ interactive ESPHome flashing), with the 5.5\,TB drive relocated to
 historian. If Home Assistant loses Pixel iBeacon BLE range from its new
 living-room home, an ESPHome Bluetooth proxy in the bedroom bridges the
 radio --- to be tested at the HA cutover.
+
+\subsection{Phase 5 detail: the scan and print pipeline}
+
+Today a scan travels a three-host relay: maitred's USB scanner and
+scan-button-watcher rsync batches to rich-evans's OCR processor
+(img2pdf + ocrmypdf) and separately into the paperless consume
+directory. After consolidation the entire pipeline is single-host:
+scanner USB, watcher, OCR processor, and paperless all on historian,
+with two cross-host rsync hops eliminated. The printer follows the same
+pattern: the Brother moves to historian with maitred's CUPS/Samba/Bonjour
+configuration as the literal template (including the by-IP TLS
+certification trick and the SMB printing-group firewall rules). The
+scanner can move early (with phase 4, when paperless lands) or with the
+phase 5 cable morning; the printer waits for phase 5, when maitred powers
+off for good. maitred's break-glass config keeps the printer/scanner
+sections forever --- harmless if the USB devices are absent on revival.
 
 \section{Data and Secrets}
 
