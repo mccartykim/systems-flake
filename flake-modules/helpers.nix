@@ -14,27 +14,67 @@
     # compile against it. Bump aotriton; torch picks it up via
     # AOTRITON_INSTALLED_PREFIX = rocmPackages.aotriton.
     rocmPackages = prev.rocmPackages.overrideScope (rfinal: rprev: {
-      aotriton = (rprev.aotriton.override {
-        # Only build kernels for Strix Point; full default target list is slow.
-        gpuTargets = ["gfx1151"];
-      }).overrideAttrs (old: rec {
+      # torch 2.13 requires AOTriton 0.12b (v3-only API: LazyTensor cookie,
+      # attn_options.deterministic, VarlenType::StridedVarlen, seq_strides_*);
+      # gfx1151 flash attention is promoted out of experimental in 0.12b.
+      # nixpkgs still ships 0.11.1b. Source-building 0.12b in the sandbox is
+      # impractical: its v3src/CMakeLists.txt clones ROCm/aiter from the
+      # NETWORK at configure time (sandbox-blocked; the vendoring patch is
+      # nontrivial), and the v3 kernel compile needs a triton venv + hours
+      # with a real ENOSPC failure record on hydra (nixpkgs #453992).
+      # Instead consume AMD's official prebuilt artifacts — the same approach
+      # as huggingface/kernels' nix-builder aotriton_0_12: the rocm7.2 shim
+      # tarball (cmake-install layout: lib/libaotriton_v2.so, headers, cmake
+      # config) + the amd-gfx115x image pack (.aks2 kernels for the Radeon
+      # 890M family). nixpkgs torch picks this up unchanged via
+      # AOTRITON_INSTALLED_PREFIX = rocmPackages.aotriton (see
+      # pkgs/development/python-modules/torch/source/default.nix) — no
+      # bundling (BUILD_AOTRITON_INTO_WHEEL=false, already patched upstream).
+      aotriton = prev.stdenv.mkDerivation (finalAttrs: {
+        pname = "aotriton";
         version = "0.12b";
-        src = prev.fetchFromGitHub {
-          owner = "ROCm";
-          repo = "aotriton";
-          tag = version;
-          hash = "sha256-KOc+xAoWABjokIEq5n9olpln3JUqVFYGADLwqV/H2Zc=";
-          leaveDotGit = true;
-          # Same postFetch as nixpkgs: all submodules except the ~500MB
-          # unused triton one.
-          postFetch = ''
-            cd $out
-            git reset --hard HEAD
-            for submodule in $(git config --file .gitmodules --get-regexp path | awk '{print $2}' | grep '^third_party/' | grep -v '^third_party/triton$'); do
-              git submodule update --init --recursive "$submodule"
-            done
-            find "$out" -name .git -print0 | xargs -0 rm -rf
-          '';
+
+        src = prev.fetchurl {
+          url = "https://github.com/ROCm/aotriton/releases/download/0.12b/aotriton-0.12b-manylinux_2_28_x86_64-rocm7.2-shared.tar.gz";
+          hash = "sha256-W5fo0EGxYMhAhZYfPTvXuYkGQrFGussEyZGqmtao3Kg=";
+        };
+        # Only our arch family (Radeon 890M = gfx1151) — the other five
+        # image packs (~720MB) are unnecessary. Hash from huggingface/kernels.
+        images = prev.fetchurl {
+          url = "https://github.com/ROCm/aotriton/releases/download/0.12b/aotriton-0.12b-images-amd-gfx115x.tar.gz";
+          hash = "sha256-MXc4ehXGeLMAV/RYTR/BuPjbVhY4kMtcmPJ0UCCfWns=";
+        };
+
+        nativeBuildInputs = [prev.autoPatchelfHook];
+        buildInputs = [prev.stdenv.cc.cc.lib prev.xz rprev.clr];
+
+        dontConfigure = true;
+        dontBuild = true;
+        # Keep the prebuilt .so's symbols intact (torch binds them at link).
+        dontStrip = true;
+
+        installPhase = ''
+          runHook preInstall
+
+          # Shim tarball: aotriton/{lib,include} -> cmake-install layout.
+          mkdir -p "$out"
+          tar -C "$out" -zxf "$src" --strip-components=1
+
+          # Image pack: aotriton/lib/aotriton.images/amd-gfx115x/... ->
+          # $out/lib/aotriton.images/amd-gfx115x/... (runtime resolves
+          # kernels relative to the .so).
+          mkdir -p "$out/lib"
+          tar -C "$out/lib" -zxf "$images" --strip-components=2 aotriton/lib/aotriton.images
+
+          runHook postInstall
+        '';
+
+        meta = with prev.lib; {
+          description = "Ahead of Time (AOT) Triton Math Library (prebuilt shim + gfx115x images)";
+          homepage = "https://github.com/ROCm/aotriton";
+          license = licenses.mit;
+          platforms = ["x86_64-linux"];
+          sourceProvenance = with sourceTypes; [binaryNativeCode];
         };
       });
     });
