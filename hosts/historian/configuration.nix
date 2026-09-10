@@ -24,6 +24,11 @@
     # Xen boot via GRUB-multiboot2 chainload (firmware-safe xen.efi path)
     ../../modules/xen-grub-boot.nix
 
+    # domU networking (a3j.3): standalone NAT bridge xenbr0 (192.168.101.0/24)
+    # for vif-* guests — networkd bridge + dnsmasq DHCP/DNS + nftables NAT.
+    # Guests attach with vif = [ "bridge=xenbr0" ] in their xl.cfg.
+    ../../modules/xen-domu-network.nix
+
     # Knitwork webApp SPA container (builds wasmJs at start, nginx serves;
     # proxied to knit.kimb.dev via maitred's socat forwarder)
     ./knitwork-web.nix
@@ -207,6 +212,25 @@
     enable = true;
     setXenDefault = true;
   };
+
+  # domU networking (a3j.3) — NAT bridge for vif-* guests. Standalone bridge
+  # (no physical enslavement): NM owns eno1/enp100s0 today, and at the a3j.8
+  # router phase those roles swap — the NAT bridge must not care which port
+  # carries the uplink. NAT is nftables (base profile); the iptables
+  # networking.nat module would be inert here. Guests: DHCP .100–.200,
+  # static .10–.99 free. Mesh reach into guests happens via
+  # kimb.xenDomuNetwork.portForwards as services migrate (a3j.5/6/7).
+  kimb.xenDomuNetwork.enable = true;
+
+  # xendomains DISABLED until the first real domU lands (a3j.7). Its only job
+  # is autostarting /etc/xen/auto/*.cfg — empty today — but its stop path
+  # runs `xl list -l`, which currently stalls against oxenstored (see a3j.7
+  # notes: plain `xl list` works, `xl list -l` wedges; only a reboot clears
+  # the daemon state). The stall made every switch-time stop hang the full
+  # 90s TimeoutStopSec and fail the switch. Re-enable in a3j.7 when
+  # /etc/xen/auto is populated — and re-test stop behavior with live guests
+  # before trusting it on a shutdown path.
+  systemd.services.xendomains.enable = lib.mkForce false;
 
   # Host identification and networking configuration
   networking = {

@@ -410,6 +410,7 @@
             minimal-test = import ./tests/minimal-test.nix {inherit pkgs;};
             network-test = import ./tests/network-test.nix {inherit pkgs;};
             working-vm-test = import ./tests/working-vm-test.nix {inherit pkgs;};
+            xen-domu-network-test = import ./tests/xen-domu-network-test.nix {inherit pkgs;};
 
             # Configuration evaluation tests (fast - no VM)
             # buildbot-nix builds every .#checks attr on each commit, so adding a
