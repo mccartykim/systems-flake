@@ -187,6 +187,20 @@
     libvirtd.enable = true;
   };
 
+  # === Xen hypervisor trial (phase 1, a3j.2) ===
+  # Adds Xen boot entries ALONGSIDE the normal per-generation entries — the
+  # normal entry stays the default, so a plain reboot never lands on Xen;
+  # booting Xen is a deliberate menu pick, and fallback is power-cycle +
+  # normal entry (zero-loss trial design). dom0Resources left at defaults
+  # (0 = all RAM to dom0) so the ollama GTT headroom (amdgpu.gttsize=57344)
+  # is untouched — carve out guest memory only after domUs prove out.
+  # dom0 is PVH on Xen 4.22 (PV dom0 removed upstream). See bd a3j.2 for
+  # the trial checklist + rollback.
+  virtualisation.xen = {
+    enable = true;
+    boot.builderVerbosity = "info";
+  };
+
   # Host identification and networking configuration
   networking = {
     hostName = "historian";
