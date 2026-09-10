@@ -105,16 +105,6 @@
     options = ["nofail" "noatime"];
   };
 
-  # PNY 1TB USB — VM/state volume staging (phase 0, a3j.1): qcow2 domU images
-  # + nspawn roots. Steam library wiring remains deferred; vacuum-backups
-  # lives here already. Not in the restic include set (paths are home/etc/
-  # var-lib/root), so these are excluded from backup by construction — domU
-  # state backs up from within each guest.
-  systemd.tmpfiles.rules = [
-    "d /mnt/games/xen 0755 kimb users -"
-    "d /mnt/games/machines 0755 kimb users -"
-  ];
-
   kimb = {
     # Restic backups
     restic.enable = true;
@@ -249,9 +239,15 @@
   # AMD-specific configuration
   hardware.amdgpu.opencl.enable = true;
 
-  # ROCm support for compute workloads
+  # ROCm support for compute workloads; plus PNY 1TB USB staging (phase 0,
+  # a3j.1): qcow2 domU images + nspawn roots. Steam library wiring remains
+  # deferred; vacuum-backups lives here already. Not in the restic include
+  # set (paths are home/etc/var-lib/root), so excluded from backup by
+  # construction — domU state backs up from within each guest.
   systemd.tmpfiles.rules = [
     "L+    /opt/rocm/hip   -    -    -     -    ${pkgs.rocmPackages.clr}"
+    "d /mnt/games/xen 0755 kimb users -"
+    "d /mnt/games/machines 0755 kimb users -"
   ];
 
   # Boot configuration
