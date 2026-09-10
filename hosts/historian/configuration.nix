@@ -187,17 +187,21 @@
     libvirtd.enable = true;
   };
 
-  # === Xen hypervisor trial (phase 1, a3j.2) ===
-  # Adds Xen boot entries ALONGSIDE the normal per-generation entries — the
-  # normal entry stays the default, so a plain reboot never lands on Xen;
-  # booting Xen is a deliberate menu pick, and fallback is power-cycle +
-  # normal entry (zero-loss trial design). dom0Resources left at defaults
-  # (0 = all RAM to dom0) so the ollama GTT headroom (amdgpu.gttsize=57344)
-  # is untouched — carve out guest memory only after domUs prove out.
-  # dom0 is PVH on Xen 4.22 (PV dom0 removed upstream). See bd a3j.2 for
-  # the trial checklist + rollback.
+  # === Xen hypervisor — TRIAL #1 FAILED 2026-09-10, PARKED (a3j.2) ===
+  # Real hardware (GmkTec EVO-X1): black screen instantly after picking the
+  # Xen entry; no SSH, no journald record → died PRE-KERNEL (xen.efi or very
+  # early Xen init, likely firmware/GOP handoff or AMD-Vi on Strix Point).
+  # QEMU/OVMF rehearsal of the SAME UKI + kernel + initrd: FULL PASS — boots
+  # through Xen → kernel → systemd into Emergency Mode (root-device wait, an
+  # artifact of the minimal test ESP). Artifact chain EXONERATED; failure is
+  # firmware/hardware-specific. See bd a3j.2 for the diagnostic ladder
+  # (loglvl/all, iommu=off bisect, BIOS audit, older xen, upstream research).
+  # PARKED: enable=false so no rebuild-boot can flip the menu default back to
+  # the xen entry. Re-arm = flip true + nixos-rebuild boot + deliberate menu
+  # pick (loader.conf default still hand-pointed at the normal entry — a
+  # boot rebuild while enabled RESETS the default to xen, upstream intent).
   virtualisation.xen = {
-    enable = true;
+    enable = false;
     boot.builderVerbosity = "info";
   };
 
