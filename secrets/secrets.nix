@@ -13,6 +13,13 @@ let
   # All working machines that can decrypt shared secrets
   workingMachines = (builtins.attrValues hostKeys) ++ [bootstrap oracleKey mochiKey];
 
+  # Fleet-core recipient set (a3j.10): the two always-on boxes. Service
+  # secrets keyed to fleetCore move between fleet-core hosts with NO re-key
+  # ceremony — the recipient set is the unit, not the host. Bootstrap stays
+  # appended per-secret below, so re-encryption from a bootstrap identity
+  # remains possible no matter which fleet-core host a service lives on.
+  fleetCore = [hostKeys.historian hostKeys.rich-evans];
+
   # Helper to create node cert/key secrets for a host
   createNodeSecrets = name: {
     "nebula-${name}-cert.age".publicKeys = [hostKeys.${name} bootstrap];
@@ -28,10 +35,15 @@ in
     # Shared CA certificate - all working systems
     "nebula-ca.age".publicKeys = workingMachines;
 
-    # Cloudflare API token - only maitred needs this
-    "cloudflare-api-token.age".publicKeys = [hostKeys.maitred bootstrap];
-    # Grafana secret key - only maitred needs this
-    "grafana-secret-key.age".publicKeys = [hostKeys.maitred bootstrap];
+    # Cloudflare API token - maitred consumer (DDNS), pre-keyed for
+    # historian (a3j.10) ahead of the phase-5 maitred duty migration.
+    # maitred keeps decryptability as a cold spare (retiring hosts stay in
+    # the registry forever).
+    "cloudflare-api-token.age".publicKeys = [hostKeys.maitred hostKeys.historian bootstrap];
+    # Grafana secret key - maitred consumer (grafana), pre-keyed for
+    # historian (a3j.10, phase-5 prometheus/grafana migration). Cold-spare
+    # rule as above.
+    "grafana-secret-key.age".publicKeys = [hostKeys.maitred hostKeys.historian bootstrap];
 
     # Authelia secrets - maitred and historian
     "authelia-jwt-secret.age".publicKeys = [hostKeys.maitred hostKeys.historian bootstrap];
@@ -50,32 +62,39 @@ in
     # ===== LIFE COACH AGENT =====
     # Home Assistant long-lived access token for presence sensor queries
     "ha-life-coach-token.age".publicKeys = [hostKeys.rich-evans hostKeys.historian hostKeys.marshmallow bootstrap];
-    # Matrix access token for life-coach chatbot (Tuwunel on rich-evans)
-    "matrix-life-coach-token.age".publicKeys = [hostKeys.rich-evans bootstrap];
+    # Matrix access token for life-coach chatbot (Tuwunel; a3j.10 pre-key
+    # to fleet-core for the a3j.6 Tuwunel migration to historian)
+    "matrix-life-coach-token.age".publicKeys = fleetCore ++ [bootstrap];
     # Matrix access token for the Phase-1 vox-bridge (@vox-bridge:kimb.dev,
     # Tuwunel on rich-evans). Minted via a transient allow_registration flip;
-    # see 40k_bridge/deploy/GO_NOGO.md §3.
-    "matrix-vox-bridge-token.age".publicKeys = [hostKeys.rich-evans bootstrap];
-    # Discord bot token for life-coach chatbot
-    "discord-life-coach-token.age".publicKeys = [hostKeys.rich-evans bootstrap];
+    # see 40k_bridge/deploy/GO_NOGO.md §3. a3j.10 pre-key to fleet-core for
+    # the a3j.6 Tuwunel migration (re-keys again to the a3j.7 organisms
+    # domU host key if the vox daemon moves there).
+    "matrix-vox-bridge-token.age".publicKeys = fleetCore ++ [bootstrap];
+    # Discord bot token for life-coach chatbot (a3j.10 pre-key to
+    # fleet-core; life-coach stack migrates in a3j.6/a3j.7)
+    "discord-life-coach-token.age".publicKeys = fleetCore ++ [bootstrap];
 
     # ===== VACUUM ORGANISM =====
     # Discord bot token for vacuum_organism sidecar (separate Discord
     # application from life-coach; see lib/discord_bot.py fail-closed
-    # allowlist semantics).
-    "discord-vacuum-bot-token.age".publicKeys = [hostKeys.rich-evans bootstrap];
+    # allowlist semantics). a3j.10 pre-key to fleet-core ahead of the a3j.7
+    # organisms domU (re-keys to the domU host key when it exists).
+    "discord-vacuum-bot-token.age".publicKeys = fleetCore ++ [bootstrap];
 
     # ===== EMAIL / MAIL =====
-    # Mail account passwords for mbsync on rich-evans (pull-only sync)
-    # Used by both email-digest and org-crm services
-    "mail-zoho-password.age".publicKeys = [hostKeys.rich-evans bootstrap];
-    "mail-gmail-password.age".publicKeys = [hostKeys.rich-evans bootstrap];
-    "mail-fastmail-password.age".publicKeys = [hostKeys.rich-evans bootstrap];
+    # Mail account passwords for mbsync (pull-only sync). Used by both
+    # email-digest and org-crm services. a3j.10 pre-key to fleet-core ahead
+    # of the a3j.6 email-digest/org-crm migration (Maildir rides the
+    # seagate; the mu xapian index rebuilds on historian's NVMe).
+    "mail-zoho-password.age".publicKeys = fleetCore ++ [bootstrap];
+    "mail-gmail-password.age".publicKeys = fleetCore ++ [bootstrap];
+    "mail-fastmail-password.age".publicKeys = fleetCore ++ [bootstrap];
 
     # ===== ORG-CRM =====
-    # Discord bot token for CRM agent (separate from life-coach)
-    # Uncomment after creating Discord application and encrypting token:
-    "discord-org-crm-token.age".publicKeys = [hostKeys.rich-evans bootstrap];
+    # Discord bot token for CRM agent (separate from life-coach).
+    # a3j.10 pre-key to fleet-core ahead of the a3j.6 org-crm migration.
+    "discord-org-crm-token.age".publicKeys = fleetCore ++ [bootstrap];
 
     # ===== BUILDBOT-NIX CI =====
     # Master lives on rich-evans, worker on historian.
@@ -126,6 +145,10 @@ in
     # bridge-scribe forced-command servitor). Decrypted on rich-evans only
     # (owned by vox-organism, mode 0400). This is NOT a GitHub key — it never
     # touches github; it only authenticates the in-fleet hop to the scribe.
+    # bridge-fleet pubkey forced-command entries move to historian kimb
+    # when their services move (a3j.9); the key itself re-keys to the a3j.7
+    # organisms domU host key (new registry entry) if the vox daemon moves
+    # into that domU. Until then: rich-evans-only.
     "bridge-fleet-ssh-key.age".publicKeys = [hostKeys.rich-evans bootstrap];
 
     # ===== MEDIA PIPELINE (historian) =====
@@ -146,30 +169,40 @@ in
     # ===== SRE AGENT =====
     # GitHub fine-grained PAT for filing issues in mccartykim/homelab-incidents
     # (Issues: read/write on that repo only). Decrypted on rich-evans.
+    # a3j.10 audit: SRE stack is currently disabled on rich-evans — NOT
+    # pre-keyed for historian; keep-or-drop decided at rich-evans retirement.
     "gh-sre-token.age".publicKeys = [hostKeys.rich-evans bootstrap];
     # Discord bot token for SRE alert notifications (#sre-alerts channel).
     # Separate bot application from life-coach/vacuum/org-crm.
+    # a3j.10 audit: as above — SRE stack disabled, not pre-keyed for
+    # historian; keep-or-drop at rich-evans retirement.
     "discord-sre-token.age".publicKeys = [hostKeys.rich-evans bootstrap];
     # Ollama Cloud API key for LLM inference on rich-evans.
     # Get key from https://ollama.com/settings/api-keys
+    # NOTE (a3j.10, user decision 2026-09-08): ollama cloud auth is USERLAND
+    # — `ollama signin` managed ad hoc per host over ssh, NOT agenix — so
+    # historian is intentionally NOT a recipient; it re-provisions cloud
+    # auth manually as a known one-time step on rebuild/new-host.
     "ollama-cloud-key.age".publicKeys = [hostKeys.rich-evans hostKeys.cheesecake hostKeys.marshmallow bootstrap];
 
     # ===== KNITWORK (rich-evans) =====
     # Moderation admin bearer token for the knitwork AppView's
     # POST/DELETE /admin/hidden de-index/restore path (Stage 4). The token value
-    # itself is never in any repo/flake — only this encrypted file is. Decrypted
-    # on rich-evans via its SSH host key; consumed through
+    # itself is never in any repo/flake — only this encrypted file is. a3j.10
+    # pre-key to fleet-core (decryptable on rich-evans + historian) ahead of
+    # the a3j.5 knitwork migration; consumed through
     # services.knitwork.adminTokenFile -> KNIT_ADMIN_TOKEN_FILE. See
     # hosts/rich-evans/knitwork.nix.
-    "knit-admin-token.age".publicKeys = [hostKeys.rich-evans bootstrap];
+    "knit-admin-token.age".publicKeys = fleetCore ++ [bootstrap];
 
     # Confidential OAuth client P-256 private key (multibase) for the knitwork
     # BFF's private_key_jwt client auth. The key value is never in any repo/flake
-    # — only this encrypted file. Decrypted on rich-evans via its SSH host key;
+    # — only this encrypted file. a3j.10 pre-key to fleet-core (decryptable
+    # on rich-evans + historian) ahead of the a3j.5 knitwork-BFF migration;
     # consumed through services.knitwork-bff.clientKeyFile -> KNIT_CLIENT_KEY. See
     # hosts/rich-evans/knitwork-bff.nix. Generated with the knitwork repo's
     # bff/cmd/genkey, then age-encrypted to rich-evans + bootstrap here.
-    "knit-bff-client-key.age".publicKeys = [hostKeys.rich-evans bootstrap];
+    "knit-bff-client-key.age".publicKeys = fleetCore ++ [bootstrap];
 
     # ===== BORGES (rich-evans) =====
     # systemd EnvironmentFile for the borges ebook server: BORGES_ADMIN_PASS
@@ -177,9 +210,10 @@ in
     # outside the DB so a DB leak alone can't forge a session or brute-force a
     # PIN), BORGES_BASE_URL (https://borges.kimb.dev -> Secure session cookie).
     # The values are never in any repo/flake — only this encrypted file.
-    # Decrypted on rich-evans via its SSH host key; consumed through
+    # a3j.10 pre-key to fleet-core (decryptable on rich-evans + historian)
+    # ahead of the a3j.5 borges migration; consumed through
     # services.borges.environmentFile -> systemd EnvironmentFile=. See
     # hosts/rich-evans/borges.nix.
-    "borges-env.age".publicKeys = [hostKeys.rich-evans bootstrap];
+    "borges-env.age".publicKeys = fleetCore ++ [bootstrap];
   }
   // allNebulaSecrets
