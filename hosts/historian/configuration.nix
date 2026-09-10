@@ -202,17 +202,10 @@
   virtualisation.xen = {
     enable = true;
     boot.builderVerbosity = "quiet";
-    # Diagnostic visibility while the GRUB path proves out on real hardware
-    # (drop once setXenDefault flips true): verbose Xen log on the console.
-    boot.params = [
-      "loglvl=all"
-      "guest_loglvl=all"
-      "console=vga"
-    ];
   };
   boot.xenGrubBoot = {
     enable = true;
-    setXenDefault = false;
+    setXenDefault = true;
   };
 
   # Host identification and networking configuration
