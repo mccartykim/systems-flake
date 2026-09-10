@@ -63,9 +63,15 @@ in {
     # cookie). The borges service runs as the borges user (module sets
     # User=borges), so the decrypted file is borges-owned 0400.
     environmentFile = config.age.secrets.borges-env.path;
+
+    # Secret declaration lives INSIDE the same mkIf as the service: the
+    # decrypted file is chowned to the borges user (see age.secrets below),
+    # who only exists once services.borges.enable creates the module's
+    # system user — an eager top-level declaration would fail activation
+    # with agenixChown: user 'borges' does not exist while enable=false.
   };
 
-  age.secrets.borges-env = {
+  age.secrets.borges-env = lib.mkIf borges.enable {
     file = ../../secrets/borges-env.age;
     mode = "0400";
     owner = "borges";
