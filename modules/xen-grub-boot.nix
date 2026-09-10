@@ -35,12 +35,25 @@ let
   cfg = config.boot.xenGrubBoot;
   xenCfg = config.virtualisation.xen;
 
-  grubXen = pkgs.grub2_efi.overrideAttrs (old: {
-    pname = "grub2-efi-xen-mb2";
-    patches = (old.patches or [ ]) ++ [
-      ../pkgs/patches/grub-2.14-xen-multiboot2-relocator.patch
-    ];
-  });
+  # GRUB 2.12 module set, taken from Debian's grub-efi-amd64 package.
+  # Why not nixpkgs' grub2_efi (2.14): 2.14 has relocator regressions that
+  # page-fault Xen multiboot2 boots (vendored patch covers the OVMF-visible
+  # half, but the patched image still dies instantly on the EVO-X1's AMI
+  # firmware — while this exact Debian-2.12-modules image booted the box
+  # from USB). grub-mkimage is ABI-tolerant, so nixpkgs' mkimage (any
+  # version) repacking these 2.12 modules is fine. Swap back to a pure
+  # pkgs.grub2_efi once nixpkgs' grub boots Xen on AMI Aptio firmware.
+  grubModulesDeb = pkgs.fetchurl {
+    url = "https://deb.debian.org/debian/pool/main/g/grub2/grub-efi-amd64-bin_2.12-9+deb13u2_amd64.deb";
+    hash = "sha256-1IbWLIOqGX+Dwd0FYP/ZbZHIlvTVhIUWTrfhYj57/eI=";
+  };
+  grub2112Modules = pkgs.runCommand "grub-2.12-x86_64-efi-modules" { } ''
+    mkdir -p tmp && cd tmp
+    ${pkgs.binutils}/bin/ar x ${grubModulesDeb} data.tar.xz
+    tar xf data.tar.xz
+    mkdir -p $out
+    cp -r usr/lib/grub/x86_64-efi $out/x86_64-efi || cp -r ./usr/lib/grub/x86_64-efi $out/x86_64-efi
+  '';
 
   grubModules = toString [
     "multiboot2"
@@ -87,12 +100,13 @@ let
       gnugrep
       gnused
       jq
-      grubXen
+      grub2_efi # grub-mkimage tool only; module ABI comes from grub2112Modules
     ];
     runtimeEnv = {
       efiMountPoint = config.boot.loader.efi.efiSysMountPoint;
       setXenDefault = if cfg.setXenDefault then "1" else "0";
       inherit grubModules;
+      grubModuleDir = toString grub2112Modules + "/x86_64-efi";
     };
     excludeShellChecks = [ "SC2016" ];
     text = builtins.readFile ./xen-grub-boot-builder.sh;

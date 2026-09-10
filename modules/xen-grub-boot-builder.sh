@@ -40,29 +40,28 @@ for gen in "${gens[@]}"; do
     machineID=$(sed -nr 's/^machine-id (.*)$/\1/p' "$gen")
     sortKey=$(sed -nr 's/^sort-key (.*)$/\1/p' "$gen")
 
-    # xen.gz lives in the per-generation dir next to the GRUB image. The
-    # whole config is embedded in the image via --config: searching for
-    # xen.gz pins $root to the ESP regardless of drive enumeration, and
-    # nothing external needs parsing. Kernel/initrd are referenced at their
-    # existing shared locations under EFI/nixos.
+    # xen.gz + grub.cfg live in the per-generation dir next to the GRUB
+    # image; GRUB finds the cfg via the image's baked-in prefix (this is the
+    # exact layout the hardware-proven USB used, scaled up per-generation).
+    # Kernel/initrd are referenced at their existing shared EFI/nixos paths.
     cp "$multiboot" "$dir/xen.gz"
 
-    tmpCfg=$(mktemp)
-    cat > "$tmpCfg" <<EOFGRUB
-search --no-floppy --file --set=xenroot /$dirName/xen.gz
-multiboot2 (\$xenroot)/$dirName/xen.gz $bootParams
-module2 (\$xenroot)/EFI/nixos/$kernel init=$init $kernelParams
-module2 (\$xenroot)/EFI/nixos/$initrd
-boot
+    cat > "$dir/grub.cfg" <<EOFGRUB
+set timeout=1
+set default=0
+menuentry "Xen" {
+  multiboot2 /$dirName/xen.gz $bootParams
+  module2 (\$root)/EFI/nixos/$kernel init=$init $kernelParams
+  module2 (\$root)/EFI/nixos/$initrd
+}
 EOFGRUB
 
-    # Module list comes from the module's grubModules (unquoted expansion is
-    # intentional); note part_msdos is load-bearing for partition-table-less
-    # media even though it looks vestigial.
+    # Module DIR comes from the Debian-sourced 2.12 modules (see the nix
+    # module for why); module list from grubModules (unquoted intentional).
+    # part_msdos is load-bearing for partition-table-less ESP access.
     # shellcheck disable=SC2086
-    grub-mkimage -O x86_64-efi -o "$dir/grubx64.efi" -p "/$dirName" \
-        --config "$tmpCfg" $grubModules
-    rm -f "$tmpCfg"
+    grub-mkimage -d "$grubModuleDir" -O x86_64-efi -o "$dir/grubx64.efi" \
+        -p "/$dirName" $grubModules
 
     cat > "$esp/loader/entries/$grubGen.conf" <<EOFCONF
 title $title (with Xen Hypervisor)
