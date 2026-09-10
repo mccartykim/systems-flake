@@ -43,39 +43,6 @@
         publicAccess = true;
         websockets = false;
       };
-      # Knitwork — lexicon host + firehose indexer. Runs HERE as a host
-      # service (see hosts/rich-evans/knitwork.nix, which imports the
-      # knitwork flake's NixOS module). maitred only reverse-proxies to
-      # it (the duplicate `knit` entry under the maitred bucket below,
-      # with host = "rich-evans" and no containerIP, drives Caddy's vhost
-      # + maitred's socat forwarder to this host's Nebula IP:port).
-      knit = {
-        enable = true;
-        port = 8080;
-        subdomain = "knit";
-        host = "rich-evans";
-        auth = "none";
-        publicAccess = true;
-        # The lexicon host / AppView is plain HTTP; the firehose indexer's
-        # WebSocket is an *outbound* wss to the relay, so no inbound websockets.
-        websockets = false;
-      };
-      # Knitwork BFF — ATProto OAuth write relay, runs HERE as a host service
-      # (hosts/rich-evans/knitwork-bff.nix imports the knitwork flake's BFF
-      # module and reads this entry for port/enable). The duplicate `knit-bff`
-      # entry under the maitred bucket drives maitred's socat forwarder +
-      # the /api/* routing; this entry just feeds the rich-evans host config.
-      # publicAccess=false (mirrored in maitred): the BFF has no subdomain of
-      # its own — it's reached via /api/* on knit.kimb.dev.
-      knit-bff = {
-        enable = true;
-        port = 8787;
-        subdomain = "knit-bff";
-        host = "rich-evans";
-        auth = "none";
-        publicAccess = false;
-        websockets = false;
-      };
     };
 
     # Historian services (the beefy always-on Beelink)
@@ -115,7 +82,7 @@
         websockets = false;
       };
       knit = {
-        enable = false;
+        enable = true;
         port = 8080;
         subdomain = "knit";
         host = "historian";
@@ -126,7 +93,7 @@
         websockets = false;
       };
       knit-bff = {
-        enable = false;
+        enable = true;
         port = 8787;
         subdomain = "knit-bff";
         host = "historian";
@@ -199,27 +166,28 @@
         enable = true;
         port = 8080;
         subdomain = "knit";
-        host = "rich-evans";
+        host = "historian";
         auth = "none";
         publicAccess = true;
-        # No containerIP: knit runs on rich-evans (rich-evans bucket
-        # above), not as a maitred container. This entry exists only so
-        # maitred's reverse-proxy generates the knit.kimb.dev vhost and
-        # the socat forwarder (containerBridge:8080 → rich-evans Nebula
-        # 10.100.0.40:8080) engages via the `host != "maitred"` filter.
+        # No containerIP: knit runs as a host service on historian (a3j.5;
+        # the entry under the historian bucket above), not as a maitred
+        # container. This entry exists only so maitred's reverse-proxy
+        # generates the knit.kimb.dev vhost and the socat forwarder
+        # (containerBridge:8080 → historian Nebula 10.100.0.10:8080) engages
+        # via the `host != "maitred"` filter.
         websockets = false;
       };
-      # Knitwork BFF — the ATProto OAuth write relay, also on rich-evans (host
-      # service, see hosts/rich-evans/knitwork-bff.nix). publicAccess=false so
-      # this drives ONLY the socat forwarder (containerBridge:8787 → rich-evans
-      # Nebula 10.100.0.40:8787), NOT a vhost: the BFF is reached via /api/* on
+      # Knitwork BFF — the ATProto OAuth write relay, now on historian (a3j.5;
+      # hosts/historian/knitwork-bff.nix). publicAccess=false so this drives
+      # ONLY the socat forwarder (containerBridge:8787 → historian Nebula
+      # 10.100.0.10:8787), NOT a vhost: the BFF is reached via /api/* on
       # the hand-written knit.kimb.dev vhost in reverse-proxy.nix, not its own
       # subdomain. Mirrors how the `knit` entry above works, minus the vhost.
       knit-bff = {
         enable = true;
         port = 8787;
         subdomain = "knit-bff";
-        host = "rich-evans";
+        host = "historian";
         auth = "none";
         publicAccess = false;
         websockets = false;

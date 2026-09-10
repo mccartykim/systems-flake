@@ -37,11 +37,15 @@ in {
     # Matrix homeserver (Tuwunel) + Discord bridge
     ./matrix.nix
 
-    # Knitwork — lexicon host + firehose indexer (host service, proxied via maitred)
-    ./knitwork.nix
+    # Knitwork — REMOVED at a3j.5: the lexicon host + firehose indexer moved
+    # to historian (hosts/historian/knitwork.nix; the registry entry lives in
+    # the historian bucket). The module file stays for reference, like
+    # buildbot-master.nix.
+    # ./knitwork.nix
 
-    # Knitwork BFF — ATProto OAuth write relay (host service, /api/* on knit.kimb.dev)
-    ./knitwork-bff.nix
+    # Knitwork BFF — REMOVED at a3j.5: the ATProto OAuth write relay moved to
+    # historian (hosts/historian/knitwork-bff.nix).
+    # ./knitwork-bff.nix
 
     # DNS server - DISABLED: moved to maitred router
     # ./dns.nix
