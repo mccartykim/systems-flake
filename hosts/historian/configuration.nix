@@ -21,6 +21,9 @@
     # Restic backups to Backblaze B2
     ../../modules/restic-backup.nix
 
+    # Xen boot via GRUB-multiboot2 chainload (firmware-safe xen.efi path)
+    ../../modules/xen-grub-boot.nix
+
     # Knitwork webApp SPA container (builds wasmJs at start, nginx serves;
     # proxied to knit.kimb.dev via maitred's socat forwarder)
     ./knitwork-web.nix
@@ -187,22 +190,22 @@
     libvirtd.enable = true;
   };
 
-  # === Xen hypervisor — TRIAL #1 FAILED 2026-09-10, PARKED (a3j.2) ===
-  # Real hardware (GmkTec EVO-X1): black screen instantly after picking the
-  # Xen entry; no SSH, no journald record → died PRE-KERNEL (xen.efi or very
-  # early Xen init, likely firmware/GOP handoff or AMD-Vi on Strix Point).
-  # QEMU/OVMF rehearsal of the SAME UKI + kernel + initrd: FULL PASS — boots
-  # through Xen → kernel → systemd into Emergency Mode (root-device wait, an
-  # artifact of the minimal test ESP). Artifact chain EXONERATED; failure is
-  # firmware/hardware-specific. See bd a3j.2 for the diagnostic ladder
-  # (loglvl/all, iommu=off bisect, BIOS audit, older xen, upstream research).
-  # PARKED: enable=false so no rebuild-boot can flip the menu default back to
-  # the xen entry. Re-arm = flip true + nixos-rebuild boot + deliberate menu
-  # pick (loader.conf default still hand-pointed at the normal entry — a
-  # boot rebuild while enabled RESETS the default to xen, upstream intent).
+  # === Xen hypervisor — RESUMED 2026-09-10 via GRUB-multiboot2 (a3j.2) ===
+  # Trial #1 (direct xen.efi) died pre-kernel at the firmware handoff; the
+  # GmkTec BIOS 1.04 (latest published for the base EVO-X1) is confirmed to
+  # kill xen.efi specifically, while Xen 4.22 + Strix Point + AMD-Vi are
+  # proven healthy via GRUB multiboot2 (hardware trial #2 + ROCm/ollama
+  # green under dom0). modules/xen-grub-boot.nix provides the chainload
+  # entries and scrubs the broken UKI entries the upstream builder writes.
+  # setXenDefault stays false until a GRUB-path boot is confirmed at the
+  # desk, so unattended reboots/power cycles still land on the plain entry.
   virtualisation.xen = {
-    enable = false;
-    boot.builderVerbosity = "info";
+    enable = true;
+    boot.builderVerbosity = "quiet";
+  };
+  boot.xenGrubBoot = {
+    enable = true;
+    setXenDefault = false;
   };
 
   # Host identification and networking configuration

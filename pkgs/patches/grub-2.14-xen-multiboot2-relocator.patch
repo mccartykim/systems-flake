@@ -1,0 +1,88 @@
+diff -ru a/grub-core/lib/i386/relocator16.S b/grub-core/lib/i386/relocator16.S
+--- a/grub-core/lib/i386/relocator16.S	2026-09-10 03:16:23.789578537 -0400
++++ b/grub-core/lib/i386/relocator16.S	2026-09-10 03:16:35.461886607 -0400
+@@ -29,6 +29,9 @@
+ #include <grub/i386/relocator_private.h>
+ 
+ #include "relocator_common.S"
++
++	/* Symbols below are patched at runtime; give them a writable section. */
++	.section	.text.relocator, "awx", %progbits
+ 	
+ 	.p2align	4	/* force 16-byte alignment */
+ 
+diff -ru a/grub-core/lib/i386/relocator32.S b/grub-core/lib/i386/relocator32.S
+--- a/grub-core/lib/i386/relocator32.S	2026-09-10 03:16:23.826477863 -0400
++++ b/grub-core/lib/i386/relocator32.S	2026-09-10 03:16:35.462014322 -0400
+@@ -24,6 +24,9 @@
+ 
+ #include "relocator_common.S"
+ 
++	/* Symbols below are patched at runtime; give them a writable section. */
++	.section	.text.relocator, "awx", %progbits
++
+ 	.p2align	4	/* force 16-byte alignment */
+ 
+ VARIABLE(grub_relocator32_start)
+diff -ru a/grub-core/lib/i386/relocator64.S b/grub-core/lib/i386/relocator64.S
+--- a/grub-core/lib/i386/relocator64.S	2026-09-10 03:16:23.864109299 -0400
++++ b/grub-core/lib/i386/relocator64.S	2026-09-10 03:16:35.462121039 -0400
+@@ -24,6 +24,9 @@
+ 
+ #include "relocator_common.S"
+ 
++	/* Symbols below are patched at runtime; give them a writable section. */
++	.section	.text.relocator, "awx", %progbits
++
+ 	.p2align	4	/* force 16-byte alignment */
+ 
+ VARIABLE(grub_relocator64_start)
+diff -ru a/grub-core/lib/i386/relocator_asm.S b/grub-core/lib/i386/relocator_asm.S
+--- a/grub-core/lib/i386/relocator_asm.S	2026-09-10 03:16:23.900953423 -0400
++++ b/grub-core/lib/i386/relocator_asm.S	2026-09-10 03:16:35.462226453 -0400
+@@ -19,6 +19,9 @@
+ #include <grub/symbol.h>
+ #include <grub/i386/memory.h>
+ 
++	/* Symbols below are patched at runtime; give them a writable section. */
++	.section	.text.relocator, "awx", %progbits
++
+ 	.p2align	2
+ 
+ VARIABLE(grub_relocator_backward_start)
+diff -ru a/grub-core/lib/i386/relocator_common_c.c b/grub-core/lib/i386/relocator_common_c.c
+--- a/grub-core/lib/i386/relocator_common_c.c	2026-09-10 03:16:23.977749581 -0400
++++ b/grub-core/lib/i386/relocator_common_c.c	2026-09-10 03:16:49.154545031 -0400
+@@ -109,6 +109,7 @@
+   grub_uint64_t *pt2 = pt3 + (npt3pages << PAGE_IDX_SIZE);
+   grub_uint64_t *endpreamble = pt2 + (npt2pages << PAGE_IDX_SIZE);
+   grub_uint64_t i;
++  grub_uint64_t firmware_cr3;
+ 
+   /* movabs $pt4, %rax.  */
+   *p++ = 0x48;
+@@ -123,6 +124,11 @@
+ 
+   /* jmp $endpreamble.  */
+   *p++ = 0xe9;
++
++  /* Inherit firmware PML4 so high mappings (EFI runtime, MMIO) */
++  /* remain reachable after switching to our own page table.    */
++  asm volatile ("mov %%cr3, %0" : "=r" (firmware_cr3));
++  grub_memcpy (pt4, (void *) (firmware_cr3 & ~0xfffULL), GRUB_PAGE_SIZE);
+   *(grub_uint32_t *) p = (grub_uint8_t *) endpreamble - p - 4;
+ 
+   for (i = 0; i < npt3pages; i++)
+diff -ru a/grub-core/lib/x86_64/relocator_asm.S b/grub-core/lib/x86_64/relocator_asm.S
+--- a/grub-core/lib/x86_64/relocator_asm.S	2026-09-10 03:16:23.939941840 -0400
++++ b/grub-core/lib/x86_64/relocator_asm.S	2026-09-10 03:16:35.462325266 -0400
+@@ -19,6 +19,9 @@
+ #include <grub/symbol.h>
+ #include <grub/i386/memory.h>
+ 
++	/* Symbols below are patched at runtime; give them a writable section. */
++	.section	.text.relocator, "awx", %progbits
++
+ 	.p2align	2
+ 
+ VARIABLE(grub_relocator_backward_start)
