@@ -33,6 +33,29 @@
     # proxied to knit.kimb.dev via maitred's socat forwarder)
     ./knitwork-web.nix
 
+    # === a3j.5 low-risk service migrations (from rich-evans) ===
+    # All registry-gated via kimb.services (services/default.nix): each file
+    # is inert (mkIf) until its entry moves to the historian bucket at
+    # cutover — except mpd, which has no registry entry and starts at the
+    # pre-work deploy (fresh DB scan over the NFS-mounted seagate; no
+    # consumers point at it until the MPD_HOST flip).
+
+    # Borges — EPUB-first ebook server (library via /mnt/media-drive NFS)
+    ./borges.nix
+
+    # Knitwork — lexicon host + firehose indexer (host service; maitred's
+    # socat forwarder repoints via the registry `host` flip)
+    ./knitwork.nix
+
+    # Knitwork BFF — ATProto OAuth write relay (/api/* on knit.kimb.dev)
+    ./knitwork-bff.nix
+
+    # MPD httpd stream — the Choirmaster's music (Nest fetches over LAN)
+    ./mpd.nix
+
+    # Homepage dashboard — the consolidated instance (LAN-only)
+    ./homepage.nix
+
     # Buildbot worker — DISABLED 2026-06-22 (gave up on buildbot-nix
     # fighting private-repo flake inputs; may revisit a different CI
     # scheme later). Re-enable by uncommenting this import; the module

@@ -110,6 +110,56 @@
         publicAccess = false;
         websockets = false;
       };
+
+      # === a3j.5 low-risk migrations (from rich-evans) — placeholders OFF
+      # until each cutover push flips enable here and removes the entry
+      # from the rich-evans bucket below. The host files
+      # (hosts/historian/{borges,knitwork,knitwork-bff,homepage}.nix) are
+      # mkIf-gated on these, so they are inert while enable=false. maitred's
+      # duplicate entries (maitred bucket below) keep pointing at rich-evans
+      # until each cutover flips their `host` to historian — that repoints
+      # the socat forwarders + vhosts. ===
+
+      borges = {
+        enable = false;
+        port = 7171;
+        subdomain = "borges";
+        host = "historian";
+        auth = "none";
+        publicAccess = true;
+        websockets = false;
+      };
+      knit = {
+        enable = false;
+        port = 8080;
+        subdomain = "knit";
+        host = "historian";
+        auth = "none";
+        publicAccess = true;
+        # The lexicon host / AppView is plain HTTP; the firehose indexer's
+        # WebSocket is an *outbound* wss to the relay, so no inbound websockets.
+        websockets = false;
+      };
+      knit-bff = {
+        enable = false;
+        port = 8787;
+        subdomain = "knit-bff";
+        host = "historian";
+        auth = "none";
+        # No subdomain of its own — reached via /api/* on knit.kimb.dev
+        # (publicAccess=false drives only maitred's socat forwarder).
+        publicAccess = false;
+        websockets = false;
+      };
+      homepage = {
+        enable = false;
+        port = 8082;
+        subdomain = "home-rich";
+        host = "historian";
+        auth = "none";
+        publicAccess = false;
+        websockets = false;
+      };
     };
 
     # Maitred services (router + reverse proxy)
