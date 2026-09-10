@@ -207,6 +207,15 @@
   virtualisation.xen = {
     enable = true;
     boot.builderVerbosity = "quiet";
+    # C xenstored, not the nixpkgs default oxenstored (ocamlPackages.oxenstored
+    # = xapi-project v25.3.0, March 2025): it predates the XS_GET_QUOTA wire op
+    # that libxl 4.22 issues during `xl list -l`, and it silently drops the op
+    # instead of replying ENOSYS (xenstore.txt spec) — every -l caller wedges
+    # forever, including xendomains stop (90s hang per reboot until it was
+    # masked). The C daemon from the same xen-4.22.0 package implements the op.
+    # Takes effect on next boot (xenstored is RefuseManualStop).
+    # Root cause + evidence: systems-flake-a3j.12.
+    store.path = "${config.virtualisation.xen.package}/bin/xenstored";
   };
   boot.xenGrubBoot = {
     enable = true;
