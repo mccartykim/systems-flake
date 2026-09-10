@@ -208,7 +208,12 @@ in {
         org-crm.nixosModules.default
         (self + "/hosts/rich-evans/org-crm.nix")
         (self + "/hosts/rich-evans/email-digest.nix")
-        (self + "/hosts/rich-evans/borges.nix")
+        # Borges host module — REMOVED at a3j.5: the service moved to historian
+        # (hosts/historian/borges.nix; the module file stays here for
+        # reference, like buildbot-master.nix). The import must go with the
+        # registry entry move — the module reads config.kimb.services.borges,
+        # which now lives in the historian bucket only.
+        # (self + "/hosts/rich-evans/borges.nix")
         # Buildbot master — DISABLED 2026-06-22 (gave up on buildbot-nix
         # fighting private-repo flake inputs; may revisit a different CI
         # scheme later). Re-enable by uncommenting; the module file
