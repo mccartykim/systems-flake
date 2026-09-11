@@ -81,6 +81,11 @@
     # + mbsync SyncState needed zero translation ===
     ./org-crm.nix
 
+    # === a3j.8.1: monitoring stack (from maitred) — prometheus + grafana
+    # + blackbox. State (TSDB + grafana sqlite/dashboards) moves via the
+    # runbook two-pass rsync; see the file header for scrape deltas ===
+    ./monitoring.nix
+
     # Buildbot worker — DISABLED 2026-06-22 (gave up on buildbot-nix
     # fighting private-repo flake inputs; may revisit a different CI
     # scheme later). Re-enable by uncommenting this import; the module
@@ -222,10 +227,19 @@
     restic.extraExclude = [
       "/home/kimb/.android"
       "/home/kimb/.gradle"
+      # a3j.8.1: prometheus TSDB — regenerable, up to 10G retention cap of
+      # segment churn per backup pass. grafana.db (dashboards/datasources)
+      # is 1.5M and rides the normal /var/lib include.
+      "/var/lib/prometheus2"
     ];
 
-    # Centralized observability — DISABLED: too noisy, low value for now
-    # observability.enable = true;
+    # Centralized observability — re-enabled for the a3j.8.1 monitoring
+    # cutover: node_exporter on :9100 (historian is now its own scrape
+    # target + the textfile host for the restic staleness probe and the
+    # ollama-health-probe metrics, which were previously writing into a
+    # dir nobody scraped). journal-upload stays OFF (opt-in option,
+    # default false — the sink on rich-evans is disabled fleet-wide).
+    observability.enable = true;
 
     # Nebula configuration (certs generated via `nix run .#generate-nebula-certs`)
     nebula = {
@@ -260,12 +274,14 @@
         }
         # Forgejo HTTP API (#forge): rich-evans is a *server*, not a personal
         # device, so openToPersonalDevices doesn't cover it — officers/daemon
-        # there need an explicit rule to reach the forge on 10.100.0.10:3000.
+        # there need an explicit rule to reach the forge on 10.100.0.10:3030.
         # Personal-device webui access is already covered by
         # openToPersonalDevices; SSH :2222 is scribe-localhost + personal
         # devices, so no rule for it.
+        # a3j.8.1: port 3000 -> 3030 (grafana took the conventional 3000;
+        # bridge-scribe's FORGE_URL flipped in the same push).
         {
-          port = 3000;
+          port = 3030;
           proto = "tcp";
           group = "servers";
         }

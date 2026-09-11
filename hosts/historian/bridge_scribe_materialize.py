@@ -18,7 +18,7 @@
 # and prisoned under the scratch root (no leading `/`, no `..` segment).
 #
 # Forge flow (#125): the PR review surface is the Nebula-only Forgejo on
-# historian (10.100.0.10:3000 / :2222), NOT github. This script clones github
+# historian (10.100.0.10:3030 / :2222), NOT github. This script clones github
 # (current main — github stays the nix-fetch remote; the bootstrap-cycle
 # invariant forbids repointing systems-flake's own inputs at the forge),
 # catches the forge up (pushes github heads -> forge, fast-forward only), then
@@ -93,7 +93,7 @@ REPOS = {
     },
 }
 
-FORGE_URL_DEFAULT = "http://10.100.0.10:3000"
+FORGE_URL_DEFAULT = "http://10.100.0.10:3030"
 
 
 def die(msg, code=1):

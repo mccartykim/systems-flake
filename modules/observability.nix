@@ -23,6 +23,18 @@ with lib; let
 in {
   options.kimb.observability = {
     enable = mkEnableOption "observability stack (node_exporter + journal-upload)";
+
+    # Opt-in (default false): the journal-remote sink on rich-evans is
+    # DISABLED fleet-wide (kimb.journalRemote.enable = false there, along
+    # with the rest of observability — "too noisy, low value"). Enabling
+    # observability on a host without this flag would run a uploader that
+    # fail-loops against the dead sink every 10s. Flip this AND
+    # kimb.journalRemote.enable on the sink host together.
+    journalUpload = mkOption {
+      type = types.bool;
+      default = false;
+      description = "Upload this host's journal to the central sink (requires the sink to be enabled on its host)";
+    };
   };
 
   config = mkIf cfg.enable {
@@ -37,8 +49,9 @@ in {
 
     # Forward journal to the central sink (rich-evans). Skipped on the sink
     # itself — rich-evans hosts kimb.journalRemote and would otherwise loop
-    # uploads to itself.
-    systemd.services.systemd-journal-upload = mkIf (config.networking.hostName != "rich-evans") {
+    # uploads to itself. Opt-in via journalUpload: the sink is currently
+    # disabled (see the option comment above).
+    systemd.services.systemd-journal-upload = mkIf (cfg.journalUpload && config.networking.hostName != "rich-evans") {
       description = "Upload journal to central sink";
       after = ["network.target"];
       wants = ["network.target"];

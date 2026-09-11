@@ -111,6 +111,33 @@
         publicAccess = true;
         websockets = false;
       };
+      # Grafana + Prometheus — the a3j.8.1 migration from maitred (see
+      # hosts/historian/monitoring.nix). Grafana keeps its conventional 3000:
+      # forgejo (formerly 3000 on this host) moved to 3030 in the same push
+      # — its only HTTP consumers are the bridge-scribe (FORGE_URL, flake-
+      # managed) and the nebula inbound rule; git pushes use ssh :2222,
+      # unaffected. The maitred-bucket duplicates below keep driving the
+      # grafana/prometheus vhosts, authelia rules, and socat forwarders on
+      # the router (reverse = flip host back + re-enable in maitred's
+      # monitoring.nix).
+      grafana = {
+        enable = true;
+        port = 3000;
+        subdomain = "grafana";
+        host = "historian";
+        auth = "authelia";
+        publicAccess = true;
+        websockets = false;
+      };
+      prometheus = {
+        enable = true;
+        port = 9090;
+        subdomain = "prometheus";
+        host = "historian";
+        auth = "authelia";
+        publicAccess = true;
+        websockets = false;
+      };
     };
 
     # Maitred services (router + reverse proxy)
@@ -128,7 +155,12 @@
         enable = true;
         port = 3000;
         subdomain = "grafana";
-        host = "maitred";
+        # a3j.8.1: the SERVICE moved to historian; this maitred duplicate
+        # (enable=true, host=historian) keeps driving the Caddy vhost,
+        # authelia one-factor rule, DNS local-data, and the socat forwarder
+        # (LAN:3000 -> historian Nebula :3000). The monitoring units
+        # themselves are gated on host == "maitred" in monitoring.nix.
+        host = "historian";
         auth = "authelia";
         publicAccess = true;
         websockets = false;
@@ -137,7 +169,9 @@
         enable = true;
         port = 9090;
         subdomain = "prometheus";
-        host = "maitred";
+        # a3j.8.1: service moved to historian — same duplicate/forwarder
+        # pattern as grafana above.
+        host = "historian";
         auth = "authelia";
         publicAccess = true;
         websockets = false;

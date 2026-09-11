@@ -133,7 +133,7 @@ in
     # new keys) as officers gain authoring scope (#64).
     "deploy-key-bridge-scribe.age".publicKeys = [hostKeys.historian bootstrap];
     # Forgejo application token for the bridge-scribe (#forge). The scribe
-    # opens PRs/issues on the Nebula-only forge (10.100.0.10:3000) with this
+    # opens PRs/issues on the Nebula-only forge (10.100.0.10:3030) with this
     # — the REST API credential (push uses the shared mccartykim SSH key
     # over the forge's built-in :2222; the API uses this token). Two paths,
     # two purposes. Decrypted on historian only (owner bridge-scribe, 0400),

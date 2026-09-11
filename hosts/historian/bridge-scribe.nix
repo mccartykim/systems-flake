@@ -94,7 +94,7 @@
     set -eu
     export PATH=${lib.makeBinPath [pkgs.git pkgs.openssh pkgs.python3 pkgs.coreutils pkgs.gnugrep]}
     export BRIDGE_SCRIBE_DEPLOY_KEY="${config.age.secrets.deploy-key-bridge-scribe.path}"
-    export FORGE_URL="http://10.100.0.10:3000"
+    export FORGE_URL="http://10.100.0.10:3030"
     export FORGE_TOKEN_FILE="${config.age.secrets.forge-bot-token.path}"
     export BRIDGE_MATERIALIZE_PY="${materializePy}"
     export BRIDGE_READ_PY="${readPy}"

@@ -28,9 +28,10 @@ in {
     allowedHosts = "localhost,127.0.0.1,192.168.69.167:8082,10.100.0.10:8082";
 
     settings = {
-      # The consolidated dashboard: what lives HERE now, plus the fleet
-      # entries still elsewhere (copyparty + HA move at a3j.6; the maitred
-      # stack at phase 5).
+      # The consolidated dashboard: what lives HERE now. The a3j.6 cohort
+      # (copyparty, HA) and the a3j.8.1 monitoring stack (grafana,
+      # prometheus) are all local — remaining "elsewhere" fleet services are
+      # on maitred (retiring at a3j.8.2+) and rich-evans (a3j.7).
       title = "Historian Services";
 
       services = [
@@ -87,28 +88,46 @@ in {
           ];
         }
         {
-          "Elsewhere (until later phases)" = [
-            {
-              "Copyparty" = {
-                href = "https://files.${cfg.domain}";
-                description = "File sharing (rich-evans → a3j.6)";
-                server = "10.100.0.40";
-                container = false;
-              };
-            }
+          "Smart Home" = [
             {
               "Home Assistant" = {
                 href = "https://hass.${cfg.domain}";
-                description = "Smart home (rich-evans → a3j.6)";
-                server = "10.100.0.40";
+                description = "Smart home (moved here at a3j.6)";
+                server = "localhost";
+                container = false;
+              };
+            }
+          ];
+        }
+        {
+          "Files" = [
+            {
+              "Copyparty" = {
+                # No files.kimb.dev vhost exists (no maitred duplicate —
+                # deliberate); direct access is http://192.168.69.167:3923.
+                href = "http://localhost:3923";
+                description = "File sharing (moved here at a3j.6)";
+                server = "localhost";
+                container = false;
+              };
+            }
+          ];
+        }
+        {
+          "Monitoring" = [
+            {
+              "Grafana" = {
+                href = "https://grafana.${cfg.domain}";
+                description = "Metrics dashboards (moved here at a3j.8.1)";
+                server = "localhost";
                 container = false;
               };
             }
             {
-              "Grafana" = {
-                href = "https://grafana.${cfg.domain}";
-                description = "System metrics (maitred → phase 5)";
-                server = "10.100.0.50";
+              "Prometheus" = {
+                href = "https://prometheus.${cfg.domain}";
+                description = "Metrics collection (moved here at a3j.8.1)";
+                server = "localhost";
                 container = false;
               };
             }

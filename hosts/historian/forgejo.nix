@@ -8,14 +8,20 @@
 # dependency). See 40k_bridge/docs/SELF_HOSTED_FORGE.md.
 #
 # Exposure model:
-#   - HTTP (3000) + built-in SSH (2222) bind to the Nebula IP 10.100.0.10
+#   - HTTP (3030) + built-in SSH (2222) bind to the Nebula IP 10.100.0.10
 #     ONLY, never 0.0.0.0 — so nothing listens on eno1 (WAN/LAN-safe by
 #     binding, not by firewall hope).
 #   - Personal devices (desktops/laptops/mobile) reach both ports via
 #     kimb.nebula.openToPersonalDevices (historian already sets this).
-#   - rich-evans (a *server*, not a personal device) reaches HTTP 3000 for
+#   - rich-evans (a *server*, not a personal device) reaches HTTP 3030 for
 #     forge API calls via the one extraInboundRule in configuration.nix.
-#   - Host firewall deliberately does NOT open 3000/2222 on eno1.
+#   - Host firewall deliberately does NOT open 3030/2222 on eno1.
+#
+# Port history: HTTP was 3000 (forgejo's default) until a3j.8.1 moved it to
+# 3030 — grafana's migration from maitred claimed the conventional 3000
+# (forgejo's HTTP consumers are all flake-managed: bridge-scribe's
+# FORGE_URL + the nebula rule; git pushes ride the built-in SSH :2222,
+# which never changed).
 #
 # Single-user model: DISABLE_REGISTRATION + REQUIRE_SIGNIN_VIEW + one admin
 # account created out-of-band (`forgejo admin user create --admin` after
@@ -45,9 +51,10 @@
       server = {
         # Nebula-only bind — the hardening pin. Never 0.0.0.0.
         HTTP_ADDR = "10.100.0.10";
-        HTTP_PORT = 3000;
+        # 3030, not forgejo's default 3000 — grafana (a3j.8.1) owns 3000 now.
+        HTTP_PORT = 3030;
         DOMAIN = "10.100.0.10";
-        ROOT_URL = "http://10.100.0.10:3000/";
+        ROOT_URL = "http://10.100.0.10:3030/";
 
         # Built-in SSH server, isolated from the host sshd (:22). The scribe
         # pushes from localhost; the Lord-Captain clones from a desktop over

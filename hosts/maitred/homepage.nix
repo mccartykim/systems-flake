@@ -94,21 +94,26 @@ in {
           container = service.containerIP != null;
 
           # Add widgets for specific services
+          # a3j.8.1: grafana + prometheus moved to historian — the widget
+          # API URLs follow (maitred's socat forwarders serve the same ports,
+          # but scraping the source directly over Nebula is cheaper).
+          # homeassistant: stale 10.100.0.40 since the a3j.6 cutover — fixed
+          # in the same pass (same rebook class, same file).
           widget =
             lib.optionalAttrs (name == "grafana") {
               type = "grafana";
-              url = "http://localhost:${toString service.port}";
+              url = "http://10.100.0.10:${toString service.port}";
               username = cfg.admin.name;
               password = "admin"; # TODO: Use secrets
             }
             // lib.optionalAttrs (name == "prometheus") {
               type = "prometheus";
-              url = "http://localhost:${toString service.port}";
+              url = "http://10.100.0.10:${toString service.port}";
             }
             // lib.optionalAttrs (name == "homeassistant") {
               type = "homeassistant";
-              url = "http://10.100.0.40:${toString service.port}";
-              # key = "your_api_key"; # TODO: Add API key via secrets
+              url = "http://10.100.0.10:${toString service.port}";
+              # key = "your_api_key"; # TODO: Add API key via agenix secrets
             };
         };
 
