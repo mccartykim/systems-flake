@@ -240,9 +240,16 @@ in {
     # above). choirmaster-infer logs to CHOIRMASTER_STATE (NOT OFFICER_STATE);
     # the daemon (in the choirmaster-organism group) can write here. The music
     # tools (cast-stream/play/mpd-status) carry their own env via the package
-    # wrap (CHOIRMASTER_LIB_PARENT) + sensible defaults (MPD_HOST auto-LAN-IP,
-    # MPD_HTTP_PORT 8666, TTS_DEVICE "Kim's nest hub") — no extra env needed.
+    # wrap (CHOIRMASTER_LIB_PARENT) + sensible defaults (MPD_HTTP_PORT 8666,
+    # TTS_DEVICE "Kim's nest hub").
     CHOIRMASTER_STATE = "/var/lib/choirmaster-organism";
+    # a3j.5: MPD moved to historian — MPD_HOST now points there. ONE var
+    # feeds both mpc control (choirmaster/play, mpd-status) and
+    # cast-stream's stream URL (the Nest pulls the URL directly over the
+    # LAN, so it must be the LAN IP, not the nebula IP — the Nest is not a
+    # mesh node). Replaces the auto-LAN-IP default, which resolved to this
+    # host while mpd lived here.
+    MPD_HOST = "192.168.69.167";
     # Factor finance-axis env (ESSENTIAL — factor-infer + the hledger tools
     # read these, NOT OFFICER_STATE). Without FACTOR_LEDGER the ledger
     # defaults to /tmp/factor/ledger.journal + the reactive #factor cycle

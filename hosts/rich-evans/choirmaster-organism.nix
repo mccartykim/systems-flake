@@ -51,35 +51,14 @@
 {...}: {
   services.choirmaster-organism.enable = true;
 
-  # MPD httpd — the stream the Choirmaster casts. Control port 6600 stays
-  # loopback (mpc runs locally on the daemon); the httpd output binds
-  # 0.0.0.0:8666 so the Nest hub can fetch it over the LAN. musicDirectory
-  # is the EXISTING /mnt/seagate/music_compressed (currently encrypted-
-  # receive; becomes a real library after the runtime syncthing flip).
-  # audio_output is the declarative RFC42 form (services.mpd.settings, a
-  # list of attrsets — each renders an `audio_output { ... }` block); the
-  # old `extraConfig` string was removed in current nixpkgs.
-  services.mpd = {
-    enable = true;
-    musicDirectory = "/mnt/seagate/music_compressed";
-    # auto_update: inotify-rescan the music_directory on change so newly
-    # syncthing-synced tracks are searchable without a manual `mpc update`.
-    # Without this, the tag DB goes stale after a sync and the Choirmaster /
-    # Chirurgeon wake_music track find silently misses tracks that ARE on
-    # disk (found live 2026-08-04: 42 tracks on disk but absent from the DB
-    # after the 2026-07-26 compressed-folder flip, including the wake-up
-    # acceptance track "Nobody Speak").
-    settings.auto_update = "yes";
-    settings.audio_output = [
-      {
-        type = "httpd";
-        name = "rich-evans choirmaster stream";
-        port = "8666";
-        bind_to_address = "0.0.0.0";
-        encoder = "lame";
-        bitrate = "192";
-        format = "44100:16:2";
-      }
-    ];
-  };
+  # MPD httpd — MOVED to historian at a3j.5 (hosts/historian/mpd.nix):
+  # the stream the Choirmaster casts now serves from historian's LAN IP
+  # (192.168.69.167:8666), reading the same music_compressed library via
+  # the /mnt/media-drive NFS automount of the seagate. The daemon's
+  # MPD_HOST is flipped in hosts/rich-evans/vox-organism.nix — one env
+  # var feeds both mpc control and cast-stream's URL, so the Nest keeps
+  # pulling the stream over the LAN unchanged. No audio device was ever
+  # needed here (httpd-only output); the same holds on historian. mpd's
+  # state stays on rich-evans through the burn-in window (fresh DB built
+  # on historian — the tag cache is the bulk of it and rebuilds).
 }
