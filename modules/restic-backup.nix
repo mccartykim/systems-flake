@@ -33,6 +33,13 @@ in {
 
   options.kimb.restic = {
     enable = mkEnableOption "kimb's restic backups to shared B2 repo";
+    # a3j.4: extra include paths beyond the fixed home/etc/var-lib/root set —
+    # e.g. historian's seagate irreplaceables (Maildir, org, tooms_photos).
+    extraPaths = mkOption {
+      type = types.listOf types.str;
+      default = [];
+      description = "Extra paths to include in the restic backup set";
+    };
 
     extraExclude = mkOption {
       type = types.listOf types.str;
@@ -83,7 +90,7 @@ in {
         "/etc"
         "/var/lib"
         "/root"
-      ];
+      ] ++ cfg.extraPaths;
 
       # Override the generic exclude defaults with kimb-specific ones —
       # the generic module's defaults use globs like `**/.cache`, but

@@ -165,14 +165,7 @@ in {
         proto = "tcp";
         host = "maitred";
       }
-      # NFSv4 over Nebula — historian reads the seagate media library (read-only).
-      # NFSv4 = port 2049 only (no mountd/lockd/statd); the host firewall already
-      # trusts nebula1, so this Nebula rule is the sole gate.
-      {
-        port = 2049;
-        proto = "tcp";
-        host = "historian";
-      }
+      # a3j.4: NFSv4 rule REMOVED — the seagate lives on historian now.
     ];
   };
 
@@ -186,34 +179,34 @@ in {
     netbootxyz.enable = true;
   };
 
-  # Mount external storage. commit=60 raises the ext4 journal commit interval
-  # from the default 5s to 60s: mbsync writes a flood of small Maildir files
-  # without fsync-per-message, and mu index writes to the xapian db — both are
-  # write-heavy workloads that stall on jbd2's periodic 5s commit blocking
-  # writers. A 60s commit amortizes those flushes (acceptable: at worst 60s of
-  # recently-written mail/index is lost on a crash, and the mail source of
-  # truth is the IMAP server, re-synced next cycle). Helps the backlog drain
-  # + the first full mu index clear the 30-min timeout window.
+  # a3j.4: the seagate moved to historian — this is now an NFS mount of the
+  # REVERSE-export (historian exports the drive rw to this host; see
+  # hosts/historian/configuration.nix). SAME PATH so the remaining drive
+  # consumers (copyparty, email-digest Maildir, org-crm bulk — the 6b cohort)
+  # keep working unchanged until their cutovers; the export drops at 6b
+  # completion. NFSv4.1 = port 2049 only; soft+timeo so a historian outage
+  # fails operations instead of hanging consumers; automount for resilience
+  # across historian reboots.
   fileSystems."/mnt/seagate" = {
-    device = "/dev/disk/by-uuid/980870c5-7397-45dd-9f01-972f9b51d0f6";
-    fsType = "ext4";
-    options = ["defaults" "nofail" "commit=60"];
+    device = "10.100.0.10:/";
+    fsType = "nfs";
+    options = [
+      "rw"
+      "noatime"
+      "vers=4.1"
+      "proto=tcp"
+      "x-systemd.automount"
+      "x-systemd.idle-timeout=5min"
+      "x-systemd.mount-timeout=30"
+      "soft"
+      "timeo=30"
+      "retrans=2"
+    ];
   };
 
-  # NFS export of the seagate to historian (10.100.0.10) over Nebula, so Jellyfin
-  # (on historian) can read the put.io library. Read-only — rich-evans is the
-  # single writer (rclone writes /mnt/seagate locally); historian only reads via
-  # this mount. NFSv4.1 (TCP-only, one port — fits Nebula): fsid=0 makes this
-  # export the v4 pseudo-root, so the client mounts 10.100.0.40:/ and sees the
-  # seagate's contents (e.g. /mnt/rich-evans-seagate/putio == /mnt/seagate/putio).
-  # The host firewall trusts nebula1 (trustedInterfaces), so only the Nebula
-  # rule above gates it — no networking.firewall entry needed.
-  services.nfs.server = {
-    enable = true;
-    exports = ''
-      /mnt/seagate 10.100.0.10(ro,no_subtree_check,sync,fsid=0)
-    '';
-  };
+  # a3j.4: NFS export REMOVED — the seagate physically moved to historian
+  # (which now reverse-exports it rw to this host for the 6b interim; see
+  # the mount above). This host is no longer an NFS server.
 
   # Shared put.io rclone config (same .age file / path / owner as historian's
   # declaration; rekeyed to rich-evans's host key in secrets/secrets.nix). Used by
@@ -225,62 +218,9 @@ in {
     owner = "kimb";
   };
 
-  # Whole-account put.io mirror -> /mnt/seagate (ported from historian; replaces
-  # the PNY 2-dir allow-list sync). DECISIONS (locked in the migration staging
-  # notes): --delete-after --max-delete 1000 and NO --backup-dir — deletes only
-  # free space (no overfill mechanism), and put.io is the source of truth so a
-  # spurious delete (transient empty listing, the anime-RCA) self-heals on the
-  # next re-sync rather than needing a backup dir. --max-delete 1000 (file COUNT)
-  # aborts a spurious mass-delete before it wipes the library; legit large deletes
-  # (a removed show = few big files) pass under the cap. --transfers 2 (not 16):
-  # the seagate is SMR (sustained write ~49 MB/s; bursts into the CMR cache then
-  # collapse), and 2 large sequential writes are SMR's best case — > put.io's
-  # post-throttle ~25-37 MB/s, so the seagate keeps up with NO cache. 16 concurrent
-  # writes would thrash the CMR cache and collapse below single-stream.
-  # --cutoff-mode HARD + --max-duration 1h hard-stops at the cap (no CAUTIOUS drain)
-  # so --size-only resumes partials on the next 3-min tick. `|| true` so the soft
-  # max-duration / max-delete exit doesn't skip ExecStartPost. UMask=0022 keeps new
-  # files 755/644 (world-readable) so Jellyfin on historian (jellyfin:jellyfin, NOT
-  # in rich-evans's `users` group) can read them via the ro NFS export — the
-  # rsync-seeded content was chmod'd a+rX at cutover.
-  systemd.services.rclone-putio-sync = {
-    description = "Sync all of put.io to /mnt/seagate";
-    # Timer-driven oneshot: a deploy that changes this unit's store path would
-    # otherwise restart it and block the switch until ExecStart finishes (up to
-    # --max-duration 1h). restartIfChanged=false leaves the running instance alone;
-    # the unit def updates on disk and the next 3-min tick runs the new version.
-    restartIfChanged = false;
-    after = ["network-online.target"];
-    wants = ["network-online.target"];
-    serviceConfig = {
-      Type = "oneshot";
-      User = "kimb";
-      Group = "users";
-      UMask = "0022";
-      ExecStart = let
-        sync = pkgs.writeShellScript "rclone-putio-sync" ''
-          ${pkgs.rclone}/bin/rclone sync --config /run/agenix/rclone-config \
-            putio: /mnt/seagate/putio/ \
-            --verbose --stats 30s --size-only --no-update-modtime --no-update-dir-modtime \
-            --delete-after --max-delete 1000 --fast-list --checkers 16 --transfers 2 \
-            --max-transfer 50G --cutoff-mode HARD --max-duration 1h \
-            || true
-        '';
-      in "${sync}";
-      ExecStartPost = "+${pkgs.writeShellScript "post-sync" ''
-        ${pkgs.findutils}/bin/find /mnt/seagate/putio -mindepth 2 -type d -empty -delete || true
-      ''}";
-    };
-  };
-
-  systemd.timers.rclone-putio-sync = {
-    wantedBy = ["timers.target"];
-    timerConfig = {
-      OnCalendar = "*:0/3"; # every 3 min
-      RandomizedDelaySec = "30s";
-      Persistent = true;
-    };
-  };
+  # a3j.4: rclone-putio-sync REMOVED — the put.io writer runs on historian now
+  # (local writes to the drive beat NFS writes; same unit body, see
+  # hosts/historian/configuration.nix).
 
   nixpkgs.overlays = [inputs.copyparty.overlays.default];
 

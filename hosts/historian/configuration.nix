@@ -101,31 +101,78 @@
     options = ["bind" "ro"];
   };
 
-  # NFS mount of rich-evans's seagate, mounted at /mnt/media-drive — the SAME
-  # path the retired PNY exFAT drive occupied. All 1774 existing /srv/media
-  # symlinks target /mnt/media-drive/putio/..., so mounting the seagate here
-  # makes them resolve to the NFS tree AUTOMATICALLY: no symlink repoint, and the
-  # media-classifier `processed` state keys (str(filepath)) are unchanged → no
-  # mass ollama reclassify of existing shows (only genuinely-new content —
-  # ChromeCastellaneta, future shares — gets classified). Read-only, automounted
-  # on access, soft+timeo so a rich-evans outage fails operations instead of
-  # hanging Jellyfin. vers=4.1 = port 2049 only (no rpcbind/mountd); fsid=0 on the
-  # export makes the seagate the v4 pseudo-root, hence "10.100.0.40:/".
+  # === a3j.4: the seagate is PHYSICALLY LOCAL now (moved from rich-evans
+  # 2026-09-11). Same mountpoint — /mnt/media-drive — so every consumer
+  # (borges library, mpd music_compressed, jellyfin's 1774 /srv/media
+  # symlinks, media-classifier state keys) keeps working with ZERO path
+  # changes; only the device swapped from the ro NFS automount to the local
+  # ext4. nofail keeps boot safe with the drive unplugged; noatime to spare
+  # the SMR drive; commit=60 preserved from rich-evans for the
+  # email-digest Maildir/mu small-file write storm when 6b lands (same
+  # rationale as the original rich-evans mount). Interim NFS REVERSE-
+  # EXPORT (below): rich-evans's remaining drive consumers (copyparty,
+  # email-digest Maildir, org-crm bulk — the 6b cohort) keep working
+  # unchanged at /mnt/seagate until their cutovers, then the export drops.
   fileSystems."/mnt/media-drive" = {
-    device = "10.100.0.40:/";
-    fsType = "nfs";
-    options = [
-      "ro"
-      "noatime"
-      "vers=4.1"
-      "proto=tcp"
-      "x-systemd.automount"
-      "x-systemd.idle-timeout=5min"
-      "x-systemd.mount-timeout=30"
-      "soft"
-      "timeo=30"
-      "retrans=2"
-    ];
+    device = "/dev/disk/by-uuid/980870c5-7397-45dd-9f01-972f9b51d0f6";
+    fsType = "ext4";
+    options = ["nofail" "noatime" "commit=60"];
+  };
+
+  # === a3j.4 interim: NFS reverse-export of the seagate to rich-evans (rw)
+  # ===
+  # rich-evans's remaining drive consumers (copyparty, email-digest's
+  # Maildir, org-crm bulk — the 6b cohort) keep working UNCHANGED at their
+  # /mnt/seagate paths: rich-evans now mounts this export there (rw NFS
+  # over Nebula, mirroring how historian consumed the drive pre-move).
+  # NFSv4.1 = port 2049 only (no rpcbind/mountd); fsid=0 makes the seagate
+  # the v4 pseudo-root. The nebula rule below gates it (host firewall trusts
+  # nebula1). DROPS at 6b completion when the last consumer migrates.
+  services.nfs.server = {
+    enable = true;
+    exports = ''
+      /mnt/media-drive 10.100.0.40(rw,no_subtree_check,sync,fsid=0)
+    '';
+  };
+
+  # === a3j.4: put.io mirror writer ported from rich-evans — the drive is
+  # local here now, and rclone writing locally beats writing over NFS.
+  # Same unit body as rich-evans's (restartIfChanged=false so a deploy never
+  # blocks on a long sync; --transfers 2 SMR-tuned; UMask=0022 keeps new files
+  # world-readable for Jellyfin), with the target flipped to the local mount.
+  systemd.services.rclone-putio-sync = {
+    description = "Sync all of put.io to /mnt/media-drive";
+    restartIfChanged = false;
+    after = ["network-online.target" "mnt-media\\x2ddrive.mount"];
+    wants = ["network-online.target"];
+    serviceConfig = {
+      Type = "oneshot";
+      User = "kimb";
+      Group = "users";
+      UMask = "0022";
+      ExecStart = let
+        sync = pkgs.writeShellScript "rclone-putio-sync" ''
+          ${pkgs.rclone}/bin/rclone sync --config /run/agenix/rclone-config \
+            putio: /mnt/media-drive/putio/ \
+            --verbose --stats 30s --size-only --no-update-modtime --no-update-dir-modtime \
+            --delete-after --max-delete 1000 --fast-list --checkers 16 --transfers 2 \
+            --max-transfer 50G --cutoff-mode HARD --max-duration 1h \
+            || true
+        '';
+      in "${sync}";
+      ExecStartPost = "+${pkgs.writeShellScript "post-sync" ''
+        ${pkgs.findutils}/bin/find /mnt/media-drive/putio -mindepth 2 -type d -empty -delete || true
+      ''}";
+    };
+  };
+
+  systemd.timers.rclone-putio-sync = {
+    wantedBy = ["timers.target"];
+    timerConfig = {
+      OnCalendar = "*:0/3";
+      RandomizedDelaySec = "30s";
+      Persistent = true;
+    };
   };
 
   # PNY PRO ELITE V2 (1TB USB 3.2 flash) — games / Steam library volume. This
@@ -149,6 +196,17 @@
   kimb = {
     # Restic backups
     restic.enable = true;
+    # a3j.4: the seagate's irreplaceables now restic-covered from HERE (they
+    # were only covered incidentally while the drive lived on rich-evans;
+    # now it's historian's responsibility the moment the drive plugged in).
+    # Regenerable bulk (putio mirror, tv, games) stays OUT — same split the
+    # runbook specified. The extraPaths option lands in modules/restic-
+    # backup.nix with this change.
+    restic.extraPaths = [
+      "/mnt/media-drive/email-digest" # Maildir — mbsync's write target until 6b
+      "/mnt/media-drive/org" # org-crm bulk until 6b
+      "/mnt/media-drive/tooms_photos"
+    ];
     restic.extraExclude = [
       "/home/kimb/.android"
       "/home/kimb/.gradle"
@@ -198,6 +256,15 @@
           port = 3000;
           proto = "tcp";
           group = "servers";
+        }
+        # a3j.4 interim: NFSv4.1 (port 2049 only — no rpcbind/mountd) rw
+        # reverse-export to rich-evans, whose remaining drive consumers
+        # (copyparty, email-digest Maildir, org-crm bulk — the 6b cohort)
+        # still live there. Drops at 6b completion.
+        {
+          port = 2049;
+          proto = "tcp";
+          host = "rich-evans";
         }
       ];
     };
