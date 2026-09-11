@@ -14,15 +14,6 @@
         publicAccess = true;
         websockets = false;
       };
-      homepage = {
-        enable = true;
-        port = 8082;
-        subdomain = "home-rich";
-        host = "rich-evans";
-        auth = "none";
-        publicAccess = false;
-        websockets = false;
-      };
       homeassistant = {
         enable = true;
         port = 8123;
@@ -104,7 +95,7 @@
         websockets = false;
       };
       homepage = {
-        enable = false;
+        enable = true;
         port = 8082;
         subdomain = "home-rich";
         host = "historian";
