@@ -33,7 +33,7 @@
     ollamaHost = "http://historian.nebula:11434";
 
     # Home Assistant (same host)
-    haUrl = "http://127.0.0.1:8123";
+    haUrl = "http://10.100.0.10:8123";
     haTokenFile = config.age.secrets.ha-life-coach-token.path;
 
     # TTS voice

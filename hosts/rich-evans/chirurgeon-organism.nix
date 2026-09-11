@@ -51,7 +51,7 @@ in {
     # a second user, NO agenix re-encryption — see life-coach.nix for the
     # ha-chirurgeon-token secret wired to the same .age file, owner
     # chirurgeon-organism).
-    haUrl = "http://127.0.0.1:8123";
+    haUrl = "http://10.100.0.10:8123";
     haTokenFile = config.age.secrets.ha-chirurgeon-token.path;
 
     # Matrix — the durable bridge-room delivery rung (matrix-page / lib/matrix.py

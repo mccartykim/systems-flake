@@ -140,17 +140,6 @@ in {
         proto = "udp";
         host = "any";
       }
-      # Home Assistant / ESPHome
-      {
-        port = 8123;
-        proto = "tcp";
-        host = "any";
-      }
-      {
-        port = 6053;
-        proto = "tcp";
-        host = "any";
-      }
       # Camera streaming - only from personal devices
       {
         port = 8554;

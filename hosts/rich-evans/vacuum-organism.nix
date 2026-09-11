@@ -25,7 +25,7 @@
 
     # HA: same encrypted token as life-coach, decrypted independently
     # under our own user (see life-coach.nix age.secrets.ha-vacuum-token).
-    haUrl = "http://127.0.0.1:8123";
+    haUrl = "http://10.100.0.10:8123";
     haTokenFile = config.age.secrets.ha-vacuum-token.path;
 
     # Discord bot sidecar. Token is decrypted per-host via agenix;

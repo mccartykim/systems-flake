@@ -14,15 +14,6 @@
         publicAccess = true;
         websockets = false;
       };
-      homeassistant = {
-        enable = true;
-        port = 8123;
-        subdomain = "hass";
-        host = "rich-evans";
-        auth = "builtin";
-        publicAccess = true;
-        websockets = true;
-      };
       life-coach-dashboard = {
         enable = true;
         # lifecoach-organism dashboard runs on 8586; the old
@@ -102,6 +93,19 @@
         auth = "none";
         publicAccess = false;
         websockets = false;
+      };
+      # Home Assistant — the a3j.6 phase-6a migration from rich-evans (with
+      # mosquitto; see hosts/historian/home-assistant.nix). auth="builtin":
+      # HA does its own login; maitred's socat forwarder bridges hass.kimb.dev
+      # to this host's Nebula IP (registry-driven repoint).
+      homeassistant = {
+        enable = true;
+        port = 8123;
+        subdomain = "hass";
+        host = "historian";
+        auth = "builtin";
+        publicAccess = true;
+        websockets = true;
       };
     };
 
@@ -210,12 +214,12 @@
         publicAccess = true;
         websockets = false;
       };
-      # These services run on rich-evans but are proxied through maitred
+      # These services run on remote hosts but are proxied through maitred
       homeassistant = {
         enable = true;
         port = 8123;
         subdomain = "hass";
-        host = "rich-evans";
+        host = "historian";
         auth = "builtin";
         publicAccess = true;
         websockets = true;

@@ -223,7 +223,7 @@ in {
     # OFFICER_STATE=VOX_STATE override doesn't collide).
     CHIRURGEON_STATE = "/var/lib/chirurgeon-organism";
     # HA auspex (ha-get-state) + compel-spirit.
-    HA_URL = "http://127.0.0.1:8123";
+    HA_URL = "http://10.100.0.10:8123";
     HA_TOKEN_FILE = config.age.secrets.ha-vox-organism-token.path;
     # Regimen view — build-view cold-starts `emacs --batch` (NO daemon, NO
     # socket; sidesteps the 0700-socket-dir rule that broke the old

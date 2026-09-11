@@ -56,6 +56,11 @@
     # Homepage dashboard — the consolidated instance (LAN-only)
     ./homepage.nix
 
+    # === a3j.6 phase 6a: Home Assistant + mosquitto (from rich-evans) —
+    # the epic's named-risk service; state is purely local (/var/lib/hass),
+    # .storage verified IP-clean, no USB hardware binding (see file header) ===
+    ./home-assistant.nix
+
     # Buildbot worker — DISABLED 2026-06-22 (gave up on buildbot-nix
     # fighting private-repo flake inputs; may revisit a different CI
     # scheme later). Re-enable by uncommenting this import; the module

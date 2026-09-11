@@ -43,99 +43,11 @@ in {
     };
   };
 
-  # Home Assistant smart home platform (native NixOS service)
-  services.home-assistant = lib.mkIf cfg.services.homeassistant.enable {
-    enable = true;
-    # nixpkgs dropped services.home-assistant.openFirewall (frontend port
-    # moved to YAML and can't be determined at eval time); open the default
-    # HA frontend port explicitly below to keep LAN access parity.
-
-    customLovelaceModules = with pkgs.home-assistant-custom-lovelace-modules; [
-      valetudo-map-card
-    ];
-
-    extraComponents = [
-      "default_config"
-      "met"
-      "radio_browser"
-      "esphome" # ESP32 integration
-      "zeroconf" # Device discovery
-      "ssdp"
-      "api" # REST API for Claude skills
-      "mobile_app"
-      "androidtv_remote" # Android TV control
-      "cast" # Chromecast/Google Cast
-      "thread" # Thread mesh networking
-      "otbr" # OpenThread Border Router
-      "tplink" # TP-Link Kasa switches + Tapo cameras
-      "vacuum" # Vacuum base
-      "mqtt" # MQTT for Valetudo
-      "ibeacon" # BLE iBeacon → distance/RSSI sensor for the Pixel transmitter
-    ];
-
-    config = {
-      homeassistant = {
-        external_url = "https://hass.${cfg.domain}";
-        internal_url = "http://10.100.0.40:${toString cfg.services.homeassistant.port}";
-      };
-      default_config = {};
-      http = {
-        server_host = ["0.0.0.0"];
-        server_port = cfg.services.homeassistant.port;
-        use_x_forwarded_for = true;
-        trusted_proxies = [
-          "10.100.0.50" # maitred Nebula
-          "192.168.69.1" # maitred LAN
-          "192.168.100.0/24" # Container network
-          "127.0.0.1"
-        ];
-      };
-      api = {};
-      # UI-defined automations (existing)
-      "automation ui" = "!include automations.yaml";
-      script = "!include scripts.yaml";
-      scene = "!include scenes.yaml";
-      # Submit buttons for the vacuum organism (find-me / belay). The old
-      # life-coach shell_command/automation/input_text/input_button blocks
-      # (signal_*.sh -> dead org-life-coach SQLite interrupt_events table)
-      # were removed: the org-life-coach daemon is stopped and the
-      # button-monitor sidecar polls HA REST directly.
-      input_button = {
-        vacuum_find_me = {
-          name = "Vacuum: Come Find Me";
-          icon = "mdi:map-marker-account";
-        };
-        vacuum_belay = {
-          name = "Vacuum: Belay (I'm coming)";
-          icon = "mdi:hand-back-right-off";
-        };
-      };
-      # Hard kill switch for vacuum_organism. When on, the agent
-      # refuses all motion and marks in-flight dispatches SKIPPED
-      # with reason "off-duty". See vacuum_organism/HA_SETUP.md.
-      input_boolean = {
-        vacuum_offduty = {
-          name = "Vacuum Organism Off-Duty";
-          icon = "mdi:robot-off";
-        };
-      };
-    };
-  };
-
-  # MQTT broker for Valetudo vacuum integration (LAN-only, no auth)
-  services.mosquitto = {
-    enable = true;
-    listeners = [
-      {
-        address = "0.0.0.0";
-        port = 1883;
-        omitPasswordAuth = true;
-        settings.allow_anonymous = true;
-        acl = ["topic readwrite #"];
-      }
-    ];
-  };
-
+  # Home Assistant + mosquitto — REMOVED at a3j.6 phase 6a: moved to historian
+  # as a unit (hosts/historian/home-assistant.nix; the registry entry lives
+  # in the historian bucket now). The consumers still on this host (organism
+  # daemons until a3j.7) point their haUrl at http://10.100.0.10:8123; the
+  # vacuum's valetudo broker setting repoints to 192.168.69.167:1883.
 
   # Firewall configuration for enabled services
   networking.firewall = {
@@ -146,18 +58,11 @@ in {
       # Copyparty additional ports
       (lib.optionals cfg.services.copyparty.enable [3921 3945 3969 3990])
 
-      # Home Assistant
-      (lib.optional cfg.services.homeassistant.enable cfg.services.homeassistant.port)
-
-      # ESPHome native API (for ESP32 device discovery)
-      (lib.optional cfg.services.homeassistant.enable 6053)
 
 
       # CUPS printing
       [631]
 
-      # MQTT (Mosquitto for Valetudo)
-      [1883]
     ];
 
     allowedUDPPorts = lib.optionals cfg.services.copyparty.enable [
@@ -174,11 +79,6 @@ in {
 
   # Create necessary directories
   systemd.tmpfiles.rules = lib.flatten [
-    # Home Assistant needs hass user ownership (created by native service)
-    (lib.optional cfg.services.homeassistant.enable "d /var/lib/hass 0750 hass hass -")
-    (lib.optional cfg.services.homeassistant.enable "f /var/lib/hass/automations.yaml 0644 hass hass -")
-    (lib.optional cfg.services.homeassistant.enable "f /var/lib/hass/scripts.yaml 0644 hass hass -")
-    (lib.optional cfg.services.homeassistant.enable "f /var/lib/hass/scenes.yaml 0644 hass hass -")
     # Copyparty storage
     (lib.optional cfg.services.copyparty.enable "d /mnt/storage 0755 root root -")
     (lib.optional cfg.services.copyparty.enable "d /mnt/storage/public 0755 root root -")

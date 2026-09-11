@@ -42,7 +42,7 @@ in {
     # gated upstream in lifecoach-mechanical.execute_actions.
 
     # Home Assistant — reuse the existing agenix secret
-    haUrl = "http://127.0.0.1:8123";
+    haUrl = "http://10.100.0.10:8123";
     haTokenFile = config.age.secrets.ha-life-coach-token.path;
 
     # Emacs daemon from the old module's socket path. The old
