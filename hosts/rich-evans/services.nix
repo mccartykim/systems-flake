@@ -136,63 +136,6 @@ in {
     ];
   };
 
-  # Homepage dashboard (host service) - local only
-  services.homepage-dashboard = lib.mkIf cfg.services.homepage.enable {
-    enable = true;
-    openFirewall = false; # LAN access only
-    listenPort = cfg.services.homepage.port;
-
-    settings = {
-      title = "Rich-Evans Services";
-
-      services = [
-        {
-          "File Storage" = lib.mkIf cfg.services.copyparty.enable [
-            {
-              "Copyparty" = {
-                href = "http://localhost:${toString cfg.services.copyparty.port}";
-                description = "Local file sharing and upload";
-                server = "localhost";
-                container = false;
-              };
-            }
-          ];
-        }
-        {
-          "Smart Home" = lib.mkIf cfg.services.homeassistant.enable [
-            {
-              "Home Assistant" = {
-                href = "http://localhost:${toString cfg.services.homeassistant.port}";
-                description = "Home automation platform";
-                server = "localhost";
-                container = true;
-              };
-            }
-          ];
-        }
-        {
-          "System Monitoring" = [
-            {
-              "Maitred Grafana" = {
-                href = "https://grafana.${cfg.domain}";
-                description = "System metrics dashboard";
-                server = "10.100.0.50"; # maitred Nebula IP
-                container = false;
-              };
-            }
-            {
-              "Maitred Homepage" = {
-                href = "https://home.${cfg.domain}";
-                description = "Main services dashboard";
-                server = "10.100.0.50"; # maitred Nebula IP
-                container = false;
-              };
-            }
-          ];
-        }
-      ];
-    };
-  };
 
   # Firewall configuration for enabled services
   networking.firewall = {
@@ -209,8 +152,6 @@ in {
       # ESPHome native API (for ESP32 device discovery)
       (lib.optional cfg.services.homeassistant.enable 6053)
 
-      # Homepage (LAN only)
-      (lib.optional cfg.services.homepage.enable cfg.services.homepage.port)
 
       # CUPS printing
       [631]
