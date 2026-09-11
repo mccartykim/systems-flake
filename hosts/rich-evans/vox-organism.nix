@@ -82,7 +82,14 @@
   # duty breaks); mirrored below.
   factor-pkg = inputs.bridge-crew.packages.${pkgs.system}."factor-organism";
 in {
+  # a3j.6 interim: Tuwunel moved to historian (hosts/historian/matrix.nix);
+  # the daemon stays here until the a3j.7 organisms domU. Remote homeserver
+  # URL drops the same-host tuwunel.service bindings + assertion in the
+  # bridge-crew module (sameHostHomeserver, rev f5b35200). The token
+  # (matrix-vox-bridge-token) rides the homeserver's DB untouched.
   services.vox-organism = {
+    # Remote homeserver (historian) over Nebula — see the block comment above.
+    matrixHomeserverUrl = "http://10.100.0.10:6167";
     enable = true;
     # @vox-bridge:kimb.dev access token — REUSED from Phase 1 (agenix secret;
     # minted via a transient allow_registration flip — see deploy/GO_NOGO.md §3

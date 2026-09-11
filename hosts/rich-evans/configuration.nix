@@ -34,8 +34,11 @@ in {
     # Journal-remote receiver (sink for systemd-journal-upload from other hosts)
     ../../modules/journal-remote-sink.nix
 
-    # Matrix homeserver (Tuwunel) + Discord bridge
-    ./matrix.nix
+    # Matrix homeserver — REMOVED at a3j.6: Tuwunel + mautrix-discord moved
+    # to historian (hosts/historian/matrix.nix; the vox-organism daemon here
+    # polls 10.100.0.10:6167 over Nebula until a3j.7). The module file stays
+    # for reference.
+    # ./matrix.nix
 
     # Knitwork — REMOVED at a3j.5: the lexicon host + firehose indexer moved
     # to historian (hosts/historian/knitwork.nix; the registry entry lives in
@@ -154,12 +157,8 @@ in {
         proto = "tcp";
         host = "any";
       }
-      # Matrix/Tuwunel homeserver
-      {
-        port = 6167;
-        proto = "tcp";
-        host = "any";
-      }
+      # Matrix/Tuwunel homeserver — REMOVED at a3j.6 (moved to historian; the
+      # vox-organism daemon polls it over Nebula at 10.100.0.10:6167).
       # SRE agent webhook (Alertmanager → rich-evans)
       {
         port = 9095;

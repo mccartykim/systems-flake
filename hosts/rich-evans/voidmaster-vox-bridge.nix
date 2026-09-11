@@ -39,7 +39,7 @@
     # to this room.
     matrixRoomId = "!3G8AV0aN4zJ4ttbIGQ:kimb.dev";
     matrixUserId = "@vox-bridge:kimb.dev";
-    matrixHomeserverUrl = "http://127.0.0.1:6167";
+    matrixHomeserverUrl = "http://10.100.0.10:6167"; # a3j.6: Tuwunel on historian
     # @vox-bridge:kimb.dev access token (agenix secret; minted via a
     # transient allow_registration flip — see deploy/GO_NOGO.md §3 + the
     # matrix-token-mint-requires-registration-flip memory).

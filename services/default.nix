@@ -228,7 +228,7 @@
         enable = true;
         port = 6167;
         subdomain = "matrix";
-        host = "rich-evans";
+        host = "historian"; # a3j.6: Tuwunel moved from rich-evans (hosts/historian/matrix.nix)
         auth = "builtin";
         publicAccess = true;
         websockets = true;

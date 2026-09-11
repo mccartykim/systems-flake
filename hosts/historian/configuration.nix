@@ -61,6 +61,11 @@
     # .storage verified IP-clean, no USB hardware binding (see file header) ===
     ./home-assistant.nix
 
+    # === a3j.6 phase 6a: Matrix homeserver (Tuwunel) + mautrix-discord (from
+    # rich-evans) — embedded store, federation keys ride the state rsync
+    # untouched ===
+    ./matrix.nix
+
     # Buildbot worker — DISABLED 2026-06-22 (gave up on buildbot-nix
     # fighting private-repo flake inputs; may revisit a different CI
     # scheme later). Re-enable by uncommenting this import; the module
