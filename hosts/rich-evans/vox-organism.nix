@@ -240,7 +240,7 @@ in {
     ORG_AGENT_INIT = org-agent-init;
     ORG_AGENT_FILE = "/var/lib/life-coach-agent/agent.org";
     # speak / lib/tts.py (rung-2 smart-speaker vox).
-    TTS_SERVER = "http://total-eclipse.nebula:8091";
+    TTS_SERVER = "http://historian.nebula:8091"; # a3j.9.1: was total-eclipse
     TTS_VOICE = "jet2";
     TTS_DEVICE = "Kim's nest hub";
     # Choirmaster error-log dir (officer-specific, parity with CHIRURGEON_STATE

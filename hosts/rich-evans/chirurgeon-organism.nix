@@ -79,7 +79,7 @@ in {
     # bedroom Nest ("Living Room speaker") — the only reliably-castable
     # speaker; the kitchen "Kim's nest hub" is chronically unavailable, and
     # the Captain sleeps in the bedroom so the wake must target it.
-    ttsServer = "http://total-eclipse.nebula:8091";
+    ttsServer = "http://historian.nebula:8091"; # a3j.9.1: was total-eclipse
     ttsVoice = "jet2";
     ttsDevice = "Living Room speaker";
   };

@@ -58,7 +58,7 @@ in {
     orgAgentEmacsclient = "${org-agent-emacs}/bin/emacsclient";
 
     # TTS
-    ttsServer = "http://total-eclipse.nebula:8091";
+    ttsServer = "http://historian.nebula:8091"; # a3j.9.1: was total-eclipse
     ttsVoice = "jet2";
     ttsDevice = "Kim's nest hub";
 

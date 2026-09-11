@@ -86,6 +86,9 @@
     # runbook two-pass rsync; see the file header for scrape deltas ===
     ./monitoring.nix
 
+    # === a3j.9.1: Qwen3-TTS voice server (from total-eclipse) — CPU/GGML ===
+    ./qwen3-tts.nix
+
     # Buildbot worker — DISABLED 2026-06-22 (gave up on buildbot-nix
     # fighting private-repo flake inputs; may revisit a different CI
     # scheme later). Re-enable by uncommenting this import; the module

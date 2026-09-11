@@ -3005,11 +3005,11 @@
         "uv2nix": "uv2nix"
       },
       "locked": {
-        "lastModified": 1783173267,
-        "narHash": "sha256-d96+RNEceTMlUwrE5Bnp85Yj9b+pREdsidfix5c0ww4=",
+        "lastModified": 1789120613,
+        "narHash": "sha256-V7TVHUd7jCkKAmyCHjTJuYo5mxxjprQJvVagznmOoWw=",
         "ref": "refs/heads/master",
-        "rev": "c9b3f7b91b1573a2c91641bbab26dfbaa56fb75f",
-        "revCount": 3,
+        "rev": "e3f652b8b80791f1af67e3c632c8113d355e7a92",
+        "revCount": 4,
         "type": "git",
         "url": "ssh://git@github.com/mccartykim/qwen3-tts-cuda-flake.git"
       },

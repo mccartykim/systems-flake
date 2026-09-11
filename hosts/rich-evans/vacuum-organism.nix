@@ -20,7 +20,7 @@
     vacuumHost = "10.100.0.60";
 
     # Qwen3-TTS for the biden-legs voice.
-    qwenTtsServer = "http://total-eclipse.nebula:8091";
+    qwenTtsServer = "http://historian.nebula:8091"; # a3j.9.1: was total-eclipse
     qwenTtsVoice = "biden-legs";
 
     # HA: same encrypted token as life-coach, decrypted independently

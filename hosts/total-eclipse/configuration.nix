@@ -23,8 +23,11 @@
     # Auto-reload NVIDIA modules after config changes
     ./nvidia-reload.nix
 
-    # Qwen3-TTS voice cloning server (port 8091)
-    ./qwen3-tts.nix
+    # Qwen3-TTS voice cloning server (port 8091) — MOVED to historian at
+    # a3j.9.1 (CPU/GGML build; see hosts/historian/qwen3-tts.nix). Kept here
+    # (commented) for rollback: uncomment + flip the 4 organism TTS_SERVER
+    # values back to total-eclipse.nebula:8091.
+    # ./qwen3-tts.nix
 
     # Paperless-ngx document management (scanned mail from maitred)
     ./paperless.nix
