@@ -52,7 +52,12 @@ in {
     # Desktops using mkDesktop helper
     historian = mkDesktop {
       hostname = "historian";
-      extraModules = [media-classifier.nixosModules.default];
+      extraModules = [
+        media-classifier.nixosModules.default
+        # Copyparty — moved from rich-evans at a3j.6 phase 6b (with the
+        # seagate local since a3j.4)
+        copyparty.nixosModules.default
+      ];
     };
     total-eclipse = mkDesktop {
       hostname = "total-eclipse";
@@ -109,7 +114,7 @@ in {
         bridgeCrewSrc = inputs."bridge-crew-src";
       };
       extraModules = [
-        copyparty.nixosModules.default
+        # copyparty.nixosModules.default — MOVED to historian at a3j.6 6b
         org-life-coach.nixosModules.default
         bridge-crew.nixosModules."lifecoach-organism"
         bridge-crew.nixosModules."vacuum-organism"

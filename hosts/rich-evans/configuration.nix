@@ -80,42 +80,6 @@ in {
     enable = true;
     openToPersonalDevices = true;
     extraInboundRules = [
-      # Copyparty ports
-      {
-        port = 3923;
-        proto = "tcp";
-        host = "any";
-      }
-      {
-        port = 3921;
-        proto = "tcp";
-        host = "any";
-      }
-      {
-        port = 3945;
-        proto = "tcp";
-        host = "any";
-      }
-      {
-        port = 3990;
-        proto = "tcp";
-        host = "any";
-      }
-      {
-        port = "12000-12099";
-        proto = "tcp";
-        host = "any";
-      }
-      {
-        port = 69;
-        proto = "udp";
-        host = "any";
-      }
-      {
-        port = 3969;
-        proto = "udp";
-        host = "any";
-      }
       # Guacamole
       {
         port = 4822;
@@ -222,7 +186,6 @@ in {
   # (local writes to the drive beat NFS writes; same unit body, see
   # hosts/historian/configuration.nix).
 
-  nixpkgs.overlays = [inputs.copyparty.overlays.default];
 
   # Server-specific services
   services = {
@@ -306,10 +269,6 @@ in {
   networking.firewall = {
     allowedTCPPorts = [
       9001 # Existing service
-      3923 # Copyparty HTTP
-      3921 # Copyparty FTP
-      3945 # Copyparty SMB
-      3990 # Copyparty additional
       4822 # Guacamole daemon
       8080 # Guacamole web interface
       # 8666 removed at a3j.5 — the MPD httpd stream moved to historian
@@ -318,16 +277,10 @@ in {
       # config — no vhost replacement is needed.
     ];
     allowedTCPPortRanges = [
-      {
-        from = 12000;
-        to = 12099;
-      } # Copyparty dynamic ports
     ];
     allowedUDPPorts = [
       65535 # Existing
-      69 # TFTP
       1900 # UPnP
-      3969 # Copyparty TFTP
       5353 # mDNS/Bonjour
       20
     ];

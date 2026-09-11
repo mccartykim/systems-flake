@@ -5,15 +5,6 @@
   hostServices = {
     # Rich Evans services
     rich-evans = {
-      copyparty = {
-        enable = true;
-        port = 3923;
-        subdomain = "files";
-        host = "rich-evans";
-        auth = "authelia";
-        publicAccess = true;
-        websockets = false;
-      };
       life-coach-dashboard = {
         enable = true;
         # lifecoach-organism dashboard runs on 8586; the old
@@ -106,6 +97,19 @@
         auth = "builtin";
         publicAccess = true;
         websockets = true;
+      };
+      # Copyparty — the a3j.6 phase-6b migration from rich-evans (with the
+      # seagate local since a3j.4; see hosts/historian/copyparty.nix). NOTE:
+      # still no maitred duplicate = no files.kimb.dev vhost — direct
+      # IP:3923 access, as on rich-evans (the vhost is a future decision).
+      copyparty = {
+        enable = true;
+        port = 3923;
+        subdomain = "files";
+        host = "historian";
+        auth = "authelia";
+        publicAccess = true;
+        websockets = false;
       };
     };
 

@@ -66,6 +66,10 @@
     # untouched ===
     ./matrix.nix
 
+    # === a3j.6 phase 6b: copyparty (from rich-evans, with the seagate
+    # local since a3j.4) ===
+    ./copyparty.nix
+
     # Buildbot worker — DISABLED 2026-06-22 (gave up on buildbot-nix
     # fighting private-repo flake inputs; may revisit a different CI
     # scheme later). Re-enable by uncommenting this import; the module
@@ -192,6 +196,10 @@
     fsType = "ext4";
     options = ["nofail" "noatime"];
   };
+
+  # Copyparty overlay (module imports pkgs.copyparty via this overlay —
+  # moved from rich-evans at a3j.6 6b)
+  nixpkgs.overlays = [inputs.copyparty.overlays.default];
 
   kimb = {
     # Restic backups
