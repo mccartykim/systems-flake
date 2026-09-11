@@ -66,6 +66,10 @@ in {
       ExecStart = "${pkgs.kdePackages.kdeconnect-kde}/bin/kdeconnectd";
       Restart = "on-failure";
       RestartSec = "5s";
+      # Headless: no DISPLAY/WAYLAND_DISPLAY, so give Qt the offscreen QPA
+      # platform. Without this, QApplicationPrivate::init aborts on the first
+      # attempts (the daemon is a Qt app).
+      Environment = ["QT_QPA_PLATFORM=offscreen"];
     };
   };
 
