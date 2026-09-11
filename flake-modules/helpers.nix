@@ -99,6 +99,14 @@
           doCheck = false;
         });
 
+        # The PLAIN torch (not torchWithRocm) also builds WITH ROCm under the
+        # global nixpkgs.config.rocmSupport=true on historian, and hits the SAME
+        # CK/flash-attn sandbox issue documented below for torchWithRocm. Nothing
+        # uses GPU features of the plain torch (paperless -> sentence-transformers
+        # does CPU inference), so force the CPU build. No-op on hosts that don't
+        # set rocmSupport (the default is already false there).
+        torch = pyPrev.torch.override {rocmSupport = false;};
+
         # torchWithRocm (torch 2.13, python3.14) fails on historian (Strix
         # Point, gfx1151):
         # 1. Upstream CK flash-attn script add_make_kernel_pt.sh has a
