@@ -212,7 +212,9 @@ in {
         (self + "/hosts/rich-evans/org-bridge.nix")
         org-crm.nixosModules.default
         (self + "/hosts/rich-evans/org-crm.nix")
-        (self + "/hosts/rich-evans/email-digest.nix")
+        # email-digest — MOVED to historian at a3j.6 6b (imported via its
+        # configuration.nix; rich-evans keeps a user/group stub for the
+        # Interrogator's stale-index interim until a3j.7)
         # Borges host module — REMOVED at a3j.5: the service moved to historian
         # (hosts/historian/borges.nix; the module file stays here for
         # reference, like buildbot-master.nix). The import must go with the

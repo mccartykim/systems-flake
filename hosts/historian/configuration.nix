@@ -70,6 +70,11 @@
     # local since a3j.4) ===
     ./copyparty.nix
 
+    # === a3j.6 phase 6b: email-digest (from rich-evans) — mbsync + mu
+    # index + hourly Discord digest; Maildir local since a3j.4, xapian
+    # index on this host's NVMe (pre-built at cutover) ===
+    ./email-digest.nix
+
     # Buildbot worker — DISABLED 2026-06-22 (gave up on buildbot-nix
     # fighting private-repo flake inputs; may revisit a different CI
     # scheme later). Re-enable by uncommenting this import; the module

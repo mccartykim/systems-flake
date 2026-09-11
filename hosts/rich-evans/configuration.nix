@@ -34,6 +34,9 @@ in {
     # Journal-remote receiver (sink for systemd-journal-upload from other hosts)
     ../../modules/journal-remote-sink.nix
 
+    # email-digest STUB — user/group only (a3j.6 6b interim, see the file)
+    ./email-digest-stub.nix
+
     # Matrix homeserver — REMOVED at a3j.6: Tuwunel + mautrix-discord moved
     # to historian (hosts/historian/matrix.nix; the vox-organism daemon here
     # polls 10.100.0.10:6167 over Nebula until a3j.7). The module file stays
