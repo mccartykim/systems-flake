@@ -1,12 +1,15 @@
-# MPD httpd — the Choirmaster's music stream, ported from
+  # MPD httpd — the Choirmaster's music stream, ported from
 # hosts/rich-evans/choirmaster-organism.nix at a3j.5 (the organism itself
 # stays on rich-evans until the a3j.7 organisms domU; only the mpd service
 # moves now, per the a3j.5 phase list).
 #
-# Music lives on the seagate, read via the /mnt/media-drive NFS automount
-# (read-only) until a3j.4 physically moves the drive here — path-preserved,
-# so this config is untouched by that move. The compressed library
-# (music_compressed) is the one the Choirmaster casts.
+# a3j.6 completion: the library moved from /mnt/media-drive/music_compressed
+# (the seagate copy — kept current only by rich-evans's now-removed
+# NFS-looped syncthing folder) to ~/compressed_music, this host's
+# syncthing-managed copy of the SAME folder (fgp3e-2t6j7, sendreceive,
+# verified in-sync at the flip). Content identical; the seagate copy goes
+# stale (inert blob on the drive, tracked for cleanup at a3j.13).
+# The compressed library is the one the Choirmaster casts.
 #
 # inotify auto_update does NOT work over NFS (events fire on the NFS server,
 # never reach the client), so rich-evans's `settings.auto_update = "yes"` is
@@ -28,9 +31,22 @@
   pkgs,
   ...
 }: {
+  # Read-only bind of the syncthing-managed ~/compressed_music for the
+  # `mpd` user (cannot traverse the 0700 /home/kimb). Same pattern as the
+  # jellyfin music bind in configuration.nix.
+  fileSystems."/var/lib/mpd/music" = {
+    device = "/home/kimb/compressed_music";
+    fsType = "none";
+    options = ["bind" "ro"];
+  };
+
   services.mpd = {
     enable = true;
-    musicDirectory = "/mnt/media-drive/music_compressed";
+    # Bind-mounted copy of ~/compressed_music (see fileSystems below) —
+    # MPD runs as user `mpd` and /home/kimb is 0700 kimb:users, so it cannot
+    # traverse the home path directly (same reason jellyfin's music bind
+    # exists). The bind skips traversal; the folder itself is o+rx.
+    musicDirectory = "/var/lib/mpd/music";
     # We open the firewall ourselves below (8666/6600) instead of letting the
     # module open it — its default (false) is kept explicit to silence the
     # non-loopback-bind warning.

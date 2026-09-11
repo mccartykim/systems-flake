@@ -146,30 +146,15 @@ in {
     netbootxyz.enable = true;
   };
 
-  # a3j.4: the seagate moved to historian — this is now an NFS mount of the
-  # REVERSE-export (historian exports the drive rw to this host; see
-  # hosts/historian/configuration.nix). SAME PATH so the remaining drive
-  # consumers (copyparty, email-digest Maildir, org-crm bulk — the 6b cohort)
-  # keep working unchanged until their cutovers; the export drops at 6b
-  # completion. NFSv4.1 = port 2049 only; soft+timeo so a historian outage
-  # fails operations instead of hanging consumers; automount for resilience
-  # across historian reboots.
-  fileSystems."/mnt/seagate" = {
-    device = "10.100.0.10:/";
-    fsType = "nfs";
-    options = [
-      "rw"
-      "noatime"
-      "vers=4.1"
-      "proto=tcp"
-      "x-systemd.automount"
-      "x-systemd.idle-timeout=5min"
-      "x-systemd.mount-timeout=30"
-      "soft"
-      "timeo=30"
-      "retrans=2"
-    ];
-  };
+  # a3j.6 completion: the /mnt/seagate NFS mount is REMOVED — org-crm
+  # (the last 6b drive consumer) moved to historian at cutover 9,
+  # rich-evans's syncthing seagate folders were removed (the mesh lives on
+  # historian: ~/Music, ~/compressed_music, ~/org, ~/work-org,
+  # ~/color_ebooks), and org-bridge (staying here per a3j.7.1) reads a
+  # LOCAL ~/org dir (crew-context.org md5-verified identical) instead of
+  # the drive via the old symlink. The ~/work-org symlink (pointing at
+  # all-encrypted receiveencrypted blobs — never readable) was removed
+  # too. No drive consumer remains on this host.
 
   # a3j.4: NFS export REMOVED — the seagate physically moved to historian
   # (which now reverse-exports it rw to this host for the 6b interim; see

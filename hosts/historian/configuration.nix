@@ -134,21 +134,14 @@
     options = ["nofail" "noatime" "commit=60"];
   };
 
-  # === a3j.4 interim: NFS reverse-export of the seagate to rich-evans (rw)
-  # ===
-  # rich-evans's remaining drive consumers (copyparty, email-digest's
-  # Maildir, org-crm bulk — the 6b cohort) keep working UNCHANGED at their
-  # /mnt/seagate paths: rich-evans now mounts this export there (rw NFS
-  # over Nebula, mirroring how historian consumed the drive pre-move).
-  # NFSv4.1 = port 2049 only (no rpcbind/mountd); fsid=0 makes the seagate
-  # the v4 pseudo-root. The nebula rule below gates it (host firewall trusts
-  # nebula1). DROPS at 6b completion when the last consumer migrates.
-  services.nfs.server = {
-    enable = true;
-    exports = ''
-      /mnt/media-drive 10.100.0.40(rw,no_subtree_check,sync,fsid=0)
-    '';
-  };
+  # === a3j.6 completion: reverse-NFS export REMOVED (the seagate is local) ===
+  # org-crm (the
+  # last 6b drive consumer) moved at cutover 9, rich-evans's syncthing
+  # seagate folders were removed (the mesh lives here: ~/Music,
+  # ~/compressed_music, ~/org, ~/work-org, ~/color_ebooks), and org-bridge
+  # (staying on rich-evans per a3j.7.1) now reads a LOCAL ~/org dir
+  # (crew-context.org md5-verified identical) instead of the drive via
+  # the symlink. The nebula 2049 rule is gone too.
 
   # === a3j.4: put.io mirror writer ported from rich-evans — the drive is
   # local here now, and rclone writing locally beats writing over NFS.
@@ -279,12 +272,8 @@
         # a3j.4 interim: NFSv4.1 (port 2049 only — no rpcbind/mountd) rw
         # reverse-export to rich-evans, whose remaining drive consumers
         # (copyparty, email-digest Maildir, org-crm bulk — the 6b cohort)
-        # still live there. Drops at 6b completion.
-        {
-          port = 2049;
-          proto = "tcp";
-          host = "rich-evans";
-        }
+        # still live there. DROPPED at 6b completion (cutover 9) with the
+        # export itself — rich-evans no longer mounts the drive.
       ];
     };
 
