@@ -57,6 +57,11 @@ in {
         # Copyparty — moved from rich-evans at a3j.6 phase 6b (with the
         # seagate local since a3j.4)
         copyparty.nixosModules.default
+        # org-crm — moved from rich-evans at a3j.6 cutover 9 (2026-09-11);
+        # host file hosts/historian/org-crm.nix. The org-bridge broker STAYED
+        # on rich-evans (user-deferred mothball-or-fix decision, tracked in
+        # a3j.7.1).
+        org-crm.nixosModules.default
       ];
     };
     total-eclipse = mkDesktop {
@@ -210,8 +215,12 @@ in {
         (self + "/hosts/rich-evans/choirmaster-organism.nix")
         (self + "/hosts/rich-evans/factor-organism.nix")
         (self + "/hosts/rich-evans/org-bridge.nix")
-        org-crm.nixosModules.default
-        (self + "/hosts/rich-evans/org-crm.nix")
+        # org-crm — MOVED to historian at a3j.6 cutover 9 (module in
+        # historian's extraModules; host file hosts/historian/org-crm.nix).
+        # The file hosts/rich-evans/org-crm.nix stays for reference, like
+        # borges.nix. NOTE: org-bridge STAYS here (deferred decision
+        # systems-flake-a3j.7.1 — keeps serving officers until mothballed
+        # or moved to the a3j.7 domU).
         # email-digest — MOVED to historian at a3j.6 6b (imported via its
         # configuration.nix; rich-evans keeps a user/group stub for the
         # Interrogator's stale-index interim until a3j.7)

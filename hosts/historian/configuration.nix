@@ -75,6 +75,12 @@
     # index on this host's NVMe (pre-built at cutover) ===
     ./email-digest.nix
 
+    # === a3j.6 phase 6b cutover 9: org-crm (from rich-evans) — personal
+    # CRM agent (tasks/notes/mail digest, Secretary Discord bot). State
+    # /var/lib/org-crm rode the rsync verbatim — identical paths, mu index
+    # + mbsync SyncState needed zero translation ===
+    ./org-crm.nix
+
     # Buildbot worker — DISABLED 2026-06-22 (gave up on buildbot-nix
     # fighting private-repo flake inputs; may revisit a different CI
     # scheme later). Re-enable by uncommenting this import; the module
