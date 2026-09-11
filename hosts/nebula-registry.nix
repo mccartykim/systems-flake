@@ -59,7 +59,7 @@ let
       groups = ["desktops" "nixos" "printing"];
       publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBXpuMSA1RXsYs6cEhvNqzhWpbIe2NB0ya1MUte87SD+";
       meta = {
-        hardware = "Beelink SER5 Max (Ryzen 7 5800H APU)";
+        hardware = "GMKtec NucBox EVO-X1 (Ryzen AI 9 HX 370 APU, Radeon 890M iGPU)";
         purpose = "Daily driver desktop, future local AI inference";
         name = "Records and preserves - will run local AI models";
         notes = "Low-power gaming for now; waiting for ROCm support in NixOS";
