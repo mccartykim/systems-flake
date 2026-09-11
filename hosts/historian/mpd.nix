@@ -32,9 +32,14 @@
   ...
 }: {
   # Read-only bind of the syncthing-managed ~/compressed_music for the
-  # `mpd` user (cannot traverse the 0700 /home/kimb). Same pattern as the
-  # jellyfin music bind in configuration.nix.
-  fileSystems."/var/lib/mpd/music" = {
+  # `mpd` user (cannot traverse the 0700 /home/kimb; jellyfin's music bind
+  # in configuration.nix is the same pattern). NOTE: the bind must live
+  # OUTSIDE /var/lib/mpd — the nixpkgs mpd module adds StateDirectory=mpd/
+  # music when musicDirectory is exactly /var/lib/mpd/music, and systemd's
+  # state-dir namespace setup then collides with the ro bind (EROFS at the
+  # STATE_DIRECTORY step — the 03:02 activation failure). /srv/mpd-music
+  # dodges the exact-match and keeps the ro guarantee.
+  fileSystems."/srv/mpd-music" = {
     device = "/home/kimb/compressed_music";
     fsType = "none";
     options = ["bind" "ro"];
@@ -42,11 +47,13 @@
 
   services.mpd = {
     enable = true;
-    # Bind-mounted copy of ~/compressed_music (see fileSystems below) —
+    # Bind-mounted copy of ~/compressed_music (see fileSystems above) —
     # MPD runs as user `mpd` and /home/kimb is 0700 kimb:users, so it cannot
     # traverse the home path directly (same reason jellyfin's music bind
     # exists). The bind skips traversal; the folder itself is o+rx.
-    musicDirectory = "/var/lib/mpd/music";
+    # Order after the mount — RequiresMountsFor in [Unit] (unitConfig), the
+    # section systemd actually honors for it (the email-digest lesson).
+    musicDirectory = "/srv/mpd-music";
     # We open the firewall ourselves below (8666/6600) instead of letting the
     # module open it — its default (false) is kept explicit to silence the
     # non-loopback-bind warning.
@@ -95,5 +102,10 @@
   # mpc control (both from the LAN — the Nest is not a nebula node; the
   # firewall trust model matches rich-evans's, which also had 8666 open to
   # the LAN).
+  # Order MPD after the music bind mount at activation (RequiresMountsFor
+  # belongs in [Unit] — unitConfig — the section systemd honors; the
+  # email-digest lesson about [Service]-section copies silently ignored).
+  systemd.services.mpd.unitConfig.RequiresMountsFor = ["/srv/mpd-music"];
+
   networking.firewall.allowedTCPPorts = [8666 6600];
 }
