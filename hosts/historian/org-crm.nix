@@ -9,7 +9,7 @@
 # so the mu xapian index (baked with /var/lib/org-crm/Mail) and the mbsync
 # SyncState needed NO translation (state.db audited: zero path columns).
 # OLLAMA_HOST (historian.nebula:11434, module default) now resolves same-host.
-# scanDir is vestigial (scans flow maitred -> total-eclipse paperless) — kept
+# scanDir is vestigial (scans flow maitred -> historian paperless) — kept
 # for config parity; /var/lib/scans does not exist here.
 {
   config,

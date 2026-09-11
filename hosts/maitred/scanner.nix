@@ -1,6 +1,6 @@
 # Scanner configuration for maitred
 # Fujitsu fi-6130Z with ADF duplex scanning + scan button automation
-# Scans stage locally as TIFF, rsync to total-eclipse paperless-ngx for processing
+# Scans stage locally as TIFF, rsync to historian paperless-ngx for processing
 {
   config,
   lib,
@@ -9,7 +9,7 @@
 }: let
   scanDir = "/var/lib/scans";
   remoteScanDir = "/var/lib/paperless/consume";
-  remoteHost = "kimb@total-eclipse.nebula";
+  remoteHost = "kimb@historian.nebula"; # a3j.9.2: was total-eclipse
 
   # NOTE: sane-backends is NOT included here — we use the system scanimage
   # at /run/current-system/sw/bin/scanimage which is properly wrapped
@@ -150,7 +150,7 @@
     done
   '';
 
-  # Rsync script: push scans to total-eclipse paperless, remove synced files
+  # Rsync script: push scans to historian paperless, remove synced files
   syncScript = pkgs.writeShellScript "sync-scans" ''
     set -euo pipefail
     export PATH="${lib.makeBinPath [pkgs.coreutils pkgs.rsync pkgs.openssh pkgs.findutils]}:$PATH"

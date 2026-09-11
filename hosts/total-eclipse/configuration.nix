@@ -29,8 +29,11 @@
     # values back to total-eclipse.nebula:8091.
     # ./qwen3-tts.nix
 
-    # Paperless-ngx document management (scanned mail from maitred)
-    ./paperless.nix
+    # Paperless-ngx document management (scanned mail from maitred) — MOVED to
+    # historian at a3j.9.2 (see hosts/historian/paperless.nix). Kept here
+    # (commented) for rollback: uncomment + point maitred's scanner.rsync back
+    # at total-eclipse.nebula.
+    # ./paperless.nix
 
     # sms-history: read-only SMS reader (KDE Connect D-Bus) prisoned behind a
     # forced command on kimb's authorized_keys for the Interrogator's fleet
