@@ -21,6 +21,11 @@ in {
     enable = true;
     openFirewall = false; # we open the port ourselves below (LAN access only)
     listenPort = cfg.services.homepage.port;
+    # gethomepage validates the Host header by default and rejects the LAN
+    # IP ("Host validation failed") — allow the addresses the dashboard is
+    # actually reached on: local + historian's LAN IP (browser bookmark) +
+    # the nebula IP (personal devices over the mesh).
+    allowedHosts = "localhost,127.0.0.1,192.168.69.167:8082,10.100.0.10:8082";
 
     settings = {
       # The consolidated dashboard: what lives HERE now, plus the fleet
