@@ -174,7 +174,6 @@ in {
   # (local writes to the drive beat NFS writes; same unit body, see
   # hosts/historian/configuration.nix).
 
-
   # Server-specific services
   services = {
     miniflux = {

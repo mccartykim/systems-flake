@@ -641,7 +641,7 @@
       # ollama instance; otherwise benchmark/agent requests queue behind it.
       # Strix Point iGPU has enough unified memory for multiple concurrent slots.
       environmentVariables = {
-        OLLAMA_IGPU_ENABLE = "1";  # Required for Strix Point iGPU (Radeon 890M)
+        OLLAMA_IGPU_ENABLE = "1"; # Required for Strix Point iGPU (Radeon 890M)
         OLLAMA_NUM_PARALLEL = "4";
         OLLAMA_FLASH_ATTENTION = "1";
         OLLAMA_KV_CACHE_TYPE = "q8_0";
@@ -787,10 +787,9 @@
   # embeds the key in the Nix store, so we leave it empty and read it from the
   # agenix secret here instead. Runs as kimb:media (no `+`): kimb owns /srv/media
   # and the StateDirectory, and is in `media` so it can read the 0440 API-key secret.
-  systemd.services.media-classifier.serviceConfig.ExecStartPost =
-    let
-      jellyfinApiKeyFile = config.age.secrets.jellyfin-api-key.path;
-    in
+  systemd.services.media-classifier.serviceConfig.ExecStartPost = let
+    jellyfinApiKeyFile = config.age.secrets.jellyfin-api-key.path;
+  in
     pkgs.writeShellScript "trigger-jellyfin-scan" ''
       # mindepth 2 protects the Anime/Movies/TV Shows roots.
       ${pkgs.findutils}/bin/find /srv/media -mindepth 2 -type d -empty -delete || true

@@ -21,7 +21,7 @@
   # this host that use the broker), not hand-listed, so adding an officer is
   # one roster entry, not an edit here. relayUids stays literal (the daemon
   # 998 is the one router; roster-independent).
-  roster = import "${bridgeCrewSrc}/deploy/roster.nix" { inherit lib; };
+  roster = import "${bridgeCrewSrc}/deploy/roster.nix" {inherit lib;};
 in {
   services.org-bridge = {
     enable = true;
@@ -44,6 +44,6 @@ in {
     # trusted to name the routed officer (strict uid-match would deny every
     # routed officer). It already controls every cycle, so this adds no
     # capability beyond router compromise. See org-bridge.nix relayUids.
-    relayUids = [ "998" ];
+    relayUids = ["998"];
   };
 }

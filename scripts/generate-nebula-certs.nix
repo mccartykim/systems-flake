@@ -8,8 +8,7 @@
   lib,
   hostData,
   bootstrapKey,
-}:
-let
+}: let
   yubikeyIdentity1 = builtins.toString ../secrets/identities/yubikey-1.pub;
   yubikeyIdentity2 = builtins.toString ../secrets/identities/yubikey-2.pub;
 in

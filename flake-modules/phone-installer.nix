@@ -419,23 +419,22 @@ in {
     lib.optionalAttrs
     (system == "aarch64-linux" || system == "x86_64-linux")
     {
-      packages =
-        let
-          installers =
-            lib.mapAttrs'
-            (
-              name: args:
-                lib.nameValuePair "${name}-installer" (mkPhoneInstaller pkgs args)
-            )
-            installerHosts;
-        in
-          # mochi-restore-generator depends on the mochi-installer (it appends
-          # the installer's body to the generated restore script).
-          installers
-          // (lib.optionalAttrs (installers ? mochi-installer) {
-            "mochi-restore-generator" = mkRestoreGenerator pkgs {
-              installer = installers.mochi-installer;
-            };
-          });
+      packages = let
+        installers =
+          lib.mapAttrs'
+          (
+            name: args:
+              lib.nameValuePair "${name}-installer" (mkPhoneInstaller pkgs args)
+          )
+          installerHosts;
+      in
+        # mochi-restore-generator depends on the mochi-installer (it appends
+        # the installer's body to the generated restore script).
+        installers
+        // (lib.optionalAttrs (installers ? mochi-installer) {
+          "mochi-restore-generator" = mkRestoreGenerator pkgs {
+            installer = installers.mochi-installer;
+          };
+        });
     };
 }

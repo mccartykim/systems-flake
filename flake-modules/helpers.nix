@@ -107,23 +107,24 @@
         #    generation fails later anyway, and AOTriton (the preferred SDPA
         #    backend) supports RDNA, so disable CK SDPA.
         # 3. Restrict build to gfx1151 via gpuTargets override.
-        torchWithRocm = (pyPrev.torchWithRocm.override {
-          # Setting PYTORCH_ROCM_ARCH via env would be pointless: the torch
-          # derivation re-exports it from gpuTargets (which takes priority),
-          # so override gpuTargets directly.
-          gpuTargets = ["gfx1151"];
-        }).overrideAttrs (old: {
-          postPatch =
-            (old.postPatch or "")
-            + ''
-              patchShebangs aten/src/ATen/native/transformers/hip/flash_attn/ck/
-            '';
-          env =
-            (old.env or {})
-            // {
-              USE_ROCM_CK_SDPA = "0";
-            };
-        });
+        torchWithRocm =
+          (pyPrev.torchWithRocm.override {
+            # Setting PYTORCH_ROCM_ARCH via env would be pointless: the torch
+            # derivation re-exports it from gpuTargets (which takes priority),
+            # so override gpuTargets directly.
+            gpuTargets = ["gfx1151"];
+          }).overrideAttrs (old: {
+            postPatch =
+              (old.postPatch or "")
+              + ''
+                patchShebangs aten/src/ATen/native/transformers/hip/flash_attn/ck/
+              '';
+            env =
+              (old.env or {})
+              // {
+                USE_ROCM_CK_SDPA = "0";
+              };
+          });
       };
     };
   };
@@ -182,14 +183,14 @@ in {
         # host-key path; the AVF restore script bakes this STABLE key. Registry
         # keys verified 2026-07-25 to match live `ssh-keyscan` for oracle +
         # historian + mochi.
-        programs.ssh.knownHosts =
-          builtins.listToAttrs (builtins.map (n: {
+        programs.ssh.knownHosts = builtins.listToAttrs (builtins.map (n: {
             name = n;
             value = {
               hostNames = ["${n}.nebula" registry.nodes.${n}.ip];
               publicKey = registry.nodes.${n}.publicKey;
             };
-          }) pinned);
+          })
+          pinned);
       })
     ];
 

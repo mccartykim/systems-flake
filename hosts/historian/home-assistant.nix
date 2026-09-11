@@ -131,23 +131,21 @@ in {
   # the mode fields only apply at creation). After the cutover push, the
   # rsync'd /var/lib/hass needs a one-time chown -R hass:hass (rich-evans's
   # numeric ids differ from this host's fresh hass user).
-  systemd.tmpfiles.rules =
-    lib.optionals cfg.services.homeassistant.enable [
-      "d /var/lib/hass 0750 hass hass -"
-      "f /var/lib/hass/automations.yaml 0644 hass hass -"
-      "f /var/lib/hass/scripts.yaml 0644 hass hass -"
-      "f /var/lib/hass/scenes.yaml 0644 hass hass -"
-    ];
+  systemd.tmpfiles.rules = lib.optionals cfg.services.homeassistant.enable [
+    "d /var/lib/hass 0750 hass hass -"
+    "f /var/lib/hass/automations.yaml 0644 hass hass -"
+    "f /var/lib/hass/scripts.yaml 0644 hass hass -"
+    "f /var/lib/hass/scenes.yaml 0644 hass hass -"
+  ];
 
   # Nebula: HA frontend from any mesh node (maitred's socat for hass.kimb.dev
   # + the rich-evans organisms' interim haUrl at 10.100.0.10:8123 + personal
   # devices). Parity with rich-evans's old host=any rule.
-  kimb.nebula.extraInboundRules =
-    lib.optionals cfg.services.homeassistant.enable [
-      {
-        port = cfg.services.homeassistant.port;
-        proto = "tcp";
-        host = "any";
-      }
-    ];
+  kimb.nebula.extraInboundRules = lib.optionals cfg.services.homeassistant.enable [
+    {
+      port = cfg.services.homeassistant.port;
+      proto = "tcp";
+      host = "any";
+    }
+  ];
 }

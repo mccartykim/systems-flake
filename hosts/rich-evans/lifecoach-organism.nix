@@ -22,8 +22,14 @@
 }: let
   org-agent-emacs = inputs.org-agent.packages.${pkgs.system}.emacs;
   # Per-service overrides for all lifecoach-organism units
-  lifecoach-services = ["lifecoach-heartbeat" "lifecoach-scheduler" "lifecoach-watchdog"
-    "lifecoach-discord-bot" "lifecoach-button-monitor" "lifecoach-dashboard"];
+  lifecoach-services = [
+    "lifecoach-heartbeat"
+    "lifecoach-scheduler"
+    "lifecoach-watchdog"
+    "lifecoach-discord-bot"
+    "lifecoach-button-monitor"
+    "lifecoach-dashboard"
+  ];
 in {
   services.lifecoach-organism = {
     enable = true;
@@ -145,13 +151,13 @@ in {
     # config (the old module still defines it under cfg.enable, which
     # we keep true to preserve the emacs daemon). So we also need the
     # activation script below to stop it imperatively during switch.
-    { org-life-coach.wantedBy = lib.mkForce []; }
+    {org-life-coach.wantedBy = lib.mkForce [];}
     # Phase-4 assign-only heartbeat (#162): lights overdue bound buttons
     # amber, then stops — no speak/vision/judgment. The Chirurgeon is the
     # sole nudger; this keeps the deterministic LED-assignment path (the
     # only thing that creates PENDING buttons) alive. See the gate in
     # lifecoach-mechanical handle_heartbeat + the phase-4 block below.
-    { lifecoach-heartbeat.environment.LIFECOACH_ASSIGN_ONLY = "1"; }
+    {lifecoach-heartbeat.environment.LIFECOACH_ASSIGN_ONLY = "1";}
   ];
 
   # ------------------------------------------------------------------

@@ -133,9 +133,18 @@ in {
           }
         ];
         relabel_configs = [
-          {source_labels = ["__address__"]; target_label = "__param_target";}
-          {target_label = "instance"; replacement = "blog.kimb.dev";}
-          {target_label = "__address__"; replacement = "localhost:9115";}
+          {
+            source_labels = ["__address__"];
+            target_label = "__param_target";
+          }
+          {
+            target_label = "instance";
+            replacement = "blog.kimb.dev";
+          }
+          {
+            target_label = "__address__";
+            replacement = "localhost:9115";
+          }
         ];
       };
 
@@ -146,9 +155,18 @@ in {
         params = {module = ["http_2xx"];};
         static_configs = [{targets = ["https://blog.kimb.dev"];}];
         relabel_configs = [
-          {source_labels = ["__address__"]; target_label = "__param_target";}
-          {source_labels = ["__param_target"]; target_label = "instance";}
-          {target_label = "__address__"; replacement = "10.100.0.2:9115";}
+          {
+            source_labels = ["__address__"];
+            target_label = "__param_target";
+          }
+          {
+            source_labels = ["__param_target"];
+            target_label = "instance";
+          }
+          {
+            target_label = "__address__";
+            replacement = "10.100.0.2:9115";
+          }
         ];
       };
     in

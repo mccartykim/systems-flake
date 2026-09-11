@@ -97,9 +97,18 @@ in {
           }
         ];
         relabel_configs = [
-          {source_labels = ["__address__"]; target_label = "__param_target";}
-          {source_labels = ["__param_target"]; target_label = "instance";}
-          {target_label = "__address__"; replacement = "localhost:9115";}
+          {
+            source_labels = ["__address__"];
+            target_label = "__param_target";
+          }
+          {
+            source_labels = ["__param_target"];
+            target_label = "instance";
+          }
+          {
+            target_label = "__address__";
+            replacement = "localhost:9115";
+          }
         ];
       };
 
@@ -110,9 +119,18 @@ in {
         params = {module = ["http_2xx"];};
         static_configs = [{targets = ["https://blog.${cfg.domain}"];}];
         relabel_configs = [
-          {source_labels = ["__address__"]; target_label = "__param_target";}
-          {source_labels = ["__param_target"]; target_label = "instance";}
-          {target_label = "__address__"; replacement = "10.100.0.2:9115";}
+          {
+            source_labels = ["__address__"];
+            target_label = "__param_target";
+          }
+          {
+            source_labels = ["__param_target"];
+            target_label = "instance";
+          }
+          {
+            target_label = "__address__";
+            replacement = "10.100.0.2:9115";
+          }
         ];
       };
     in [selfScrape nodeExporterConfig blackboxBlogInternal blackboxBlogExternal];
@@ -208,27 +226,25 @@ in {
 
   # Firewall: LAN parity with maitred's old posture (grafana bookmark by
   # LAN IP, prometheus webui, node metrics). Nebula1 is already trusted.
-  networking.firewall.allowedTCPPorts =
-    lib.flatten [
-      (lib.optional cfg.services.grafana.enable cfg.services.grafana.port)
-      (lib.optional cfg.services.prometheus.enable cfg.services.prometheus.port)
-      [9100] # node exporter
-    ];
+  networking.firewall.allowedTCPPorts = lib.flatten [
+    (lib.optional cfg.services.grafana.enable cfg.services.grafana.port)
+    (lib.optional cfg.services.prometheus.enable cfg.services.prometheus.port)
+    [9100] # node exporter
+  ];
 
   # Nebula: maitred is a router (not a personal device), so its socat
   # forwarders (grafana-proxy :3000, prometheus-proxy :9090 -> this
   # host) need explicit inbound rules — same pattern as knit/borges/BFF.
-  kimb.nebula.extraInboundRules =
-    lib.optionals (cfg.services.grafana.enable && cfg.services.prometheus.enable) [
-      {
-        port = cfg.services.grafana.port;
-        proto = "tcp";
-        host = "maitred";
-      }
-      {
-        port = cfg.services.prometheus.port;
-        proto = "tcp";
-        host = "maitred";
-      }
-    ];
+  kimb.nebula.extraInboundRules = lib.optionals (cfg.services.grafana.enable && cfg.services.prometheus.enable) [
+    {
+      port = cfg.services.grafana.port;
+      proto = "tcp";
+      host = "maitred";
+    }
+    {
+      port = cfg.services.prometheus.port;
+      proto = "tcp";
+      host = "maitred";
+    }
+  ];
 }

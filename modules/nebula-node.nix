@@ -46,7 +46,7 @@ with lib; let
     nameValuePair n.ip (
       [n.external] ++ optional (n ? lanIp) "${n.lanIp}:4242"
     ))
-    allLighthouses);
+  allLighthouses);
 
   relayIps = getOtherIps allRelays;
 

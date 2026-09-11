@@ -1,4 +1,8 @@
-{ config, lib, ... }: let
+{
+  config,
+  lib,
+  ...
+}: let
   registry = import ./hosts/nebula-registry.nix;
 in {
   # --- Networks ---
@@ -40,7 +44,12 @@ in {
     interfaces = {
       wan = {
         addresses = ["DHCP"];
-        physicalConnections = [{ node = "internet"; interface = "wan"; }];
+        physicalConnections = [
+          {
+            node = "internet";
+            interface = "wan";
+          }
+        ];
       };
       lan = {
         addresses = ["192.168.69.1/24"];
@@ -62,7 +71,12 @@ in {
       lan = {
         addresses = ["DHCP"];
         network = "lan";
-        physicalConnections = [{ node = "maitred"; interface = "lan"; }];
+        physicalConnections = [
+          {
+            node = "maitred";
+            interface = "lan";
+          }
+        ];
       };
       nebula = {
         addresses = ["10.100.0.10/16"];
@@ -79,7 +93,12 @@ in {
       lan = {
         addresses = ["DHCP"];
         network = "lan";
-        physicalConnections = [{ node = "maitred"; interface = "lan"; }];
+        physicalConnections = [
+          {
+            node = "maitred";
+            interface = "lan";
+          }
+        ];
       };
       nebula = {
         addresses = ["10.100.0.6/16"];
@@ -97,7 +116,12 @@ in {
       lan = {
         addresses = ["DHCP"];
         network = "lan";
-        physicalConnections = [{ node = "maitred"; interface = "lan"; }];
+        physicalConnections = [
+          {
+            node = "maitred";
+            interface = "lan";
+          }
+        ];
       };
       nebula = {
         addresses = ["10.100.0.40/16"];
@@ -186,7 +210,12 @@ in {
     interfaces = {
       wan = {
         addresses = ["150.136.155.204"];
-        physicalConnections = [{ node = "internet"; interface = "wan"; }];
+        physicalConnections = [
+          {
+            node = "internet";
+            interface = "wan";
+          }
+        ];
       };
       nebula = {
         addresses = ["10.100.0.2/16"];
@@ -206,7 +235,12 @@ in {
       lan = {
         addresses = ["192.168.69.177"];
         network = "lan";
-        physicalConnections = [{ node = "maitred"; interface = "lan"; }];
+        physicalConnections = [
+          {
+            node = "maitred";
+            interface = "lan";
+          }
+        ];
       };
       nebula = {
         addresses = ["10.100.0.60/16"];

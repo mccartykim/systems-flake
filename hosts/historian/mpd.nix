@@ -1,4 +1,4 @@
-  # MPD httpd — the Choirmaster's music stream, ported from
+# MPD httpd — the Choirmaster's music stream, ported from
 # hosts/rich-evans/choirmaster-organism.nix at a3j.5 (the organism itself
 # stays on rich-evans until the a3j.7 organisms domU; only the mpd service
 # moves now, per the a3j.5 phase list).

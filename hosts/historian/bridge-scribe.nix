@@ -62,7 +62,8 @@
   # allowlist map, file paths MUST be relative and prisoned under the scratch
   # root — and the FULL envelope (incl. path-prisoning) is validated BEFORE the
   # key check + clone, so a malformed envelope dies fast with no side effects.
-  materializePy = pkgs.writeText "bridge-scribe-materialize.py"
+  materializePy =
+    pkgs.writeText "bridge-scribe-materialize.py"
     (builtins.readFile ./bridge_scribe_materialize.py);
 
   # The read-only investigation verb (#127 follow-up): the Remembrancer's
@@ -70,7 +71,8 @@
   # as the author path. Read-only by construction (shallow clone + cat/grep, no
   # push/commit/forge). REPOS is imported from materializePy below so the
   # allowlist stays a single source of truth (no drift between verbs).
-  readPy = pkgs.writeText "bridge-scribe-read.py"
+  readPy =
+    pkgs.writeText "bridge-scribe-read.py"
     (builtins.readFile ./bridge_scribe_read.py);
 
   # The router that the fleet key's forced command runs. One key -> one forced
@@ -79,7 +81,8 @@
   # dispatcher: verb from $SSH_ORIGINAL_COMMAND (empty -> materialize, so the
   # daemon's command-less author hop is unchanged), args via stdin. See
   # bridge_scribe_dispatch.py.
-  dispatchPy = pkgs.writeText "bridge-scribe-dispatch.py"
+  dispatchPy =
+    pkgs.writeText "bridge-scribe-dispatch.py"
     (builtins.readFile ./bridge_scribe_dispatch.py);
 
   # The forced command the fleet key runs. Sets PATH (git/ssh/python/coreutils/
@@ -105,7 +108,8 @@
   # truth: the committed ./bridge_scribe_sync.py, read verbatim into the store
   # here. Run by the bridge-sync systemd timer below every 10 min; reuses the
   # same deploy key (authenticates to both remotes). No new secret.
-  syncPy = pkgs.writeText "bridge-scribe-sync.py"
+  syncPy =
+    pkgs.writeText "bridge-scribe-sync.py"
     (builtins.readFile ./bridge_scribe_sync.py);
 
   syncRun = pkgs.writeShellScript "bridge-scribe-sync" ''

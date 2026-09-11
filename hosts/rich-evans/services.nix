@@ -19,18 +19,13 @@ in {
   # Firewall configuration for enabled services
   networking.firewall = {
     allowedTCPPorts = lib.flatten [
-
-
-
       # CUPS printing
       [631]
-
     ];
-
-
   };
 
   # Create necessary directories
-  systemd.tmpfiles.rules = lib.flatten [
-  ];
+  systemd.tmpfiles.rules =
+    lib.flatten [
+    ];
 }

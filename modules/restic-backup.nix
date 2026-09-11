@@ -85,12 +85,14 @@ in {
       environmentFile = config.age.secrets.restic-b2-env.path;
       inherit (cfg) extraExclude;
 
-      paths = [
-        "/home/kimb"
-        "/etc"
-        "/var/lib"
-        "/root"
-      ] ++ cfg.extraPaths;
+      paths =
+        [
+          "/home/kimb"
+          "/etc"
+          "/var/lib"
+          "/root"
+        ]
+        ++ cfg.extraPaths;
 
       # Override the generic exclude defaults with kimb-specific ones —
       # the generic module's defaults use globs like `**/.cache`, but

@@ -96,7 +96,12 @@ pkgs.testers.nixosTest {
       services.nginx = {
         enable = true;
         virtualHosts."nattest" = {
-          listen = [{addr = "0.0.0.0"; port = 80;}];
+          listen = [
+            {
+              addr = "0.0.0.0";
+              port = 80;
+            }
+          ];
           locations."/" = {
             return = "200 'behind dom0 NAT!'";
             extraConfig = "add_header Content-Type text/plain;";

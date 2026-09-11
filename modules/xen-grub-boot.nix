@@ -23,15 +23,12 @@
 #     we rewrite that to `xengrub-` (if setXenDefault) or back to the
 #     newest `nixos-` entry.
 # systemd-boot stays primary; no GRUB menu is ever shown (timeout 0).
-
 {
   config,
   lib,
   pkgs,
   ...
-}:
-
-let
+}: let
   cfg = config.boot.xenGrubBoot;
   xenCfg = config.virtualisation.xen;
 
@@ -47,7 +44,7 @@ let
     url = "https://deb.debian.org/debian/pool/main/g/grub2/grub-efi-amd64-bin_2.12-9+deb13u2_amd64.deb";
     hash = "sha256-1IbWLIOqGX+Dwd0FYP/ZbZHIlvTVhIUWTrfhYj57/eI=";
   };
-  grub2112Modules = pkgs.runCommand "grub-2.12-x86_64-efi-modules" { } ''
+  grub2112Modules = pkgs.runCommand "grub-2.12-x86_64-efi-modules" {} ''
     mkdir -p tmp && cd tmp
     ${pkgs.binutils}/bin/ar x ${grubModulesDeb} data.tar.xz
     tar xf data.tar.xz
@@ -104,15 +101,17 @@ let
     ];
     runtimeEnv = {
       efiMountPoint = config.boot.loader.efi.efiSysMountPoint;
-      setXenDefault = if cfg.setXenDefault then "1" else "0";
+      setXenDefault =
+        if cfg.setXenDefault
+        then "1"
+        else "0";
       inherit grubModules;
       grubModuleDir = toString grub2112Modules + "/x86_64-efi";
     };
-    excludeShellChecks = [ "SC2016" ];
+    excludeShellChecks = ["SC2016"];
     text = builtins.readFile ./xen-grub-boot-builder.sh;
   };
-in
-{
+in {
   options.boot.xenGrubBoot = {
     enable = lib.mkEnableOption ''
       GRUB-multiboot2 chainload boot entries for Xen, for UEFI firmwares

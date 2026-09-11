@@ -171,85 +171,85 @@
   # capped at 8min so a stalled IMAP/TLS connection can't hang the index
   # forever; the service TimeoutStartSec is the outer ceiling.
   indexScript = pkgs.writeShellScript "email-digest-index" ''
-        set -euo pipefail
-        export PATH="${binPath}:$PATH"
+    set -euo pipefail
+    export PATH="${binPath}:$PATH"
 
-        MBSYNCRC="${mbsyncrc}"
-        STATE_DIR="${stateDir}"
-        MAIL_DIR="${mailDir}"
+    MBSYNCRC="${mbsyncrc}"
+    STATE_DIR="${stateDir}"
+    MAIL_DIR="${mailDir}"
 
-        # Ensure Maildir structure exists for mbsync
-        for acct in zoho gmail fastmail; do
-          mkdir -p "$MAIL_DIR/$acct/INBOX/cur" "$MAIL_DIR/$acct/INBOX/new" "$MAIL_DIR/$acct/INBOX/tmp"
-        done
+    # Ensure Maildir structure exists for mbsync
+    for acct in zoho gmail fastmail; do
+      mkdir -p "$MAIL_DIR/$acct/INBOX/cur" "$MAIL_DIR/$acct/INBOX/new" "$MAIL_DIR/$acct/INBOX/tmp"
+    done
 
-        # Clean stale lock files from interrupted runs
-        find "$MAIL_DIR" -name '.lock' -delete 2>/dev/null || true
+    # Clean stale lock files from interrupted runs
+    find "$MAIL_DIR" -name '.lock' -delete 2>/dev/null || true
 
-        # Sync mail (continue on failure for each account; 8min cap each so a
-        # stalled IMAP/TLS connection can't hang the index indefinitely — the
-        # old unbounded mbsync was a secondary hang vector behind the 90min
-        # service timeout).
-        for account in zoho gmail fastmail; do
-          timeout 8m mbsync -c "$MBSYNCRC" "$account" 2>&1 || echo "WARNING: $account sync failed (or timed out)" >&2
-        done
+    # Sync mail (continue on failure for each account; 8min cap each so a
+    # stalled IMAP/TLS connection can't hang the index indefinitely — the
+    # old unbounded mbsync was a secondary hang vector behind the 90min
+    # service timeout).
+    for account in zoho gmail fastmail; do
+      timeout 8m mbsync -c "$MBSYNCRC" "$account" 2>&1 || echo "WARNING: $account sync failed (or timed out)" >&2
+    done
 
-        # Widen the freshly-synced Maildir to group-readable so the Interrogator
-        # officer (#53) can read these messages. mbsync writes each message
-        # file at 0600 (owner-only) by default; mu find gates every query
-        # result on access(R_OK) of the underlying file, so a 0600 file is
-        # silently filtered out for any group reader — the whole result set
-        # came back empty before this (empirically: 0 vs 66397 for the owner).
-        # The vox-organism daemon (the Interrogator's cycle runner, uid 998)
-        # is in the email-digest group (roster.nix daemonExtraGroups); g+rX =
-        # group read on files + traverse on dirs (capital X: x on dirs, not
-        # the non-executable message files). Idempotent; runs every cycle so
-        # new mail from this sync is readable the moment it lands. Mirrors
-        # the .cache/mu index chmod below + the officer modules' g+r pattern.
-        chmod -R g+rX "$MAIL_DIR" 2>/dev/null || true
+    # Widen the freshly-synced Maildir to group-readable so the Interrogator
+    # officer (#53) can read these messages. mbsync writes each message
+    # file at 0600 (owner-only) by default; mu find gates every query
+    # result on access(R_OK) of the underlying file, so a 0600 file is
+    # silently filtered out for any group reader — the whole result set
+    # came back empty before this (empirically: 0 vs 66397 for the owner).
+    # The vox-organism daemon (the Interrogator's cycle runner, uid 998)
+    # is in the email-digest group (roster.nix daemonExtraGroups); g+rX =
+    # group read on files + traverse on dirs (capital X: x on dirs, not
+    # the non-executable message files). Idempotent; runs every cycle so
+    # new mail from this sync is readable the moment it lands. Mirrors
+    # the .cache/mu index chmod below + the officer modules' g+r pattern.
+    chmod -R g+rX "$MAIL_DIR" 2>/dev/null || true
 
-        # Index mail (only init if database doesn't exist)
-        if [ ! -d "$HOME/.cache/mu/xapian" ]; then
-          mu init --maildir="$MAIL_DIR" --my-address=mccartykim@zoho.com --my-address=mccarty.tim@gmail.com --my-address=kimb@kimb.dev 2>&1
-        fi
-        # Widen the mu xapian dirs BEFORE mu index. mu index can take >30min
-        # against the Seagate Maildir (30G/590K messages on spinning rust; a
-        # full incremental pass re-reads ~35G), and the service TimeoutStartSec
-        # can still kill a genuinely-hung run before it reaches the post-index
-        # chmod below — leaving xapian at mu's default 0700 so the Interrogator
-        # (email-digest group, uid 998) can't traverse it ("Couldn't stat
-        # xapian", Interrogator blind). Chmod here too so the index is
-        # group-readable even when mu index is killed mid-run. The post-index
-        # chmod below is kept as a belt-and-suspenders re-widen for the case
-        # where mu index re-inits a corrupt db mid-run. Idempotent.
-        chmod g+rX "$STATE_DIR/.cache" "$STATE_DIR/.cache/mu" "$STATE_DIR/.cache/mu/xapian" 2>/dev/null || true
-        # --lazy-check (mu source: mu-indexer.cc:237-244,284-288): skip whole
-        # unchanged cur/new dirs by dirstamp + skip unchanged files by ctime vs
-        # last_index. Steady state is O(dirs) stats, not O(messages) body reads.
-        # CRITICAL: last_index + dirstamps persist ONLY on a clean completion
-        # (mu-indexer.cc:411-435); a SIGTERM'd run leaves them unset so the next
-        # run full-re-reads every body (the 35G/50min death spiral we had under
-        # the 90min ceiling). --lazy-check with a stale/absent checkpoint simply
-        # degrades to a full pass (no skips fire) — safe to use always. The
-        # 120min service timeout lets that first full pass finish + persist the
-        # checkpoint; every subsequent run is then O(dirs). Note mu keys on
-        # st_ctime (inode change time), so any tool that rewrites a message
-        # bumps ctime and re-indexes just that message — fine.
-        mu index --lazy-check 2>&1
+    # Index mail (only init if database doesn't exist)
+    if [ ! -d "$HOME/.cache/mu/xapian" ]; then
+      mu init --maildir="$MAIL_DIR" --my-address=mccartykim@zoho.com --my-address=mccarty.tim@gmail.com --my-address=kimb@kimb.dev 2>&1
+    fi
+    # Widen the mu xapian dirs BEFORE mu index. mu index can take >30min
+    # against the Seagate Maildir (30G/590K messages on spinning rust; a
+    # full incremental pass re-reads ~35G), and the service TimeoutStartSec
+    # can still kill a genuinely-hung run before it reaches the post-index
+    # chmod below — leaving xapian at mu's default 0700 so the Interrogator
+    # (email-digest group, uid 998) can't traverse it ("Couldn't stat
+    # xapian", Interrogator blind). Chmod here too so the index is
+    # group-readable even when mu index is killed mid-run. The post-index
+    # chmod below is kept as a belt-and-suspenders re-widen for the case
+    # where mu index re-inits a corrupt db mid-run. Idempotent.
+    chmod g+rX "$STATE_DIR/.cache" "$STATE_DIR/.cache/mu" "$STATE_DIR/.cache/mu/xapian" 2>/dev/null || true
+    # --lazy-check (mu source: mu-indexer.cc:237-244,284-288): skip whole
+    # unchanged cur/new dirs by dirstamp + skip unchanged files by ctime vs
+    # last_index. Steady state is O(dirs) stats, not O(messages) body reads.
+    # CRITICAL: last_index + dirstamps persist ONLY on a clean completion
+    # (mu-indexer.cc:411-435); a SIGTERM'd run leaves them unset so the next
+    # run full-re-reads every body (the 35G/50min death spiral we had under
+    # the 90min ceiling). --lazy-check with a stale/absent checkpoint simply
+    # degrades to a full pass (no skips fire) — safe to use always. The
+    # 120min service timeout lets that first full pass finish + persist the
+    # checkpoint; every subsequent run is then O(dirs). Note mu keys on
+    # st_ctime (inode change time), so any tool that rewrites a message
+    # bumps ctime and re-indexes just that message — fine.
+    mu index --lazy-check 2>&1
 
-        # Widen the mu xapian dirs to group-traversable so the Interrogator
-        # officer (#53) can read this index read-only. The vox-organism daemon
-        # (the Interrogator's cycle runner, uid 998) is a member of this
-        # email-digest group (roster.nix daemonExtraGroups); mu init creates
-        # $HOME/.cache AND .cache/mu AND .cache/mu/xapian all at 0700
-        # (empirically verified with mu 1.14.2 — the db dir too, not just its
-        # parents), which blocks the group from traversing to the 0644 xapian
-        # db files inside .cache/mu/xapian. We are the owner, so chmod works.
-        # g+rX = group read + traverse (capital X: x on dirs, not the 0644 db
-        # files). Idempotent; runs every cycle, surviving any mu re-init.
-        # Mirrors the officer modules' "chmod g+r the seed for cross-officer
-        # daemon access" pattern.
-        chmod g+rX "$STATE_DIR/.cache" "$STATE_DIR/.cache/mu" "$STATE_DIR/.cache/mu/xapian" 2>/dev/null || true
+    # Widen the mu xapian dirs to group-traversable so the Interrogator
+    # officer (#53) can read this index read-only. The vox-organism daemon
+    # (the Interrogator's cycle runner, uid 998) is a member of this
+    # email-digest group (roster.nix daemonExtraGroups); mu init creates
+    # $HOME/.cache AND .cache/mu AND .cache/mu/xapian all at 0700
+    # (empirically verified with mu 1.14.2 — the db dir too, not just its
+    # parents), which blocks the group from traversing to the 0644 xapian
+    # db files inside .cache/mu/xapian. We are the owner, so chmod works.
+    # g+rX = group read + traverse (capital X: x on dirs, not the 0644 db
+    # files). Idempotent; runs every cycle, surviving any mu re-init.
+    # Mirrors the officer modules' "chmod g+r the seed for cross-officer
+    # daemon access" pattern.
+    chmod g+rX "$STATE_DIR/.cache" "$STATE_DIR/.cache/mu" "$STATE_DIR/.cache/mu/xapian" 2>/dev/null || true
   '';
 
   # --- Digest service script: mu find + Ollama + Discord. FAST. ---
@@ -257,202 +257,202 @@
   # email-digest-index service refreshes. If the index is stale/absent, mu
   # find returns nothing and the digest sends "No new mail" — benign.
   digestScript = pkgs.writeShellScript "email-digest" ''
-        set -euo pipefail
-        export PATH="${binPath}:$PATH"
+            set -euo pipefail
+            export PATH="${binPath}:$PATH"
 
-        STATE_DIR="${stateDir}"
-        DISCORD_TOKEN_FILE="${config.age.secrets.discord-email-digest-token.path}"
-        DISCORD_USER_ID="${discordUserId}"
-        ORG_NOTES_DIR="${orgNotesDir}"
+            STATE_DIR="${stateDir}"
+            DISCORD_TOKEN_FILE="${config.age.secrets.discord-email-digest-token.path}"
+            DISCORD_USER_ID="${discordUserId}"
+            ORG_NOTES_DIR="${orgNotesDir}"
 
-        # Read last-run timestamp; default to 24 hours ago
-        LAST_RUN_FILE="$STATE_DIR/last-run"
-        NOW=$(date +%s)
-        if [ -f "$LAST_RUN_FILE" ]; then
-          LAST_RUN=$(cat "$LAST_RUN_FILE")
-        else
-          LAST_RUN=$((NOW - 86400))
-        fi
+            # Read last-run timestamp; default to 24 hours ago
+            LAST_RUN_FILE="$STATE_DIR/last-run"
+            NOW=$(date +%s)
+            if [ -f "$LAST_RUN_FILE" ]; then
+              LAST_RUN=$(cat "$LAST_RUN_FILE")
+            else
+              LAST_RUN=$((NOW - 86400))
+            fi
 
-        # Format date for mu query
-        SINCE_DATE=$(date -d "@$LAST_RUN" +%Y%m%d)
+            # Format date for mu query
+            SINCE_DATE=$(date -d "@$LAST_RUN" +%Y%m%d)
 
-        # Find new messages (queries the xapian index the email-digest-index
-        # service refreshes; concurrent reads are safe — xapian supports them).
-        MESSAGES=$(mu find "date:$SINCE_DATE.." --fields='d f s l' --sortfield=date 2>/dev/null || true)
+            # Find new messages (queries the xapian index the email-digest-index
+            # service refreshes; concurrent reads are safe — xapian supports them).
+            MESSAGES=$(mu find "date:$SINCE_DATE.." --fields='d f s l' --sortfield=date 2>/dev/null || true)
 
-        # Read Discord token
-        DISCORD_TOKEN=$(cat "$DISCORD_TOKEN_FILE")
+            # Read Discord token
+            DISCORD_TOKEN=$(cat "$DISCORD_TOKEN_FILE")
 
-        # Helper: send Discord DM. Every curl is bounded (--max-time 30) so a
-        # stalled Discord API can't hang the digest (the old unbounded curl
-        # was a secondary hang vector).
-        send_discord_dm() {
-          local content="$1"
+            # Helper: send Discord DM. Every curl is bounded (--max-time 30) so a
+            # stalled Discord API can't hang the digest (the old unbounded curl
+            # was a secondary hang vector).
+            send_discord_dm() {
+              local content="$1"
 
-          # Create/get DM channel
-          local channel_id
-          channel_id=$(curl -sf --max-time 30 \
-            -X POST \
-            -H "Authorization: Bot $DISCORD_TOKEN" \
-            -H "Content-Type: application/json" \
-            -d "{\"recipient_id\":\"$DISCORD_USER_ID\"}" \
-            "https://discord.com/api/v10/users/@me/channels" | jq -r '.id')
-
-          if [ -z "$channel_id" ] || [ "$channel_id" = "null" ]; then
-            echo "ERROR: Failed to create DM channel" >&2
-            return 1
-          fi
-
-          # Split content at ~1990 char newline boundaries and send chunks
-          local chunk=""
-          while IFS= read -r line; do
-            if [ $(( ''${#chunk} + ''${#line} + 1 )) -gt 1990 ]; then
-              curl -sf --max-time 30 \
+              # Create/get DM channel
+              local channel_id
+              channel_id=$(curl -sf --max-time 30 \
                 -X POST \
                 -H "Authorization: Bot $DISCORD_TOKEN" \
                 -H "Content-Type: application/json" \
-                -d "$(jq -n --arg c "$chunk" '{content: $c}')" \
-                "https://discord.com/api/v10/channels/$channel_id/messages" > /dev/null
-              chunk=""
-            fi
-            if [ -n "$chunk" ]; then
-              chunk="$chunk"$'\n'"$line"
-            else
-              chunk="$line"
-            fi
-          done <<< "$content"
+                -d "{\"recipient_id\":\"$DISCORD_USER_ID\"}" \
+                "https://discord.com/api/v10/users/@me/channels" | jq -r '.id')
 
-          # Send remaining chunk
-          if [ -n "$chunk" ]; then
-            curl -sf --max-time 30 \
-              -X POST \
-              -H "Authorization: Bot $DISCORD_TOKEN" \
-              -H "Content-Type: application/json" \
-              -d "$(jq -n --arg c "$chunk" '{content: $c}')" \
-              "https://discord.com/api/v10/channels/$channel_id/messages" > /dev/null
-          fi
-        }
-
-        # If no new messages, send brief notification
-        if [ -z "$MESSAGES" ]; then
-          LAST_RUN_PRETTY=$(date -d "@$LAST_RUN" '+%b %d %H:%M')
-          send_discord_dm "No new mail since $LAST_RUN_PRETTY"
-          echo "$NOW" > "$LAST_RUN_FILE"
-          exit 0
-        fi
-
-        # Pre-fetch org notes for sender context (replaces Claude's Read tool)
-        ORG_CONTEXT=""
-        if [ -d "$ORG_NOTES_DIR" ]; then
-          for f in "$ORG_NOTES_DIR"/*.org; do
-            [ -f "$f" ] && ORG_CONTEXT="$ORG_CONTEXT
---- $(basename "$f") ---
-$(head -20 "$f")"
-          done
-        fi
-
-        # Build email content for Ollama
-        EMAIL_CONTENT=""
-        TOTAL_SIZE=0
-        MAX_SIZE=80000
-
-        while IFS= read -r line; do
-          # Extract file path (last field)
-          MSG_PATH=$(echo "$line" | awk '{print $NF}')
-          if [ -f "$MSG_PATH" ]; then
-            # Try plain text first; fall back to HTML for HTML-only emails
-            MSG_BODY=$(mu view "$MSG_PATH" 2>/dev/null || echo "[could not read message]")
-            # Check if body is empty (headers-only = no content after blank line)
-            BODY_CONTENT=$(echo "$MSG_BODY" | awk 'BEGIN{found=0} /^$/{found=1; next} found{print}')
-            if [ -z "$BODY_CONTENT" ]; then
-              HTML_BODY=$(mu view "$MSG_PATH" --format=html 2>/dev/null || true)
-              if [ -n "$HTML_BODY" ]; then
-                MSG_BODY="$HTML_BODY"
+              if [ -z "$channel_id" ] || [ "$channel_id" = "null" ]; then
+                echo "ERROR: Failed to create DM channel" >&2
+                return 1
               fi
+
+              # Split content at ~1990 char newline boundaries and send chunks
+              local chunk=""
+              while IFS= read -r line; do
+                if [ $(( ''${#chunk} + ''${#line} + 1 )) -gt 1990 ]; then
+                  curl -sf --max-time 30 \
+                    -X POST \
+                    -H "Authorization: Bot $DISCORD_TOKEN" \
+                    -H "Content-Type: application/json" \
+                    -d "$(jq -n --arg c "$chunk" '{content: $c}')" \
+                    "https://discord.com/api/v10/channels/$channel_id/messages" > /dev/null
+                  chunk=""
+                fi
+                if [ -n "$chunk" ]; then
+                  chunk="$chunk"$'\n'"$line"
+                else
+                  chunk="$line"
+                fi
+              done <<< "$content"
+
+              # Send remaining chunk
+              if [ -n "$chunk" ]; then
+                curl -sf --max-time 30 \
+                  -X POST \
+                  -H "Authorization: Bot $DISCORD_TOKEN" \
+                  -H "Content-Type: application/json" \
+                  -d "$(jq -n --arg c "$chunk" '{content: $c}')" \
+                  "https://discord.com/api/v10/channels/$channel_id/messages" > /dev/null
+              fi
+            }
+
+            # If no new messages, send brief notification
+            if [ -z "$MESSAGES" ]; then
+              LAST_RUN_PRETTY=$(date -d "@$LAST_RUN" '+%b %d %H:%M')
+              send_discord_dm "No new mail since $LAST_RUN_PRETTY"
+              echo "$NOW" > "$LAST_RUN_FILE"
+              exit 0
             fi
-            ENTRY="---
-    $line
 
-    $MSG_BODY
-    "
-            ENTRY_SIZE=''${#ENTRY}
-            if [ $((TOTAL_SIZE + ENTRY_SIZE)) -gt $MAX_SIZE ]; then
-              EMAIL_CONTENT="$EMAIL_CONTENT
-    ---
-    [Remaining messages truncated due to size limits]"
-              break
+            # Pre-fetch org notes for sender context (replaces Claude's Read tool)
+            ORG_CONTEXT=""
+            if [ -d "$ORG_NOTES_DIR" ]; then
+              for f in "$ORG_NOTES_DIR"/*.org; do
+                [ -f "$f" ] && ORG_CONTEXT="$ORG_CONTEXT
+    --- $(basename "$f") ---
+    $(head -20 "$f")"
+              done
             fi
-            EMAIL_CONTENT="$EMAIL_CONTENT$ENTRY"
-            TOTAL_SIZE=$((TOTAL_SIZE + ENTRY_SIZE))
-          fi
-        done <<< "$MESSAGES"
 
-        # Build user prompt
-        CURRENT_DATE=$(date '+%A, %B %d, %Y')
-        USER_PROMPT="Current date: $CURRENT_DATE
+            # Build email content for Ollama
+            EMAIL_CONTENT=""
+            TOTAL_SIZE=0
+            MAX_SIZE=80000
 
-    Here are the new emails since $(date -d "@$LAST_RUN" '+%b %d %H:%M'):
+            while IFS= read -r line; do
+              # Extract file path (last field)
+              MSG_PATH=$(echo "$line" | awk '{print $NF}')
+              if [ -f "$MSG_PATH" ]; then
+                # Try plain text first; fall back to HTML for HTML-only emails
+                MSG_BODY=$(mu view "$MSG_PATH" 2>/dev/null || echo "[could not read message]")
+                # Check if body is empty (headers-only = no content after blank line)
+                BODY_CONTENT=$(echo "$MSG_BODY" | awk 'BEGIN{found=0} /^$/{found=1; next} found{print}')
+                if [ -z "$BODY_CONTENT" ]; then
+                  HTML_BODY=$(mu view "$MSG_PATH" --format=html 2>/dev/null || true)
+                  if [ -n "$HTML_BODY" ]; then
+                    MSG_BODY="$HTML_BODY"
+                  fi
+                fi
+                ENTRY="---
+        $line
 
-    $EMAIL_CONTENT"
+        $MSG_BODY
+        "
+                ENTRY_SIZE=''${#ENTRY}
+                if [ $((TOTAL_SIZE + ENTRY_SIZE)) -gt $MAX_SIZE ]; then
+                  EMAIL_CONTENT="$EMAIL_CONTENT
+        ---
+        [Remaining messages truncated due to size limits]"
+                  break
+                fi
+                EMAIL_CONTENT="$EMAIL_CONTENT$ENTRY"
+                TOTAL_SIZE=$((TOTAL_SIZE + ENTRY_SIZE))
+              fi
+            done <<< "$MESSAGES"
 
-        # Invoke Ollama for summary (OLLAMA_HOST and OLLAMA_MODEL set via systemd environment).
-        #
-        # Model tiers (cloud, via historian's ollama):
-        #   gemma4:31b-cloud   — haiku-tier, routine work (this digest)
-        #   kimi-k2.7-code:cloud — sonnet/opus-tier, higher-stakes agents
-        # Local gemma4:12b was retired from this task: on an ~80KB payload it
-        # could not finish a 2048-token generation within the iGPU's throughput
-        # budget, so the call hung until the client/server timed out and
-        # SUMMARY came back empty — silently triggering the subject-line
-        # fallback below. Cloud models finish the same payload in 3-9s.
-        #
-        # `think: false` is REQUIRED: thinking-capable models (gemma4, qwen3.5,
-        # kimi-k2) otherwise spend the entire num_predict budget on thinking
-        # tokens and return an empty message.content -> subject-line fallback.
-        OLLAMA_HOST="''${OLLAMA_HOST:-http://historian.nebula:11434}"
-        OLLAMA_MODEL="''${OLLAMA_MODEL:-gemma4:31b-cloud}"
-        ENHANCED_SYSTEM="$(cat ${systemPrompt})"
-        [ -n "$ORG_CONTEXT" ] && ENHANCED_SYSTEM="$ENHANCED_SYSTEM"$'\n\n## Sender context\n'"$ORG_CONTEXT"
+            # Build user prompt
+            CURRENT_DATE=$(date '+%A, %B %d, %Y')
+            USER_PROMPT="Current date: $CURRENT_DATE
 
-        SUMMARY=""
-        # Capture HTTP status + body so failures are diagnosable instead of
-        # silently swallowed into the subject-line fallback.
-        HTTP_CODE=$(curl -s -o /tmp/email-digest-resp.json -w '%{http_code}' \
-          -X POST "$OLLAMA_HOST/api/chat" \
-          -H "Content-Type: application/json" \
-          -d "$(jq -n \
-              --arg model "$OLLAMA_MODEL" \
-              --arg system "$ENHANCED_SYSTEM" \
-              --arg user "$USER_PROMPT" \
-              '{model: $model, stream: false, think: false,
-                options: {temperature: 0.3, num_predict: 2048, num_ctx: 262144},
-                keep_alive: "30m",
-                messages: [{role: "system", content: $system}, {role: "user", content: $user}]}')" \
-          --max-time 180)
-        if [ "$HTTP_CODE" = "200" ]; then
-          SUMMARY=$(jq -r '.message.content // ""' /tmp/email-digest-resp.json 2>/dev/null)
-        else
-          echo "WARNING: Ollama $OLLAMA_MODEL returned HTTP $HTTP_CODE; body:" >&2
-          head -c 800 /tmp/email-digest-resp.json >&2 2>/dev/null || true
-          echo >&2
-        fi
+        Here are the new emails since $(date -d "@$LAST_RUN" '+%b %d %H:%M'):
 
-        # Fallback: raw subject lines if Ollama fails or returns empty content
-        if [ -z "$SUMMARY" ]; then
-          echo "WARNING: empty summary from $OLLAMA_MODEL, falling back to raw subjects" >&2
-          SUBJECT_LINES=$(mu find "date:$SINCE_DATE.." --fields='d f s' --sortfield=date 2>/dev/null || true)
-          SUMMARY="**Email Digest** ($OLLAMA_MODEL unavailable, raw subjects):
-    \`\`\`
-    $SUBJECT_LINES
-    \`\`\`"
-        fi
+        $EMAIL_CONTENT"
 
-        # Send to Discord
-        send_discord_dm "$SUMMARY"
+            # Invoke Ollama for summary (OLLAMA_HOST and OLLAMA_MODEL set via systemd environment).
+            #
+            # Model tiers (cloud, via historian's ollama):
+            #   gemma4:31b-cloud   — haiku-tier, routine work (this digest)
+            #   kimi-k2.7-code:cloud — sonnet/opus-tier, higher-stakes agents
+            # Local gemma4:12b was retired from this task: on an ~80KB payload it
+            # could not finish a 2048-token generation within the iGPU's throughput
+            # budget, so the call hung until the client/server timed out and
+            # SUMMARY came back empty — silently triggering the subject-line
+            # fallback below. Cloud models finish the same payload in 3-9s.
+            #
+            # `think: false` is REQUIRED: thinking-capable models (gemma4, qwen3.5,
+            # kimi-k2) otherwise spend the entire num_predict budget on thinking
+            # tokens and return an empty message.content -> subject-line fallback.
+            OLLAMA_HOST="''${OLLAMA_HOST:-http://historian.nebula:11434}"
+            OLLAMA_MODEL="''${OLLAMA_MODEL:-gemma4:31b-cloud}"
+            ENHANCED_SYSTEM="$(cat ${systemPrompt})"
+            [ -n "$ORG_CONTEXT" ] && ENHANCED_SYSTEM="$ENHANCED_SYSTEM"$'\n\n## Sender context\n'"$ORG_CONTEXT"
 
-        # Write last-run timestamp
-        echo "$NOW" > "$LAST_RUN_FILE"
+            SUMMARY=""
+            # Capture HTTP status + body so failures are diagnosable instead of
+            # silently swallowed into the subject-line fallback.
+            HTTP_CODE=$(curl -s -o /tmp/email-digest-resp.json -w '%{http_code}' \
+              -X POST "$OLLAMA_HOST/api/chat" \
+              -H "Content-Type: application/json" \
+              -d "$(jq -n \
+                  --arg model "$OLLAMA_MODEL" \
+                  --arg system "$ENHANCED_SYSTEM" \
+                  --arg user "$USER_PROMPT" \
+                  '{model: $model, stream: false, think: false,
+                    options: {temperature: 0.3, num_predict: 2048, num_ctx: 262144},
+                    keep_alive: "30m",
+                    messages: [{role: "system", content: $system}, {role: "user", content: $user}]}')" \
+              --max-time 180)
+            if [ "$HTTP_CODE" = "200" ]; then
+              SUMMARY=$(jq -r '.message.content // ""' /tmp/email-digest-resp.json 2>/dev/null)
+            else
+              echo "WARNING: Ollama $OLLAMA_MODEL returned HTTP $HTTP_CODE; body:" >&2
+              head -c 800 /tmp/email-digest-resp.json >&2 2>/dev/null || true
+              echo >&2
+            fi
+
+            # Fallback: raw subject lines if Ollama fails or returns empty content
+            if [ -z "$SUMMARY" ]; then
+              echo "WARNING: empty summary from $OLLAMA_MODEL, falling back to raw subjects" >&2
+              SUBJECT_LINES=$(mu find "date:$SINCE_DATE.." --fields='d f s' --sortfield=date 2>/dev/null || true)
+              SUMMARY="**Email Digest** ($OLLAMA_MODEL unavailable, raw subjects):
+        \`\`\`
+        $SUBJECT_LINES
+        \`\`\`"
+            fi
+
+            # Send to Discord
+            send_discord_dm "$SUMMARY"
+
+            # Write last-run timestamp
+            echo "$NOW" > "$LAST_RUN_FILE"
   '';
 in {
   # User and group

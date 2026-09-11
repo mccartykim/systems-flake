@@ -14,9 +14,11 @@
 # `sms-history` system user + a sudoers rule to busctl AS kimb would drop the
 # "runs as kimb" privilege. Today the reader runs as kimb but can do nothing
 # but this one read (no pty, no forwarding, fixed command).
-{ pkgs, lib, ... }:
-
-let
+{
+  pkgs,
+  lib,
+  ...
+}: let
   # The fleet-internal pubkey (rich-evans vox-organism daemon -> this host).
   # The SAME key navigator-summon and the historian scribe use; the private
   # half is agenix on rich-evans (bridge-fleet-ssh-key.age, owned by

@@ -104,11 +104,11 @@ stdenv.mkDerivation (finalAttrs: {
     gettext
     autoconf-archive
     help2man
-    gnat14  # Ada compiler — coreboot's libgfxinit
-    innoextract  # Dell BIOS update is an Inno Setup archive
+    gnat14 # Ada compiler — coreboot's libgfxinit
+    innoextract # Dell BIOS update is an Inno Setup archive
     p7zip
     unzip
-    ccache  # lbmk's cook_coreboot_config appends CONFIG_CCACHE=y
+    ccache # lbmk's cook_coreboot_config appends CONFIG_CCACHE=y
   ];
 
   buildInputs = [zlib openssl];

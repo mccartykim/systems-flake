@@ -165,7 +165,12 @@ in {
         virtualHosts.knit = {
           # Host networking: bind on the host's stack so maitred's socat
           # forwarder (→ historian Nebula IP) reaches nginx directly.
-          listen = [{addr = "0.0.0.0"; port = knitWeb.port;}];
+          listen = [
+            {
+              addr = "0.0.0.0";
+              port = knitWeb.port;
+            }
+          ];
           root = "/var/lib/knitwork/web";
           # SPA fallback: deep links / client routes load the app shell.
           locations."/".tryFiles = "$uri /index.html";

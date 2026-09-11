@@ -182,7 +182,7 @@
         cudaSupport = false;
         openvino = prev.openvino.override {
           cudaSupport = false;
-          opencv = prev.opencv4.override { enableCuda = false; };
+          opencv = prev.opencv4.override {enableCuda = false;};
         };
         python3Packages = final.python313.pkgs;
       };

@@ -59,8 +59,7 @@
   config,
   lib,
   ...
-}:
-let
+}: let
   cfg = config.kimb.xenDomuNetwork;
 
   bridgeIP = lib.head (lib.splitString "/" cfg.bridgeAddressV4);
@@ -81,19 +80,17 @@ let
   # forward chain accepts DNAT'ed flows via `ct status dnat accept` with no
   # extra filter rules.
   dnatRules = lib.concatStringsSep "\n" (
-    map (fwd:
-      let
+    map (
+      fwd: let
         ifaceMatch =
-          if fwd.interfaces == [ ]
+          if fwd.interfaces == []
           then "iifname != \"${cfg.bridgeName}\" "
           else "iifname { ${lib.concatStringsSep ", " (map (i: ''"${i}"'') fwd.interfaces)} } ";
-      in
-      "${ifaceMatch}${fwd.proto} dport ${toString fwd.port} dnat to ${fwd.destination}"
+      in "${ifaceMatch}${fwd.proto} dport ${toString fwd.port} dnat to ${fwd.destination}"
     )
     cfg.portForwards
   );
-in
-{
+in {
   options.kimb.xenDomuNetwork = {
     enable = lib.mkEnableOption "NAT bridge networking for Xen domU vif-* interfaces";
 
@@ -133,12 +130,12 @@ in
           };
           interfaces = lib.mkOption {
             type = lib.types.listOf lib.types.str;
-            default = [ ];
+            default = [];
             description = "Ingress interfaces to forward from. Empty = all external ingress (nebula1, LAN/WAN uplinks) except the guest bridge.";
           };
         };
       });
-      default = [ ];
+      default = [];
       description = "Port forwards from dom0 ingress into a domU. Add one per domU service as migrations land.";
     };
 
@@ -148,7 +145,7 @@ in
     # own tables but still traverse this chain.
     extraTrustedForwardInterfaces = lib.mkOption {
       type = lib.types.listOf lib.types.str;
-      default = [ "virbr*" "podman*" ];
+      default = ["virbr*" "podman*"];
       description = "Additional ingress interfaces allowed to forward (glob suffixes allowed).";
     };
   };
@@ -191,7 +188,7 @@ in
 
       networks."40-${cfg.bridgeName}" = {
         matchConfig.Name = cfg.bridgeName;
-        address = [ cfg.bridgeAddressV4 ];
+        address = [cfg.bridgeAddressV4];
         networkConfig = {
           # A bridge with zero enslaved ports still reports no-carrier;
           # configure it anyway so the address (and dnsmasq) are ready
@@ -226,7 +223,7 @@ in
 
       # dom0 ↔ domU traffic is INPUT on the bridge — trusted like maitred
       # trusts ve-+.
-      trustedInterfaces = [ cfg.bridgeName ];
+      trustedInterfaces = [cfg.bridgeName];
 
       extraForwardRules = ''
         # domU egress (NAT) + domU↔domU (bridge-internal, if ever filtered)
@@ -266,13 +263,13 @@ in
       # dom0 keeps NM's resolv.conf; dnsmasq serves ONLY the guests.
       resolveLocalQueries = false;
       settings = {
-        interface = [ cfg.bridgeName ];
+        interface = [cfg.bridgeName];
         # xenbr0 may come up after dnsmasq starts (networkd creates it);
         # bind-dynamic re-binds as interfaces appear/disappear instead of
         # failing at startup. Also keeps us from wild-binding :53 and
         # colliding with libvirt's per-bridge dnsmasq if that ever runs.
         bind-dynamic = true;
-        dhcp-range = [ cfg.dhcpRange ];
+        dhcp-range = [cfg.dhcpRange];
         domain-needed = true;
         # Upstream DNS = dom0's /etc/resolv.conf (default): follows
         # maitred's unbound today and historian's own DNS after a3j.8
