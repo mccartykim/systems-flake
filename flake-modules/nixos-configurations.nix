@@ -62,17 +62,24 @@ in {
         # on rich-evans (user-deferred mothball-or-fix decision, tracked in
         # a3j.7.1).
         org-crm.nixosModules.default
+        # Navigator Orlena — the cross-host read-only strategic planner (#49),
+        # moved off total-eclipse at a3j.9.3 so that host can sleep.
+        # Self-contained module (provides its own package) + the config-only
+        # host file.
+        bridge-crew.nixosModules."navigator-organism"
+        (self + "/hosts/historian/navigator-organism.nix")
       ];
     };
     total-eclipse = mkDesktop {
       hostname = "total-eclipse";
-      # Navigator Orlena — the cross-host read-only strategic planner (#49).
-      # Self-contained module (provides its own package, mirroring the other
-      # officers) + the config-only host file. No extraSpecialArgs needed.
-      extraModules = [
-        bridge-crew.nixosModules."navigator-organism"
-        (self + "/hosts/total-eclipse/navigator-organism.nix")
-      ];
+      # Navigator Orlena was hosted here; moved to historian at a3j.9.3 (it is
+      # the only always-on duty that was a bridge-crew module rather than a
+      # host service). Rollback = restore these two extraModules entries.
+      # extraModules = [
+      #   bridge-crew.nixosModules."navigator-organism"
+      #   (self + "/hosts/total-eclipse/navigator-organism.nix")
+      # ];
+      extraModules = [];
     };
 
     marshmallow = mkDesktop {
