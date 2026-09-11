@@ -92,9 +92,6 @@
     # === a3j.9.2: paperless-ngx (from total-eclipse) — scanned mail from maitred ===
     ./paperless.nix
 
-    # === a3j.9.6: WoL helper for total-eclipse (wake the gaming PC on demand) ===
-    ./wake-total-eclipse.nix
-
     # Buildbot worker — DISABLED 2026-06-22 (gave up on buildbot-nix
     # fighting private-repo flake inputs; may revisit a different CI
     # scheme later). Re-enable by uncommenting this import; the module
