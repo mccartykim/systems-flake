@@ -95,6 +95,14 @@
     # === a3j.9.4: headless KDE Connect + sms-history reader (from total-eclipse) ===
     ./kdeconnect-sms.nix
 
+    # === a3j.8.2: the public edge (from maitred) — Caddy + authelia + blog +
+    # DDNS. Gated on historian's OWN registry bucket, so maitred's edge is
+    # untouched until the flip. ===
+    ./reverse-proxy.nix
+    ./authelia.nix
+    ./blog-service.nix
+    ./dns-update.nix
+
     # Buildbot worker — DISABLED 2026-06-22 (gave up on buildbot-nix
     # fighting private-repo flake inputs; may revisit a different CI
     # scheme later). Re-enable by uncommenting this import; the module

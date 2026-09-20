@@ -138,6 +138,38 @@
         publicAccess = true;
         websockets = false;
       };
+      # === a3j.8.2: the public edge (from maitred). These activate historian's
+      # reverse-proxy.nix / authelia.nix / blog-service.nix / dns-update.nix.
+      # MAITRED'S BUCKET IS UNTOUCHED during (a): maitred keeps owning the
+      # public edge + its DNS/proxy/DNAT until the (b) flip. ===
+      authelia = {
+        enable = true;
+        port = 9091;
+        subdomain = "auth";
+        host = "historian";
+        auth = "none";
+        publicAccess = true;
+        websockets = false;
+      };
+      reverse-proxy = {
+        enable = true;
+        port = 80;
+        subdomain = "www";
+        host = "historian";
+        auth = "none";
+        publicAccess = true;
+        websockets = false;
+      };
+      blog = {
+        enable = true;
+        port = 8080;
+        subdomain = "blog";
+        host = "historian";
+        containerIP = "192.168.102.3";
+        auth = "none";
+        publicAccess = true;
+        websockets = false;
+      };
     };
 
     # Maitred services (router + reverse proxy)
