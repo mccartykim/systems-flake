@@ -108,7 +108,7 @@ in {
     # resident; that path is retired now that every role uses cloud.)
     ollamaWarmup = {
       enable = false;
-      model = "kimi-k2.7-code:cloud";
+      model = "deepseek-v4.1-flash:cloud";
       interval = "25min";
       keepAlive = "30m";
     };
@@ -124,7 +124,7 @@ in {
   };
 
   # Cloud model tiers (via historian's ollama, which proxies to ollama cloud):
-  #   main agent brain  -> kimi-k2.7-code:cloud   (sonnet/opus tier)
+  #   main agent brain  -> deepseek-v4.1-flash:cloud  (a3j.9-model: was kimi-k2.7-code:cloud)
   #   judgment + vision -> gemma4:31b-cloud        (haiku tier; vision-capable)
   # Local gemma4:12b was retired from these roles: the AMD iGPU could not
   # finish a multi-turn agent generation inside the 15-min systemd cycle,
@@ -138,7 +138,7 @@ in {
   systemd.services = lib.mkMerge [
     (lib.genAttrs lifecoach-services (_: {
       environment = {
-        OLLAMA_MODEL = lib.mkForce "kimi-k2.7-code:cloud";
+        OLLAMA_MODEL = lib.mkForce "deepseek-v4.1-flash:cloud";
         LIFECOACH_JUDGMENT_MODEL = lib.mkForce "gemma4:31b-cloud";
         LIFECOACH_VISION_MODEL = lib.mkForce "gemma4:31b-cloud";
       };

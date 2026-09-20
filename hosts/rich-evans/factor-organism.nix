@@ -33,6 +33,8 @@
 {...}: {
   services.factor-organism = {
     enable = true;
+    # a3j.9-model: deepseek-v4.1-flash:cloud (was kimi-k2.7-code:cloud).
+    ollamaModel = "deepseek-v4.1-flash:cloud";
     # Proactive heartbeat OFF at first deploy; the reactive #factor cycle
     # (via the daemon) runs now. Flip to true (default) after the user's
     # first #factor round-trip validates the persona.

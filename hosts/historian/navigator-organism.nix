@@ -24,7 +24,7 @@
     enable = true;
     stateDir = "/var/lib/navigator-organism";
     ollamaHost = "http://historian.nebula:11434";
-    ollamaModel = "kimi-k2.7-code:cloud";
+    ollamaModel = "deepseek-v4.1-flash:cloud";
     heartbeatInterval = "4h";
   };
 }

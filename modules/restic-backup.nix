@@ -85,6 +85,22 @@ in {
       environmentFile = config.age.secrets.restic-b2-env.path;
       inherit (cfg) extraExclude;
 
+      # The shared B2 repo is also written by other hosts (total-eclipse,
+      # rich-evans) whose daily timers overlap (±2h randomized delay). A
+      # concurrent backup holds a SHARED lock; the `forget --prune` step needs
+      # an EXCLUSIVE lock and failed with 'repo already locked by PID ... on
+      # <other host>' (restic-backups-home.service exit 11, 2026-09-20). The
+      # backup itself succeeded — only retention broke. --retry-lock makes the
+      # prune WAIT the other host's backup out instead of failing. Setting
+      # pruneOpts REPLACES the module default, so the keep-policy is repeated.
+      pruneOpts = [
+        "--keep-daily 7"
+        "--keep-weekly 4"
+        "--keep-monthly 6"
+        "--keep-yearly 2"
+        "--retry-lock 30m"
+      ];
+
       paths =
         [
           "/home/kimb"

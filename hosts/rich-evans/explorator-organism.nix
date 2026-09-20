@@ -40,7 +40,7 @@
     enable = true;
     stateDir = "/var/lib/explorator-organism";
     ollamaHost = "http://historian.nebula:11434";
-    ollamaModel = "kimi-k2.7-code:cloud";
+    ollamaModel = "deepseek-v4.1-flash:cloud";
     # Weekly health-audit Monday 03:30 local (the module default; restated
     # here for clarity). Persistent=true catches a missed audit.
     auditCalendar = "Mon *-*-* 03:30:00";

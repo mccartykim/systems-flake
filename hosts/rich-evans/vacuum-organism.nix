@@ -37,6 +37,14 @@
     discordAllowedUsers = "366455267673636866,100735298694021120";
   };
 
+  # a3j.9-model: the module's cycleEnv hardcodes OLLAMA_MODEL=kimi; force
+  # deepseek on every vacuum service (heartbeat/scheduler run the LLM cycles;
+  # watchdog/bot get it too for consistency).
+  systemd.services = lib.genAttrs ["vacuum-heartbeat" "vacuum-scheduler" "vacuum-watchdog" "vacuum-discord-bot"] (_: {
+    environment.OLLAMA_MODEL = lib.mkForce "deepseek-v4.1-flash:cloud";
+    environment.ORG_AGENT_LLM_MODEL = lib.mkForce "deepseek-v4.1-flash:cloud";
+  });
+
   # Discord bot token for the vacuum-organism sidecar. Separate Discord
   # application from life-coach / org-crm; encrypted to rich-evans only.
   age.secrets.discord-vacuum-bot-token = {

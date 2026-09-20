@@ -49,7 +49,11 @@
 # own state; disable leaves no side effects (the Nest hub keeps doing
 # whatever it was doing — find+start never auto-stops anything).
 {...}: {
-  services.choirmaster-organism.enable = true;
+  services.choirmaster-organism = {
+    enable = true;
+    # a3j.9-model: deepseek-v4.1-flash:cloud (was kimi-k2.7-code:cloud).
+    ollamaModel = "deepseek-v4.1-flash:cloud";
+  };
 
   # MPD httpd — MOVED to historian at a3j.5 (hosts/historian/mpd.nix):
   # the stream the Choirmaster casts now serves from historian's LAN IP

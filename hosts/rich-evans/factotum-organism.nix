@@ -32,7 +32,7 @@
     enable = true;
     stateDir = "/var/lib/factotum-organism";
     ollamaHost = "http://historian.nebula:11434";
-    ollamaModel = "kimi-k2.7-code:cloud";
+    ollamaModel = "deepseek-v4.1-flash:cloud";
     # Daily ledger recount (the module default; restated here for clarity).
     heartbeatInterval = "24h";
   };

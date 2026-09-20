@@ -35,7 +35,7 @@
     enable = true;
     stateDir = "/var/lib/confessor-organism";
     ollamaHost = "http://historian.nebula:11434";
-    ollamaModel = "kimi-k2.7-code:cloud";
+    ollamaModel = "deepseek-v4.1-flash:cloud";
     # Nightly examen at 22:00 local (the module default; restated here
     # for clarity). Persistent=true catches a missed bell.
     examenCalendar = "*-*-* 22:00:00";

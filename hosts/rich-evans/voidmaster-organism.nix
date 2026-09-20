@@ -21,7 +21,7 @@
     stateDir = "/var/lib/voidmaster-organism";
     systemsFlakeDir = "/home/kimb/shared_projects/systems-flake";
     ollamaHost = "http://historian.nebula:11434";
-    ollamaModel = "kimi-k2.7-code:cloud";
+    ollamaModel = "deepseek-v4.1-flash:cloud";
     # Phase 1 uses the vox-bridge; leave the Phase-2 Discord sidecar off.
     discordBotTokenFile = null;
   };

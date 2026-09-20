@@ -226,6 +226,10 @@ in {
   };
   users.users.vox-organism.extraGroups = ["life-coach"];
   systemd.services.vox-organism.environment = {
+    # a3j.9-model: the reactive officers (interrogator/remembrancer/savant +
+    # any daemon-dispatched cycle) inherit the daemon's OLLAMA_*/ORG_AGENT_LLM_*.
+    OLLAMA_MODEL = "deepseek-v4.1-flash:cloud";
+    ORG_AGENT_LLM_MODEL = "deepseek-v4.1-flash:cloud";
     # medicae-infer error-log dir (officer-specific, so the daemon's
     # OFFICER_STATE=VOX_STATE override doesn't collide).
     CHIRURGEON_STATE = "/var/lib/chirurgeon-organism";

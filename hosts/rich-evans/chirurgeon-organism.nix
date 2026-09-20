@@ -40,7 +40,7 @@ in {
     # the shell itself. Ollama cloud only — never a local model (esp. while
     # the Lord-Captain games).
     ollamaHost = "http://historian.nebula:11434";
-    ollamaModel = "kimi-k2.7-code:cloud";
+    ollamaModel = "deepseek-v4.1-flash:cloud";
 
     # Calendar cadence (phase 2): re-evaluate the day's appointments every
     # 15m. Tighten when the regimen duties move in phases 3-4.
