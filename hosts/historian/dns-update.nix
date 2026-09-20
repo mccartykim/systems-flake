@@ -8,6 +8,7 @@
 {
   config,
   lib,
+  pkgs,
   inputs,
   ...
 }: let
@@ -29,4 +30,14 @@ in {
     apiTokenFile = config.age.secrets.cloudflare-api-token.path;
     inherit (cfg.dns) ttl updatePeriod;
   };
+
+  # The cloudflare-ddns module's activation writes /etc/inadyn/inadyn.conf as
+  # root:root 0600 (mkdir+cat+chmod, no chown), but the nixpkgs inadyn unit runs
+  # as User=inadyn -> it can't read its own config ('Cannot read configuration
+  # file', exit 74). maitred dodges this via a pre-existing inadyn-owned file;
+  # here the chown runs on each start (the '+' prefix = as root).
+  systemd.services.inadyn.serviceConfig.ExecStartPre =
+    lib.mkIf cfg.services.reverse-proxy.enable [
+      "+${pkgs.coreutils}/bin/chown inadyn:inadyn /etc/inadyn/inadyn.conf"
+    ];
 }
