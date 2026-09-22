@@ -249,9 +249,20 @@ in {
     # discover /etc/voxtype/config.toml keeps system truth authoritative: the
     # lookup chain is user config -> system config, so a stray
     # ~/.config/voxtype/config.toml would otherwise silently shadow this file.
-    # The model is referenced by store path from inside this file, so it stays
-    # in the system closure and is not garbage collected.
+    #
+    # The model path inside that file is a plain /nix/store path, which is
+    # GC-able. environment.etc alone does NOT keep it alive — /etc is built by
+    # the activation script at switch time and is not a GC root — so the model
+    # could be collected and the daemon would then fail on a missing model.
+    # Referencing it from a systemPackage makes the profile hold the reference,
+    # which pins the whole chain (voxtype -> model) as a GC root.
     environment.etc."voxtype/config.toml".source = configFile;
+
+    # Installs the CLI as well as the daemon: `voxtype status`,
+    # `voxtype record start/stop` (for external triggers such as an extra mouse
+    # button) and `voxtype info devices` are all needed interactively. Also the
+    # GC root for the model path referenced by the generated config.
+    environment.systemPackages = [cfg.package];
 
     # /dev/uinput access for the text injectors (dotool creates a transient
     # virtual keyboard; ydotool writes to /dev/uinput). Without this the
@@ -280,6 +291,29 @@ in {
       wantedBy = lib.optionals cfg.autoStart [cfg.startTarget];
       serviceConfig = {
         Type = "simple";
+        # Clear a stale pidlock before starting. voxtype refuses to start if
+        # $XDG_RUNTIME_DIR/voxtype/voxtype.lock names a live pid, and it does not
+        # clean that file up after an unclean exit (SIGKILL, OOM, crash) — which
+        # leaves the unit crash-looping forever on "another voxtype instance is
+        # already running". The check is deliberately guarded on the pid being
+        # dead: a genuinely running instance still blocks startup, so this can
+        # only ever remove a stale lock.
+        ExecStartPre = pkgs.writeShellScript "voxtype-clear-stale-lock" ''
+          set -eu
+          lock="''${XDG_RUNTIME_DIR:-/tmp}/voxtype/voxtype.lock"
+          [ -e "$lock" ] || exit 0
+          pid=$(cat "$lock" 2>/dev/null || true)
+          # A *live* pid means a genuine instance: leave it alone. Anything else
+          # — empty, garbage, or a dead pid — is a stale lock and gets removed.
+          # (kill -0 on a non-numeric pid just fails, so garbage is treated as
+          # stale, which is what we want.)
+          if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+            echo "voxtype: live instance (pid $pid) holds $lock; leaving it alone" >&2
+            exit 0
+          fi
+          echo "voxtype: removing stale lock $lock (pid ''${pid:-unknown} not live)" >&2
+          rm -f "$lock"
+        '';
         # Pin the config so the system file wins over any user config.
         ExecStart = "${cfg.package}/bin/voxtype -c /etc/voxtype/config.toml daemon";
         Restart = "on-failure";
