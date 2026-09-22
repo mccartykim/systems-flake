@@ -78,6 +78,15 @@ in {
     home.packages = with pkgs;
       [
         claude-code
+        # Runtime deps for `ollama launch <tool>`. ollama ships an
+        # `ollama launch` integrations command that shells out to npm: it
+        # errors out unless `npm` is on PATH, and if the tool it wants is
+        # missing it performs an imperative global npm install. Putting the
+        # packaged nodejs, claude-code and pi-coding-agent on PATH means `npm`,
+        # `node`, `claude` and `pi` are all found, so the integrations use the
+        # store versions instead of installing anything at runtime.
+        nodejs
+        pi-coding-agent
       ]
       ++ lib.optional cfg.claudeZai claude-zai
       ++ lib.optional cfg.ollamaPi ollama-pi
