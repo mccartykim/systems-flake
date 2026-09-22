@@ -14,10 +14,6 @@
     ../profiles/laptop.nix
     ../../modules/nebula-node.nix
     ../../modules/peripherals.nix
-    # Push-to-talk dictation. startx-only, so the daemon is started below via
-    # kimb.voxtype.startTarget = "default.target" + linger rather than
-    # graphical-session.target (which never activates on this host).
-    ../../modules/voxtype.nix
     # Stylix derives a base16 colorscheme from the PDX-carpet wallpaper
     # and applies it across the desktop (gtk, qt, terminals, vim, etc.).
     inputs.stylix.nixosModules.stylix
@@ -335,25 +331,6 @@
       exec startx
     end
   '';
-
-  # Push-to-talk dictation, triggered by ScrollLock.
-  #
-  # creme uses bare startx, so graphical-session.target never activates (same
-  # reason picom is launched from xinitrc above). The daemon is therefore
-  # started from default.target with lingering enabled, which keeps kimb's user
-  # manager alive from boot — no login session or display manager required.
-  #
-  # Caveat that comes with default.target: the unit is up before X exists. The
-  # evdev hotkey listener and audio capture work headless, and voxtype re-reads
-  # the focused window per transcription, so this is fine in practice — but if
-  # a transcription is attempted before an X client has focus, the injected
-  # keystrokes have nowhere to land.
-  kimb.voxtype = {
-    enable = true;
-    key = "SCROLLLOCK";
-    startTarget = "default.target";
-    linger = true;
-  };
 
   # Default i3 config — emacsclient auto-spawns on workspace 1, plain
   # uxterm via $mod+Return (tmux started manually inside), vim-style
