@@ -44,6 +44,9 @@
 
     # Switch emulator (Eden master, x86-64-v3 generic profile)
     ./emulation.nix
+
+    # Push-to-talk speech-to-text (evdev hotkey via the RealForce かな key).
+    ../../modules/voxtype.nix
   ];
 
   kimb = {
@@ -80,6 +83,19 @@
         }
       ];
     };
+  };
+
+  # Push-to-talk dictation. Trigger is the JIS かな key (two positions right of
+  # the spacebar, before RightAlt). voxtype's own key whitelist has no name for
+  # it, so it goes in as the kernel keycode: KEY_KATAKANAHIRAGANA == 93.
+  # NOTE: modules/peripherals.nix must not bind katakanahiragana, or voxtype's
+  # evdev listener will never see the press.
+  kimb.voxtype = {
+    enable = true;
+    key = "EVTEST_93";
+    # NVIDIA GPU here, so whisper.cpp flash attention is real rather than inert.
+    package = pkgs.voxtype-vulkan;
+    flashAttention = true;
   };
 
   # Disable sleep/suspend (keeps waking immediately anyway)

@@ -5,6 +5,18 @@
   pkgs,
   ...
 }: {
+  imports = [
+    # Push-to-talk dictation, ScrollLock-triggered, on every laptop. Hosts that
+    # never activate graphical-session.target (creme's bare startx) override
+    # startTarget downstream — see hosts/creme/configuration.nix.
+    ../../modules/voxtype.nix
+  ];
+
+  kimb.voxtype = {
+    enable = true;
+    key = "SCROLLLOCK";
+  };
+
   # Services configuration
   services = {
     # Power management
