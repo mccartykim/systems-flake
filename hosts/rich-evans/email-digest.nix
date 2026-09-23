@@ -194,18 +194,17 @@
       timeout 8m mbsync -c "$MBSYNCRC" "$account" 2>&1 || echo "WARNING: $account sync failed (or timed out)" >&2
     done
 
-    # Widen the freshly-synced Maildir to group-readable so the Interrogator
-    # officer (#53) can read these messages. mbsync writes each message
-    # file at 0600 (owner-only) by default; mu find gates every query
+    # Widen the freshly-synced Maildir to group-readable. mbsync writes each
+    # message file at 0600 (owner-only) by default; mu find gates every query
     # result on access(R_OK) of the underlying file, so a 0600 file is
     # silently filtered out for any group reader — the whole result set
     # came back empty before this (empirically: 0 vs 66397 for the owner).
-    # The vox-organism daemon (the Interrogator's cycle runner, uid 998)
-    # is in the email-digest group (roster.nix daemonExtraGroups); g+rX =
-    # group read on files + traverse on dirs (capital X: x on dirs, not
-    # the non-executable message files). Idempotent; runs every cycle so
-    # new mail from this sync is readable the moment it lands. Mirrors
-    # the .cache/mu index chmod below + the officer modules' g+r pattern.
+    # g+rX = group read on files + traverse on dirs (capital X: x on dirs,
+    # not the non-executable message files). Idempotent; runs every cycle so
+    # new mail from this sync is readable the moment it lands. Mirrors the
+    # .cache/mu index chmod below. (Originally added for the Interrogator
+    # officer, removed 2026-09-23 with the bridge crew; kept because any
+    # future group reader — e.g. the next lifecoach — depends on it.)
     chmod -R g+rX "$MAIL_DIR" 2>/dev/null || true
 
     # Index mail (only init if database doesn't exist)
@@ -237,18 +236,15 @@
     # bumps ctime and re-indexes just that message — fine.
     mu index --lazy-check 2>&1
 
-    # Widen the mu xapian dirs to group-traversable so the Interrogator
-    # officer (#53) can read this index read-only. The vox-organism daemon
-    # (the Interrogator's cycle runner, uid 998) is a member of this
-    # email-digest group (roster.nix daemonExtraGroups); mu init creates
-    # $HOME/.cache AND .cache/mu AND .cache/mu/xapian all at 0700
-    # (empirically verified with mu 1.14.2 — the db dir too, not just its
-    # parents), which blocks the group from traversing to the 0644 xapian
-    # db files inside .cache/mu/xapian. We are the owner, so chmod works.
-    # g+rX = group read + traverse (capital X: x on dirs, not the 0644 db
-    # files). Idempotent; runs every cycle, surviving any mu re-init.
-    # Mirrors the officer modules' "chmod g+r the seed for cross-officer
-    # daemon access" pattern.
+    # Widen the mu xapian dirs to group-traversable so a group reader can
+    # read this index read-only. mu init creates $HOME/.cache AND .cache/mu
+    # AND .cache/mu/xapian all at 0700 (empirically verified with mu 1.14.2
+    # — the db dir too, not just its parents), which blocks the group from
+    # traversing to the 0644 xapian db files inside .cache/mu/xapian. We are
+    # the owner, so chmod works. g+rX = group read + traverse (capital X: x
+    # on dirs, not the 0644 db files). Idempotent; runs every cycle,
+    # surviving any mu re-init. (Originally for the Interrogator officer,
+    # removed 2026-09-23 with the bridge crew; kept for future group readers.)
     chmod g+rX "$STATE_DIR/.cache" "$STATE_DIR/.cache/mu" "$STATE_DIR/.cache/mu/xapian" 2>/dev/null || true
   '';
 

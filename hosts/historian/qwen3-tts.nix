@@ -9,7 +9,8 @@
 #
 # Endpoint: POST http://historian.nebula:8091/v1/audio/speech
 # Consumers (4 organisms on rich-evans): vox TTS_SERVER, lifecoach-organism +
-# chirurgeon-organism ttsServer, vacuum-organism qwenTtsServer.
+# The Chirurgeon's ttsServer was removed 2026-09-23 with the bridge crew;
+# vacuum-organism's qwenTtsServer is below.
 {
   config,
   lib,

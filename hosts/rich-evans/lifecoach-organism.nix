@@ -152,12 +152,11 @@ in {
     # we keep true to preserve the emacs daemon). So we also need the
     # activation script below to stop it imperatively during switch.
     {org-life-coach.wantedBy = lib.mkForce [];}
-    # Phase-4 assign-only heartbeat (#162): lights overdue bound buttons
-    # amber, then stops — no speak/vision/judgment. The Chirurgeon is the
-    # sole nudger; this keeps the deterministic LED-assignment path (the
-    # only thing that creates PENDING buttons) alive. See the gate in
-    # lifecoach-mechanical handle_heartbeat + the phase-4 block below.
-    {lifecoach-heartbeat.environment.LIFECOACH_ASSIGN_ONLY = "1";}
+    # Phase-4 assign-only heartbeat (#162) — REVERTED 2026-09-23 with the
+    # bridge crew. It made the lifecoach heartbeat assign-only (lights overdue
+    # bound buttons amber + stops) because the Chirurgeon officer was the sole
+    # nudger. The Chirurgeon is gone, so the lifecoach nudges for itself again
+    # (the LIFECOACH_ASSIGN_ONLY env + the scheduler timer are restored below).
   ];
 
   # ------------------------------------------------------------------
@@ -191,28 +190,12 @@ in {
   };
 
   # ------------------------------------------------------------------
-  # Phase-4 cutover (#62): the Chirurgeon owns the regimen + day's ledger
-  # judgment (seed un-gated in chirurgeon_organism) and is the SOLE nudger.
-  # The lifecoach-heartbeat timer stays ON but runs assign-only
-  # (LIFECOACH_ASSIGN_ONLY above + the gate in lifecoach-mechanical): it
-  # lights overdue bound buttons amber and stops — no speak/vision/judgment
-  # — so the deterministic LED-assignment path (the only thing that creates
-  # PENDING buttons for the button-monitor to ack) stays alive without any
-  # double-nudging. The SCHEDULER timer stays OFF (its proactive next_wake
-  # nudging is the duty the Chirurgeon absorbed). The lifecoach-organism
-  # module stays enabled for the reactive sidecars (button-monitor /
-  # dashboard / discord-bot / watchdog). Reversible: unset
-  # LIFECOACH_ASSIGN_ONLY + revert this block — full proactive lifecoach
-  # returns instantly as the fallback (seed untouched).
+  # Phase-4 cutover (#62) — REVERTED 2026-09-23 with the bridge crew.
+  # The Chirurgeon officer owned the regimen + day's ledger judgment and was
+  # the SOLE nudger; the lifecoach heartbeat ran assign-only and its
+  # scheduler timer was stopped. All of that is unwound here, restoring full
+  # proactive lifecoach behavior (the fallback the phase-4 comment promised
+  # was one revert away). The reactive sidecars (button-monitor / dashboard /
+  # discord-bot / watchdog) were never gated on this and are unchanged.
   # ------------------------------------------------------------------
-  systemd.timers.lifecoach-scheduler.wantedBy = lib.mkForce [];
-  system.activationScripts.stop-lifecoach-proactive = {
-    text = ''
-      if /run/current-system/sw/bin/systemctl is-active --quiet lifecoach-scheduler.timer 2>/dev/null; then
-        echo "stopping proactive lifecoach-scheduler.timer (phase-4 cutover to the Chirurgeon)"
-        /run/current-system/sw/bin/systemctl stop lifecoach-scheduler.timer || true
-      fi
-    '';
-    deps = [];
-  };
 }

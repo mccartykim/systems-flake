@@ -29,6 +29,7 @@ Having a declarative mesh network and single config for my fleet makes this syst
 * My blog, under mist-blog. Runs under gleam so I have it run on maitred to test its vaunted efficiency.
 * Ollama, for local VLM inference on total-eclipse and historian (historian runs the rocm build).
 * Life Coach Agent, a rich-evans based agent that helps me keep up with routines and tasks.
+   * Being rebuilt as a *single* simpler agent. The previous setup had a fleet of 11 Warhammer-40k-flavored "bridge officer" personas plus this coach; all of those were removed on 2026-09-23 as too confusing. See `docs/lifecoach-handoff.md`.
 * A dual webcam endpoint for stills from rich-evans for lifecoach to use.
 * Syncthing, for keeping folders synced between computers
 * Restic, for regular backups

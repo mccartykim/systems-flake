@@ -5,7 +5,7 @@
   self,
   ...
 }: let
-  inherit (inputs) nixpkgs nixos-hardware nixos-facter-modules copyparty nil-flake media-classifier org-life-coach org-crm organism bridge-crew;
+  inherit (inputs) nixpkgs nixos-hardware nixos-facter-modules copyparty nil-flake media-classifier org-life-coach org-crm lifecoach-organism vacuum-organism;
   inherit (config.flake.lib) mkDesktop mkServer mkHomeManager commonModules;
 in {
   flake.nixosConfigurations = {
@@ -58,27 +58,16 @@ in {
         # seagate local since a3j.4)
         copyparty.nixosModules.default
         # org-crm — moved from rich-evans at a3j.6 cutover 9 (2026-09-11);
-        # host file hosts/historian/org-crm.nix. The org-bridge broker STAYED
-        # on rich-evans (user-deferred mothball-or-fix decision, tracked in
-        # a3j.7.1).
+        # host file hosts/historian/org-crm.nix. (The org-bridge broker that
+        # stayed on rich-evans was removed 2026-09-23 with the bridge crew.)
         org-crm.nixosModules.default
-        # Navigator Orlena — the cross-host read-only strategic planner (#49),
-        # moved off total-eclipse at a3j.9.3 so that host can sleep.
-        # Self-contained module (provides its own package) + the config-only
-        # host file.
-        bridge-crew.nixosModules."navigator-organism"
-        (self + "/hosts/historian/navigator-organism.nix")
       ];
     };
     total-eclipse = mkDesktop {
       hostname = "total-eclipse";
-      # Navigator Orlena was hosted here; moved to historian at a3j.9.3 (it is
-      # the only always-on duty that was a bridge-crew module rather than a
-      # host service). Rollback = restore these two extraModules entries.
-      # extraModules = [
-      #   bridge-crew.nixosModules."navigator-organism"
-      #   (self + "/hosts/total-eclipse/navigator-organism.nix")
-      # ];
+      # Navigator Orlena (a bridge-crew officer) was hosted here, moved to
+      # historian at a3j.9.3, and then removed 2026-09-23 along with the whole
+      # bridge crew. No extraModules.
       extraModules = [];
     };
 
@@ -116,121 +105,25 @@ in {
     # Servers using mkServer helper
     rich-evans = mkServer {
       hostname = "rich-evans";
-      # bridgeCrewSrc (40k_bridge source, flake=false) is consumed by the
-      # imported org-bridge module (takes it as a module arg). `organism` is
-      # consumed by the voidmaster-vox-bridge host file for organicBin.
-      # `inputs` (already passed by mkServer) reaches the org-bridge host
-      # file for org-agent's emacs + elisp.
-      extraSpecialArgs = {
-        inherit organism;
-        bridgeCrewSrc = inputs."bridge-crew-src";
-      };
       extraModules = [
         # copyparty.nixosModules.default — MOVED to historian at a3j.6 6b
         org-life-coach.nixosModules.default
-        bridge-crew.nixosModules."lifecoach-organism"
-        bridge-crew.nixosModules."vacuum-organism"
-        # Phase-1 bridge crew: the Void-Master officer agent (self-contained
-        # module from the voidmaster_organism flake) + the org-bridge broker
-        # + vox-bridge Matrix transport (imported from the 40k_bridge source
-        # tree). See 40k_bridge/deploy/SYSTEMS_FLAKE_PATCH.md.
-        bridge-crew.nixosModules."void-master-organism"
-        # High Factotum officer agent (Severin, read-only bookkeeper).
-        # Self-contained module from the factotum_organism flake — it
-        # resolves its own package from pkgs.system, so it needs NO
-        # extraSpecialArgs (unlike org-bridge/vox-bridge which take
-        # bridgeCrewSrc/organism). Consequently NO colmena meta.specialArgs
-        # change is required (the prior colmena break was a missing
-        # specialArgs; this module adds none).
-        bridge-crew.nixosModules."factotum-organism"
-        # Ship's Confessor officer agent (Aurelian, read-only fleet
-        # chronicler). Self-contained module from the confessor_organism
-        # flake — resolves its own package from pkgs.system, so it needs
-        # NO extraSpecialArgs and NO colmena meta.specialArgs change
-        # (same shape as the Factotum).
-        bridge-crew.nixosModules."confessor-organism"
-        # Magos Explorator officer agent (Velan, read-only machine-spirit
-        # diagnostician). Self-contained module from the explorator_organism
-        # flake — resolves its own package from pkgs.system, so it needs NO
-        # extraSpecialArgs and NO colmena meta.specialArgs change (same shape
-        # as the Confessor / Factotum).
-        bridge-crew.nixosModules."explorator-organism"
-        # Chirurgeon Vahan (ship's Medicae, household axis) — the 9th bridge
-        # officer (#62). Self-contained module from the chirurgeon_organism
-        # flake — resolves its own package from pkgs.system, so it needs NO
-        # extraSpecialArgs and NO colmena meta.specialArgs change (same shape
-        # as the Confessor / Factotum / Explorator).
-        bridge-crew.nixosModules."chirurgeon-organism"
-        # Interrogator Voke (the read-only mail reader, #53) — the 10th bridge
-        # officer. Self-contained module from the interrogator_organism flake
-        # (resolves its own package from pkgs.system, NO extraSpecialArgs, NO
-        # colmena meta.specialArgs change — same shape as the other self-
-        # contained officer modules). On-request (no heartbeat): the vox-
-        # organism daemon runs its `organic` cycle under uid 998 (a member of
-        # interrogator-organism + email-digest) to read the mu index.
-        bridge-crew.nixosModules."interrogator-organism"
-        # Remembrancer Olesia (chronicler of the public record, the writer
-        # officer). Self-contained module from the remembrancer_organism flake
-        # (resolves its own package from pkgs.system, NO extraSpecialArgs, NO
-        # colmena meta.specialArgs change — same shape as the other self-
-        # contained officer modules). On-request (no heartbeat): the vox-
-        # organism daemon runs its `organic` cycle under uid 998 (a member of
-        # remembrancer-organism) to compose prose + propose via the PR loop.
-        bridge-crew.nixosModules."remembrancer-organism"
-        # Savant Quine — read-only reference librarian (web/ebook/print),
-        # 12th bridge officer. Self-contained module (resolves its own
-        # package from pkgs.system, NO extraSpecialArgs, NO colmena
-        # meta.specialArgs change — same shape as the other self-contained
-        # officer modules). On-request (no heartbeat): the vox-organism
-        # daemon runs its `organic` cycle under uid 998 (a member of
-        # savant-organism + borges) to read the web + the borges ebook db.
-        bridge-crew.nixosModules."savant-organism"
-        # Choirmaster Cassiel — on-demand music officer (MPD httpd + cast),
-        # 13th bridge officer. Self-contained (same shape). On-request (NO
-        # heartbeat): find + start only; the Lord-Captain stops manually.
-        # The MPD httpd stream it casts lives on rich-evans:8666 (configured
-        # in the host file below).
-        bridge-crew.nixosModules."choirmaster-organism"
-        # Factor Voss — ship's Treasurer (finance axis, hledger), 14th bridge
-        # officer. Self-contained (same shape). Proactive heartbeat wired-
-        # but-OFF at first deploy (enableHeartbeat=false in the host file)
-        # until the user's first #factor round-trip validates the persona;
-        # the reactive #factor cycle runs via the daemon now.
-        bridge-crew.nixosModules."factor-organism"
-        (import "${inputs."bridge-crew-src"}/deploy/org-bridge.nix")
-        (import "${inputs."bridge-crew-src"}/deploy/vox-bridge.nix")
-        # Phase-2 vox-organism: the Astropath comms-bridge daemon (replaces the
-        # Phase-1 voidmaster-vox-bridge above). Takes bridgeCrewSrc as a module
-        # arg (threaded via specialArgs) to read the daemon script + seed
-        # sample straight from the 40k_bridge source tree. See
-        # 40k_bridge/deploy/vox-organism.nix.
-        (import "${inputs."bridge-crew-src"}/deploy/vox-organism.nix")
+        # Lifecoach + vacuum sidekick — now DIRECT flake inputs (their former
+        # `bridge-crew` aggregator was removed along with the 11 character
+        # bridge officers). Both are self-contained: nixosModules.default
+        # resolves its own package from pkgs.system, so no extraSpecialArgs.
+        lifecoach-organism.nixosModules.default
+        vacuum-organism.nixosModules.default
         (self + "/hosts/rich-evans/life-coach.nix")
         (self + "/hosts/rich-evans/org-life-coach.nix")
         (self + "/hosts/rich-evans/lifecoach-organism.nix")
         (self + "/hosts/rich-evans/vacuum-organism.nix")
-        (self + "/hosts/rich-evans/voidmaster-organism.nix")
-        (self + "/hosts/rich-evans/voidmaster-vox-bridge.nix")
-        (self + "/hosts/rich-evans/vox-organism.nix")
-        (self + "/hosts/rich-evans/factotum-organism.nix")
-        (self + "/hosts/rich-evans/confessor-organism.nix")
-        (self + "/hosts/rich-evans/explorator-organism.nix")
-        (self + "/hosts/rich-evans/chirurgeon-organism.nix")
-        (self + "/hosts/rich-evans/interrogator-organism.nix")
-        (self + "/hosts/rich-evans/remembrancer-organism.nix")
-        (self + "/hosts/rich-evans/savant-organism.nix")
-        (self + "/hosts/rich-evans/choirmaster-organism.nix")
-        (self + "/hosts/rich-evans/factor-organism.nix")
-        (self + "/hosts/rich-evans/org-bridge.nix")
         # org-crm — MOVED to historian at a3j.6 cutover 9 (module in
         # historian's extraModules; host file hosts/historian/org-crm.nix).
         # The file hosts/rich-evans/org-crm.nix stays for reference, like
-        # borges.nix. NOTE: org-bridge STAYS here (deferred decision
-        # systems-flake-a3j.7.1 — keeps serving officers until mothballed
-        # or moved to the a3j.7 domU).
+        # borges.nix.
         # email-digest — MOVED to historian at a3j.6 6b (imported via its
-        # configuration.nix; rich-evans keeps a user/group stub for the
-        # Interrogator's stale-index interim until a3j.7)
+        # configuration.nix; rich-evans keeps a user/group stub).
         # Borges host module — REMOVED at a3j.5: the service moved to historian
         # (hosts/historian/borges.nix; the module file stays here for
         # reference, like buildbot-master.nix). The import must go with the

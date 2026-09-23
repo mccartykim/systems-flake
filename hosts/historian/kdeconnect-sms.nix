@@ -11,6 +11,15 @@
 # NOTE: the Interrogator's SMS tool is not wired yet (agent.org: "gated on
 # mochi ... no SMS tool in your envelope yet"), so this is preparation — when
 # the tool lands it reads from historian, not total-eclipse.
+#
+# BRIDGE CREW REMOVED 2026-09-23: this reader was originally built for the
+# Interrogator officer (whose cycle the rich-evans vox-organism daemon ran).
+# That fleet is gone, so the authorized_keys entry below is now a dangling
+# forced command on a key with no consumer. It is left in place deliberately —
+# the reader is still a plausible tool for the next lifecoach (see
+# docs/lifecoach-handoff.md), and re-issuing the key entry is churn until that
+# design settles. Remove it if you re-key. Note the same pubkey string is
+# duplicated in hosts/total-eclipse/sms-history.nix.
 {
   pkgs,
   lib,

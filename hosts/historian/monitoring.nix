@@ -4,9 +4,9 @@
 # exporter (scrape target 10.100.0.50:9100) plus the grafana/prometheus
 # socat forwarders driven by the maitred-bucket registry duplicates.
 #
-# Port note: grafana keeps its conventional 3000 — forgejo moved to 3030
-# in the same push (its only HTTP consumers are flake-managed:
-# bridge-scribe's FORGE_URL + the nebula inbound rule).
+# Port note: grafana keeps its conventional 3000. (forgejo, which had moved
+# to 3030 in the same push, was disabled 2026-09-23 with the bridge crew —
+# port 3030 is now free.)
 #
 # Scrape-config deltas vs the maitred original:
 #   - node-exporter: same four fleet targets; localhost is now historian

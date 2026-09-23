@@ -44,18 +44,6 @@ in {
         specialArgs = {
           inherit inputs;
           outputs = self;
-          # Parity with nixosConfigurations' mkServer `extraSpecialArgs`
-          # (rich-evans): the voidmaster-vox-bridge host module takes
-          # { organism } for organicBin, and the org-bridge module (from
-          # bridge-crew-src, loaded via the shared modules in makeColmenaNode
-          # `imports`) takes { bridgeCrewSrc }. nixosConfigurations threads
-          # both via mkServer's extraSpecialArgs; colmena sets its own
-          # specialArgs here, so without these `deploy rich-evans` (colmena)
-          # fails "attribute 'X' missing" while `nswitch rich-evans`
-          # (nixosConfigurations) works. Unused by hosts that don't import
-          # those modules.
-          inherit (inputs) organism;
-          bridgeCrewSrc = inputs."bridge-crew-src";
         };
       };
     }

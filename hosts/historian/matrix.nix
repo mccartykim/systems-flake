@@ -10,11 +10,11 @@
 # rich-evans, delta rsync, start here.
 #
 # Consumers: maitred's socat forwarder (matrix-proxy) repoints to this
-# host via the registry (matrix.kimb.dev); the vox-organism daemon on
-# rich-evans polls http://10.100.0.10:6167 over Nebula until the a3j.7
-# organisms domU (bridge-crew module rev f5b35200 added the remote-
-# homeserver support: sameHostHomeserver gates the unit bindings +
-# assertion). Federation endpoint matrix.kimb.dev:443 + the root-domain
+# host via the registry (matrix.kimb.dev); personal devices + the lifecoach
+# matrix chatbot reach it over Nebula. (The rich-evans vox-organism daemon
+# that used to poll it was removed 2026-09-23 with the bridge crew — the
+# remote-homeserver support in the module remains, unused.) Federation
+# endpoint matrix.kimb.dev:443 + the root-domain
 # .well-known delegation are unchanged (reverse-proxy.nix is static).
 {
   config,
@@ -72,8 +72,7 @@
   # during the federation sync catch-up after the cutover.
   #
   # Firewall: 6167 LAN (parity with rich-evans) + Nebula from any mesh node
-  # (maitred's socat for matrix.kimb.dev, the rich-evans organisms' interim
-  # vox-organism polling, personal devices).
+  # (maitred's socat for matrix.kimb.dev, personal devices).
   networking.firewall.allowedTCPPorts = [6167];
 
   kimb.nebula.extraInboundRules = [

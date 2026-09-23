@@ -119,31 +119,20 @@
       };
     };
 
-    # The organism primitive — the stateful-agent CLI (bin/organic). Consumed
-    # by the voidmaster-vox-bridge host file's organicBin. See
-    # 40k_bridge/deploy/SYSTEMS_FLAKE_PATCH.md.
-    organism.url = "git+ssh://git@github.com/mccartykim/organism.git";
-    organism.inputs.nixpkgs.follows = "nixpkgs";
+    # === Lifecoach + vacuum sidekick ===
+    # Self-contained flakes (each resolves its own package from pkgs.system,
+    # nixosModules.default, no extraSpecialArgs, no colmena meta.specialArgs
+    # change). Both bring their own transitive `organism` input — the CLI
+    # primitive (bin/organic) — so this repo declares no direct `organism`
+    # input. The 11 character "bridge officer" flakes that used to be
+    # aggregated behind a single `bridge-crew` input (plus the 40k_bridge
+    # `bridge-crew-src` source tree for org-bridge/vox-bridge) were removed
+    # wholesale — see docs/lifecoach-handoff.md for the removal record.
+    lifecoach-organism.url = "git+ssh://git@github.com/mccartykim/lifecoach_organism.git";
+    lifecoach-organism.inputs.nixpkgs.follows = "nixpkgs";
+    vacuum-organism.url = "git+ssh://git@github.com/mccartykim/vacuum_organism.git";
+    vacuum-organism.inputs.nixpkgs.follows = "nixpkgs";
 
-    # === Bridge crew agents ===
-    # The 13 self-contained `*-organism` flakes (lifecoach, vacuum, + the 11
-    # bridge officers) are aggregated behind one input to keep this inputs
-    # block manageable. Each is self-contained: its nixosModules.default
-    # resolves its own package from pkgs.system, no extraSpecialArgs, no
-    # colmena meta.specialArgs change. Consume as
-    #   bridge-crew.nixosModules."<name>-organism"
-    # Officer repos stay private on github over git+ssh (fine-grained PATs
-    # can't read archive URLs; ssh keys are what consumers have). See
-    # ~/projects/bridge-crew-flake for the roster + what stays un-aggregated.
-    bridge-crew.url = "git+ssh://git@github.com/mccartykim/bridge-crew-flake.git";
-    bridge-crew.inputs.nixpkgs.follows = "nixpkgs";
-
-    # 40k_bridge source tree — NOT a flake (no flake.nix). Consumed for the
-    # org-bridge + vox-bridge NixOS modules via `import` of path strings, and
-    # for the org-bridge broker/client Python + scope TOML at eval time.
-    # `bridgeCrewSrc` is threaded into the rich-evans eval via extraSpecialArgs.
-    bridge-crew-src.url = "git+ssh://git@github.com/mccartykim/40k_bridge.git";
-    bridge-crew-src.flake = false;
     org-crm = {
       url = "git+ssh://git@github.com/mccartykim/org_crm.git";
       inputs = {

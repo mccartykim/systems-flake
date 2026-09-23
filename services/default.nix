@@ -112,11 +112,10 @@
         websockets = false;
       };
       # Grafana + Prometheus — the a3j.8.1 migration from maitred (see
-      # hosts/historian/monitoring.nix). Grafana keeps its conventional 3000:
-      # forgejo (formerly 3000 on this host) moved to 3030 in the same push
-      # — its only HTTP consumers are the bridge-scribe (FORGE_URL, flake-
-      # managed) and the nebula inbound rule; git pushes use ssh :2222,
-      # unaffected. The maitred-bucket duplicates below keep driving the
+      # hosts/historian/monitoring.nix). Grafana keeps its conventional 3000.
+      # (forgejo, which had moved to 3030 in that same push, was disabled
+      # 2026-09-23 with the bridge crew.) The maitred-bucket duplicates below
+      # keep driving the
       # grafana/prometheus vhosts, authelia rules, and socat forwarders on
       # the router (reverse = flip host back + re-enable in maitred's
       # monitoring.nix).

@@ -34,12 +34,13 @@ in {
     # Journal-remote receiver (sink for systemd-journal-upload from other hosts)
     ../../modules/journal-remote-sink.nix
 
-    # email-digest STUB — user/group only (a3j.6 6b interim, see the file)
-    ./email-digest-stub.nix
+    # email-digest STUB — REMOVED 2026-09-23 with the bridge crew: the stub
+    # existed only so the group survived for vox-organism's extraGroups +
+    # the Interrogator's stale-index reads. Both are gone now; the service
+    # itself has lived on historian since a3j.6 6b.
 
     # Matrix homeserver — REMOVED at a3j.6: Tuwunel + mautrix-discord moved
-    # to historian (hosts/historian/matrix.nix; the vox-organism daemon here
-    # polls 10.100.0.10:6167 over Nebula until a3j.7). The module file stays
+    # to historian (hosts/historian/matrix.nix). The module file stays
     # for reference.
     # ./matrix.nix
 
@@ -124,8 +125,7 @@ in {
         proto = "tcp";
         host = "any";
       }
-      # Matrix/Tuwunel homeserver — REMOVED at a3j.6 (moved to historian; the
-      # vox-organism daemon polls it over Nebula at 10.100.0.10:6167).
+      # Matrix/Tuwunel homeserver — REMOVED at a3j.6 (moved to historian).
       # SRE agent webhook (Alertmanager → rich-evans)
       {
         port = 9095;
@@ -150,9 +150,9 @@ in {
   # (the last 6b drive consumer) moved to historian at cutover 9,
   # rich-evans's syncthing seagate folders were removed (the mesh lives on
   # historian: ~/Music, ~/compressed_music, ~/org, ~/work-org,
-  # ~/color_ebooks), and org-bridge (staying here per a3j.7.1) reads a
-  # LOCAL ~/org dir (crew-context.org md5-verified identical) instead of
-  # the drive via the old symlink. The ~/work-org symlink (pointing at
+  # ~/color_ebooks). (The org-bridge broker that used to read this host's
+  # LOCAL ~/org dir was removed 2026-09-23 with the bridge crew.) The
+  # ~/work-org symlink (pointing at
   # all-encrypted receiveencrypted blobs — never readable) was removed
   # too. No drive consumer remains on this host.
 
@@ -225,19 +225,9 @@ in {
       esphome # ESP32 flashing and management
       claude-code
       (pkgs.callPackage ../../pkgs/claude-zai.nix {})
-      # Diagnostics for the bridge crew: python3 + jq for ad-hoc Matrix / organism
-      # JSON inspection over ssh (the vox-organism daemon ships its OWN pinned
-      # python3 interpreter via pkgs.python3.withPackages, so this is not a
-      # runtime dep of the daemon — just the operator's PATH).
+      # Diagnostics: python3 + jq for ad-hoc Matrix / JSON inspection over ssh.
       python3
       jq
-      # mu — the Interrogator (#53) runs read-only `mu find`/`mu view` over the
-      # index the email-digest service already maintains (it is NOT a package
-      # runtimeDep of interrogator_organism — the index/Maildir only exist on
-      # rich-evans + the hermetic test stubs mu). Placed here so it resolves on
-      # the vox-organism daemon's reactive PATH (/run/current-system/sw/bin)
-      # + a manual interrogator-invoke. See email-digest.nix for the index.
-      mu
     ];
 
     # Override default shell setup for server

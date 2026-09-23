@@ -109,22 +109,12 @@
     # file (hosts/historian/buildbot-worker.nix) is left intact.
     # ./buildbot-worker.nix
 
-    # bridge-scribe — the #60 authoring servitor. A forced-command ssh target
-    # (rich-evans vox-organism daemon -> historian) that clones a plain-git
-    # scratch copy, commits on proposed/<slug>, and pushes with the repo's
-    # GitHub deploy key. See hosts/historian/bridge-scribe.nix.
-    ./bridge-scribe.nix
-
-    # Forgejo — the Nebula-only git forge (#forge). Officers propose here;
-    # the Lord-Captain reviews + merges instead of GitHub. See ./forgejo.nix.
-    ./forgejo.nix
+    # bridge-scribe — REMOVED 2026-09-23 with the bridge crew (the #60
+    # authoring servitor existed only to serve the officer fleet).
+    # Forgejo — DISABLED 2026-09-23. It was the officers' PR surface; the
+    # config file moved to ../crew_secrets/forgejo.nix for reference.
+    # ./forgejo.nix
   ];
-
-  # Enable the bridge-scribe authoring servitor (#60): the forced-command ssh
-  # target rich-evans's vox-organism daemon reaches to materialize officer
-  # author requests (clone -> commit on proposed/<slug> -> push). See
-  # ./bridge-scribe.nix.
-  services.bridge-scribe.enable = true;
 
   # Syncthing — shared config via kimb.syncthing module
   kimb.syncthing.enable = true;
@@ -160,10 +150,9 @@
   # org-crm (the
   # last 6b drive consumer) moved at cutover 9, rich-evans's syncthing
   # seagate folders were removed (the mesh lives here: ~/Music,
-  # ~/compressed_music, ~/org, ~/work-org, ~/color_ebooks), and org-bridge
-  # (staying on rich-evans per a3j.7.1) now reads a LOCAL ~/org dir
-  # (crew-context.org md5-verified identical) instead of the drive via
-  # the symlink. The nebula 2049 rule is gone too.
+  # ~/compressed_music, ~/org, ~/work-org, ~/color_ebooks). (The org-bridge
+  # broker that used to read rich-evans's LOCAL ~/org dir was removed
+  # 2026-09-23 with the bridge crew.) The nebula 2049 rule is gone too.
 
   # === a3j.4: put.io mirror writer ported from rich-evans — the drive is
   # local here now, and rclone writing locally beats writing over NFS.
@@ -289,19 +278,9 @@
           proto = "tcp";
           host = "maitred";
         }
-        # Forgejo HTTP API (#forge): rich-evans is a *server*, not a personal
-        # device, so openToPersonalDevices doesn't cover it — officers/daemon
-        # there need an explicit rule to reach the forge on 10.100.0.10:3030.
-        # Personal-device webui access is already covered by
-        # openToPersonalDevices; SSH :2222 is scribe-localhost + personal
-        # devices, so no rule for it.
-        # a3j.8.1: port 3000 -> 3030 (grafana took the conventional 3000;
-        # bridge-scribe's FORGE_URL flipped in the same push).
-        {
-          port = 3030;
-          proto = "tcp";
-          group = "servers";
-        }
+        # Forgejo HTTP API (#forge) — REMOVED 2026-09-23 with the bridge crew
+        # (the forge was the officers' PR surface and is now disabled; see
+        # ../../crew_secrets/forgejo.nix).
         # a3j.4 interim: NFSv4.1 (port 2049 only — no rpcbind/mountd) rw
         # reverse-export to rich-evans, whose remaining drive consumers
         # (copyparty, email-digest Maildir, org-crm bulk — the 6b cohort)

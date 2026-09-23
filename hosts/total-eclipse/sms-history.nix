@@ -1,8 +1,15 @@
 # sms-history: read-only SMS reader for the Interrogator, cross-host via the
-# fleet ssh key. The Interrogator (rich-evans, vox-organism daemon) ssh'es here
-# as kimb; this forced command runs the KDE Connect D-Bus reader AS kimb --
+# fleet ssh key. The Interrogator officer (rich-evans, vox-organism daemon)
+# used to ssh here as kimb; this forced command runs the KDE Connect D-Bus
+# reader AS kimb --
 # KDE Connect's conversations live on kimb's *session* bus
 # (/run/user/1000/bus, 0600 owner-only), so a different uid cannot connect.
+#
+# BRIDGE CREW REMOVED 2026-09-23: this file is no longer imported
+# (hosts/total-eclipse/configuration.nix has it commented; the live copy is
+# hosts/historian/kdeconnect-sms.nix). Kept for reference — the reader itself
+# is still a plausible tool for the next lifecoach (see
+# docs/lifecoach-handoff.md).
 #
 # Reuses the shared bridge-fleet-ssh-key: a THIRD prisoned forced-command
 # target on that key (alongside navigator-summon on this host and the scribe

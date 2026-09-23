@@ -1,7 +1,8 @@
-# MPD httpd — the Choirmaster's music stream, ported from
+# MPD httpd — the music stream, ported from
 # hosts/rich-evans/choirmaster-organism.nix at a3j.5 (the organism itself
-# stays on rich-evans until the a3j.7 organisms domU; only the mpd service
-# moves now, per the a3j.5 phase list).
+# was removed 2026-09-23 with the bridge crew; this stream is independent,
+# and what used to "stay on rich-evans until the a3j.7 organisms domU" is
+# now moot — only the mpd service moved here, per the a3j.5 phase list).
 #
 # a3j.6 completion: the library moved from /mnt/media-drive/music_compressed
 # (the seagate copy — kept current only by rich-evans's now-removed
@@ -21,11 +22,12 @@
 #   - 8666 httpd stream: fetched by the bedroom Nest hub over the LAN (cast
 #     sessions pull the URL directly — it must be a LAN address, hence
 #     0.0.0.0 + a LAN firewall hole, mirroring rich-evans's posture).
-#   - 6600 control: the Choirmaster organism (still on rich-evans, in the
-#     vox-organism daemon) runs mpc against MPD_HOST, which the a3j.5 cutover
-#     sets to historian's LAN IP 192.168.69.167 in
-#     hosts/rich-evans/vox-organism.nix. Same env var feeds cast-stream's
-#     stream URL, so one flip repoints both control and cast.
+#   - 6600 control: the Choirmaster organism (removed 2026-09-23 with the
+#     bridge crew — the MPD httpd stream itself is kept, since a music
+#     stream is independent of the officers) ran mpc against MPD_HOST,
+#     which the a3j.5 cutover set to historian's LAN IP 192.168.69.167 in
+#     hosts/rich-evans/vox-organism.nix. Same env var fed cast-stream's
+#     stream URL, so one flip repointed both control and cast.
 {
   lib,
   pkgs,
@@ -98,10 +100,10 @@
     };
   };
 
-  # LAN exposure: 8666 for the Nest's cast pull, 6600 for the Choirmaster's
-  # mpc control (both from the LAN — the Nest is not a nebula node; the
-  # firewall trust model matches rich-evans's, which also had 8666 open to
-  # the LAN).
+  # LAN exposure: 8666 for the Nest's cast pull, 6600 for MPD control
+  # (both from the LAN — the Nest is not a nebula node). The Choirmaster
+  # organism that used 6600 was removed 2026-09-23; the control port stays
+  # open for LAN mpc clients.
   # Order MPD after the music bind mount at activation (RequiresMountsFor
   # belongs in [Unit] — unitConfig — the section systemd honors; the
   # email-digest lesson about [Service]-section copies silently ignored).

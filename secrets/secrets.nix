@@ -65,12 +65,6 @@ in
     # Matrix access token for life-coach chatbot (Tuwunel; a3j.10 pre-key
     # to fleet-core for the a3j.6 Tuwunel migration to historian)
     "matrix-life-coach-token.age".publicKeys = fleetCore ++ [bootstrap];
-    # Matrix access token for the Phase-1 vox-bridge (@vox-bridge:kimb.dev,
-    # Tuwunel on rich-evans). Minted via a transient allow_registration flip;
-    # see 40k_bridge/deploy/GO_NOGO.md §3. a3j.10 pre-key to fleet-core for
-    # the a3j.6 Tuwunel migration (re-keys again to the a3j.7 organisms
-    # domU host key if the vox daemon moves there).
-    "matrix-vox-bridge-token.age".publicKeys = fleetCore ++ [bootstrap];
     # Discord bot token for life-coach chatbot (a3j.10 pre-key to
     # fleet-core; life-coach stack migrates in a3j.6/a3j.7)
     "discord-life-coach-token.age".publicKeys = fleetCore ++ [bootstrap];
@@ -120,36 +114,19 @@ in
     # to /root/.netrc on historian — see hosts/historian/buildbot-worker.nix.
     "buildbot-worker-git-netrc.age".publicKeys = [hostKeys.historian bootstrap];
 
-    # ===== BRIDGE CREW — AUTHORING SERVITOR (historian) =====
-    # ONE shared GitHub deploy key for the bridge-scribe servitor (#60 PR-authoring
-    # loop), registered (write access) on every authorable repo. Decrypted on
-    # historian only (owned by bridge-scribe, mode 0400); the vox-organism daemon
-    # on rich-evans reaches it indirectly via the forced-command ssh hop — it
-    # never sees the key itself. Per-repo scope is enforced in CODE (the scribe's
-    # REPOS allowlist + the daemon's OFFICER_REPOS), not by key scoping — all
-    # authorable repos share one key because they all live in the same
-    # /run/agenix on one host owned by one user, so per-repo keys would buy no
-    # blast-radius isolation. Rotate once. Add repos to the scribe REPOS map (not
-    # new keys) as officers gain authoring scope (#64).
-    "deploy-key-bridge-scribe.age".publicKeys = [hostKeys.historian bootstrap];
-    # Forgejo application token for the bridge-scribe (#forge). The scribe
-    # opens PRs/issues on the Nebula-only forge (10.100.0.10:3030) with this
-    # — the REST API credential (push uses the shared mccartykim SSH key
-    # over the forge's built-in :2222; the API uses this token). Two paths,
-    # two purposes. Decrypted on historian only (owner bridge-scribe, 0400),
-    # localhost to the forge. Scoped to the authorable repos; rotate in the
-    # forge webui if it leaks. See hosts/historian/forgejo.nix + 40k_bridge/
-    # forge_tools.
-    "forge-bot-token.age".publicKeys = [hostKeys.historian bootstrap];
-    # Fleet-internal ssh key (rich-evans vox-organism daemon -> historian
-    # bridge-scribe forced-command servitor). Decrypted on rich-evans only
-    # (owned by vox-organism, mode 0400). This is NOT a GitHub key — it never
-    # touches github; it only authenticates the in-fleet hop to the scribe.
-    # bridge-fleet pubkey forced-command entries move to historian kimb
-    # when their services move (a3j.9); the key itself re-keys to the a3j.7
-    # organisms domU host key (new registry entry) if the vox daemon moves
-    # into that domU. Until then: rich-evans-only.
-    "bridge-fleet-ssh-key.age".publicKeys = [hostKeys.rich-evans bootstrap];
+    # ===== BRIDGE CREW — REMOVED 2026-09-23 =====
+    # The 40k "bridge officer" roleplay stack (11 character agents +
+    # org-bridge broker + vox-bridge / vox-organism transports + the
+    # bridge-scribe authoring servitor + the Nebula-only forgejo) was removed
+    # wholesale. The four officer-only .age files moved out of this tree to
+    # ../crew_secrets (kept sealed, no longer referenced by any config):
+    #   matrix-vox-bridge-token.age   @vox-bridge:kimb.dev Matrix token
+    #   bridge-fleet-ssh-key.age      rich-evans daemon -> historian hop
+    #   deploy-key-bridge-scribe.age  bridge-scribe GitHub deploy key
+    #   forge-bot-token.age           forgejo application token
+    # A dangling owner (e.g. "vox-organism") would break evaluation once the
+    # officer service users are gone, so no stanzas remain. See
+    # docs/lifecoach-handoff.md for the removal record.
 
     # ===== MEDIA PIPELINE (historian) =====
     # rclone config with put.io OAuth token
