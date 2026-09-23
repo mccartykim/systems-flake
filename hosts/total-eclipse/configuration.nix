@@ -96,6 +96,10 @@
     # NVIDIA GPU here, so whisper.cpp flash attention is real rather than inert.
     package = pkgs.voxtype-vulkan;
     flashAttention = true;
+    # The trackball's extra button reports BTN_TASK (279), which voxtype's own
+    # listener never sees — it only opens keyboard-like devices. This bridges
+    # the button's press/release to `voxtype record start/stop` for hold-to-talk.
+    mouse.enable = true;
   };
 
   # Disable sleep/suspend (keeps waking immediately anyway)

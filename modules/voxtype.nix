@@ -234,6 +234,60 @@ in {
         activate `graphical-session.target`.
       '';
     };
+
+    mouse = {
+      enable = lib.mkEnableOption ''
+        bridging a mouse button to voxtype's record commands.
+
+        voxtype's own evdev hotkey only opens devices that advertise KEY_A +
+        KEY_Z + KEY_ENTER, so a pure mouse is never watched and a trackball
+        button cannot trigger recording directly. This option runs a small
+        evdev watcher that turns the button's press/release into
+        `voxtype record start` / `voxtype record stop`, giving hold-to-talk on
+        a button voxtype itself cannot see.
+
+        Needed because none of the alternatives can deliver press *and*
+        release for such a button: KDE global shortcuts are press-only, KWin
+        workspace scripts expose no mouse buttons, and keyd has no name for
+        BTN_TASK.
+      '';
+
+      deviceName = lib.mkOption {
+        type = lib.types.str;
+        default = "HUGE PLUS";
+        description = ''
+          Substring of the input device's reported name, to identify the mouse.
+          Deliberately not a /dev/input/eventN number — those shift across
+          reboots and re-plugs. Check with `evtest` or
+          `cat /sys/class/input/eventN/device/name`.
+        '';
+        example = "ELECOM";
+      };
+
+      vendor = lib.mkOption {
+        type = lib.types.str;
+        default = "056e";
+        description = "USB vendor id of the device, from /sys/class/input/eventN/device/id/vendor.";
+      };
+
+      product = lib.mkOption {
+        type = lib.types.str;
+        default = "01ab";
+        description = "USB product id of the device, from /sys/class/input/eventN/device/id/product.";
+      };
+
+      button = lib.mkOption {
+        type = lib.types.int;
+        default = 279;
+        description = ''
+          evdev button code to bridge. 279 is BTN_TASK, which is what this
+          trackball's extra button reports (it is *not* button 4 or 5 — in
+          X11/Plasma numbering, 4 and 5 are scroll wheel up/down). Find the
+          code by watching the device, e.g. `evtest /dev/input/eventN`.
+        '';
+        example = 275;
+      };
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -320,6 +374,29 @@ in {
         RestartSec = 5;
         # The runtime dir is where voxtype keeps its pidlock (voxtype.lock) and
         # state file, which `voxtype record start/stop/toggle` read.
+        Environment = ["XDG_RUNTIME_DIR=%t"];
+      };
+    };
+
+    # Watches a mouse button and drives voxtype's record commands, for buttons
+    # voxtype's own listener cannot see (it only opens keyboard-like devices).
+    # Gives hold-to-talk: press -> record start, release -> record stop.
+    systemd.user.services.voxtype-mouse = lib.mkIf cfg.mouse.enable {
+      description = "Bridge a mouse button to voxtype record start/stop";
+      partOf = [cfg.startTarget];
+      after = ["voxtype.service"];
+      wantedBy = lib.optionals cfg.autoStart [cfg.startTarget];
+      serviceConfig = {
+        Type = "simple";
+        ExecStart = lib.getExe (pkgs.callPackage ../pkgs/voxtype-mouse.nix {
+          inherit (cfg.mouse) deviceName vendor product button;
+          # The watcher shells out to the voxtype CLI, but the record commands
+          # work by signalling the daemon, so any 1.0.x binary is fine.
+          voxtype = cfg.package;
+        });
+        Restart = "always";
+        RestartSec = 5;
+        # The device node lives under /dev/input, readable via the input group.
         Environment = ["XDG_RUNTIME_DIR=%t"];
       };
     };
