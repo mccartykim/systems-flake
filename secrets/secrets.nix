@@ -133,6 +133,15 @@ in
     "rclone-config.age".publicKeys = [hostKeys.historian hostKeys.rich-evans bootstrap];
     # Jellyfin API key for media-classifier library rescan trigger
     "jellyfin-api-key.age".publicKeys = [hostKeys.historian bootstrap];
+    # HomeBox API-key pepper — hashed into every HomeBox API key, so it must never change once
+    # keys are issued. Routed through agenix rather than the nixpkgs homebox module's `settings`,
+    # because `settings` becomes a literal Environment= line in the unit and unit environments are
+    # world-readable in the Nix store. The pinned nixpkgs (0.25.0-era) has no `secrets` option, so
+    # agenix plus a systemd EnvironmentFile is the only way to keep it out of the store.
+    #
+    # Re-encrypting this file is safe (same plaintext, different recipients). Rotating the VALUE is
+    # not: it would invalidate every issued key, including the one bin_finder_ai authenticates with.
+    "homebox-api-pepper.age".publicKeys = [hostKeys.historian bootstrap];
     # ===== RESTIC BACKUPS (Backblaze B2) =====
     # All hosts can decrypt for deduplication across syncthing-replicated data
     "restic-password.age".publicKeys = workingMachines;

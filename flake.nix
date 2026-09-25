@@ -15,6 +15,19 @@
     home-manager.url = "github:nix-community/home-manager";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
 
+    # bin_finder_ai — the household-inventory AI service (photograph an object, describe it,
+    # file it into HomeBox).
+    #
+    # SSH, not https, and private: colmena deploys historian with `buildOnTarget = true`, so
+    # **historian itself evaluates this flake** and must be able to fetch the input. That rules out
+    # both a `path:`/absolute-path input (the path exists only on one machine) and an https URL to
+    # a private repo (no credentials on historian, and no way to prompt).
+    #
+    # SSH works because historian can already reach github.com as this user, which is the same
+    # mechanism the other private inputs here rely on.
+    bin-finder-ai.url = "git+ssh://git@github.com/mccartykim/bin_finder_ai.git";
+    bin-finder-ai.inputs.nixpkgs.follows = "nixpkgs";
+
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
     nix-darwin.url = "github:LnL7/nix-darwin";
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs";

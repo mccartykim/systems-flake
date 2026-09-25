@@ -114,12 +114,39 @@
     # Forgejo — DISABLED 2026-09-23. It was the officers' PR surface; the
     # config file moved to ../crew_secrets/forgejo.nix for reference.
     # ./forgejo.nix
+
+    # bin_finder_ai — photograph an object, have it described by a hosted vision
+    # model, and file it into HomeBox (which is the system of record). Runs on
+    # this host but does NO local inference: the VLM is ollama.com's hosted API
+    # and the attribute extractor is OpenRouter, so it needs no ROCm despite
+    # historian having it. See ./bin-finder.nix for the measurements behind that.
+    ./bin-finder.nix
   ];
 
   # Syncthing — shared config via kimb.syncthing module
   kimb.syncthing.enable = true;
   kimb.maitredNameservers.enable = true;
   kimb.zaiApiKey.enable = true;
+
+  # HomeBox + the bin_finder_ai AI extensions. HomeBox is the household
+  # inventory of record; bin_finder files photographed objects into it with a
+  # description and attribute tags. The module comes from the bin_finder_ai
+  # flake input (see flake-modules/nixos-configurations.nix); these are its
+  # options. See hosts/historian/bin-finder.nix for the architecture notes.
+  services.bin-finder = {
+    enable = true;
+    homebox = {
+      enable = true;
+      # Pin HomeBox to 0.26.2 to match the live database, which that version created and which has
+      # 26 goose migrations applied. The pinned nixpkgs ships 0.25.0 and goose errors on a newer
+      # schema — and because the DB is on /mnt/media-drive rather than in the store, `--rollback`
+      # would not undo a downgrade. See pkgs/homebox-0.26.2.nix.
+      package = pkgs.callPackage ../../pkgs/homebox-0.26.2.nix { };
+    };
+    # Hosted vision model, not local — measured 0.70s vs 2.05s for historian's
+    # own gemma4:e4b (and 68.24s with thinking on). No ROCm needed for this.
+    vlmModel = "deepseek-v4.1-flash";
+  };
 
   # Expose music library to Jellyfin (read-only bind mount)
   fileSystems."/var/lib/jellyfin/music" = {
@@ -716,6 +743,38 @@
     group = "media";
     mode = "0440";
   };
+
+  # === HomeBox + bin_finder_ai ===
+
+  # The HomeBox API-key pepper, decrypted by agenix to a root-only path.
+  #
+  # Owner stays root and the mode is 0400: only systemd reads this file (as root, resolving the
+  # EnvironmentFile before dropping privileges), so the homebox user never needs to read it.
+  age.secrets.homebox-api-pepper = {
+    file = ../../secrets/homebox-api-pepper.age;
+    mode = "0400";
+  };
+
+  # The pepper reaches HomeBox through a systemd EnvironmentFile rather than through
+  # services.homebox.settings.
+  #
+  # WHY NOT `settings`: that option emits literal `Environment=` lines, which are world-readable in
+  # the Nix store — the wrong place for a secret hashed into every API key. The nixpkgs this repo
+  # pins (0.25.0-era homebox module) offers NO `secrets` option that would route it through systemd
+  # credentials; `secrets` arrived with the 0.26.2-era module. So agenix + EnvironmentFile it is.
+  #
+  # WHY `EnvironmentFile` AND NOT `Environment`: `@path@` is only expanded in EnvironmentFile, where
+  # systemd reads the file's contents. As `Environment=` the variable would literally be the string
+  # "@...@", which is non-empty — so HomeBox would start and then reject every API key, pointing the
+  # blame at the key rather than at the wiring.
+  #
+  # AND the agenix file must be `KEY=value`, not a bare value: systemd SILENTLY IGNORES a line with
+  # no `=` in an EnvironmentFile. A bare 64-byte pepper on its own line is present, readable, exactly
+  # the right length, listed in `EnvironmentFiles` — and HomeBox still panics that the pepper is
+  # unset. That mistake cost a debugging cycle; the encrypted file now holds
+  # "HBOX_AUTH_API_KEY_PEPPER=<value>".
+  systemd.services.homebox.serviceConfig.EnvironmentFile =
+    config.age.secrets.homebox-api-pepper.path;
 
   # === Media pipeline systemd services ===
 

@@ -5,7 +5,7 @@
   self,
   ...
 }: let
-  inherit (inputs) nixpkgs nixos-hardware nixos-facter-modules copyparty nil-flake media-classifier org-life-coach org-crm lifecoach-organism vacuum-organism;
+  inherit (inputs) nixpkgs nixos-hardware nixos-facter-modules copyparty nil-flake media-classifier bin-finder-ai org-life-coach org-crm lifecoach-organism vacuum-organism;
   inherit (config.flake.lib) mkDesktop mkServer mkHomeManager commonModules;
 in {
   flake.nixosConfigurations = {
@@ -61,6 +61,10 @@ in {
         # host file hosts/historian/org-crm.nix. (The org-bridge broker that
         # stayed on rich-evans was removed 2026-09-23 with the bridge crew.)
         org-crm.nixosModules.default
+        # HomeBox + the bin_finder_ai AI extensions. Self-contained module (provides its own
+        # package and options), mirroring media-classifier. Enabled in
+        # hosts/historian/configuration.nix.
+        bin-finder-ai.nixosModules.default
       ];
     };
     total-eclipse = mkDesktop {
