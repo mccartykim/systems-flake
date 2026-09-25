@@ -98,11 +98,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1790323196,
-        "narHash": "sha256-Gs3mUe8S8GOob4gSuRdGvAk1aeBIQox8OzZQ1AhqCCY=",
+        "lastModified": 1790326766,
+        "narHash": "sha256-ghxhgCYSEPLv9HZUP+9TQFnadBGg9cCVXhQX98wc7Ac=",
         "ref": "refs/heads/main",
-        "rev": "cac08718a6f208fa7e47f069522d6ffa34ff468b",
-        "revCount": 8,
+        "rev": "97b88a6a4ade9f4ec3f96448dccf01227e82289f",
+        "revCount": 9,
         "type": "git",
         "url": "ssh://git@github.com/mccartykim/bin_finder_ai.git"
       },
