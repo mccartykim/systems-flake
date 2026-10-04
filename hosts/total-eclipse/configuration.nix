@@ -93,9 +93,21 @@
   kimb.voxtype = {
     enable = true;
     key = "EVTEST_93";
-    # NVIDIA GPU here, so whisper.cpp flash attention is real rather than inert.
-    package = pkgs.voxtype-vulkan;
-    flashAttention = true;
+    # CPU build on purpose. The Vulkan build takes a Vulkan device at daemon
+    # start and holds ~144 MiB of this card's 256 MiB BAR1 aperture for as long
+    # as it runs. BAR1 is exposed to Vulkan as a second DEVICE_LOCAL heap, and
+    # wgpu's Vulkan OOM pre-check applies the *smallest* device-local heap's
+    # remaining budget as a ceiling on generic allocations — so with BAR1 nearly
+    # full, WebGPU's GPUAdapter.requestDevice() fails with "Not enough memory
+    # left" even though the 8 GiB VRAM heap is empty. Verified: stopping voxtype
+    # restores WebGPU, starting it breaks it again; the CPU build never takes a
+    # Vulkan device (no GPU fds) and leaves BAR1 at ~33 MiB.
+    # This is a wgpu validation bug (gfx-rs/wgpu#9643), not a broken Vulkan
+    # stack — vulkaninfo enumerates the GPU normally. Revisit if the upstream
+    # fix lands and GPU-accelerated dictation becomes worth reclaiming.
+    package = pkgs.voxtype;
+    # Inert without a GPU-backed build (see modules/voxtype.nix), so off.
+    flashAttention = false;
     # The trackball's extra button reports BTN_TASK (279), which voxtype's own
     # listener never sees — it only opens keyboard-like devices. This bridges
     # the button's press/release to `voxtype record start/stop` for hold-to-talk.
