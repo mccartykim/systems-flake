@@ -814,7 +814,17 @@
     categoryOverrides = {
       "ONE PIECE" = "anime";
       "Gachiakuta" = "anime";
+      # Year-based seasons (2003x01, "Mythbusters 2004/") now decode as TV in
+      # the classifier; this pin is a belt-and-suspenders so a regression there
+      # can't silently push 272 episodes back into Movies.
+      "Mythbusters" = "tv";
     };
+    # Jev (TypeSafe System One) arbiter via OpenRouter. Uncomment once the
+    # openrouter-api-key secret exists (see secrets.nix) — the key is read from
+    # the file at runtime, so it stays out of the Nix store. Until then the
+    # Ollama model below remains the arbiter.
+    # jevApiKeyFile = config.age.secrets.openrouter-api-key.path;
+    # jevModel = "typesafe/jev-1.13";
     # Use the cloud ollama subscription via historian's proxy. Local qwen3:8b on
     # total-eclipse emits only thinking tokens and returns an empty response field
     # for /api/generate even with /no_think; kimi-k2.7-code:cloud works when the
