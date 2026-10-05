@@ -873,8 +873,12 @@
       LAST=$(cat "$STAMP" 2>/dev/null || echo 0)
       if [ $((NOW - LAST)) -ge 180 ]; then
         API_KEY="$(cat ${jellyfinApiKeyFile})"
+        # Jellyfin dropped the `?api_key=` query form for admin endpoints;
+        # the key must go in the MediaBrowser Authorization header now (the
+        # query form returns 401, which silently broke every rescan).
         ${pkgs.curl}/bin/curl -sf -X POST \
-          "http://localhost:8096/Library/Refresh?api_key=$API_KEY" \
+          -H "Authorization: MediaBrowser Token=\"$API_KEY\"" \
+          "http://localhost:8096/Library/Refresh" \
           || echo "Warning: Jellyfin scan trigger failed (non-fatal)"
         echo "$NOW" > "$STAMP"
       fi
