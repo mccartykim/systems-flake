@@ -133,6 +133,10 @@ in
     "rclone-config.age".publicKeys = [hostKeys.historian hostKeys.rich-evans bootstrap];
     # Jellyfin API key for media-classifier library rescan trigger
     "jellyfin-api-key.age".publicKeys = [hostKeys.historian bootstrap];
+    # OpenRouter API key for the media-classifier Jev (TypeSafe System One)
+    # arbiter. Read from a bare file at runtime (jevApiKeyFile) so it stays out
+    # of the world-readable Nix store config.
+    "openrouter-api-key.age".publicKeys = [hostKeys.historian bootstrap];
     # HomeBox API-key pepper — hashed into every HomeBox API key, so it must never change once
     # keys are issued. Routed through agenix rather than the nixpkgs homebox module's `settings`,
     # because `settings` becomes a literal Environment= line in the unit and unit environments are

@@ -744,6 +744,15 @@
     mode = "0440";
   };
 
+  # OpenRouter API key for the media-classifier Jev (TypeSafe System One)
+  # arbiter. Same media-group 0440 pattern as the Jellyfin key: the classifier
+  # reads the key from the file at runtime, so it never enters the Nix store.
+  age.secrets.openrouter-api-key = {
+    file = ../../secrets/openrouter-api-key.age;
+    group = "media";
+    mode = "0440";
+  };
+
   # === HomeBox + bin_finder_ai ===
 
   # The HomeBox API-key pepper, decrypted by agenix to a root-only path.
@@ -819,12 +828,13 @@
       # can't silently push 272 episodes back into Movies.
       "Mythbusters" = "tv";
     };
-    # Jev (TypeSafe System One) arbiter via OpenRouter. Uncomment once the
-    # openrouter-api-key secret exists (see secrets.nix) — the key is read from
-    # the file at runtime, so it stays out of the Nix store. Until then the
-    # Ollama model below remains the arbiter.
-    # jevApiKeyFile = config.age.secrets.openrouter-api-key.path;
-    # jevModel = "typesafe/jev-1.13";
+    # Jev (TypeSafe System One) arbiter via OpenRouter. The key is read from
+    # the agenix file at runtime, so it stays out of the Nix store. A typed
+    # decision model: it returns one of anime/tv/movie with a calibrated
+    # confidence, and overrides medium-confidence scored results. Ollama
+    # below remains the fallback if the Jev call fails.
+    jevApiKeyFile = config.age.secrets.openrouter-api-key.path;
+    jevModel = "typesafe/jev-1.13";
     # Use the cloud ollama subscription via historian's proxy. Local qwen3:8b on
     # total-eclipse emits only thinking tokens and returns an empty response field
     # for /api/generate even with /no_think; kimi-k2.7-code:cloud works when the
