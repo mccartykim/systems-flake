@@ -851,11 +851,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791346530,
-        "narHash": "sha256-ygc16dPzY5aIzYS/3XnmrD+ez416iUwvCUQsJB91nZ8=",
+        "lastModified": 1791347084,
+        "narHash": "sha256-+eex8veiW94MP9S9QeIZIfVy6VEfMV1KpntKKP7ts2A=",
         "ref": "refs/heads/main",
-        "rev": "edcaa4a77a06b8776dcacea587a2cb30e47701c5",
-        "revCount": 1,
+        "rev": "c7bc88510d9f79c69f728046caabd27469d5add7",
+        "revCount": 2,
         "type": "git",
         "url": "ssh://git@github.com/mccartykim/keyed_james_bible.git"
       },

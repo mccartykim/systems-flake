@@ -33,19 +33,27 @@
     };
     imports = self.nixosConfigurations.${name}._module.args.modules;
   };
-in {
-  flake.colmena =
-    {
-      meta = {
-        nixpkgs = import nixpkgs {
-          system = "x86_64-linux";
-          overlays = [];
-        };
-        specialArgs = {
-          inherit inputs;
-          outputs = self;
-        };
+
+  hive = {
+    meta = {
+      nixpkgs = import nixpkgs {
+        system = "x86_64-linux";
+        overlays = [];
       };
-    }
-    // (builtins.mapAttrs makeColmenaNode nixosHosts);
+      specialArgs = {
+        inherit inputs;
+        outputs = self;
+      };
+    };
+  } // (builtins.mapAttrs makeColmenaNode nixosHosts);
+in {
+  flake.colmena = hive;
+
+  # Colmena 0.5 renamed its flake output from `colmena` to `colmenaHive`.
+  # nixpkgs pins 0.5.0, so exposing only the legacy name makes the repo's
+  # `deploy` devshell alias fail with:
+  #   flake '...' does not provide attribute
+  #   'packages.x86_64-linux.colmenaHive', ... or 'colmenaHive'
+  # Both names are exposed so either colmena major version works.
+  flake.colmenaHive = hive;
 }
