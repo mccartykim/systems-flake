@@ -130,6 +130,12 @@
     keyed-james-bible.url = "git+ssh://git@github.com/mccartykim/keyed_james_bible.git";
     keyed-james-bible.inputs.nixpkgs.follows = "nixpkgs";
 
+    # Colmena, as a flake input. Needed because colmena 0.5 evaluates flakes
+    # directly and expects `colmena.lib.makeHive` to build its hive output;
+    # hand-writing the `{__schema, meta, nodes}` shape is not the supported path.
+    colmena.url = "github:nix-community/colmena";
+    colmena.inputs.nixpkgs.follows = "nixpkgs";
+
     # org-agent + org-life-coach (life-coach agent stack)
     org-agent.url = "git+ssh://git@github.com/mccartykim/org-agent.git";
     org-agent.inputs.nixpkgs.follows = "nixpkgs";

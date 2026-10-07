@@ -34,12 +34,15 @@
     imports = self.nixosConfigurations.${name}._module.args.modules;
   };
 
-  # Colmena 0.5 changed its flake output in two ways: it reads `colmenaHive`
-  # instead of `colmena`, and its hive schema is `{ meta, nodes, ... }` rather
-  # than the flat map colmena 0.4 accepted for `flake.colmena`. A hive handed to
-  # 0.5 without `nodes` fails with `attribute 'nodes' missing`.
+  # Colmena 0.5 evaluates flakes directly and expects the output at
+  # `colmenaHive`, built by `colmena.lib.makeHive` from the legacy hive (its own
+  # migration guide: `colmenaHive = colmena.lib.makeHive self.outputs.colmena;`).
+  # Hand-writing the schema instead fails in turn with `attribute '__schema'
+  # missing`, then `attribute 'nodes' missing`, then `attribute 'metaConfig'
+  # missing` — makeHive is the supported path, so it is what we use.
   #
-  # The legacy output is left exactly as it was, since 0.4 takes the flat map.
+  # The legacy `colmena` output is kept exactly as it was: colmena 0.4 reads the
+  # flat map, and that is what this repo's `deploy` alias has been pointed at.
   legacyHive =
     {
       meta = {
@@ -57,9 +60,5 @@
 in {
   flake.colmena = legacyHive;
 
-  flake.colmenaHive = {
-    __schema = "v0.5";
-    meta = legacyHive.meta;
-    nodes = builtins.mapAttrs makeColmenaNode nixosHosts;
-  };
+  flake.colmenaHive = inputs.colmena.lib.makeHive legacyHive;
 }
