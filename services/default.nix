@@ -169,6 +169,25 @@
         publicAccess = true;
         websockets = false;
       };
+      # keyed james bible — keys a question into a span of KJV verses using Jev,
+      # then clips the passage from a local KJV corpus
+      # (hosts/historian/kjb.nix). Port 8765 is the app's own default, pinned
+      # here so the Caddy vhost and the unit cannot drift apart.
+      #
+      # auth = "none": no Authelia gate, so the page is public like borges.
+      # Abuse, not access, is the risk: every distinct question bills an
+      # OpenRouter call (~$0.00017), so the app enforces its own per-client and
+      # global token buckets and answers 429 with Retry-After. The real backstop
+      # is a spend limit on the OpenRouter key.
+      kjb = {
+        enable = true;
+        port = 8765;
+        subdomain = "kjb";
+        host = "historian";
+        auth = "none";
+        publicAccess = true;
+        websockets = false;
+      };
     };
 
     # Maitred services (router + reverse proxy)

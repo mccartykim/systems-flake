@@ -121,6 +121,15 @@
     borges.url = "git+ssh://git@github.com/mccartykim/borges_book_warehouse.git";
     borges.inputs.nixpkgs.follows = "nixpkgs";
 
+    # keyed james bible — keys a question into a span of KJV verses by chaining
+    # Jev (TypeSafe System One) Choice questions down book -> chapter -> verse,
+    # then clipping the passage from a local KJV corpus. Pure-Python stdlib
+    # service (package only, no NixOS module); systems-flake runs it as a host
+    # service on historian at kjb.kimb.dev (services.kjb.*). Same git+ssh
+    # convention as borges/media-classifier.
+    keyed-james-bible.url = "git+ssh://git@github.com/mccartykim/keyed_james_bible.git";
+    keyed-james-bible.inputs.nixpkgs.follows = "nixpkgs";
+
     # org-agent + org-life-coach (life-coach agent stack)
     org-agent.url = "git+ssh://git@github.com/mccartykim/org-agent.git";
     org-agent.inputs.nixpkgs.follows = "nixpkgs";

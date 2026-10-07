@@ -844,6 +844,26 @@
         "type": "github"
       }
     },
+    "keyed-james-bible": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1791346530,
+        "narHash": "sha256-ygc16dPzY5aIzYS/3XnmrD+ez416iUwvCUQsJB91nZ8=",
+        "ref": "refs/heads/main",
+        "rev": "edcaa4a77a06b8776dcacea587a2cb30e47701c5",
+        "revCount": 1,
+        "type": "git",
+        "url": "ssh://git@github.com/mccartykim/keyed_james_bible.git"
+      },
+      "original": {
+        "type": "git",
+        "url": "ssh://git@github.com/mccartykim/keyed_james_bible.git"
+      }
+    },
     "kimb-blog-content": {
       "flake": false,
       "locked": {
@@ -1667,6 +1687,7 @@
         "flake-parts": "flake-parts",
         "home-manager": "home-manager",
         "jovian-nixos": "jovian-nixos",
+        "keyed-james-bible": "keyed-james-bible",
         "kimb-blog-content": "kimb-blog-content",
         "knitwork": "knitwork",
         "knitwork-frontend": "knitwork-frontend",
