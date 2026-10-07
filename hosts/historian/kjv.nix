@@ -70,5 +70,18 @@ in {
         TimeoutStartSec = 30;
       };
     };
+
+    # Let maitred's socat forwarder reach this service over Nebula. Without this
+    # the forwarder listens but every connection times out: the host firewall
+    # already trusts nebula1, so the Nebula ACL is the only gate, and maitred is
+    # not a personal device so openToPersonalDevices does not cover it. Same
+    # rule borges.nix declares for its own port.
+    kimb.nebula.extraInboundRules = lib.mkIf kjv.enable [
+      {
+        port = kjv.port;
+        proto = "tcp";
+        host = "maitred";
+      }
+    ];
   };
 }
