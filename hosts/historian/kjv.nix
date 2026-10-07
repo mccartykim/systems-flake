@@ -39,7 +39,11 @@ in {
       wants = ["network-online.target" "agenix.service"];
 
       serviceConfig = {
-        ExecStart = "${package}/bin/keyed-james-bible --host 127.0.0.1 --port ${toString kjv.port}";
+        # Bind all interfaces, not just loopback: maitred terminates TLS and
+        # reaches this port over Nebula (10.100.0.10), so a 127.0.0.1 bind would
+        # accept the TCP connection and then refuse it. The host firewall already
+        # trusts nebula1, so the Nebula ACL declared below is the only gate.
+        ExecStart = "${package}/bin/keyed-james-bible --host 0.0.0.0 --port ${toString kjv.port}";
 
         # Deliberately not root: this is the only unit in the fleet that both
         # faces the network and holds an OpenRouter key. It needs read access to
