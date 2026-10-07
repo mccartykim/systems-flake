@@ -34,29 +34,32 @@
     imports = self.nixosConfigurations.${name}._module.args.modules;
   };
 
-  hive = {
-    meta = {
-      nixpkgs = import nixpkgs {
-        system = "x86_64-linux";
-        overlays = [];
-      };
-      specialArgs = {
-        inherit inputs;
-        outputs = self;
-      };
-    };
-  } // (builtins.mapAttrs makeColmenaNode nixosHosts);
-in {
   # Colmena 0.5 changed its flake output in two ways: it reads `colmenaHive`
-  # instead of `colmena`, and it asserts that the hive declares
-  # `__schema == "v0.5"`. A hive without that field fails with
-  # `attribute '__schema' missing`. nixpkgs pins 0.5.0, so the repo's `deploy`
-  # devshell alias was broken against it.
+  # instead of `colmena`, and its hive schema is `{ meta, nodes, ... }` rather
+  # than the flat map colmena 0.4 accepted for `flake.colmena`. A hive handed to
+  # 0.5 without `nodes` fails with `attribute 'nodes' missing`.
   #
-  # The two outputs therefore differ by exactly that field. It is NOT added to
-  # the legacy `colmena` output: colmena 0.4 predates the schema and would read
-  # an extra `__schema` key as a node named "__schema" whose config is a string,
-  # so adding it there would break the version it still serves.
-  flake.colmena = hive;
-  flake.colmenaHive = hive // {__schema = "v0.5";};
+  # The legacy output is left exactly as it was, since 0.4 takes the flat map.
+  legacyHive =
+    {
+      meta = {
+        nixpkgs = import nixpkgs {
+          system = "x86_64-linux";
+          overlays = [];
+        };
+        specialArgs = {
+          inherit inputs;
+          outputs = self;
+        };
+      };
+    }
+    // (builtins.mapAttrs makeColmenaNode nixosHosts);
+in {
+  flake.colmena = legacyHive;
+
+  flake.colmenaHive = {
+    __schema = "v0.5";
+    meta = legacyHive.meta;
+    nodes = builtins.mapAttrs makeColmenaNode nixosHosts;
+  };
 }
