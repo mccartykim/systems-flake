@@ -171,7 +171,7 @@
       };
       # keyed james bible — keys a question into a span of KJV verses using Jev,
       # then clips the passage from a local KJV corpus
-      # (hosts/historian/kjb.nix). Port 8765 is the app's own default, pinned
+      # (hosts/historian/kjv.nix). Port 8765 is the app's own default, pinned
       # here so the Caddy vhost and the unit cannot drift apart.
       #
       # auth = "none": no Authelia gate, so the page is public like borges.
@@ -179,10 +179,14 @@
       # OpenRouter call (~$0.00017), so the app enforces its own per-client and
       # global token buckets and answers 429 with Retry-After. The real backstop
       # is a spend limit on the OpenRouter key.
-      kjb = {
+      #
+      # There is a duplicate of this entry under the maitred bucket: maitred is
+      # still the public edge for kimb.dev, so it needs one to generate the
+      # kjv.kimb.dev vhost and its socat forwarder to this host.
+      kjv = {
         enable = true;
         port = 8765;
-        subdomain = "kjb";
+        subdomain = "kjv";
         host = "historian";
         auth = "none";
         publicAccess = true;
@@ -367,6 +371,22 @@
         enable = true;
         port = 7171;
         subdomain = "borges";
+        host = "historian";
+        auth = "none";
+        publicAccess = true;
+        websockets = false;
+      };
+      # keyed james bible — runs as a host service on historian (the entry under
+      # the historian bucket above). No containerIP: this duplicate exists only
+      # so maitred's reverse-proxy.nix generates the kjv.kimb.dev vhost and the
+      # socat forwarder (containerBridge:8765 -> historian Nebula :8765)
+      # engages via the `host != "maitred"` filter. Without it the record
+      # resolves to maitred and the connection is refused, because maitred is
+      # still the public edge for this domain.
+      kjv = {
+        enable = true;
+        port = 8765;
+        subdomain = "kjv";
         host = "historian";
         auth = "none";
         publicAccess = true;

@@ -6,12 +6,9 @@
 # here rather than in that flake so the secret path and state directory stay
 # beside the service registry entry that gates them.
 #
-# Unlike borges, no Nebula inbound rule or socat hop is needed. maitred is no
-# longer the public edge — the a3j.8.2 flip landed, and historian's own Caddy
-# holds the kimb.dev certificates and binds :80/:443. The registry entry in
-# services/default.nix generates the kjb.kimb.dev vhost in reverse-proxy.nix,
-# where targetIP resolves to 127.0.0.1 for `host = "historian"` with no
-# containerIP, so Caddy reaches this unit directly over loopback.
+# Named for the *subdomain* (kjv.kimb.dev, the Bible version) rather than the
+# project (keyed james bible), so the registry key, the unit, and the state
+# directory all match the name people actually type.
 {
   config,
   lib,
@@ -19,23 +16,22 @@
   inputs,
   ...
 }: let
-  kjb = config.kimb.services.kjb;
+  kjv = config.kimb.services.kjv;
   package = inputs.keyed-james-bible.packages.${pkgs.stdenv.hostPlatform.system}.default;
 in {
-  config = lib.mkIf kjb.enable {
+  config = lib.mkIf kjv.enable {
     # A dedicated unprivileged account whose PRIMARY group is "media". That
     # group is what makes the OpenRouter key readable: the secret is encrypted
-    # only for historian + bootstrap, and the existing declaration gives it
-    # root:media 0440. Joining the group is therefore how this service gets the
-    # key, rather than re-encrypting the secret for new recipients or widening
-    # the file's mode.
-    users.users.kjb = {
+    # only for historian + bootstrap, and its declaration gives it root:media
+    # 0440. Joining the group is therefore how this service gets the key, rather
+    # than re-encrypting the secret for new recipients or widening the file.
+    users.users.kjv = {
       isSystemUser = true;
       group = "media";
       description = "keyed james bible service";
     };
 
-    systemd.services.kjb = {
+    systemd.services.kjv = {
       description = "keyed james bible — a question keyed into a KJV verse span via Jev";
       wantedBy = ["multi-user.target"];
       # agenix must have decrypted the key before the unit reads its path.
@@ -43,20 +39,20 @@ in {
       wants = ["network-online.target" "agenix.service"];
 
       serviceConfig = {
-        ExecStart = "${package}/bin/keyed-james-bible --host 127.0.0.1 --port ${toString kjb.port}";
+        ExecStart = "${package}/bin/keyed-james-bible --host 127.0.0.1 --port ${toString kjv.port}";
 
         # Deliberately not root: this is the only unit in the fleet that both
         # faces the network and holds an OpenRouter key. It needs read access to
         # the decrypted secret and nothing else.
-        User = "kjb";
+        User = "kjv";
         Group = "media";
 
-        # StateDirectory creates /var/lib/kjb and chowns it to User:Group above.
-        # The app is pointed there explicitly because its default cache path sits
-        # beside its own source, which the (read-only) Nix store does not allow.
-        StateDirectory = "kjb";
+        # StateDirectory creates /var/lib/kjv owned by User:Group above. The app
+        # is pointed there explicitly because its default cache path sits beside
+        # its own source, which the (read-only) Nix store does not allow.
+        StateDirectory = "kjv";
         Environment = [
-          "KJB_CACHE_PATH=/var/lib/kjb/cache.json"
+          "KJB_CACHE_PATH=/var/lib/kjv/cache.json"
           # Passed as a PATH, not as a value. agenix writes this secret as a bare
           # token with no `KEY=value` wrapper, and systemd's EnvironmentFile
           # silently ignores any line without an `=` in it — pointing an
@@ -69,9 +65,8 @@ in {
         Restart = "on-failure";
         RestartSec = 5;
 
-        # The app's limits are the only thing between a public endpoint and a
-        # bill, so give it room to hold connections open across a Jev round trip
-        # without being killed mid-request.
+        # The app's own limits are the only thing between a public endpoint and
+        # a bill, so allow room for a Jev round trip without being killed.
         TimeoutStartSec = 30;
       };
     };

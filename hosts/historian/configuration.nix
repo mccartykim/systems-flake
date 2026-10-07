@@ -104,8 +104,8 @@
     ./dns-update.nix
 
     # keyed james bible — a question keyed into a KJV verse span via Jev,
-    # served at kjb.kimb.dev. Gated on the `kjb` entry in services/default.nix.
-    ./kjb.nix
+    # served at kjv.kimb.dev. Gated on the `kjv` entry in services/default.nix.
+    ./kjv.nix
 
     # Buildbot worker — DISABLED 2026-06-22 (gave up on buildbot-nix
     # fighting private-repo flake inputs; may revisit a different CI
