@@ -47,13 +47,16 @@
     };
   } // (builtins.mapAttrs makeColmenaNode nixosHosts);
 in {
+  # Colmena 0.5 changed its flake output in two ways: it reads `colmenaHive`
+  # instead of `colmena`, and it asserts that the hive declares
+  # `__schema == "v0.5"`. A hive without that field fails with
+  # `attribute '__schema' missing`. nixpkgs pins 0.5.0, so the repo's `deploy`
+  # devshell alias was broken against it.
+  #
+  # The two outputs therefore differ by exactly that field. It is NOT added to
+  # the legacy `colmena` output: colmena 0.4 predates the schema and would read
+  # an extra `__schema` key as a node named "__schema" whose config is a string,
+  # so adding it there would break the version it still serves.
   flake.colmena = hive;
-
-  # Colmena 0.5 renamed its flake output from `colmena` to `colmenaHive`.
-  # nixpkgs pins 0.5.0, so exposing only the legacy name makes the repo's
-  # `deploy` devshell alias fail with:
-  #   flake '...' does not provide attribute
-  #   'packages.x86_64-linux.colmenaHive', ... or 'colmenaHive'
-  # Both names are exposed so either colmena major version works.
-  flake.colmenaHive = hive;
+  flake.colmenaHive = hive // {__schema = "v0.5";};
 }
