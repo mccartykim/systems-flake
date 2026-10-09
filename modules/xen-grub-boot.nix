@@ -1,6 +1,6 @@
 # Boot Xen via GRUB-multiboot2 chainloaded from systemd-boot.
 #
-# Why this exists (bd systems-flake-a3j.2):
+# Why this exists:
 #   historian's GmkTec EVO-X1 firmware (BIOS 1.04, the latest published for
 #   the base model) kills xen.efi instantly at the firmware->xen.efi handoff
 #   (pre-kernel black screen; identical artifacts boot fine under OVMF).
