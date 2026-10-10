@@ -160,7 +160,7 @@
       # 26 goose migrations applied. The pinned nixpkgs ships 0.25.0 and goose errors on a newer
       # schema — and because the DB is on /mnt/media-drive rather than in the store, `--rollback`
       # would not undo a downgrade. See pkgs/homebox-0.26.2.nix.
-      package = pkgs.callPackage ../../pkgs/homebox-0.26.2.nix { };
+      package = pkgs.callPackage ../../pkgs/homebox-0.26.2.nix {};
     };
     # Hosted vision model, not local — measured 0.70s vs 2.05s for historian's
     # own gemma4:e4b (and 68.24s with thinking on). No ROCm needed for this.
@@ -170,6 +170,18 @@
   # Expose music library to Jellyfin (read-only bind mount)
   fileSystems."/var/lib/jellyfin/music" = {
     device = "/home/kimb/Music";
+    fsType = "none";
+    options = ["bind" "ro"];
+  };
+
+  # Expose org-crm contact notes to email-digest (read-only bind mount) —
+  # same idiom as the Jellyfin music bind. /home/kimb is 0700, so the
+  # email-digest service user cannot traverse to the real notes dir at
+  # ~/projects/org_crm/notes; this bind mirrors it into the service's
+  # stateDir (see hosts/historian/email-digest.nix orgNotesDir). The digest
+  # reads these .org files for sender context when summarizing mail.
+  fileSystems."/var/lib/email-digest/org-notes" = {
+    device = "/home/kimb/projects/org_crm/notes";
     fsType = "none";
     options = ["bind" "ro"];
   };
@@ -275,6 +287,12 @@
       "/mnt/media-drive/email-digest" # Maildir — mbsync's write target until 6b
       "/mnt/media-drive/org" # org-crm bulk until 6b
       "/mnt/media-drive/tooms_photos"
+      # job_search_mk2 — the job-search workspace synced here from
+      # total-eclipse via Syncthing (jobcoach migration, 2026-10-10). The
+      # folder does not exist yet; restic logs a warning and continues when
+      # an include path matches no files (verified against restic 0.19.1),
+      # so this line is safe to land before the first sync.
+      "/mnt/media-drive/job_search_mk2"
     ];
     restic.extraExclude = [
       "/home/kimb/.android"

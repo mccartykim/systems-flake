@@ -34,7 +34,16 @@
   # reads and the Interrogator queries interactively; a spun-down USB drive
   # would eat 5–10s spin-up per query. Split layout: bulk on rust, index on SSD.
   mailDir = "/mnt/media-drive/email-digest/Mail"; # a3j.6 6b: local since a3j.4 (seagate lives here)
-  orgNotesDir = "/home/kimb/shared_projects/org_crm/notes";
+  # 2026-10-10 (PRD §2.3 fix): was /home/kimb/shared_projects/org_crm/notes —
+  # a rich-evans-era stale path that doesn't exist on historian (the notes
+  # live at ~/projects/org_crm/notes), so ORG_NOTES_DIR has been silently
+  # empty since the a3j.6 6b cutover. Fixed path + the Jellyfin idiom for
+  # reading kimb-owned data from a service user: /home/kimb is 0700, so the
+  # email-digest user can't traverse to the real dir (verified live: EACCES
+  # as email-digest). The ro bind below mirrors the notes dir into the
+  # service's stateDir, which the unit already opens via ReadWritePaths
+  # stateDir (binds are read-only — the digest only ever reads them).
+  orgNotesDir = "/var/lib/email-digest/org-notes";
   discordUserId = "366455267673636866";
 
   mbsyncrc = pkgs.writeText "email-digest-mbsyncrc" ''
@@ -97,7 +106,12 @@
     # mis-filed message isn't invisible. NOT `Patterns *` (pulls labels-as-
     # folders, noisier); the explicit list is cleaner. mbsync -a syncs all
     # CHANNELS; the Patterns list is the per-folder lever.
-    Patterns "INBOX" "[Gmail]/Sent Mail" "[Gmail]/Drafts" "[Gmail]/Trash" "[Gmail]/Starred" "[Gmail]/All Mail" "[Gmail]/Spam"
+    # 2026-10-10 parity with kimb's interactive ~/.mbsyncrc (jobcoach
+    # migration PRD §2.3): "Job Search" is where the job-search pipeline
+    # files application traffic and JC's mail sweeps read it; Junk,
+    # Unroll.me and Weirdo Newsletters round out the folder set TE pulls
+    # that this channel missed (≈4.8k messages, one-time catch-up pull).
+    Patterns "INBOX" "[Gmail]/Sent Mail" "[Gmail]/Drafts" "[Gmail]/Trash" "[Gmail]/Starred" "[Gmail]/All Mail" "[Gmail]/Spam" "Job Search" "Junk" "Unroll.me" "Weirdo Newsletters"
     Create Near
     SyncState *
     Sync Pull
@@ -497,6 +511,11 @@ in {
     # service runs, which RequiresMountsFor gates on the drive being mounted).
     tmpfiles.rules = [
       "d ${stateDir} 0750 email-digest email-digest -"
+      # Mountpoint for the org-notes ro bind (hosts/historian/
+      # configuration.nix). Created at switch time before the mount unit
+      # starts; persists across boots. The bind itself is read-only —
+      # this dir only exists to be shadowed by the mount.
+      "d ${stateDir}/org-notes 0750 email-digest email-digest -"
     ];
 
     # --- Index service: mbsync pull + mu index. SLOW (~50min/pass). ---
@@ -522,13 +541,6 @@ in {
         ProtectHome = "read-only";
         ProtectSystem = "strict";
         ReadWritePaths = [stateDir mailDir];
-        # Guard the mount-trap: /mnt/seagate is `nofail` (boots with the drive
-        # absent). Without this, the service would write the Maildir into the
-        # empty SSD mountpoint dir, shadowing the real data when the drive
-        # remounts. RequiresMountsFor makes the service refuse to run while the
-        # drive is gone (the timer retries on its next cadence). The Interrogator
-        # blocks degrade benignly when the index is stale/absent.
-        RequiresMountsFor = ["/mnt/seagate"];
         PrivateTmp = true;
         NoNewPrivileges = true;
         StateDirectory = "email-digest";
@@ -540,6 +552,22 @@ in {
         # sync paths.
         UMask = "027";
       };
+      # Guard the mount-trap: /mnt/media-drive is `nofail` (boots with the
+      # drive absent). Without this, the service would write the Maildir into
+      # the empty root-disk mountpoint dir, shadowing the real data when the
+      # drive remounts. RequiresMountsFor makes the service refuse to run
+      # while the drive is gone (the timer retries on its next cadence).
+      # The Interrogator blocks degrade benignly when the index is stale.
+      #
+      # At unit level (unitConfig), NOT inside serviceConfig (fixed
+      # 2026-10-10): RequiresMountsFor is a [Unit] directive, so under
+      # serviceConfig systemd 261 logged "Unknown key 'RequiresMountsFor' in
+      # section [Service], ignoring" on every reload since the option was
+      # written — the guard was inert the whole time (and the path was stale
+      # too: /mnt/seagate was the rich-evans NFS automount, local since
+      # a3j.4 as /mnt/media-drive). nixpkgs does not auto-generate it from
+      # ReadWritePaths.
+      unitConfig.RequiresMountsFor = ["/mnt/media-drive"];
     };
 
     # --- Digest service: mu find + Ollama + Discord. FAST (~2min). ---
@@ -567,27 +595,41 @@ in {
         ProtectHome = "read-only";
         ProtectSystem = "strict";
         ReadWritePaths = [stateDir];
-        # The digest reads the xapian index + maildir the index service
-        # populates; it writes only its own stateDir (last-run). The Seagate
-        # mount-trap guard applies (read paths under /mnt/seagate); if the
-        # drive is absent, mu find returns nothing → "No new mail" DM (benign).
-        RequiresMountsFor = ["/mnt/seagate"];
         PrivateTmp = true;
         NoNewPrivileges = true;
         StateDirectory = "email-digest";
         UMask = "027";
       };
+      # The digest reads the xapian index + maildir the index service
+      # populates; it writes only its own stateDir (last-run). The
+      # media-drive mount-trap guard applies (read paths under
+      # /mnt/media-drive); if the drive is absent, mu find returns nothing →
+      # "No new mail" DM (benign). Same unitConfig fix as the index service
+      # — the old serviceConfig.RequiresMountsFor=/mnt/seagate line was
+      # silently ignored by systemd 261 AND pointed at a stale path.
+      unitConfig.RequiresMountsFor = ["/mnt/media-drive"];
     };
 
     # Index timer: hourly. Feeds the Interrogator a ~hourly-fresh index (the
     # old 15min timer was never real — each pass took ~68min, so runs chained
     # back-to-back at ~hourly anyway; this makes the cadence honest). A oneshot
     # can't overlap itself, and 120min TimeoutStartSec bounds a slow pass.
+    #
+    # OnCalendar, NOT OnBootSec+OnUnitActiveSec (fixed 2026-10-10): the
+    # monotonic pair chains from unit activity, so when a deploy restarts the
+    # timer the chain breaks — timer enters `active (elapsed)` with
+    # NextElapseUSecRealtime empty and NEVER fires again until reboot.
+    # Observed live: Sep 25 2026 switch-to-configuration SIGTERM'd the
+    # mid-flight index run (44min in), restarted the timer; NextElapseUSec
+    # stayed empty for 15 days while the hourly digest kept DMing "no new
+    # mail" off a frozen index. A calendar timer always has a future elapse
+    # after a restart; Persistent=true keeps the catch-up semantics after
+    # downtime. (The digest timer below already used OnCalendar — that's
+    # why it never wedged; only the index timer chained monotonically.)
     timers.email-digest-index = {
       wantedBy = ["timers.target"];
       timerConfig = {
-        OnBootSec = "3min";
-        OnUnitActiveSec = "1h";
+        OnCalendar = "hourly";
         Persistent = true;
       };
     };
