@@ -296,12 +296,17 @@
       "/mnt/media-drive/email-digest" # Maildir — mbsync's write target until 6b
       "/mnt/media-drive/org" # org-crm bulk until 6b
       "/mnt/media-drive/tooms_photos"
-      # job_search_mk2 — the job-search workspace synced here from
-      # total-eclipse via Syncthing (jobcoach migration, 2026-10-10). The
-      # folder does not exist yet; restic logs a warning and continues when
-      # an include path matches no files (verified against restic 0.19.1),
-      # so this line is safe to land before the first sync.
+      # job_search_mk2 — the job-search workspace, canonical on this host since
+      # 2026-10-10 (@user decision: git transport over ssh, NOT Syncthing; the
+      # migration-era Syncthing plan is superseded). Working tree checked out
+      # at 7222ebc, 382 files, job-search.org sha256 verified identical to
+      # total-eclipse's. The include was safe to land before the data existed:
+      # restic warns and continues when a path matches no files (0.19.1).
       "/mnt/media-drive/job_search_mk2"
+      # The workspace's git REMOTE lives here too (bare repo, ~20M) — it's a
+      # sibling of the working tree, so the working-tree include doesn't cover
+      # it. History + objects must ride to B2 alongside the checkout.
+      "/mnt/media-drive/job_search_mk2.git"
     ];
     restic.extraExclude = [
       "/home/kimb/.android"

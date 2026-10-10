@@ -14,12 +14,18 @@ agenix `hermes-env.age` / `hermes-dashboard-session-token.age` (this repo).
 - [ ] historian disk: `ssh historian.nebula 'df -h /'` — expect ≥100G free
       (first uv2nix build is chunky; if tight → `nh clean all -K 2d` FIRST,
       then expect the next apply to be slow per the post-gc tradeoff).
-- [ ] Syncthing folder `job_search_mk2` landed on both ends (web-UI action,
-      not flake) + per-folder symlink:
+- [ ] Workspace transport **done 2026-10-10 (git, supersedes Syncthing):** bare repo
+      `/mnt/media-drive/job_search_mk2.git` + canonical working tree
+      `/mnt/media-drive/job_search_mk2` + per-folder symlink
       `mkdir -p /home/kimb/shared_projects && ln -s /mnt/media-drive/job_search_mk2 /home/kimb/shared_projects/job_search_mk2`
       (JC's handoff §2 form; the whole-drive variant is superseded).
+      Verified live: baseline `7222ebc` (382 files), `job-search.org` sha256
+      `64506f52…` identical on both hosts, tree clean. TE's clone is
+      push-wired (`origin = kimb@historian.nebula:/mnt/media-drive/job_search_mk2.git`).
 - [ ] B2 proof: `sudo cat <staticPaths store file>` shows
-      `/mnt/media-drive/job_search_mk2` (armed since commit 21d5419c).
+      `/mnt/media-drive/job_search_mk2` **and** `/mnt/media-drive/job_search_mk2.git`
+      (the bare repo got its own line 2026-10-10 — a sibling of the working tree,
+      not covered by it; pending the next historian apply to land in the live set).
 
 ## 1. Deploy the module (historian builds its own closure)
 
@@ -100,6 +106,13 @@ systemctl status hermes-agent hermes-backend
   username `kimb`, password in the handoff below. OAuth (Nous Portal) is the
   upgrade path if ever exposed publicly (then a maitred caddy vhost +
   authelia per the services/default.nix pattern, PRD Q9 later phase).
+- **Workspace editing surface (git transport, supersedes Syncthing):** canonical
+  tree `/mnt/media-drive/job_search_mk2` on historian, reachable byte-identically
+  via `/home/kimb/shared_projects/job_search_mk2`. Emacs-on-TE edits via
+  tramp/ssh; edits land on the historian tree, committed there (or from TE via
+  pull→edit→push). TE's local clone is read-only-by-rule — history only advances
+  by push to `origin` (`kimb@historian.nebula:/mnt/media-drive/job_search_mk2.git`).
+  Offline fallback: edit locally in TE's clone, `git push` when networked.
 - **Telegram:** tokens pending @user (one bot per profile) — without them the
   gateway runs serve-mode + Discord platforms fine (per-profile .env carries
   existing Discord tokens from the rsync). Adding a token later =
