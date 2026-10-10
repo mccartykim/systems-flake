@@ -31,8 +31,14 @@
     "lifecoach-dashboard"
   ];
 in {
+  # DISABLED 2026-10-10 — moving soon; the physical ESP32 buttons are going
+  # in a box and the coach has nothing left to coach. Will be replaced by a
+  # simpler agent later (see docs/lifecoach-handoff.md); to re-enable, flip
+  # enable = true and restore the two tokenFile lines below + the services/
+  # default.nix life-coach-dashboard entries. The org-agent emacs daemon,
+  # life-coach user, state dirs, and secrets in life-coach.nix all stay.
   services.lifecoach-organism = {
-    enable = true;
+    enable = false;
     user = "life-coach";
     stateDir = "/var/lib/lifecoach-organism";
 
@@ -135,15 +141,19 @@ in {
   #
   # Also make emacsclient findable — the module's default `path =` doesn't
   # include it because the lifecoach-organism flake has no dependency on org-agent.
+  # mkIf-gated with the 2026-10-10 disable so these don't become bare
+  # Environment-only unit definitions for services the module no longer
+  # creates (dead unit files). Ungate on re-enable.
   systemd.services = lib.mkMerge [
-    (lib.genAttrs lifecoach-services (_: {
-      environment = {
-        OLLAMA_MODEL = lib.mkForce "deepseek-v4.1-flash:cloud";
-        LIFECOACH_JUDGMENT_MODEL = lib.mkForce "gemma4:31b-cloud";
-        LIFECOACH_VISION_MODEL = lib.mkForce "gemma4:31b-cloud";
-      };
-      path = lib.mkAfter [org-agent-emacs];
-    }))
+    (lib.mkIf config.services.lifecoach-organism.enable
+      (lib.genAttrs lifecoach-services (_: {
+        environment = {
+          OLLAMA_MODEL = lib.mkForce "deepseek-v4.1-flash:cloud";
+          LIFECOACH_JUDGMENT_MODEL = lib.mkForce "gemma4:31b-cloud";
+          LIFECOACH_VISION_MODEL = lib.mkForce "gemma4:31b-cloud";
+        };
+        path = lib.mkAfter [org-agent-emacs];
+      })))
     # Stop the old org-life-coach python daemon. Setting wantedBy=[]
     # removes the multi-user.target.wants symlink so it's no longer
     # "wanted" by systemd on boot. But NixOS activation won't stop a

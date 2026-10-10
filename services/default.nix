@@ -5,8 +5,12 @@
   hostServices = {
     # Rich Evans services
     rich-evans = {
+      # DISABLED 2026-10-10 with the lifecoach stack (moving soon; buttons
+      # going in a box). Flipping to false drops the coach.kimb.dev vhost +
+      # maitred's socat forwarder, following the buildbot pattern: entry
+      # kept so the DNS record isn't pointing at a vhost that exists.
       life-coach-dashboard = {
-        enable = true;
+        enable = false;
         # lifecoach-organism dashboard runs on 8586; the old
         # org-life-coach dashboard on 8585 is now mkForce-disabled.
         port = 8586;
@@ -346,8 +350,11 @@
         publicAccess = true;
         websockets = true;
       };
+      # DISABLED 2026-10-10 with the lifecoach stack (see the rich-evans
+      # bucket above). This maitred-bucket duplicate drove only the socat
+      # forwarder + authelia rule for coach.kimb.dev; both stop here.
       life-coach-dashboard = {
-        enable = true;
+        enable = false;
         # lifecoach-organism dashboard runs on 8586; the old
         # org-life-coach dashboard on 8585 is now mkForce-disabled.
         port = 8586;

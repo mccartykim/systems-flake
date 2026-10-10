@@ -21,11 +21,16 @@
   # second file owned by the vacuum-organism user. This avoids
   # minting a new HA long-lived token while still respecting the
   # one-user-per-decrypted-secret model.
-  age.secrets.ha-vacuum-token = {
-    file = ../../secrets/ha-life-coach-token.age;
-    owner = "vacuum-organism";
-    mode = "0400";
-  };
+  #
+  # REMOVED with the 2026-10-10 lifecoach disable: the vacuum-organism
+  # user no longer exists, and an agenix secret owned by a missing user
+  # breaks activation. Restore from the pre-disable commit on re-enable
+  # (the .age file is unchanged in secrets/).
+  # age.secrets.ha-vacuum-token = {
+  #   file = ../../secrets/ha-life-coach-token.age;
+  #   owner = "vacuum-organism";
+  #   mode = "0400";
+  # };
 
   # chirurgeon-organism (the 9th bridge officer, #62) read the same HA token
   # as its own user — REMOVED 2026-09-23 with the bridge crew. The shared
