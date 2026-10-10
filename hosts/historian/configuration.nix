@@ -90,7 +90,14 @@
     ./qwen3-tts.nix
 
     # === a3j.9.2: paperless-ngx (from total-eclipse) — scanned mail from maitred ===
-    ./paperless.nix
+    # DISABLED 2026-10-10: dead weight per Kimb — hardly used. It was also the
+    # sole reason python3.14-torch entered historian's closure (via
+    # sentence-transformers), and the helpers-overlay CPU torch never
+    # substitutes from cache — every gc'd historian rebuild re-compiled it
+    # for hours on-target. State at /var/lib/paperless is untouched; maitred's
+    # scanner rsync (hosts/maitred/scanner.nix) is disabled in step. Re-enable:
+    # uncomment this import + the scanner.nix rsync block.
+    # ./paperless.nix
 
     # === a3j.9.4: headless KDE Connect + sms-history reader (from total-eclipse) ===
     ./kdeconnect-sms.nix

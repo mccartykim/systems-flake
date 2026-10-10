@@ -215,25 +215,30 @@ in {
       };
 
       # Rsync scans to rich-evans every 2 minutes
-      sync-scans = {
-        description = "Sync scanned documents to rich-evans";
-        after = ["network.target" "nebula@mesh.service"];
-        serviceConfig = {
-          Type = "oneshot";
-          ExecStart = syncScript;
-          User = "root";
-        };
-      };
+      # DISABLED 2026-10-10 with paperless on historian (dead weight, hardly
+      # used). Scans still stage in /var/lib/scans and the samba `scans` share
+      # exposes them read-only — grab them manually. Re-enable together with
+      # historian's ./paperless.nix import.
+      # sync-scans = {
+      #   description = "Sync scanned documents to rich-evans";
+      #   after = ["network.target" "nebula@mesh.service"];
+      #   serviceConfig = {
+      #     Type = "oneshot";
+      #     ExecStart = syncScript;
+      #     User = "root";
+      #   };
+      # };
     };
 
-    timers.sync-scans = {
-      description = "Sync scans to rich-evans every 2 minutes";
-      wantedBy = ["timers.target"];
-      timerConfig = {
-        OnCalendar = "*:0/2";
-        Persistent = true;
-      };
-    };
+    # DISABLED 2026-10-10 with the sync-scans service (see above).
+    # timers.sync-scans = {
+    #   description = "Sync scans to rich-evans every 2 minutes";
+    #   wantedBy = ["timers.target"];
+    #   timerConfig = {
+    #     OnCalendar = "*:0/2";
+    #     Persistent = true;
+    #   };
+    # };
   };
 
   # Share scans directory via Samba (read-only, same ACL as printers)
