@@ -87,7 +87,15 @@
     ./monitoring.nix
 
     # === a3j.9.1: Qwen3-TTS voice server (from total-eclipse) — CPU/GGML ===
-    ./qwen3-tts.nix
+    # DISABLED 2026-10-10 per Kimb — a bit much for the value. This was the
+    # second reason python3.14-torch stayed in historian's closure after the
+    # paperless disable (qwen3-tts-cuda flake is CPU/torch-based); with both
+    # gone, torch and its multi-hour from-source compile leave the closure
+    # entirely. The only consumers were lifecoach/vacuum organisms' TTS
+    # pointers (both disabled 2026-10-10; their unit env overrides are
+    # mkIf-gated so the URLs are inert). State/model files under
+    # /var/lib/qwen3-tts are untouched. Re-enable: uncomment this import.
+    # ./qwen3-tts.nix
 
     # === a3j.9.2: paperless-ngx (from total-eclipse) — scanned mail from maitred ===
     # DISABLED 2026-10-10: dead weight per Kimb — hardly used. It was also the
