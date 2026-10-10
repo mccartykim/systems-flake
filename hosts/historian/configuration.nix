@@ -750,6 +750,14 @@
       "input"
       "libvirtd"
       "media"
+      # 2026-10-10 (jobcoach migration PRD §3.3): the shared mu index at
+      # /var/lib/email-digest/.cache/mu is group-readable by design (the
+      # Interrogator precedent — per-cycle g+rX chmods in the index
+      # script), but kimb wasn't in the group, so JC's reader on this host
+      # couldn't see the index at all ([ -d ] false through the 0750
+      # .cache chain — verified live 2026-10-10). Reader-only: JC never
+      # runs mbsync/mu index here (digest service owns sync+index).
+      "email-digest"
     ];
   };
 
