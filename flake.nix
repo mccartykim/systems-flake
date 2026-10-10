@@ -213,6 +213,15 @@
     # pkgs/pdx-wallpaper.
     stylix.url = "github:danth/stylix";
     stylix.inputs.nixpkgs.follows = "nixpkgs";
+
+    # Hermes Agent — the AI agent framework this fleet's agent profiles run on.
+    # Phase 2 of the hermes→historian migration (docs/hermes-historian-migration-prd.md):
+    # one module instance on historian serves all five profiles via the gateway
+    # multiplexer. Public repo; nixpkgs NOT followed — the module resolves its
+    # own package from its flake's inputs.self.packages (uv2nix Python env),
+    # and following nixpkgs would rebuild that env against a different tree.
+    # Tier 2 platform: pin, bump deliberately, never as a flake-bump rider.
+    hermes-agent.url = "github:NousResearch/hermes-agent";
   };
 
   outputs = {

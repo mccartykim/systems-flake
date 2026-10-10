@@ -140,6 +140,15 @@
     # and the attribute extractor is OpenRouter, so it needs no ROCm despite
     # historian having it. See ./bin-finder.nix for the measurements behind that.
     ./bin-finder.nix
+
+    # === Hermes Agent gateway (from total-eclipse) — Phase 2 of the
+    # hermes→historian migration (docs/hermes-historian-migration-prd.md).
+    # One module instance, five profiles (blog-pm, facade-decomper, jobcoach,
+    # knitwork-pm, systems-flake-mgr) via the gateway multiplexer; state at
+    # /var/lib/hermes (rides the /var/lib restic include). Runs as kimb (Q8)
+    # for workspace-write parity with syncthing. Secret material lands via
+    # agenix at cutover; the migration rsync is NOT a deploy step. ===
+    ./hermes-agent.nix
   ];
 
   # Syncthing — shared config via kimb.syncthing module

@@ -205,5 +205,25 @@ in
     # services.borges.environmentFile -> systemd EnvironmentFile=. See
     # hosts/rich-evans/borges.nix.
     "borges-env.age".publicKeys = fleetCore ++ [bootstrap];
+
+    # ===== HERMES AGENT (historian) =====
+    # systemd-style EnvironmentFile rendered into /var/lib/hermes/.hermes/.env
+    # by the hermes-agent NixOS module on each activation (environmentFiles).
+    # Contains OLLAMA_API_KEY (moved from total-eclipse's interactive
+    # ~/.hermes/.env at the Phase-2 cutover — the module REWRITES the top-level
+    # .env every activation, so the key must live here) plus the dashboard
+    # basic-auth credentials for the nebula-only backend bind (Q9): scrypt
+    # password hash (no plaintext at rest) + the HMAC session secret (stable
+    # across restarts). Per-PROFILE .env files (jobcoach's Discord tokens etc.)
+    # are NOT managed by the module and migrate with the rsync. See
+    # hosts/historian/hermes-agent.nix + docs/hermes-historian-migration-prd.md.
+    "hermes-env.age".publicKeys = [hostKeys.historian bootstrap];
+
+    # Stable dashboard/API session token for the hermes backend on historian
+    # (backend.sessionTokenFile — read at start time, never on a command line;
+    # keeps desktop-app remote-gateway connections stable across restarts).
+    # The desktop app stores its copy on the client; this file is the server
+    # side. Same Phase-2 change-set as hermes-env above.
+    "hermes-dashboard-session-token.age".publicKeys = [hostKeys.historian bootstrap];
   }
   // allNebulaSecrets
