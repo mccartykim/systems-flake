@@ -2,7 +2,7 @@
 
 **Author:** systems-flake-mgr (fleet half); jobcoach owns the workspace half (.stignore + handoff note, slotted into Phase 1).
 **Written:** 2026-10-10, after live verification on total-eclipse, historian, and rich-evans.
-**Status:** DRAFT — awaiting @kimb go/no-go (§5). **Phase 0 flake fixes are now implemented in the tree** (timer, mount guard, orgNotesDir bind, gmail parity — see §4.0); Phase 1's restic line landed with them.
+**Status:** DRAFT — awaiting @kimb go/no-go (§5). **Phase 0 flake fixes are now implemented in the tree** (timer, mount guard, orgNotesDir bind, gmail parity — see §4.0); Phase 1's restic line landed with them. §3.2's path canonicalization corrected to the per-folder symlink (supersedes the whole-drive form); §3.3 adds the verified `gmail/Archive` verdict (excluded — all content already in All Mail). @kimb has directed **all of JC's state migrates** (profile core + workspace + mail; caches re-fetch); remaining open calls in §5 are single-writer confirmation, `car/` payload, Telegram tokens, retirement windows.
 
 ## 1. Problem
 
@@ -46,12 +46,13 @@ Goal: one Hermes deployment on historian as a flake-managed service; job coach's
 ## 3. Target architecture
 
 1. **Hermes service on historian** — as previously designed (skill ref `hermes-on-historian.md`): `github:NousResearch/hermes-agent` as a pinned flake input, `nixosModules.default` on historian, one gateway multiplexer serving all 5 profiles, state under `/var/lib/hermes` (rides the `/var/lib` restic include automatically), secrets via agenix + `environmentFiles`, Telegram one-bot-per-profile, dashboard nebula-only at first.
-2. **Workspace** — Syncthing Send/Receive `job_search_mk2` → `/mnt/media-drive/job_search_mk2`, **historian canonical** (JC's single-writer rule for `job-search.org`), JC's `.stignore` + handoff note, plus one line: `kimb.restic.extraPaths += ["/mnt/media-drive/job_search_mk2"]` on historian. Path canonicalization via `ln -s /mnt/media-drive /home/kimb/shared_projects` on historian (JC's proposal — verified nothing exists at `~/shared_projects` there today, so no shadowing risk).
+2. **Workspace** — Syncthing Send/Receive `job_search_mk2` → `/mnt/media-drive/job_search_mk2`, **historian canonical** (JC's single-writer rule for `job-search.org`), JC's `.stignore` + handoff note, plus one line: `kimb.restic.extraPaths += ["/mnt/media-drive/job_search_mk2"]` on historian. Path canonicalization on historian (corrected 2026-10-10 to JC's handoff §2 form — my earlier whole-drive symlink was superseded: `ln -s /mnt/media-drive ~/shared_projects` would rename all 1.6 T of media as `~/shared_projects`): `mkdir -p /home/kimb/shared_projects && ln -s /mnt/media-drive/job_search_mk2 /home/kimb/shared_projects/job_search_mk2`. Byte-identical resolution for the 7 profile files that hardcode the path, zero exposure of the drive's other contents (verified nothing exists at `~/shared_projects` on historian today).
 3. **Email: converge on ONE canonical Maildir on historian's seagate.**
    - The IMAP servers hold the truth (TE's mbsync is two-way: `Create Both` + `Sync All`), so this is a **catch-up pull, not a 30G migration**.
    - PNY stays the games volume: it's removable USB flash — the wrong home for a primary copy of irreplaceable mail — and there's no capacity or performance reason to move mail off the seagate (split layout already solves rust's random-read weakness; neither drive is SMR).
    - Concretely: fix §2.3's three flake bugs; extend historian's gmail channel `Patterns` with `"Job Search" "Junk" "Unroll.me" "Weirdo Newsletters"`; let mbsync catch up (sequential writes, rust-appropriate); jobcoach reads the canonical Maildir + **one shared mu index** via the email-digest group (the Interrogator precedent: group-read, `mu --muhome /var/lib/email-digest/.cache/mu`; hermes user joins `email-digest` group). One index, two readers, hourly freshness for JC's sweeps — no second 6-7G index on the SSD.
    - TE's Maildir becomes the rollback copy (kept on `/mnt/bulk`, 48h snapshots), retired after a verified catch-up + soak window.
+   - **`gmail/Archive` (TE-only, 233,159 files, frozen since 2026-06-16) is OUT of the canonical store — verified, not assumed (2026-10-10):** it's a leftover of an older TE channel config, in *neither* mbsyncrc's gmail Patterns. Filename overlap with `[Gmail]/All Mail` is 0/200 — but filenames are per-folder UIDs in Gmail IMAP, so that proves nothing; by `Message-ID` (25-message sample via TE's mu index), **25/25 Archive messages also live in `[Gmail]/All Mail`**, which historian's channel pulls. Archive is Gmail's default archive label — its contents are All Mail by definition. Zero unique messages lost by excluding it; parity is per-Pattern, not file-count totals.
 4. **End state:** every piece of JC's world B2-covered *systematically* (brain via `/var/lib`, workspace via extraPaths, mail via existing extraPaths) rather than incidentally, and total-eclipse powers off.
 
 ## 4. Phases
@@ -66,11 +67,14 @@ Goal: one Hermes deployment on historian as a flake-managed service; job coach's
 
 ## 5. Decisions needed from @kimb (go/no-go)
 
-1. **Phase 0+1 now?** Independent of the Hermes move; closes the workspace's offsite gap (the sharpest risk — irreplaceable, unprotected) and restores honest mail digests. Recommended: yes, now.
-2. **Does `car/` ride?** (JC's question: keep `cars.org` + scripts, drop the 67M PDF + regenerable scratch → sync/B2 set drops 115M → 14M. Either works; the flake line doesn't change.)
-3. **Single canonical Maildir on the seagate + PNY stays games?** (My recommendation: yes to both — see §3.3.)
-4. **Hermes scope:** all five profiles? Telegram one-bot-per-profile (needs BotFather tokens from you) vs shared bot + `profile_routes`?
-5. **TE Maildir retirement window** (I'd suggest: delete after Phase 0 verification + 2 weeks soak; it costs 30G of snapshot-covered bulk in the meantime).
+**Resolved by @kimb (2026-10-10):**
+- **Scope: ALL of JC's state migrates** — profile core + workspace + mail. @kimb wants to chat with us from anywhere, not just at the desk; nothing is left behind except re-fetchable caches. (PRD assumed all-5-profiles; now confirmed for JC's seat and consistent with the same treatment for the rest.)
+
+**Still open:**
+1. **Single-writer rule confirmation** — the PRD and JC's handoff assume historian canonical for `job-search.org`; JC asks that it be said out loud rather than defaulted.
+2. **`car/` payload** — drop the 67M Haynes PDF + derived scratch, keep `cars.org` + fetch scripts (JC's default; flips with two `.stignore` lines if you ever want the manual readable offline).
+3. **Telegram tokens** — one-bot-per-profile needs a BotFather token per profile from you (JC + systems-flake-mgr at minimum, per "chat with y'all"); shared bot + `profile_routes` is the zero-BotFather alternative.
+4. **TE Maildir retirement window** — delete TE's 30G Maildir after Phase 0 verification + ~2-week soak? (It stays as rollback until then.)
 
 ## 6. Risks
 
