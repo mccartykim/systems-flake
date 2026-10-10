@@ -13,6 +13,7 @@
     ../profiles/base.nix
     ../profiles/desktop.nix
     ../profiles/gaming.nix
+    ../profiles/brother-printer.nix
 
     # Nebula mesh network (consolidated module)
     ../../modules/nebula-node.nix
