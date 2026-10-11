@@ -64,7 +64,12 @@ pgrep -af 'hermes serve|hermes-desktop'   # then quit via the app, or:
 # pkill -f 'hermes serve'  (the desktop app restarts its own backend — quit the app)
 ```
 
-**rsync the durable set** (86M; re-fetchables stay behind — never rsync
+**rsync the durable set** — **123M measured 2026-10-11 00:40 EDT**. The
+exclude list below is the SPEC; byte counts are point-in-time (the original
+"86M" estimate rotted +37M in one day of heavy sessions — re-measure at
+execution: `du -sh --exclude=cache --exclude=logs --exclude=hermes-agent
+--exclude=tools --exclude=models_dev_cache.json --exclude=pets
+--exclude=telemetry ~/.hermes`). Re-fetchables stay behind — never rsync
 `cache/ logs/ hermes-agent/ tools/`):
 
 ```bash
@@ -125,9 +130,20 @@ systemctl status hermes-agent hermes-backend
 
 - Dashboard basic-auth password (generated, scrypt-hashed in the env secret —
   plaintext lives in the age file and the local handoff file only):
-  `/home/kimb/.hermes/profiles/systems-flake-mgr/cache/scratch/hermes-secrets/DASHBOARD_PASSWORD.txt` (0600).
-- Desktop app remote-gateway token: same dir, `hermes-dashboard-session-token` file.
-- Rotate anytime: `agenix -e hermes-env.age` (password hash) + redeploy.
+  `/home/kimb/hermes-secrets/DASHBOARD_PASSWORD.txt` (dir 0700, files 0600).
+  **Moved 2026-10-11 out of the profile `cache/scratch` staging dir — scratch
+  prunes entries idle >24h and would have silently shredded the only
+  plaintext copy (~10h from loss when caught). Never stage one-time handoffs
+  under `cache/`, and always state the full path in the room.**
+  Verified end-to-end 2026-10-11: the file's password scrypt-matches the LIVE
+  deployed hash on historian (n=16384 r=8 p=1), and the repo-sealed plaintext
+  is value-identical to the deployed `.env` — no credential drift on
+  re-activation.
+- Desktop app remote-gateway token: same dir, `hermes-dashboard-session-token`
+  file (+ `hermes-env`, the sealed secret's plaintext, for rotation reference).
+- Rotate anytime: `agenix -e hermes-env.age` (password hash) + redeploy
+  (interactive editor only; scripted re-seal = `age -R <recipients>` — never
+  `EDITOR="cp …"`, which silently seals an empty file).
 
 ## 5. Rollback
 
