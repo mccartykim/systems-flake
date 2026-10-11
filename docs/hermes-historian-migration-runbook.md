@@ -55,14 +55,53 @@ orphan store-realise processes pin disk): write the two applies into
 ## 2. Cutover — move the durable state
 
 **Stop the source first** (a live copy misses WAL-resident writes; sessions
-optimize/prune refuse while a process holds the DB):
+optimize/prune refuse while a process holds the DB). **The operator must be
+OUTSIDE the app's process tree** (jobcoach's gate, 2026-10-11): a session
+inside the desktop app dies with the app mid-copy, and a not-fully-dead
+survivor is what rewrites the WALs under the copy. Run the whole sequence
+below as ONE script launched `setsid` BEFORE the quit — it survives the
+app's death, logs to `~/hermes-cutover.log`, and writes `~/hermes-cutover.DONE`
+only if every gate passes. The executing agent session dies with the app by
+design; its next turn happens on historian.
+
+**Kill patterns verified against the live process table 2026-10-11** — the
+per-profile backend's real cmdline is
+`…-hermes-agent-env/bin/hermes --profile <name> serve …`, so a naive
+`'hermes serve'` pattern matches NOTHING (this runbook's earlier assert
+would have passed while every backend lived):
 
 ```bash
-# on total-eclipse: quit the Hermes desktop app + gateway (interactive
-# install — no systemd unit; pgrep hermes to confirm nothing holds state.db)
-pgrep -af 'hermes serve|hermes-desktop'   # then quit via the app, or:
-# pkill -f 'hermes serve'  (the desktop app restarts its own backend — quit the app)
+# 1. quit the desktop app + every profile backend, then assert quiet
+pkill -f 'herme[s]-desktop' || true      # the electron app (both processes)
+pkill -f 'bin/herme[s].*serve' || true   # per-profile `hermes … serve` backends
+for i in $(seq 1 30); do pgrep -af 'herme[s]-desktop|bin/herme[s].*serve' || break; sleep 2; done
+pgrep -af 'herme[s]-desktop|bin/herme[s].*serve' && { echo "SOURCE NOT QUIET"; exit 1; }
 ```
+
+**Checkpoint the WALs as an explicit step — process teardown is a promise,
+not a checkpoint** (jobcoach's gate, proven on disk 2026-10-11: blog-pm's
+backend exited at 08:32 with its 3.1 M WAL still sitting there; three of six
+profile WALs are teardown-orphans). The durable set carries ~24 M of live
+`state.db-wal` (jobcoach 7.0 M, facade 5.1 M, sfm 4.6 M, knitwork 3.4 M,
+blog-pm 3.2 M, top-level 1.1 M, plus six `-shm`) — rewritten by the very act
+of preparing the cutover:
+
+```bash
+# 2. checkpoint every state DB; busy=0 doubles as a no-live-connection assert
+#    (sqlite3 on TE: /etc/profiles/per-user/kimb/bin/sqlite3)
+for db in /home/kimb/.hermes/state.db /home/kimb/.hermes/shared-state.db \
+           /home/kimb/.hermes/projects.db /home/kimb/.hermes/profiles/*/state.db; do
+  [ -f "$db" ] || continue
+  out=$(sqlite3 "$db" 'PRAGMA wal_checkpoint(TRUNCATE);')
+  [ "${out%%|*}" = "0" ] || { echo "CHECKPOINT BUSY: $db ($out)"; exit 1; }
+  [ ! -s "$db-wal" ] || { echo "WAL NOT EMPTY: $db-wal"; exit 1; }
+  pgrep -af 'herme[s]-desktop|bin/herme[s].*serve' && { echo "BACKEND RETURNED mid-checkpoint"; exit 1; }
+done
+```
+
+Copied `-shm` files are stale shared-memory indexes — SQLite rebuilds them
+on first open; harmless. The busy=0 checkpoint plus 0-byte WAL is the gate:
+"WAL-safe" is a measured property of the copy, not an assumption about it.
 
 **rsync the durable set** — **123M measured 2026-10-11 00:40 EDT**. The
 exclude list below is the SPEC; byte counts are point-in-time (the original
@@ -85,6 +124,22 @@ them from `settings` + `environmentFiles` on every switch, so the rsynced
 copies are transient. Per-profile dirs (incl. each profile's own `.env`,
 `config.yaml`, skills, memories, sessions, state.db) ride verbatim — the module
 never touches them.
+
+**Post-copy integrity gate — on historian, BEFORE any restart.** The script
+runs this over ssh and touches `.DONE` only if every DB answers `ok`
+(`sqlite3` verified present on historian at `/etc/profiles/per-user/kimb/bin/sqlite3`):
+
+```bash
+ssh historian.nebula 'for db in /var/lib/hermes/.hermes/state.db \
+  /var/lib/hermes/.hermes/shared-state.db /var/lib/hermes/.hermes/projects.db \
+  /var/lib/hermes/.hermes/profiles/*/state.db; do
+  [ -f "$db" ] || continue
+  echo "$db: $(sqlite3 "$db" "PRAGMA integrity_check;")"   # expect: ok
+done'
+```
+
+Read the log + `.DONE` before restarting anything — if any DB is not `ok`,
+stop and investigate; the restart is a deliberate step, not part of the copy.
 
 **Restart + verify on historian:**
 
@@ -125,6 +180,14 @@ systemctl status hermes-agent hermes-backend
   which the module does not manage: edit
   `/var/lib/hermes/.hermes/profiles/<name>/.env` directly on historian, then
   `systemctl restart hermes-agent`.
+- **Post-cutover, TE's local profiles are a stale fork BY DESIGN —
+  read-only-by-rule, like the workspace clone** (jobcoach, 2026-10-11).
+  Point the desktop app at the remote gateway (per profile) and let nothing
+  run against the local `~/.hermes` copy: talking to the local profile while
+  historian is canonical silently diverges memory/skills with no error — the
+  same two-copies failure shape as the mail mirrors (TE's `Junk` frozen four
+  months). The executing agent's "next session is the historian one." The
+  local copy stays as Phase-3 rollback until the soak retires it.
 
 ## 4. Secrets handoff for @user (plaintext NOT in the repo)
 
@@ -139,6 +202,15 @@ systemctl status hermes-agent hermes-backend
   deployed hash on historian (n=16384 r=8 p=1), and the repo-sealed plaintext
   is value-identical to the deployed `.env` — no credential drift on
   re-activation.
+  **Single-copy caveat (jobcoach, 2026-10-11): the plaintext now exists ONLY
+  on TE** — historian holds just the hash — so losing TE's home means the
+  dashboard is recoverable only by rotating + re-sealing (recipe above; ~15
+  min, nebula-only blast radius). The password belongs in a password manager
+  today. NOTE: the local Hermes vault is EMPTY and no 1Password/Bitwarden
+  backend is detected on TE (probed 2026-10-11) — so either @user's own
+  manager (phone-side), or the default: save it into the Hermes vault from
+  the dashboard login page right after cutover, when the vault lives on
+  historian's `/var/lib` (B2-covered) instead of the demoted host.
 - Desktop app remote-gateway token: same dir, `hermes-dashboard-session-token`
   file (+ `hermes-env`, the sealed secret's plaintext, for rotation reference).
 - Rotate anytime: `agenix -e hermes-env.age` (password hash) + redeploy
