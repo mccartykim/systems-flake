@@ -37,7 +37,10 @@ in {
         nameserver ${hostVeth}
       '';
 
-      imports = [inputs.mist-blog.nixosModules.default];
+      imports = [
+        ../../modules/emudhra-ca-blacklist.nix
+        inputs.mist-blog.nixosModules.default
+      ];
 
       # mist-blog's module references `self.packages.${pkgs.system}.default`
       # to find the binary; pass its flake in as a module arg.

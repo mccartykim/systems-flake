@@ -42,7 +42,10 @@ in {
         nameserver 192.168.69.1
       '';
 
-      imports = [inputs.mist-blog.nixosModules.default];
+      imports = [
+        ../../modules/emudhra-ca-blacklist.nix
+        inputs.mist-blog.nixosModules.default
+      ];
       _module.args.self = inputs.mist-blog;
       environment.systemPackages = [inputs.mist-blog.packages.x86_64-linux.default];
 

@@ -7,6 +7,8 @@
 }: let
   sshKeys = import ../ssh-keys.nix;
 in {
+  imports = [../../modules/emudhra-ca-blacklist.nix];
+
   # Boot configuration
   boot = {
     # Bootloader - can be overridden by hosts
@@ -133,14 +135,4 @@ in {
   # Enable sudo for wheel group
   security.sudo.wheelNeedsPassword = false;
 
-  # eMudhra intermediate CA compromise (Oct 2026). NSS 3.131.1 removes the
-  # signing root, but nixpkgs still ships cacert 3.126, so distrust the
-  # emSign roots that remain trusted for serverAuth. Revisit once
-  # security.pki.caBundle is built from NSS >= 3.131.1.
-  security.pki.caCertificateBlacklist = [
-    "Comodo AAA Services root"
-    "emSign ECC Root CA - G3"
-    "emSign Root CA - C1"
-    "emSign ECC Root CA - C3"
-  ];
 }
