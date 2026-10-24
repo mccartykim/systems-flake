@@ -287,6 +287,10 @@ def delete_putio_file(
 
 
 def main(argv: list[str] | None = None) -> int:
+    # journald otherwise buffers every per-file line until the process exits,
+    # which hides progress on a ~1h run.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(line_buffering=True)
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--media-root", action="append", dest="media_roots",
                     help="media root to scan; repeatable")
