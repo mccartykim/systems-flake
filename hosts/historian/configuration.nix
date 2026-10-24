@@ -1050,9 +1050,7 @@
   # dryRun=true logs decisions without touching put.io; false arms deletion.
   # See scripts/media_putio_gc.py and its unittest file.
   systemd.services.media-putio-gc = let
-    # Held in dry-run after The Pitt was deleted by the first armed run.
-    # Favorite it (or add an exclusion) before flipping this back to false.
-    dryRun = true;
+    dryRun = false;
     args =
       [
         "${pkgs.python3}/bin/python3"
