@@ -77,8 +77,9 @@ class TestPathHelpers(unittest.TestCase):
 class TestDecide(unittest.TestCase):
     def _decide(self, **kw):
         args = dict(rel="chill.institute/x/a.mkv", mtime=NOW - 31 * DAY,
-                    userdata=[], now=NOW, max_age_days=30,
-                    excludes=gc.DEFAULT_EXCLUDES)
+                    link="/srv/media/TV Shows/Show/a.mkv",
+                    userdata=[], favorite_paths=set(), now=NOW,
+                    max_age_days=30, excludes=gc.DEFAULT_EXCLUDES)
         args.update(kw)
         return gc.decide(**args)
 
@@ -104,10 +105,35 @@ class TestDecide(unittest.TestCase):
         self.assertEqual(reason, "excluded-share")
 
     def test_favorite_by_any_user_protected(self):
-        ud = [{"IsFavorite": False, "Played": True,
-               "LastPlayedDate": "2020-01-01T00:00:00Z"},
-              {"IsFavorite": True}]
-        self.assertEqual(self._decide(userdata=ud), (False, "favorite"))
+        link = "/srv/media/TV Shows/Show/a.mkv"
+        self.assertEqual(
+            self._decide(link=link, favorite_paths={link}),
+            (False, "favorite"),
+        )
+
+    def test_favorited_series_protects_all_episodes(self):
+        # Jellyfin stores the favorite on the Series, not the Episode.
+        self.assertFalse(self._decide(
+            link="/srv/media/TV Shows/Futurama (1999)/Season 1/e1.mkv",
+            favorite_paths={"/srv/media/TV Shows/Futurama (1999)"},
+        )[0])
+
+    def test_favorited_season_protects_its_episodes(self):
+        self.assertFalse(self._decide(
+            link="/srv/media/TV Shows/Show/Season 1/e1.mkv",
+            favorite_paths={"/srv/media/TV Shows/Show/Season 1"},
+        )[0])
+
+    def test_favorite_similar_prefix_does_not_protect(self):
+        # "Show" must not protect "Show 2" or "Showcase".
+        self.assertTrue(self._decide(
+            link="/srv/media/TV Shows/Show 2/e1.mkv",
+            favorite_paths={"/srv/media/TV Shows/Show"},
+        )[0])
+        self.assertTrue(self._decide(
+            link="/srv/media/TV Shows/Showcase/e1.mkv",
+            favorite_paths={"/srv/media/TV Shows/Show"},
+        )[0])
 
     def test_viewed_within_window_protected(self):
         ud = [{"Played": True,
@@ -141,8 +167,13 @@ class TestDecide(unittest.TestCase):
         self.assertTrue(self._decide(userdata=ud)[0])
 
     def test_multiple_users_union_protects(self):
-        ud = [{"Played": False}, {"IsFavorite": True}]
-        self.assertFalse(self._decide(userdata=ud)[0])
+        # Any user's recent view is enough; the other user's empty data is
+        # irrelevant.
+        ud = [{"Played": False},
+              {"Played": True, "LastPlayedDate": "2023-11-30T00:00:00Z"}]
+        self.assertFalse(
+            self._decide(userdata=ud, now=1_701_000_000.0)[0]
+        )
 
 
 class TestPlan(unittest.TestCase):
@@ -199,6 +230,13 @@ class TestPlan(unittest.TestCase):
         link = self.make("chill.institute/show/a.mkv", 45)
         actions, _ = self.run_plan({link: [{"IsFavorite": True}]})
         self.assertEqual(actions, [])
+
+    def test_favorited_series_dir_is_not_planned(self):
+        self.make("chill.institute/show/a.mkv", 45, "TV Shows/show/a.mkv")
+        series = os.path.join(self.media, "TV Shows", "show")
+        actions, reasons = self.run_plan({series: [{"IsFavorite": True}]})
+        self.assertEqual(actions, [])
+        self.assertEqual(reasons["favorite"], 1)
 
     def test_non_video_regular_file_and_dead_link_ignored(self):
         self.make("chill.institute/show/notes.txt", 400)

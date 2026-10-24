@@ -109,10 +109,28 @@ def parse_dt(value: str | None) -> datetime | None:
         return None
 
 
+def has_favorited_ancestor(link: str, favorite_paths: set[str]) -> bool:
+    """True if link or any parent directory is favorited.
+
+    Jellyfin favorites live on the Series/Season item, not on each Episode, so
+    a favorited show must protect every file beneath its path.
+    """
+    path = link
+    while True:
+        if path in favorite_paths:
+            return True
+        parent = os.path.dirname(path)
+        if parent == path:
+            return False
+        path = parent
+
+
 def decide(
     rel: str,
     mtime: float | None,
+    link: str,
     userdata: list[dict] | None,
+    favorite_paths: set[str] | None,
     now: float,
     max_age_days: float,
     excludes: list[str] | None = None,
@@ -128,7 +146,7 @@ def decide(
 
     cutoff = now - max_age_days * 86400.0
     entries = userdata or []
-    if any(bool(u.get("IsFavorite")) for u in entries):
+    if has_favorited_ancestor(link, favorite_paths or set()):
         return False, "favorite"
 
     played_undated = False
@@ -173,6 +191,10 @@ def plan(
 ) -> tuple[list[dict], dict[str, int]]:
     """Build the deletion list. Returns (actions, reason counts)."""
     now = time.time() if now is None else now
+    favorite_paths = {
+        path for path, entries in userdata.items()
+        if any(bool(u.get("IsFavorite")) for u in entries)
+    }
     actions: list[dict] = []
     reasons: dict[str, int] = {}
     for link in iter_media_links(roots):
@@ -185,7 +207,8 @@ def plan(
         except OSError:
             continue  # dead link; media-symlink-cleanup owns it
         eligible, reason = decide(
-            rel, mtime, userdata.get(link), now, max_age_days, excludes
+            rel, mtime, link, userdata.get(link), favorite_paths,
+            now, max_age_days, excludes
         )
         reasons[reason] = reasons.get(reason, 0) + 1
         if eligible:
@@ -219,8 +242,10 @@ def jellyfin_userdata(
         start = 0
         while True:
             query = urllib.parse.urlencode({
+                # Series/Season included so a favorited show protects its
+                # episodes (Jellyfin stores the favorite on the parent item).
                 "recursive": "true",
-                "includeItemTypes": "Movie,Episode",
+                "includeItemTypes": "Movie,Episode,Series,Season",
                 "fields": "Path,UserData",
                 "enableImages": "false",
                 "limit": page_size,
