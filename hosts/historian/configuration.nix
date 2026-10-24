@@ -1045,10 +1045,10 @@
   # kimb:media — it can read the 0440 API key but not /var/lib/jellyfin/data.
   # The per-file clock is the mirror file's mtime, which rclone preserves from
   # put.io via --no-update-modtime (so each file keeps its own deadline).
-  # dryRun=true logs decisions and passes --dry-run to rclone; flip to false to
-  # arm deletion. See scripts/media_putio_gc.py and its unittest file.
+  # dryRun=true logs decisions without touching put.io; false arms deletion.
+  # See scripts/media_putio_gc.py and its unittest file.
   systemd.services.media-putio-gc = let
-    dryRun = true;
+    dryRun = false;
     args =
       [
         "${pkgs.python3}/bin/python3"
