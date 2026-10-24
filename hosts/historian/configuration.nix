@@ -1036,15 +1036,17 @@
   };
 
   # === put.io media garbage collector ===
-  # Deletes a video from put.io once its OWN 30-day clock has run out and no
-  # Jellyfin user favorited it or played it within that window. Scope is the
-  # media-classifier symlink farm, so only files Jellyfin is meant to manage
-  # are candidates; the Parsimony share is excluded outright.
+  # TV/anime is decided per SERIES: the whole show goes once its newest
+  # episode is 30+ days old and no episode was played in that window; one
+  # recent view keeps every episode. Movies are decided per file, but a movie
+  # matching the franchise name of a non-idle series is kept. Anything
+  # Jellyfin has not indexed is never touched, and the Parsimony share is
+  # excluded outright. Scope is the media-classifier symlink farm.
   #
   # Uses the Jellyfin HTTP API, not its SQLite DB, because this unit runs as
   # kimb:media — it can read the 0440 API key but not /var/lib/jellyfin/data.
-  # The per-file clock is the mirror file's mtime, which rclone preserves from
-  # put.io via --no-update-modtime (so each file keeps its own deadline).
+  # Ages come from each mirror file's mtime, which rclone preserves from
+  # put.io via --no-update-modtime.
   # dryRun=true logs decisions without touching put.io; false arms deletion.
   # See scripts/media_putio_gc.py and its unittest file.
   systemd.services.media-putio-gc = let
@@ -1060,6 +1062,10 @@
         "--media-root"
         "/srv/media/TV Shows"
         "--media-root"
+        "/srv/media/Anime"
+        "--series-root"
+        "/srv/media/TV Shows"
+        "--series-root"
         "/srv/media/Anime"
         "--putio-root"
         "/mnt/media-drive/putio"

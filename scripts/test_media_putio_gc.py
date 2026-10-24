@@ -187,6 +187,7 @@ class TestPlan(unittest.TestCase):
                                  "Parsimony", "hers"))
         os.makedirs(os.path.join(self.media, "TV Shows", "show"))
         self.cache = {}
+        self.links = []
 
     def tearDown(self):
         self.tmp.cleanup()
@@ -203,11 +204,16 @@ class TestPlan(unittest.TestCase):
         link = os.path.join(self.media, link_rel)
         os.makedirs(os.path.dirname(link), exist_ok=True)
         os.symlink(target, link)
+        self.links.append(link)
         return link
 
     def run_plan(self, userdata=None):
+        # Every linked file is assumed indexed by Jellyfin unless a test says
+        # otherwise; the GC must ignore anything Jellyfin has not categorized.
+        data = {link: [{}] for link in self.links}
+        data.update(userdata or {})
         return gc.plan(
-            [self.media], self.putio, userdata or {}, 30,
+            [self.media], self.putio, data, 30,
             gc.DEFAULT_EXCLUDES, now=NOW,
         )
 
@@ -254,9 +260,9 @@ class TestPlan(unittest.TestCase):
         self.assertEqual(self.run_plan()[0], [])
 
     def test_duplicate_roots_do_not_double_count(self):
-        self.make("chill.institute/show/a.mkv", 45)
+        link = self.make("chill.institute/show/a.mkv", 45)
         actions, _ = gc.plan(
-            [self.media, self.media], self.putio, {}, 30,
+            [self.media, self.media], self.putio, {link: [{}]}, 30,
             gc.DEFAULT_EXCLUDES, now=NOW,
         )
         self.assertEqual(len(actions), 1)
@@ -267,6 +273,164 @@ class TestPlan(unittest.TestCase):
             now=NOW,
         )
         self.assertEqual((actions, reasons), ([], {}))
+
+
+class TestTitlesAndKeys(unittest.TestCase):
+    def test_title_tokens_strips_year_and_leading_the(self):
+        self.assertEqual(
+            gc.title_tokens("Movies/Futurama Benders Big Score (2007).mkv"),
+            ["futurama", "benders", "big", "score"],
+        )
+        self.assertEqual(gc.title_tokens("The Simpsons Movie.avi"),
+                         ["simpsons", "movie"])
+
+    def test_series_key(self):
+        roots = ["/srv/media/TV Shows"]
+        self.assertEqual(
+            gc.series_key("/srv/media/TV Shows/Show/Season 1/e.mkv", roots),
+            "/srv/media/TV Shows/Show",
+        )
+        self.assertIsNone(gc.series_key("/srv/media/Movies/x.mkv", roots))
+        self.assertIsNone(gc.series_key("/srv/media/TV Shows", roots))
+
+    def test_related_to_series_is_prefix_only(self):
+        self.assertTrue(
+            gc.related_to_series("Movies/Futurama Movie.mkv", [["futurama"]])
+        )
+        self.assertFalse(
+            gc.related_to_series("Movies/Up.mkv", [["futurama"]])
+        )
+        self.assertFalse(
+            gc.related_to_series("Movies/Star Trek.mkv", [["futurama"]])
+        )
+
+
+class TestSeriesGrouping(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        root = self.tmp.name
+        self.putio = os.path.join(root, "putio")
+        self.media = os.path.join(root, "media")
+        self.tv = os.path.join(self.media, "TV Shows")
+        os.makedirs(os.path.join(self.putio, "chill.institute"))
+        self.links = []
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def make(self, rel, age_days, link_rel):
+        target = os.path.join(self.putio, rel)
+        os.makedirs(os.path.dirname(target), exist_ok=True)
+        with open(target, "wb") as fh:
+            fh.write(b"x")
+        _utime(target, age_days)
+        link = os.path.join(self.media, link_rel)
+        os.makedirs(os.path.dirname(link), exist_ok=True)
+        os.symlink(target, link)
+        self.links.append(link)
+        return link
+
+    def run_plan(self, userdata=None, unknown=()):
+        data = {link: [{}] for link in self.links if link not in unknown}
+        data.update(userdata or {})
+        return gc.plan(
+            [self.media], self.putio, data, 30, gc.DEFAULT_EXCLUDES,
+            now=NOW, series_roots=[self.tv],
+        )
+
+    def episode(self, name, age_days):
+        return self.make(
+            f"chill.institute/show/{name}", age_days,
+            f"TV Shows/Show/Season 1/{name}",
+        )
+
+    def test_old_series_deleted_as_a_unit(self):
+        a = self.episode("s1e1.mkv", 60)
+        b = self.episode("s1e2.mkv", 45)
+        actions, reasons = self.run_plan()
+        self.assertEqual({x["link"] for x in actions}, {a, b})
+        self.assertEqual(reasons["unwatched"], 2)
+
+    def test_one_recent_view_protects_whole_series(self):
+        a = self.episode("s1e1.mkv", 60)
+        self.episode("s1e2.mkv", 60)
+        actions, reasons = self.run_plan({
+            a: [{"Played": True,
+                 "LastPlayedDate": "2023-11-01T00:00:00Z"}],
+        })
+        self.assertEqual(actions, [])
+        self.assertEqual(reasons["viewed-recently"], 2)
+
+    def test_newest_episode_protects_series(self):
+        self.episode("s1e1.mkv", 90)
+        self.episode("s1e2.mkv", 5)
+        actions, reasons = self.run_plan()
+        self.assertEqual(actions, [])
+        self.assertEqual(reasons["too-new"], 2)
+
+    def test_favorited_series_protects_every_episode(self):
+        self.episode("s1e1.mkv", 60)
+        self.episode("s1e2.mkv", 60)
+        series = os.path.join(self.tv, "Show")
+        actions, reasons = self.run_plan({series: [{"IsFavorite": True}]})
+        self.assertEqual(actions, [])
+        self.assertEqual(reasons["favorite"], 2)
+
+    def test_in_progress_episode_protects_series(self):
+        a = self.episode("s1e1.mkv", 60)
+        self.episode("s1e2.mkv", 60)
+        actions, reasons = self.run_plan(
+            {a: [{"Played": False, "PlaybackPositionTicks": 5}]}
+        )
+        self.assertEqual(actions, [])
+        self.assertEqual(reasons["in-progress"], 2)
+
+    def test_series_with_unindexed_file_left_alone(self):
+        self.episode("s1e1.mkv", 60)
+        unknown = self.episode("s1e2.mkv", 60)
+        actions, reasons = self.run_plan(unknown={unknown})
+        self.assertEqual(actions, [])
+        self.assertEqual(reasons["not-in-jellyfin"], 2)
+
+    def test_unindexed_movie_left_alone(self):
+        movie = self.make("chill.institute/x/Old Movie.mkv", 400,
+                          "Movies/Old Movie.mkv")
+        actions, reasons = self.run_plan(unknown={movie})
+        self.assertEqual(actions, [])
+        self.assertEqual(reasons["not-in-jellyfin"], 1)
+
+    def test_movie_related_to_active_series_protected(self):
+        ep = self.make(
+            "chill.institute/futurama/s1e1.mkv", 60,
+            "TV Shows/Futurama (1999)/Season 1/s1e1.mkv",
+        )
+        self.make("chill.institute/futurama/Benders.mkv", 90,
+                  "Movies/Futurama Benders Big Score (2007).mkv")
+        actions, reasons = self.run_plan({
+            ep: [{"Played": True,
+                  "LastPlayedDate": "2023-11-01T00:00:00Z"}],
+        })
+        self.assertEqual(actions, [])
+        self.assertEqual(reasons["related-series"], 1)
+
+    def test_movie_related_to_idle_series_deleted(self):
+        self.make("chill.institute/futurama/s1e1.mkv", 60,
+                  "TV Shows/Futurama (1999)/Season 1/s1e1.mkv")
+        movie = self.make("chill.institute/futurama/a.mkv", 90,
+                          "Movies/Futurama Movie.mkv")
+        actions, reasons = self.run_plan()
+        self.assertIn(movie, {x["link"] for x in actions})
+        self.assertIsNone(reasons.get("related-series"))
+
+    def test_unrelated_movie_deleted_even_with_active_series(self):
+        ep = self.episode("s1e1.mkv", 60)
+        movie = self.make("chill.institute/x/g.mkv", 90,
+                          "Movies/The Godfather (1972).mkv")
+        actions, _ = self.run_plan({
+            ep: [{"Played": True,
+                  "LastPlayedDate": "2023-11-01T00:00:00Z"}],
+        })
+        self.assertIn(movie, {x["link"] for x in actions})
 
 
 class _StubHandler(BaseHTTPRequestHandler):

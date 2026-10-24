@@ -3,12 +3,19 @@
 
 Deletes a video from put.io when ALL of these hold:
 
-  * it is older than --max-age-days (each file's clock starts at its own
-    mtime, which rclone preserves from put.io via --no-update-modtime)
+  * it is older than --max-age-days (the clock is the file's mtime, which
+    rclone preserves from put.io via --no-update-modtime)
   * no Jellyfin user has it favorited
   * no Jellyfin user played it within --max-age-days (a view before that
     window does not save it)
   * it is not in progress (PlaybackPositionTicks > 0, not finished)
+
+TV/anime files under a --series-root are decided per series: every episode
+survives if any episode was played recently, and a series is deleted as a
+unit only once its NEWEST episode is also older than the window (so a show
+still receiving episodes is never culled). Movies are decided per file, but
+a movie whose title starts with the franchise name of a non-idle series
+(played recently or favorited) is protected too.
 
 Scope is the media-classifier symlink farm under /srv/media/{Movies,TV Shows,
 Anime}: only files the classifier linked into Jellyfin are candidates. Files
@@ -38,6 +45,7 @@ DEFAULT_MEDIA_ROOTS = [
     "/srv/media/TV Shows",
     "/srv/media/Anime",
 ]
+DEFAULT_SERIES_ROOTS = ["/srv/media/TV Shows", "/srv/media/Anime"]
 DEFAULT_PUTIO_ROOT = "/mnt/media-drive/putio"
 DEFAULT_EXCLUDES = ["Items shared with you/Parsimony"]
 DEFAULT_JELLYFIN_URL = "http://localhost:8096"
@@ -144,26 +152,76 @@ def decide(
     if age_days < max_age_days:
         return False, "too-new"
 
-    cutoff = now - max_age_days * 86400.0
-    entries = userdata or []
     if has_favorited_ancestor(link, favorite_paths or set()):
         return False, "favorite"
+    reason = activity_reason([userdata], now, max_age_days)
+    if reason:
+        return False, reason
+    return True, "unwatched"
 
+
+def activity_reason(userdatas, now, max_age_days):
+    """Reason that playback protects these items, or None.
+
+    Takes one UserData list per item so a series can pool all its episodes:
+    one recent view (or an in-progress one) protects the whole series.
+    """
+    cutoff = now - max_age_days * 86400.0
     played_undated = False
-    for u in entries:
-        last = parse_dt(u.get("LastPlayedDate"))
-        if last is not None and last.timestamp() >= cutoff:
-            return False, "viewed-recently"
-        played = bool(u.get("Played")) or int(u.get("PlayCount") or 0) > 0
-        if played and last is None:
-            played_undated = True
+    for entries in userdatas:
+        for u in entries or []:
+            last = parse_dt(u.get("LastPlayedDate"))
+            if last is not None and last.timestamp() >= cutoff:
+                return "viewed-recently"
+            played = bool(u.get("Played")) or int(u.get("PlayCount") or 0) > 0
+            if played and last is None:
+                played_undated = True
     if played_undated:
         # Seen at some unknown time: can't prove it is outside the window.
-        return False, "played-undated"
-    for u in entries:
-        if int(u.get("PlaybackPositionTicks") or 0) > 0 and not u.get("Played"):
-            return False, "in-progress"
-    return True, "unwatched"
+        return "played-undated"
+    for entries in userdatas:
+        for u in entries or []:
+            if int(u.get("PlaybackPositionTicks") or 0) > 0 and not u.get("Played"):
+                return "in-progress"
+    return None
+
+
+def series_key(link, series_roots):
+    """Series directory for a link under a TV/anime root, else None.
+
+    The media-classifier farm is <root>/<Series>/Season N/episode.mkv, so the
+    first path component under the root identifies the series.
+    """
+    for root in series_roots:
+        prefix = root.rstrip("/") + "/"
+        if link.startswith(prefix):
+            head = link[len(prefix):].split("/", 1)[0]
+            return os.path.join(root.rstrip("/"), head)
+    return None
+
+
+def title_tokens(path):
+    """Lowercase title tokens of a media filename, year/brackets removed."""
+    base = os.path.splitext(os.path.basename(path))[0]
+    base = re.sub(r"[\[(].*?[\])]", " ", base)
+    tokens = re.findall(r"[a-z0-9]+", base.lower())
+    tokens = [t for t in tokens if not re.fullmatch(r"(?:19|20)\d{2}", t)]
+    if tokens[:1] == ["the"]:
+        tokens = tokens[1:]
+    return tokens
+
+
+def related_to_series(link, active_series):
+    """True if a movie title starts with an active series' franchise name.
+
+    ponytail: token-prefix heuristic (Jellyfin has no movie->series link); it
+    can only over-protect, e.g. "Office Christmas Party" under "The Office".
+    """
+    tokens = title_tokens(link)
+    for series_tokens in active_series:
+        if series_tokens and tokens[:len(series_tokens)] == series_tokens:
+            return True
+    return False
 
 
 def iter_media_links(roots: list[str]):
@@ -188,35 +246,105 @@ def plan(
     max_age_days: float,
     excludes: list[str],
     now: float | None = None,
+    series_roots: list[str] | None = None,
 ) -> tuple[list[dict], dict[str, int]]:
-    """Build the deletion list. Returns (actions, reason counts)."""
+    """Build the deletion list. Returns (actions, reason counts).
+
+    Links under a series root are decided per series: the whole series is
+    deleted together, and one recent view protects every episode. Movies (and
+    any link outside a series root) are decided per file, except that a movie
+    matching the franchise name of a non-idle series is protected.
+    """
     now = time.time() if now is None else now
     favorite_paths = {
         path for path, entries in userdata.items()
         if any(bool(u.get("IsFavorite")) for u in entries)
     }
-    actions: list[dict] = []
+    series_roots = series_roots or []
+    groups: dict[str, list[dict]] = {}
+    movies: list[dict] = []
     reasons: dict[str, int] = {}
+    actions: list[dict] = []
+
+    def tally(reason, count=1):
+        reasons[reason] = reasons.get(reason, 0) + count
+
+    def action(entry):
+        return {
+            "link": entry["link"],
+            "rel": entry["rel"],
+            "age_days": (now - entry["mtime"]) / 86400.0,
+        }
+
     for link in iter_media_links(roots):
         target = os.path.realpath(link)
         rel = putio_relpath(target, putio_root)
         if rel is None:
             continue
+        if is_excluded(rel, excludes or []):
+            tally("excluded-share")
+            continue
         try:
             mtime = os.stat(target).st_mtime
         except OSError:
             continue  # dead link; media-symlink-cleanup owns it
-        eligible, reason = decide(
-            rel, mtime, link, userdata.get(link), favorite_paths,
-            now, max_age_days, excludes
+        entry = {
+            "link": link,
+            "rel": rel,
+            "mtime": mtime,
+            # A file Jellyfin has not indexed (yet) is left alone: only
+            # categorized media is ever a candidate for deletion.
+            "known": link in userdata,
+        }
+        key = series_key(link, series_roots)
+        if key is None:
+            movies.append(entry)
+        else:
+            groups.setdefault(key, []).append(entry)
+
+    active_series = []  # token lists; "not idle" = favorited or played
+    for _key, entries in groups.items():
+        if not all(e["known"] for e in entries):
+            # Some file in the series is not categorized by Jellyfin: leave
+            # the whole series alone rather than deleting a partial show.
+            tally("not-in-jellyfin", len(entries))
+            continue
+        favorite = any(
+            path == _key or path.startswith(_key + "/")
+            for path in favorite_paths
         )
-        reasons[reason] = reasons.get(reason, 0) + 1
+        activity = activity_reason(
+            [userdata.get(e["link"]) or [] for e in entries],
+            now, max_age_days,
+        )
+        if favorite or activity:
+            active_series.append(title_tokens(_key))
+        if favorite:
+            reason = "favorite"
+        elif (now - max(e["mtime"] for e in entries)) < max_age_days * 86400.0:
+            reason = "too-new"
+        else:
+            reason = activity
+        if reason is None:
+            tally("unwatched", len(entries))
+            actions.extend(action(e) for e in entries)
+        else:
+            tally(reason, len(entries))
+
+    for entry in movies:
+        if not entry["known"]:
+            tally("not-in-jellyfin")
+            continue
+        eligible, reason = decide(
+            entry["rel"], entry["mtime"], entry["link"],
+            userdata.get(entry["link"]), favorite_paths, now, max_age_days,
+            excludes,
+        )
+        if eligible and related_to_series(entry["link"], active_series):
+            eligible, reason = False, "related-series"
+        tally(reason)
         if eligible:
-            actions.append({
-                "link": link,
-                "rel": rel,
-                "age_days": (now - mtime) / 86400.0,
-            })
+            actions.append(action(entry))
     return actions, reasons
 
 
@@ -298,6 +426,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--max-age-days", type=float, default=30.0)
     ap.add_argument("--exclude", action="append", dest="excludes",
                     help="put.io path prefix to never touch; repeatable")
+    ap.add_argument("--series-root", action="append", dest="series_roots",
+                    help="TV/anime root decided per series; repeatable")
     ap.add_argument("--jellyfin-url", default=DEFAULT_JELLYFIN_URL)
     ap.add_argument("--jellyfin-key-file", required=True)
     ap.add_argument("--rclone", default="rclone")
@@ -308,13 +438,18 @@ def main(argv: list[str] | None = None) -> int:
 
     roots = args.media_roots or DEFAULT_MEDIA_ROOTS
     excludes = args.excludes if args.excludes is not None else DEFAULT_EXCLUDES
+    series_roots = (
+        args.series_roots if args.series_roots is not None
+        else DEFAULT_SERIES_ROOTS
+    )
 
     with open(args.jellyfin_key_file, encoding="utf-8") as fh:
         api_key = fh.read().strip()
 
     userdata = jellyfin_userdata(args.jellyfin_url, api_key)
     actions, reasons = plan(
-        roots, args.putio_root, userdata, args.max_age_days, excludes
+        roots, args.putio_root, userdata, args.max_age_days, excludes,
+        series_roots=series_roots,
     )
 
     mode = "DRY-RUN" if args.dry_run else "LIVE"
