@@ -1035,5 +1035,71 @@
     };
   };
 
+  # === put.io media garbage collector ===
+  # Deletes a video from put.io once its OWN 30-day clock has run out and no
+  # Jellyfin user favorited it or played it within that window. Scope is the
+  # media-classifier symlink farm, so only files Jellyfin is meant to manage
+  # are candidates; the Parsimony share is excluded outright.
+  #
+  # Uses the Jellyfin HTTP API, not its SQLite DB, because this unit runs as
+  # kimb:media — it can read the 0440 API key but not /var/lib/jellyfin/data.
+  # The per-file clock is the mirror file's mtime, which rclone preserves from
+  # put.io via --no-update-modtime (so each file keeps its own deadline).
+  # dryRun=true logs decisions and passes --dry-run to rclone; flip to false to
+  # arm deletion. See scripts/media_putio_gc.py and its unittest file.
+  systemd.services.media-putio-gc = let
+    dryRun = true;
+    args =
+      [
+        "${pkgs.python3}/bin/python3"
+        (toString ../../scripts/media_putio_gc.py)
+        "--media-root"
+        "/srv/media/Movies"
+        "--media-root"
+        "/srv/media/TV Shows"
+        "--media-root"
+        "/srv/media/Anime"
+        "--putio-root"
+        "/mnt/media-drive/putio"
+        "--max-age-days"
+        "30"
+        "--exclude"
+        "Items shared with you/Parsimony"
+        "--jellyfin-key-file"
+        config.age.secrets.jellyfin-api-key.path
+        "--rclone"
+        "${pkgs.rclone}/bin/rclone"
+        "--rclone-config"
+        "/run/agenix/rclone-config"
+      ]
+      ++ lib.optional dryRun "--dry-run";
+  in {
+    description = "Delete unwatched, unfavorited put.io media older than 30 days";
+    restartIfChanged = false;
+    after = ["network-online.target"];
+    wants = ["network-online.target"];
+    serviceConfig = {
+      Type = "oneshot";
+      User = "kimb";
+      Group = "media";
+      ExecStart = lib.escapeShellArgs args;
+      StateDirectory = "media-putio-gc";
+      Environment = "HOME=/var/lib/media-putio-gc";
+      NoNewPrivileges = true;
+      ProtectSystem = "strict";
+      ProtectHome = true;
+      PrivateTmp = true;
+    };
+  };
+
+  systemd.timers.media-putio-gc = {
+    wantedBy = ["timers.target"];
+    timerConfig = {
+      OnCalendar = "*-*-* 04:17:00";
+      RandomizedDelaySec = "1h";
+      Persistent = true;
+    };
+  };
+
   system.stateVersion = "23.11";
 }
