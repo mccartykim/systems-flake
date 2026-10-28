@@ -7,8 +7,6 @@
 }: let
   sshKeys = import ../ssh-keys.nix;
 in {
-  imports = [../../modules/emudhra-ca-blacklist.nix];
-
   # Boot configuration
   boot = {
     # Bootloader - can be overridden by hosts
@@ -134,5 +132,4 @@ in {
 
   # Enable sudo for wheel group
   security.sudo.wheelNeedsPassword = false;
-
 }

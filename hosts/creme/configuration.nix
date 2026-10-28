@@ -50,12 +50,12 @@
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
   # Plymouth boot splash. Hides the kernel/systemd-boot scrollback wall
-  # behind a clean spinner from kernel handoff onward. Plymouth needs the
-  # systemd-based initrd to coordinate with the spinner; libreboot's
-  # SeaBIOS+GRUB chainload still scrolls a bit before kernel takeover,
-  # but everything from there to login is quiet.
+  # behind a clean spinner from kernel handoff onward. The systemd-based
+  # initrd (the only initrd since nixpkgs dropped the scripted one) lets
+  # Plymouth coordinate with the spinner; libreboot's SeaBIOS+GRUB
+  # chainload still scrolls a bit before kernel takeover, but everything
+  # from there to login is quiet.
   boot.plymouth.enable = true;
-  boot.initrd.systemd.enable = true;
   boot.kernelParams = ["quiet" "splash" "loglevel=3" "rd.systemd.show_status=auto" "rd.udev.log_level=3" "resume_offset=56424448"];
   # Hibernate resume from swapfile on /dev/sda2 (ext4).
   # resume_offset is the physical block offset from `filefrag -e /swapfile`.

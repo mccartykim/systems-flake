@@ -62,8 +62,6 @@ in {
       lib,
       ...
     }: {
-      imports = [../../modules/emudhra-ca-blacklist.nix];
-
       # The downloaded Node's ELF wants the FHS loader; nix-ld provides it.
       programs.nix-ld.enable = true;
 

@@ -7,8 +7,25 @@
 }: {
   environment.systemPackages =
     [
-      # Switch — eden-nightly built from upstream master with steamdeck profile (znver2 + LTO)
-      inputs.eden-nightly-flake.packages.x86_64-linux.eden-nightly-steamdeck
+      # Switch — eden-nightly built from upstream master with steamdeck profile (znver2 + LTO).
+      # The pinned June nightly predates GCC 16 / fmt 12 / httplib 0.58; upstream fixed the
+      # resulting includes and API calls in master. Backport them until eden-nightly-flake is
+      # bumped (its cpmfiles have diverged, so a bump needs re-verification).
+      (inputs.eden-nightly-flake.packages.x86_64-linux.eden-nightly-steamdeck.overrideAttrs (old: {
+        postPatch =
+          (old.postPatch or "")
+          + ''
+            # All three fixed upstream after the pinned nightly; backport them here.
+            sed -i '1i #include <cstring>' src/common/dynamic_library.cpp
+            substituteInPlace src/common/net/net.cpp src/yuzu/updater/update_dialog.cpp \
+              --replace-fail 'response.headers.contains("content-type")' \
+              'response.has_header("content-type")'
+            substituteInPlace \
+              src/common/settings_setting.h src/common/settings.cpp src/common/time_zone.cpp \
+              src/yuzu/startup_checks.cpp src/yuzu/configuration/shared_widget.cpp \
+              --replace-fail '#include <fmt/core.h>' '#include <fmt/format.h>'
+          '';
+      }))
     ]
     ++ (with pkgs; [
       ryubing

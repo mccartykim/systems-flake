@@ -68,9 +68,6 @@
       "nvme_core.default_ps_max_latency_us=0"
     ];
 
-    # systemd initrd
-    initrd.systemd.enable = true;
-
     # Boot loader customizations
     loader.systemd-boot = {
       netbootxyz.enable = true;

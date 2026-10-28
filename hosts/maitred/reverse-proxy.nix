@@ -67,8 +67,6 @@ in {
       lib,
       ...
     }: {
-      imports = [../../modules/emudhra-ca-blacklist.nix];
-
       # Use host's DNS server (unbound on router)
       networking.nameservers = [cfg.networks.containerBridge];
       # Disable nsncd to prevent localhost DNS resolution
