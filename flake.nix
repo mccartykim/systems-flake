@@ -15,6 +15,17 @@
     home-manager.url = "github:nix-community/home-manager";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
 
+    # Darwin (cronut, x86_64) stays on the 26.05 toolchain: nixpkgs 26.11
+    # dropped x86_64-darwin, so pointing it at the unstable input breaks
+    # evaluation. Keep this pair in sync with nix-darwin below.
+    nixpkgs-darwin.url = "github:NixOS/nixpkgs/nixpkgs-26.05-darwin";
+    home-manager-darwin.url = "github:nix-community/home-manager/release-26.05";
+    home-manager-darwin.inputs.nixpkgs.follows = "nixpkgs-darwin";
+    # Upstream dropped x86_64-darwin from the prebuilt index in July 2026;
+    # pin the last rev that still ships it (darwin only).
+    nix-index-database-darwin.url = "github:nix-community/nix-index-database/fab14c7b63499d57cb6673d5690168c3ec42b99a";
+    nix-index-database-darwin.inputs.nixpkgs.follows = "nixpkgs-darwin";
+
     # bin_finder_ai — the household-inventory AI service (photograph an object, describe it,
     # file it into HomeBox).
     #
@@ -29,8 +40,8 @@
     bin-finder-ai.inputs.nixpkgs.follows = "nixpkgs";
 
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
-    nix-darwin.url = "github:LnL7/nix-darwin";
-    nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
+    nix-darwin.url = "github:LnL7/nix-darwin/nix-darwin-26.05";
+    nix-darwin.inputs.nixpkgs.follows = "nixpkgs-darwin";
 
     srvos.url = "github:nix-community/srvos";
     srvos.inputs.nixpkgs.follows = "nixpkgs";

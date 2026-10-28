@@ -219,10 +219,11 @@ in {
       srvos.nixosModules.mixins-systemd-boot
     ];
 
-    # Darwin common modules
+    # Darwin common modules. Home Manager is the 26.05 release here so it
+    # matches cronut's pinned nixpkgs; the NixOS side uses `home-manager`.
     darwinCommon = [
-      home-manager.darwinModules.home-manager
-      nix-index-database.darwinModules.nix-index
+      inputs.home-manager-darwin.darwinModules.home-manager
+      inputs.nix-index-database-darwin.darwinModules.nix-index
       {programs.nix-index-database.comma.enable = true;}
     ];
 

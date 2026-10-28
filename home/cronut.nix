@@ -69,9 +69,10 @@
       };
 
       yt-dlp.enable = true;
-      git = {
+      git.enable = true;
+      delta = {
         enable = true;
-        delta.enable = true;
+        enableGitIntegration = true;
       };
 
       zellij = {
@@ -159,7 +160,7 @@
           telescope-media-files-nvim
           telescope-fzf-native-nvim
         ];
-        extraLuaConfig = ''
+        initLua = ''
                 vim.g.mapleader = ","
                        require("oil").setup({
                   defaultFileExplorer = true,
