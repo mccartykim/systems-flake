@@ -364,7 +364,15 @@ in {
 
     # Create proxy services for enabled remote services
     mkProxyService = serviceName: service: let
-      hostIP = registry.nodes.${service.host}.ip or "127.0.0.1";
+      # Resolve the target host to its Nebula IP. `or` on a nested attrpath
+      # only guards a *missing attribute*, not a missing host, so a service
+      # whose `host` is not a key in nebula-registry.nix would abort
+      # evaluation outright — while `registry` happily reports the service as
+      # configured. Fail here instead, naming the service and the bad value,
+      # so the typo is unambiguous rather than looking like a registry fault.
+      hostIP =
+        registry.nodes.${service.host}.ip
+        or (throw "kimb.services.${serviceName}.host = \"${service.host}\" is not a node in ../nebula-registry.nix; the ${serviceName}-proxy socat forwarder has no target IP");
     in
       lib.nameValuePair "${serviceName}-proxy" {
         description = "${serviceName} proxy to ${service.host}";

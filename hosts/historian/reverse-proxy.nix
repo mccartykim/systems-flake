@@ -34,7 +34,12 @@
       then service.containerIP
       else if service.host == "historian"
       then "127.0.0.1"
-      else registry.nodes.${service.host}.ip or "127.0.0.1";
+      # `or` on a nested attrpath guards a missing attribute, not a missing
+      # host, so an unknown `host` would abort evaluation instead of falling
+      # back. Fail with the offending service and value named.
+      else
+        registry.nodes.${service.host}.ip
+        or (throw "kimb.services.${serviceName}.host = \"${service.host}\" is not a node in ../nebula-registry.nix; the ${service.subdomain} vhost has no target IP");
 
     authConfig = lib.optionalString needsAuth ''
       forward_auth ${targetIP}:${toString cfg.services.authelia.port} {

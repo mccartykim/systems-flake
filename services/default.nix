@@ -103,11 +103,19 @@
         websockets = true;
       };
       # Copyparty — the a3j.6 phase-6b migration from rich-evans (with the
-      # seagate local since a3j.4; see hosts/historian/copyparty.nix). NOTE:
-      # still no maitred duplicate = no files.kimb.dev vhost — direct
-      # IP:3923 access, as on rich-evans (the vhost is a future decision).
+      # seagate local since a3j.4; see hosts/historian/copyparty.nix).
+      #
+      # DISABLED 2026-10-28 per Kimb: never actually used. The entry was
+      # always documented as aspirational (files.kimb.dev never had a maitred
+      # duplicate, so it was reached by IP:3923 only), but historian's own
+      # edge generates a vhost for every publicAccess service in its bucket,
+      # so this entry was making that Caddy attempt — and fail — an ACME
+      # issuance for a name with no service behind it. Disabling it stops the
+      # service, drops the maitred socat forwarder, and removes the vhost.
+      # State at /mnt/media-drive/copyparty and /var/lib/copyparty is
+      # untouched; re-enable by flipping enable back to true.
       copyparty = {
-        enable = true;
+        enable = false;
         port = 3923;
         subdomain = "files";
         host = "historian";
