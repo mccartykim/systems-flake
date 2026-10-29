@@ -286,6 +286,24 @@ in {
     # Container networking - point-to-point for each container
     networks."40-container-ve" = {
       matchConfig.Name = "ve-*";
+
+      # Mark container veths unmanaged so systemd-networkd leaves their
+      # addressing alone. The host side of each point-to-point link
+      # (192.168.100.1 for reverse-proxy, .11 for blog-service) is assigned
+      # by the NixOS container module's post-start script, and networkd
+      # configures no addressing of its own for these links -- so when
+      # networkd reconfigured them it took ownership and removed addresses
+      # it had not added. That raced post-start on every container restart,
+      # and losing 192.168.100.1/32 plus its route to 192.168.100.2 broke
+      # every Caddy upstream at once (the whole kimb.dev public edge), not
+      # just the one service behind it.
+      #
+      # Unmanaged=yes ends the conflict: networkd ignores ve-* entirely and
+      # the container module is the sole owner of their addressing. The
+      # forwarding flags are kept so they still apply if the global
+      # net.ipv4.conf.all.forwarding default is ever narrowed, though
+      # kernel.sysctl ip_forward=1 above is what actually routes today.
+      linkConfig.Unmanaged = true;
       networkConfig = {
         IPv4Forwarding = true;
         IPv6Forwarding = true;
