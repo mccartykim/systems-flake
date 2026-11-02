@@ -458,7 +458,32 @@ in {
     # DNS Server with Nebula name resolution
     unbound = {
       enable = true;
-      settings = {
+      settings = let
+        cfg = config.kimb;
+        registry = import ../nebula-registry.nix;
+
+        # Nebula host entries
+        nebulaHosts =
+          builtins.map (name: "\"${name}.nebula. A ${registry.nodes.${name}.ip}\"")
+          (builtins.attrNames registry.nodes);
+
+        # Enabled public services, resolving to whatever router IP the client
+        # can actually reach (split-horizon DNS).
+        serviceDomainsAt = routerIP:
+          lib.mapAttrsToList (
+            name: service: "\"${service.subdomain}.${cfg.domain}. A ${routerIP}\""
+          ) (lib.filterAttrs (
+              name: service:
+                service.enable && service.publicAccess
+            )
+            cfg.services);
+
+        localDataAt = routerIP:
+          (lib.optionals (routerIP == "192.168.69.1") nebulaHosts)
+          ++ ["\"${cfg.domain}. A ${routerIP}\""]
+          ++ serviceDomainsAt routerIP
+          ++ ["\"vacuum.${cfg.domain}. A ${routerIP}\""]; # vacuum vhost
+      in {
         server = {
           interface = [
             "0.0.0.0" # Listen on all interfaces for now
@@ -469,36 +494,31 @@ in {
             "192.168.100.0/24 allow" # Container network
             "10.100.0.0/16 allow" # Nebula network
             "127.0.0.0/8 allow"
+            # The Comcast gateway's LAN (TV, phones, …). It can only reach
+            # maitred at 10.0.0.78, so it gets its own split-horizon answers.
+            "10.0.0.0/24 allow"
           ];
-          # Local DNS entries for Nebula hosts and enabled services
-          local-data = let
-            registry = import ../nebula-registry.nix;
-            cfg = config.kimb;
+          access-control-view = ["10.0.0.0/24 comcast"];
 
-            # Nebula host entries
-            nebula-hosts =
-              builtins.map (name: "\"${name}.nebula. A ${registry.nodes.${name}.ip}\"")
-              (builtins.attrNames registry.nodes);
-
-            # Generate DNS entries for enabled public services
-            # Use router's LAN IP for split-brain DNS (192.168.69.1)
-            serviceDomains =
-              lib.mapAttrsToList (
-                name: service: "\"${service.subdomain}.${cfg.domain}. A 192.168.69.1\""
-              ) (lib.filterAttrs (
-                  name: service:
-                    service.enable && service.publicAccess
-                )
-                cfg.services);
-
-            # Root domain entry
-            rootDomain = ["\"${cfg.domain}. A 192.168.69.1\""];
-
-            # Vacuum entry - point to router for Caddy proxy
-            vacuumEntry = ["\"vacuum.${cfg.domain}. A 192.168.69.1\""];
-          in
-            nebula-hosts ++ rootDomain ++ serviceDomains ++ vacuumEntry;
+          # Local DNS entries for Nebula hosts and enabled services.
+          # Use router's LAN IP for split-brain DNS (192.168.69.1)
+          local-data = localDataAt "192.168.69.1";
         };
+
+        # Clients on the Comcast LAN can't use the public IP (the Xfinity
+        # gateway has no NAT loopback) and can't reach 192.168.69.1. Point
+        # their *.kimb.dev names at maitred's address on that segment; the
+        # existing enp3s0 :80/:443 DNAT lands them on Caddy with a valid cert.
+        # view-first falls back to the global data for everything else
+        # (nebula names, recursion for the internet).
+        # 10.0.0.78 is a DHCP address: keep a reservation on the gateway.
+        view = [
+          {
+            name = "comcast";
+            view-first = true;
+            local-data = localDataAt "10.0.0.78";
+          }
+        ];
       };
     };
 
