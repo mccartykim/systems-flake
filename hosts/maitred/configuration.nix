@@ -103,7 +103,10 @@ in {
     enable = true;
     defaultShared = true;
     listenAddresses = ["*:631"];
-    allowFrom = ["all"];
+    # LAN + Nebula only. The host firewall no longer opens 631 globally
+    # (enp2s0 and nebula1 are trusted interfaces), and this app-level ACL is
+    # the second layer against the WAN enp3s0.
+    allowFrom = ["127.0.0.1" "192.168.69.0/255.255.255.0" "10.100.0.0/255.255.0.0"];
     browsing = true;
     extraConf = ''
       ServerAlias maitred.nebula
@@ -222,12 +225,14 @@ in {
     firewall = {
       enable = true;
 
-      # Allow essential services (SSH removed from public access)
+      # Allow essential services (SSH removed from public access).
+      # 631 (CUPS/IPP) is deliberately NOT opened globally: the printer stays
+      # reachable on the LAN (enp2s0) and Nebula (nebula1) — both trusted
+      # interfaces — without listening on the WAN enp3s0.
       allowedTCPPorts = [
         53 # DNS for containers (TCP fallback)
         80 # HTTP (forwarded to blog container)
         443 # HTTPS (forwarded to blog container)
-        631 # CUPS/IPP printer sharing
         24608 # Tor bridge obfs4
       ];
 
