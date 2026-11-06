@@ -162,13 +162,16 @@
     # Marshmallow-specific services
     input-remapper.enable = true;
 
-    # Ollama LLM server - accessible over Nebula for cloud inference
+    # Ollama LLM server - accessible over Nebula only. 11434 is not opened
+    # on every interface; the mesh interface is opened explicitly below.
     ollama = {
       enable = true;
-      host = "0.0.0.0"; # Bind to all interfaces
-      openFirewall = true; # Open port 11434
+      host = "0.0.0.0"; # Bind to all interfaces; firewall scopes access
+      openFirewall = false;
     };
   };
+
+  networking.firewall.interfaces."nebula1".allowedTCPPorts = [11434];
 
   # Programs configuration
   programs = {

@@ -349,15 +349,17 @@
     # Enable Sunshine for game streaming
     sunshine.enable = true;
 
-    # Ollama LLM server - exposed over Nebula
+    # Ollama LLM server - reachable over Nebula only. The NixOS firewall is
+    # not opened on every interface; nebula1 is already a trusted interface.
     ollama = {
       enable = true;
-      host = "0.0.0.0"; # Bind to all interfaces
-      openFirewall = true; # Open port 11434
+      host = "0.0.0.0"; # Bind to all interfaces; firewall scopes access
+      openFirewall = false;
     };
+    # xrdp is for remote desktop over the mesh, not for LAN/WAN exposure.
     xrdp = {
       enable = true;
-      openFirewall = true;
+      openFirewall = false;
     };
 
     # Avahi for service discovery

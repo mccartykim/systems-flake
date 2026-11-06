@@ -662,12 +662,14 @@
     # Thunderbolt device authorization (for dock enrollment)
     hardware.bolt.enable = true;
 
-    # AI/ML services with ROCm acceleration
+    # AI/ML services with ROCm acceleration. openFirewall used to publish
+    # 11434 on every interface; nebula1 is a trusted interface and the mesh
+    # ACL already admits the server group, so local/agent access is unchanged.
     ollama = {
       enable = true;
       package = pkgs.ollama-rocm;
       rocmOverrideGfx = "11.5.0";
-      openFirewall = true;
+      openFirewall = false;
       host = "0.0.0.0";
       # Enable parallel inference — needed when Claude Code session shares the
       # ollama instance; otherwise benchmark/agent requests queue behind it.
@@ -694,10 +696,10 @@
       };
     };
 
-    # Additional services
+    # xrdp is for remote desktop over the mesh, not LAN/WAN exposure.
     xrdp = {
       enable = true;
-      openFirewall = true;
+      openFirewall = false;
     };
 
     # Avahi for service discovery

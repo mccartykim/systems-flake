@@ -152,10 +152,13 @@
     krita
   ];
 
-  # Ollama LLM server - accessible over Nebula for cloud inference
+  # Ollama LLM server - accessible over Nebula only. 11434 is not opened on
+  # every interface; the mesh interface is opened explicitly below.
   services.ollama = {
     enable = true;
     host = "0.0.0.0";
-    openFirewall = true;
+    openFirewall = false;
   };
+
+  networking.firewall.interfaces."nebula1".allowedTCPPorts = [11434];
 }
