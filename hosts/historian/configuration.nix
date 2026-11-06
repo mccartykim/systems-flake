@@ -452,22 +452,13 @@
       policy = ["magic" "unicast"];
     };
 
-    # Extended firewall configuration for streaming
     firewall = {
-      allowedTCPPorts = [
-        47984
-        47989
-        47990
-        48000
-        48010
-        22000
-      ];
-      allowedUDPPorts = [4242 22000]; # Nebula
+      # Syncthing needs 22000 TCP+UDP; everything else on the LAN/mesh comes
+      # from trustedInterfaces. No game-streaming ports — Sunshine was removed
+      # along with the TV assumptions (this host has no display stack).
+      allowedTCPPorts = [22000];
+      allowedUDPPorts = [4242 22000]; # Nebula + Syncthing
       allowedUDPPortRanges = [
-        {
-          from = 47998;
-          to = 48020;
-        }
         {
           from = 8000;
           to = 8010;
@@ -507,15 +498,9 @@
     # AMD-specific kernel modules
     kernelModules = ["amdgpu" "kvm-amd"];
 
-    # - amdgpu.gttsize: 4GB VRAM + 56GB GTT ≈ 60GB for ROCm inference
-    # - video=HDMI-A-1:...@60e: force AMDGPU to expose a fake 1080p connector
-    #   even when no monitor is plugged in, so SDDM's autologin actually
-    #   brings up a Plasma session (and therefore Sunshine) for headless
-    #   Moonlight streaming. The trailing 'e' forces enabled regardless of
-    #   hotplug state.
+    # amdgpu.gttsize: 4GB VRAM + 56GB GTT ≈ 60GB for ROCm inference.
     kernelParams = [
       "amdgpu.gttsize=57344"
-      "video=HDMI-A-1:1920x1080@60e"
     ];
 
     # Boot loader customizations
@@ -549,7 +534,6 @@
       python3Packages.torchWithRocm
       # Historian specific packages
       legendary-gl
-      # sunshine
       toolbox
       cachix
       lmstudio
@@ -649,32 +633,6 @@
     };
   };
 
-  # TV user for living room - Steam Big Picture, Firefox, Flatpak
-  users.users.tv = {
-    isNormalUser = true;
-    description = "Living Room TV";
-    extraGroups = ["video" "audio" "input" "users" "media"];
-    # No password - auto-login only
-    hashedPassword = "";
-    shell = pkgs.bash;
-  };
-
-  # Firefox auto-launch for TV user
-  systemd.user.services.firefox-tv = {
-    description = "Firefox for TV";
-    wantedBy = ["graphical-session.target"];
-    after = ["graphical-session-started.target"];
-    serviceConfig = {
-      Type = "simple";
-      ExecStart = "${pkgs.firefox}/bin/firefox --new-window about:blank";
-      Restart = "on-failure";
-      RestartSec = "5s";
-    };
-    environment = {
-      DISPLAY = ":0";
-    };
-  };
-
   # Services configuration
   services = {
     # Jellyfin media server with VA-API hardware transcoding
@@ -735,9 +693,6 @@
         OLLAMA_BASE_URL = "http://127.0.0.1:11434";
       };
     };
-
-    # Enable Sunshine for game streaming
-    sunshine.enable = true;
 
     # Additional services
     xrdp = {
