@@ -10,7 +10,6 @@ with lib; let
   cfg = config.kimb.distributedBuilds;
   hostname = config.networking.hostName;
   registry = import ../hosts/nebula-registry.nix;
-  sshKeys = import ../hosts/ssh-keys.nix;
 
   # Builder configs
   historianIP = registry.nodes.historian.ip;
@@ -18,8 +17,21 @@ with lib; let
   totalEclipseIP = registry.nodes.total-eclipse.ip;
   totalEclipseKey = registry.nodes.total-eclipse.publicKey;
 
-  # Host keys from all NixOS hosts that can use distributed builds
-  clientHostKeys = sshKeys.desktopList ++ sshKeys.laptopList ++ sshKeys.applianceList;
+  # Host keys from all NixOS hosts that can use distributed builds. Derived
+  # from the registry's `nixos` group rather than ssh-keys.nix's
+  # desktop/laptop/appliance lists: the role-based lists are easy to get
+  # wrong (applianceList used to sweep in the non-NixOS lighthouse), and a
+  # mistake here grants a builder account.
+  clientHostKeys =
+    map (name: registry.nodes.${name}.publicKey)
+    (builtins.filter
+      (name: builtins.elem "nixos" (registry.nodes.${name}.groups or []))
+      (builtins.attrNames registry.nodes));
+
+  # Builders expose only the nix-daemon protocol to client hosts. These keys
+  # are fleet machines, not humans, so every one gets a forced command
+  # instead of root shell access.
+  builderKey = key: ''command="${pkgs.nix}/bin/nix-daemon --stdio",no-port-forwarding,no-agent-forwarding,no-X11-forwarding,no-pty ${key}'';
 in {
   options.kimb.distributedBuilds = {
     enable = mkEnableOption "distributed Nix builds via historian";
@@ -67,17 +79,12 @@ in {
     (mkIf cfg.isBuilder {
       nix.settings.trusted-users = ["root" "@wheel"];
 
-      # Full-access keys (main mesh trusted hosts)
-      users.users.root.openssh.authorizedKeys.keys = clientHostKeys;
-    })
-
-    # === BUILDER-ONLY KEYS (command-restricted, no shell) ===
-    (mkIf (cfg.isBuilder && cfg.builderOnlyKeys != []) {
+      # Remote builders only ever run the nix-daemon stdio protocol, so
+      # every authorized key (fleet host keys + explicitly configured
+      # builder-only keys, e.g. the Claude sandbox key) is command-restricted
+      # rather than granting an unrestricted root shell.
       users.users.root.openssh.authorizedKeys.keys =
-        map (
-          key: ''command="${pkgs.nix}/bin/nix-daemon --stdio",no-port-forwarding,no-agent-forwarding,no-X11-forwarding,no-pty ${key}''
-        )
-        cfg.builderOnlyKeys;
+        map builderKey (clientHostKeys ++ cfg.builderOnlyKeys);
     })
 
     # === CLIENT CONFIG (all other hosts) ===

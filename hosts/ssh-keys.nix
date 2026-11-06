@@ -35,14 +35,19 @@ let
     registry.laptops
   );
 
-  # Server/appliance host keys (derived from registry)
+  # Server/appliance host keys (derived from registry). Exclude the
+  # lighthouse by ROLE: the registry has no host literally named
+  # "lighthouse", so the old removeAttrs-based filter let the non-NixOS
+  # oracle VM leak into applianceList (and thus into builder key sets).
   applianceHostKeys = builtins.listToAttrs (
     builtins.filter (x: x.value != null) (
       map (name: {
         inherit name;
         value = registry.nodes.${name}.publicKey or null;
       })
-      (builtins.attrNames (builtins.removeAttrs registry.nodes (registry.desktops ++ registry.laptops ++ ["lighthouse"])))
+      (builtins.filter
+        (name: registry.nodes.${name}.role != "lighthouse")
+        (builtins.attrNames (builtins.removeAttrs registry.nodes (registry.desktops ++ registry.laptops))))
     )
   );
 in {
