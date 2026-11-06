@@ -292,6 +292,10 @@
           # mec5035-acpi commits (battery + AC + brightness Fn keys). See
           # pkgs/libreboot-e6400-mec5035/default.nix for the full story.
           libreboot-e6400-mec5035 = pkgs.callPackage ./pkgs/libreboot-e6400-mec5035 {};
+
+          # DeepSeek Harness CLI. Supplied by pkgs.deepseek-harness; re-exported
+          # as `nix build .#dsh` for a one-off run without a host deploy.
+          dsh = pkgs.deepseek-harness;
         };
 
         # Formatter

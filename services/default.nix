@@ -115,6 +115,10 @@
       # State at /mnt/media-drive/copyparty and /var/lib/copyparty is
       # untouched; re-enable by flipping enable back to true.
       copyparty = {
+        # Disabled 2026-11-06: the flake's overlay build for this package fails
+        # on the current nixpkgs pin ("makeWrapper doesn't understand the arg
+        # --prefix PATH : …", from its re-wrapped python3 + partftpy). Re-enable
+        # once that is resolved; see hosts/historian/configuration.nix.
         enable = false;
         port = 3923;
         subdomain = "files";

@@ -6,6 +6,13 @@
 }: let
   inherit (inputs) nixpkgs home-manager srvos nix-index-database firefox-nightly nix-topology lix-module claude-wrapper;
 
+  # The dsh CLI (DeepSeek Harness). nixpkgs' own package: it patches the V8
+  # fingerprinting import that rejects toolchain-built Node, so it runs on
+  # plain nodejs_24 with no nix-ld and no upstream tarball.
+  dshOverlay = final: prev: {
+    dsh = final.deepseek-harness;
+  };
+
   # Overlay to fix Python packages with build/test issues
   pythonFixesOverlay = final: prev: {
     # torch 2.13 requires AOTriton 0.12b (v3-only API: LazyTensor cookie,
@@ -169,7 +176,7 @@ in {
       (self + "/services/default.nix")
       # Fix Python packages with strict version bounds + Firefox Nightly +
       # the generic claude-code wrapper generator (pkgs.mkClaudeWrapper).
-      {nixpkgs.overlays = [pythonFixesOverlay firefoxNightlyOverlay claude-wrapper.overlays.default];}
+      {nixpkgs.overlays = [pythonFixesOverlay firefoxNightlyOverlay claude-wrapper.overlays.default dshOverlay];}
       # Infrastructure/network diagram generation
       nix-topology.nixosModules.default
       # Static nebula host entries so hostname.nebula resolves without maitred DNS

@@ -33,6 +33,11 @@
     # proxied to knit.kimb.dev via maitred's socat forwarder)
     ./knitwork-web.nix
 
+    # DeepSeek Harness Web UI (always-on agent harness, bound to the Nebula
+    # interface at 10.100.0.10:3099). See dsh.nix for the credential and route
+    # decisions.
+    ./dsh.nix
+
     # === a3j.5 low-risk service migrations (from rich-evans) ===
     # All registry-gated via kimb.services (services/default.nix): each file
     # is inert (mkIf) until its entry moves to the historian bucket at
@@ -280,7 +285,11 @@
   };
 
   # Copyparty overlay (module imports pkgs.copyparty via this overlay —
-  # moved from rich-evans at a3j.6 6b)
+  # moved from rich-evans at a3j.6 6b). The service itself is disabled in
+  # services/default.nix on the current pin because this overlay's re-wrapped
+  # python3 + partftpy fails to build ("makeWrapper doesn't understand the arg
+  # --prefix PATH : …"). nixpkgs also ships copyparty now (1.20.26), so once the
+  # service is re-enabled, prefer dropping this overlay over fixing it.
   nixpkgs.overlays = [inputs.copyparty.overlays.default];
 
   kimb = {
@@ -324,6 +333,10 @@
     # dir nobody scraped). journal-upload stays OFF (opt-in option,
     # default false — the sink on rich-evans is disabled fleet-wide).
     observability.enable = true;
+
+    # DeepSeek Harness Web UI as an always-on host service. Its module also
+    # contributes the Nebula inbound rule for port 3099.
+    dsh.enable = true;
 
     # Nebula configuration (certs generated via `nix run .#generate-nebula-certs`)
     nebula = {
