@@ -237,12 +237,8 @@ in {
       };
     };
 
-    # Ensure the textfile directory exists for the staleness probe.
-    # (Duplicate of the rule in kimb.observability — harmless if both
-    # are active, and required when observability is enabled but its
-    # tmpfiles rule hasn't run yet.)
-    systemd.tmpfiles.rules = mkIf (cfg.stalenessProbe && config.kimb.observability.enable) [
-      "d ${textfileDir} 0777 nobody nogroup -"
-    ];
+    # The textfile directory itself is created by kimb.observability (the
+    # staleness probe is mkIf-gated on it being enabled), so this module
+    # deliberately does not duplicate the tmpfiles rule.
   };
 }

@@ -64,9 +64,13 @@ in {
       };
     };
 
-    # Create textfile directory for node_exporter textfile collector
+    # Create textfile directory for node_exporter textfile collector.
+    # Root-owned 0755: the collectors only read it, while root-run probes
+    # (restic staleness, ollama health) write here. It must NOT be
+    # world-writable — a local user could otherwise forge metrics or use a
+    # symlink to turn the probe's `> tmp && mv` into a root file write.
     systemd.tmpfiles.rules = [
-      "d ${textfileDir} 0777 nobody nogroup -"
+      "d ${textfileDir} 0755 root root -"
     ];
 
     # Open Nebula firewall for node_exporter scraping from maitred
