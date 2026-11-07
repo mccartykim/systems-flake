@@ -107,13 +107,23 @@ in {
       # and not inside serviceConfig (where a `path` key is the unrelated
       # systemd Path= filesystem directive).
       #
-      # systemd-run is included so dsh-subprocess-local can reach its
-      # linux-scope containment. That needs `systemd-run --user` plus
-      # XDG_RUNTIME_DIR from a systemd *user* manager; a system unit has
-      # neither, so it degrades to unconfined spawn and logs a warning. A
-      # lingering-enabled user unit is the way to get real containment.
+      # systemd-run lets dsh-subprocess-local reach its linux-scope
+      # containment, and bubblewrap is the sandbox chain's first rung. The
+      # chain is bwrap then Landlock; the Landlock launcher (landlock-run) is
+      # absent from the nixpkgs build, so bwrap is the only usable backend
+      # here. That matters because the sandbox fails closed: with no backend,
+      # every command returns SANDBOX_UNAVAILABLE rather than running
+      # unconfined. `workspace-write` then gives a read-only host root, a
+      # private PID namespace, an ephemeral /tmp, and writable binds for the
+      # workspace only.
+      #
+      # linux-scope additionally needs `systemd-run --user` plus
+      # XDG_RUNTIME_DIR from a systemd *user* manager, which a system unit
+      # cannot provide; it falls back to plain spawn. The sandbox is a
+      # separate mechanism and still applies.
       path = [
         pkgs.bashInteractive
+        pkgs.bubblewrap
         pkgs.coreutils
         pkgs.gnugrep
         pkgs.gnused
