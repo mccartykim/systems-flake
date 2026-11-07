@@ -93,6 +93,46 @@ in {
       # Restart on any exit: this is a long-lived server a person connects to, so
       # a crash should cost one restart, not a silent outage until someone notices.
       startLimitIntervalSec = 0;
+
+      # The bash tool spawns the bare name `bash` (dsh-bash-local builds
+      # `['bash', '-c', command]`), and dsh-subprocess-local resolves it against
+      # the child PATH, which it derives from this process's environment. The
+      # dsh wrapper alone contributes only pnpm, so without this every
+      # model-initiated shell call fails with `command "bash" was not found on
+      # PATH` and the harness cannot run a single command.
+      #
+      # This must be a real toolbelt, not just a shell: this is a coding
+      # harness, so git/rg/python/node are part of the contract. `path` is a
+      # service-level option that systemd turns into PATH, so it belongs here
+      # and not inside serviceConfig (where a `path` key is the unrelated
+      # systemd Path= filesystem directive).
+      #
+      # systemd-run is included so dsh-subprocess-local can reach its
+      # linux-scope containment. That needs `systemd-run --user` plus
+      # XDG_RUNTIME_DIR from a systemd *user* manager; a system unit has
+      # neither, so it degrades to unconfined spawn and logs a warning. A
+      # lingering-enabled user unit is the way to get real containment.
+      path = [
+        pkgs.bashInteractive
+        pkgs.coreutils
+        pkgs.gnugrep
+        pkgs.gnused
+        pkgs.findutils
+        pkgs.systemd
+        pkgs.git
+        pkgs.ripgrep
+        pkgs.jq
+        pkgs.python3
+        pkgs.nodejs_24
+        # The host's own profiles, so tools installed outside this list (the
+        # user's home-manager profile, system packages) resolve as they do for
+        # an interactive login. Last, so the pinned shell above wins a clash.
+        # These are named by their prefix: `path` appends /bin and /sbin, so
+        # spelling out "/run/current-system/sw/bin" would yield ".../bin/bin".
+        "/run/current-system/sw"
+        "/etc/profiles/per-user/kimb"
+      ];
+
       serviceConfig = {
         Type = "simple";
         User = "kimb";
@@ -100,6 +140,28 @@ in {
         Restart = "always";
         RestartSec = 5;
 
+        # The bash tool spawns the bare name `bash` (dsh-bash-local builds
+        # `['bash', '-c', command]`), and dsh-subprocess-local resolves it against
+        # the child PATH, which it derives from this process's environment. The
+        # wrapper alone contributes only pnpm, so without this every
+        # model-initiated shell call fails with `command "bash" was not found on
+        # PATH` — the harness cannot run a single command.
+        #
+        # This must be a real toolbelt, not just a shell: this is a coding
+        # harness, so git/rg/python/node are part of the contract. The listed
+        # entries guarantee the shell and coreutils exist regardless of how the
+        # system profile is shaped.
+        #
+        # systemd-run is included so dsh-subprocess-local can reach its
+        # linux-scope containment. That path needs `systemd-run --user` plus
+        # XDG_RUNTIME_DIR from a systemd *user* manager; a system unit has
+        # neither, so it degrades to unconfined spawn with a logged warning.
+        # A lingering-enabled user unit is the way to get real containment.
+
+        # Also expose the host's own profiles, so tools installed outside this
+        # list (the user's home-manager profile, system packages) resolve the
+        # same way they do for an interactive login. Kept after `path` so the
+        # pinned shell above always wins any collision.
         # DSH_HOME stays at its default so the stored credential file is found.
         # HOME is set explicitly because a system unit does not inherit one, and
         # dsh resolves several paths from it.
