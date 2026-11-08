@@ -25,10 +25,10 @@
 - NEVER say "ready to push when you are" - YOU must push
 - If push fails, resolve and retry until it succeeds
 
-## Writing Posts and Prose
+## Writing Posts, Prose, and Replies
 
-When you write a post, article, or other prose for readers, follow these rules:
+These rules apply to every post, article, document, and reply in this project.
 
-- **Use Simplified Technical English.** Write in ASD-STE100 Simplified Technical English (or in the style of Simple English Wikipedia when STE100 has no suitable word). Use clear, direct prose in the active voice.
+- **Use Simplified Technical English.** Write in ASD-STE100 Simplified Technical English (or in the style of Simple English Wikipedia when STE100 has no suitable word). Use clear, direct prose in the active voice. Keep sentences short and replies tight. Cut filler words.
 - **Explain all relevant context.** Give the reader the background they need. Do not assume they know the project, its history, or its abbreviations.
-- **Use a cold-read critic first.** Before you publish, give the draft to a reader who has no prior context (for example, a fresh subagent), and fix every point that the critic cannot understand.
+- **Use a cold-read critic first.** Before you publish a post or a document, give the draft to a reader who has no prior context (for example, a fresh subagent), and fix every point that the critic cannot understand. Do this check for a reply when the reply is long or when it gives the reader steps to follow.
