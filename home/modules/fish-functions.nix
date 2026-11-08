@@ -95,6 +95,20 @@ in {
               fish_clipboard_copy
           end
         '';
+
+        # -- host access --
+        # dshtoken → print the dsh Web UI's current token URL, fetched from
+        # historian over SSH. dsh mints a per-process token at every start, and
+        # that URL is the ONLY way to pair a new browser: the Authelia gate in
+        # front does not mint dsh's own session cookie, so a fresh phone or
+        # laptop still needs the token exactly once (the cookie it returns then
+        # survives restarts for cookieMaxAgeDays). Host follows the
+        # <name>.nebula convention; historian's static Nebula address
+        # (10.100.0.10) is the fallback if DNS is unavailable.
+        dshtoken = ''
+          set -l host historian.nebula
+          ssh $host "journalctl -u dsh -n 400 --no-pager | grep -oE 'https?://[^ ]+token=[A-Za-z0-9_-]+' | tail -1"
+        '';
       }
       // optionalAttrs cfg.includeJjPrompt {
         fish_jj_prompt = jjPrompt;
