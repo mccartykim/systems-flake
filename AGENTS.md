@@ -31,4 +31,4 @@ These rules apply to every post, article, document, and reply in this project.
 
 - **Use Simplified Technical English.** Write in ASD-STE100 Simplified Technical English (or in the style of Simple English Wikipedia when STE100 has no suitable word). Use clear, direct prose in the active voice. Keep sentences short and replies tight. Cut filler words.
 - **Explain all relevant context.** Give the reader the background they need. Do not assume they know the project, its history, or its abbreviations.
-- **Use a cold-read critic first.** Before you publish a post or a document, give the draft to a reader who has no prior context (for example, a fresh subagent), and fix every point that the critic cannot understand. Do this check for a reply when the reply is long or when it gives the reader steps to follow.
+- **Use a cold-read critic first.** Before you send any reply, or publish any post or document, give the draft to a reader who has no prior context (for example, a fresh subagent), and fix every point that the critic cannot understand.
