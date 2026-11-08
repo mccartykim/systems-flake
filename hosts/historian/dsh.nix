@@ -3,8 +3,35 @@
 # Binds historian's Nebula address so other overlay hosts can reach the Web UI,
 # and nothing else: dsh's `--host` takes one concrete local address and rejects
 # wildcards, because binding every interface would expose the agent's shell
-# execution to the whole network. Reach it at http://10.100.0.10:3099/ and open
-# the token URL the unit prints to the journal.
+# execution to the whole network.
+#
+# == Two ways in: https://dsh.kimb.dev, and the overlay URL as break-glass ==
+#
+# The canonical route is https://dsh.kimb.dev, published through maitred's Caddy
+# edge with Authelia in front. That is driven entirely by the `dsh` entry in the
+# maitred bucket of services/default.nix: one entry yields the Caddy vhost, the
+# `dsh-proxy` socat forwarder to this host, the unbound split-horizon record,
+# and the Authelia two_factor rule. Two flags here make it work, neither
+# optional:
+#
+#   --public-url    so the token URL printed to the journal (and DSH_WEB_URL)
+#                   names the address a browser can actually open. It grants
+#                   no trust by itself.
+#   --trusted-host  dsh's /api fence is a DNS-rebinding defense keyed on the
+#                   Host header. Caddy preserves Host, so the proxied authority
+#                   must be allowlisted or every /api call answers 403 while the
+#                   index page still loads — which reads like a cookie bug.
+#                   Verified: without it Host=dsh.kimb.dev gets 403, with it 401.
+#
+# The direct overlay URL (http://10.100.0.10:3099/, token URL in the journal
+# with --public-url removed) remains the break-glass path if Caddy or Authelia
+# is down; the bind address stays on the Nebula IP rather than loopback because
+# maitred's socat forwarder targets 10.100.0.10:3099.
+#
+# a3j.8.2 note: when the public edge flips to historian's own Caddy, that
+# generated vhost targets 127.0.0.1 (see reverse-proxy.nix), so the flip must
+# either bind dsh to loopback here or special-case the target — otherwise the
+# vhost 502s. Add the `dsh` entry to the historian bucket in the same change.
 #
 # == Why the route is ollama.com and not the local ollama ==
 #
@@ -187,6 +214,11 @@ in {
           "--no-open"
           "--host 10.100.0.10"
           "--port 3099"
+          # Advertised root (journal token URL, DSH_WEB_URL) — grants no trust.
+          "--public-url https://dsh.kimb.dev"
+          # Admit the authority Caddy forwards (Host is preserved). Variadic, so
+          # it must stay last: everything after it is another authority.
+          "--trusted-host dsh.kimb.dev"
         ];
 
         # The agent executes commands and writes files under the workspace it is
@@ -207,6 +239,16 @@ in {
         port = 3099;
         proto = "tcp";
         group = "servers";
+      }
+      # maitred's `dsh-proxy` socat forwarder is the hop that makes
+      # https://dsh.kimb.dev reachable: it dials 10.100.0.10:3099 from maitred.
+      # maitred is group "routers", not "servers" and not a personal-device
+      # group, so without this rule the forwarder connects into a silent drop
+      # (verified: maitred reaches historian's 7171/8765/8096, not 3099).
+      {
+        port = 3099;
+        proto = "tcp";
+        host = "maitred";
       }
     ];
   };

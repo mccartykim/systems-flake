@@ -312,6 +312,26 @@
         publicAccess = false;
         websockets = false;
       };
+      # DeepSeek Harness Web UI — the agent's browser front end, a host service
+      # on historian (hosts/historian/dsh.nix; the real entry lives there as
+      # `kimb.dsh.enable`). This duplicate drives, in one entry: the
+      # dsh.kimb.dev vhost on maitred's Caddy, the `dsh-proxy` socat forwarder
+      # (containerBridge:3099 → historian Nebula 10.100.0.10:3099), the unbound
+      # split-horizon record, and the Authelia two_factor access rule.
+      #
+      # auth = "authelia" is deliberate and should not be relaxed: this is an
+      # agent with a shell running as kimb, so the public edge must be SSO-gated.
+      # dsh also enforces its own Host fence; `--trusted-host dsh.kimb.dev` in
+      # dsh.nix is what keeps the proxied authority from being 403'd on /api.
+      dsh = {
+        enable = true;
+        port = 3099;
+        subdomain = "dsh";
+        host = "historian";
+        auth = "authelia";
+        publicAccess = true;
+        websockets = true;
+      };
       reverse-proxy = {
         enable = true;
         port = 80;
