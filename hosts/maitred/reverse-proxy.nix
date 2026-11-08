@@ -39,6 +39,11 @@
       extraConfig = ''
         ${authConfig}
         ${websocketConfig}
+        # HSTS on every generated vhost: the dsh Web UI's own browser cookie
+        # cannot set Secure behind a TLS-terminating proxy (dsh decides that
+        # from its listener protocol, not X-Forwarded-Proto), so pin browsers
+        # to HTTPS here instead. Non-browser clients ignore it.
+        header Strict-Transport-Security "max-age=31536000"
         reverse_proxy ${targetIP}:${toString service.port}
       '';
     };

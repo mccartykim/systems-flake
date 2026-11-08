@@ -37,8 +37,7 @@
       # `or` on a nested attrpath guards a missing attribute, not a missing
       # host, so an unknown `host` would abort evaluation instead of falling
       # back. Fail with the offending service and value named.
-      else
-        registry.nodes.${service.host}.ip
+      else registry.nodes.${service.host}.ip
         or (throw "kimb.services.${serviceName}.host = \"${service.host}\" is not a node in ../nebula-registry.nix; the ${service.subdomain} vhost has no target IP");
 
     authConfig = lib.optionalString needsAuth ''
@@ -60,6 +59,12 @@
       extraConfig = ''
         ${authConfig}
         ${websocketConfig}
+        # HSTS on every generated vhost: once this host owns the edge, dsh's
+        # browser cookie cannot be Secure behind the TLS-terminating proxy
+        # (dsh decides that from its listener protocol, not
+        # X-Forwarded-Proto), so pin browsers to HTTPS instead. Non-browser
+        # clients ignore it.
+        header Strict-Transport-Security "max-age=31536000"
         reverse_proxy ${targetIP}:${toString service.port}
       '';
     };
