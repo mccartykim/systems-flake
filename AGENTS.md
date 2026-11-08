@@ -24,3 +24,11 @@
 - NEVER stop before pushing - that leaves work stranded locally
 - NEVER say "ready to push when you are" - YOU must push
 - If push fails, resolve and retry until it succeeds
+
+## Writing Posts and Prose
+
+When you write a post, article, or other prose for readers, follow these rules:
+
+- **Use Simplified Technical English.** Write in ASD-STE100 Simplified Technical English (or in the style of Simple English Wikipedia when STE100 has no suitable word). Use clear, direct prose in the active voice.
+- **Explain all relevant context.** Give the reader the background they need. Do not assume they know the project, its history, or its abbreviations.
+- **Use a cold-read critic first.** Before you publish, give the draft to a reader who has no prior context (for example, a fresh subagent), and fix every point that the critic cannot understand.
