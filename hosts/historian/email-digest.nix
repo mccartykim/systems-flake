@@ -529,6 +529,11 @@ in {
     # run just skips the next timer tick — no pile-up.
     services.email-digest-index = {
       description = "Email Digest — mail sync + mu index (refresh)";
+      # Don't restart this hour-long oneshot on config changes:
+      # switch-to-configuration waits for the restart job while holding
+      # /run/nixos/switch-to-configuration.lock, and a SIGTERM mid-index
+      # leaves xapian half-built.
+      restartIfChanged = false;
       after = ["network-online.target"];
       wants = ["network-online.target"];
       path = ["/run/current-system/sw"];
