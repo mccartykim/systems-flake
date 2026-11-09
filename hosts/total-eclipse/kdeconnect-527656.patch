@@ -1,0 +1,129 @@
+diff --git a/models/notificationsmodel.cpp b/models/notificationsmodel.cpp
+index 2e7227d..7a87d38 100644
+--- a/models/notificationsmodel.cpp
++++ b/models/notificationsmodel.cpp
+@@ -9,6 +9,8 @@
+ #include <QDebug>
+ #include <QIcon>
+ 
++#include <algorithm>
++
+ #include <dbushelper.h>
+ 
+ #include "models_debug.h"
+@@ -20,8 +22,9 @@ NotificationsModel::NotificationsModel(QObject *parent)
+     connect(this, &QAbstractItemModel::rowsInserted, this, &NotificationsModel::rowsChanged);
+     connect(this, &QAbstractItemModel::rowsRemoved, this, &NotificationsModel::rowsChanged);
+ 
+-    connect(this, &QAbstractItemModel::dataChanged, this, &NotificationsModel::anyDismissableChanged);
+-    connect(this, &QAbstractItemModel::rowsInserted, this, &NotificationsModel::anyDismissableChanged);
++    connect(this, &QAbstractItemModel::dataChanged, this, &NotificationsModel::updateAnyDismissable);
++    connect(this, &QAbstractItemModel::rowsInserted, this, &NotificationsModel::updateAnyDismissable);
++    connect(this, &QAbstractItemModel::rowsRemoved, this, &NotificationsModel::updateAnyDismissable);
+ 
+     QDBusServiceWatcher *watcher =
+         new QDBusServiceWatcher(DaemonDbusInterface::activatedService(), QDBusConnection::sessionBus(), QDBusServiceWatcher::WatchForOwnerChange, this);
+@@ -78,6 +81,7 @@ void NotificationsModel::notificationAdded(const QString &id)
+     NotificationDbusInterface *dbusInterface = new NotificationDbusInterface(m_deviceId, id, this);
+     connect(dbusInterface, &NotificationDbusInterface::ready, this, &NotificationsModel::notificationUpdated);
+     m_notificationList.prepend(dbusInterface);
++    m_dismissable.insert(dbusInterface, dbusInterface->dismissable());
+     endInsertRows();
+ }
+ 
+@@ -86,6 +90,7 @@ void NotificationsModel::notificationRemoved(const QString &id)
+     for (int i = 0; i < m_notificationList.size(); ++i) {
+         if (m_notificationList[i]->notificationId() == id) {
+             beginRemoveRows(QModelIndex(), i, i);
++            m_dismissable.remove(m_notificationList[i]);
+             m_notificationList.removeAt(i);
+             endRemoveRows();
+             return;
+@@ -164,7 +169,7 @@ QVariant NotificationsModel::data(const QModelIndex &index, int role) const
+     case DbusInterfaceRole:
+         return QVariant::fromValue<QObject *>(notification);
+     case DismissableModelRole:
+-        return notification->dismissable();
++        return m_dismissable.value(notification);
+     case RepliableModelRole:
+         return !notification->replyId().isEmpty();
+     case IconPathModelRole:
+@@ -204,18 +209,24 @@ int NotificationsModel::rowCount(const QModelIndex &parent) const
+ 
+ bool NotificationsModel::isAnyDimissable() const
+ {
+-    for (NotificationDbusInterface *notification : std::as_const(m_notificationList)) {
+-        if (notification->dismissable()) {
+-            return true;
+-        }
++    return m_anyDismissable;
++}
++
++void NotificationsModel::updateAnyDismissable()
++{
++    const bool anyDismissable = std::any_of(m_dismissable.cbegin(), m_dismissable.cend(), [](bool dismissable) {
++        return dismissable;
++    });
++    if (anyDismissable != m_anyDismissable) {
++        m_anyDismissable = anyDismissable;
++        Q_EMIT anyDismissableChanged();
+     }
+-    return false;
+ }
+ 
+ void NotificationsModel::dismissAll()
+ {
+     for (NotificationDbusInterface *notification : std::as_const(m_notificationList)) {
+-        if (notification->dismissable()) {
++        if (m_dismissable.value(notification)) {
+             notification->dismiss();
+         }
+     }
+@@ -227,12 +238,18 @@ void NotificationsModel::clearNotifications()
+         beginRemoveRows(QModelIndex(), 0, m_notificationList.size() - 1);
+         qDeleteAll(m_notificationList);
+         m_notificationList.clear();
++        m_dismissable.clear();
+         endRemoveRows();
+     }
+ }
+ 
+ void NotificationsModel::notificationUpdated()
+ {
++    if (auto *notification = qobject_cast<NotificationDbusInterface *>(sender())) {
++        if (m_dismissable.contains(notification)) {
++            m_dismissable[notification] = notification->dismissable();
++        }
++    }
+     Q_EMIT dataChanged(index(0, 0), index(m_notificationList.size() - 1, 0));
+ }
+ 
+diff --git a/models/notificationsmodel.h b/models/notificationsmodel.h
+index bbc2a27..02f6f60 100644
+--- a/models/notificationsmodel.h
++++ b/models/notificationsmodel.h
+@@ -9,6 +9,7 @@
+ 
+ #include <QAbstractItemModel>
+ #include <QAbstractListModel>
++#include <QHash>
+ #include <QList>
+ #include <QPixmap>
+ 
+@@ -56,6 +57,7 @@ public Q_SLOTS:
+     void dismissAll();
+ 
+ private Q_SLOTS:
++    void updateAnyDismissable();
+     void notificationAdded(const QString &id);
+     void notificationRemoved(const QString &id);
+     void notificationUpdated();
+@@ -71,6 +73,8 @@ Q_SIGNALS:
+ private:
+     DeviceNotificationsDbusInterface *m_dbusInterface;
+     QList<NotificationDbusInterface *> m_notificationList;
++    QHash<NotificationDbusInterface *, bool> m_dismissable;
++    bool m_anyDismissable = false;
+     QString m_deviceId;
+ };
+ 

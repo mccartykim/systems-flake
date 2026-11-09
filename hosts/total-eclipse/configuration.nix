@@ -228,6 +228,20 @@
         python3Packages = final.python313.pkgs;
       };
     })
+    # KDE Connect system-tray plasmoid livelock (KDE bug 527656): on every
+    # model change the plasmoid re-reads each phone notification's
+    # "dismissable" property over synchronous D-Bus (N*N calls), blocking
+    # plasmashell's main thread. Symptoms: the panel/dock and its clock stop
+    # repainting, and every other application's notifications time out
+    # ("Failed to notify ... reply timeout expired"). Fixed upstream by commit
+    # e4e378e8 (2026-10-24), which is newer than the pinned 26.08.2 — backport.
+    (final: prev: {
+      kdePackages = prev.kdePackages.overrideScope (kfinal: kprev: {
+        kdeconnect-kde = kprev.kdeconnect-kde.overrideAttrs (old: {
+          patches = (old.patches or []) ++ [./kdeconnect-527656.patch];
+        });
+      });
+    })
   ];
 
   # Hardware configuration
