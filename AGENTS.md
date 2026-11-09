@@ -33,6 +33,31 @@ These rules apply to every post, article, document, and reply in this project.
 - **Explain all relevant context.** Give the reader the background they need. Do not assume they know the project, its history, or its abbreviations.
 - **Use a cold-read critic first.** Before you send any reply, or publish any post or document, give the draft to a reader who has no prior context (for example, a fresh subagent), and fix every point that the critic cannot understand.
 
+## Fixes: prefer a channel bump over a bespoke patch
+
+Before you add a patch for a third-party bug, check whether the fix is already in
+this repo's nixpkgs channel.
+
+1. Read the package version in the channel:
+   ```bash
+   nix eval --raw "github:NixOS/nixpkgs/nixos-unstable#<attr>.version"
+   ```
+   Do the same for the pinned nixpkgs input when it differs.
+2. Check that this version actually contains the fix. A newer version number is
+   not proof. Inspect the source or the patch list:
+   - build the source and grep it:
+     ```bash
+     nix build --no-link --print-out-paths --expr '(<pkg>.src)'
+     ```
+     then extract it and look for the fix, or
+   - read the upstream commit and confirm it is in the release tag.
+3. If the channel version contains the fix, bump the flake input instead of
+   patching: `nix flake update <input>`, build, and push.
+4. If it does not, a temporary patch is acceptable. Record the removal condition
+   in a comment next to the patch and in the commit message: the upstream commit
+   and the first release that contains it. Re-check at every flake bump, and
+   delete the patch when the pin catches up.
+
 ## Cross-project inboxes
 
 You share one machine with four agent workspaces. Each workspace owns its files. Treat the

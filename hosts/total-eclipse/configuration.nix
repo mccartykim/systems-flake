@@ -235,6 +235,9 @@
     # repainting, and every other application's notifications time out
     # ("Failed to notify ... reply timeout expired"). Fixed upstream by commit
     # e4e378e8 (2026-10-24), which is newer than the pinned 26.08.2 — backport.
+    # REMOVE this patch when the pinned nixpkgs ships a kdeconnect-kde release
+    # that contains e4e378e8 (expected 26.12.0; 26.08.3 does NOT contain it).
+    # Check the release source for m_dismissable in models/notificationsmodel.cpp.
     (final: prev: {
       kdePackages = prev.kdePackages.overrideScope (kfinal: kprev: {
         kdeconnect-kde = kprev.kdeconnect-kde.overrideAttrs (old: {
