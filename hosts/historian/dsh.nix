@@ -88,6 +88,16 @@ in {
                   contextWindow: 1048576
                   maxTokens: 393216
                   input: [text, image]
+                  # Ollama's OpenAI-compatible endpoint takes reasoning_effort
+                  # low/high/max, which are the levels its /api/show reports for
+                  # this model. No `off` row on purpose: dsh wires a chosen "off"
+                  # by omitting reasoning_effort, so declaring off would also
+                  # switch the unpicked default to silence that parameter; left
+                  # out, an unpicked level keeps Ollama's own default (high).
+                  reasoningEfforts:
+                    low: low
+                    high: high
+                    max: max
                 - id: kimi-k3
                   name: kimi-k3
                   contextWindow: 1048576
