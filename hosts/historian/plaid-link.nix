@@ -5,10 +5,10 @@
 # path that maitred's socat forwarder needs to reach the process.
 #
 # The server must bind 0.0.0.0:<port>, not 127.0.0.1:<port>. maitred
-# terminates TLS and connects over Nebula at 10.100.0.10, so a loopback bind
-# accepts the TCP connection and then refuses it. The host firewall already
-# trusts nebula1, so the Nebula ACL below is the only gate; same shape as
-# kjv.nix, borges.nix, and knitwork.nix.
+# terminates TLS and connects over Nebula at 10.100.0.10, so a loopback-only
+# bind leaves that address unanswered and the forwarder's connect is refused.
+# The host firewall already trusts nebula1, so the Nebula ACL below is the only
+# gate; same shape as kjv.nix, borges.nix, and knitwork.nix.
 {
   config,
   lib,

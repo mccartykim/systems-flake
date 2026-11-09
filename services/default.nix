@@ -216,10 +216,11 @@
       #
       # The link server is NOT a NixOS service. The money_checker workspace
       # starts it for one link session and stops it after; this entry only
-      # publishes the name. The server must listen on 0.0.0.0:8766 (not
-      # 127.0.0.1) while a session is open: maitred terminates TLS and reaches
-      # this port over Nebula, so a loopback bind accepts the TCP connection
-      # and then refuses it. With no server running, the vhost answers 502.
+      # publishes the name. The server must listen on 0.0.0.0:8766 while a
+      # session is open, not on 127.0.0.1: maitred terminates TLS and connects
+      # to historian's Nebula address, so a loopback-only bind leaves that
+      # address unanswered and the forwarder fails. With no server running, the
+      # vhost answers 502.
       #
       # Port 8766: 8765 belongs to the keyed-james-bible app (kjv.nix).
       #
