@@ -79,11 +79,15 @@ in {
               api: openai-completions
               baseURL: https://ollama.com/v1
               models:
+                # Ollama reports deepseek-v4.1-flash as vision-capable (its
+                # /api/show lists "vision"), and dsh gates image input on this
+                # declared list rather than probing the provider. Listing image
+                # is what lets the composer send an attached image.
                 - id: deepseek-v4.1-flash
                   name: deepseek-v4.1-flash
                   contextWindow: 1048576
                   maxTokens: 393216
-                  input: [text]
+                  input: [text, image]
                 - id: kimi-k3
                   name: kimi-k3
                   contextWindow: 1048576
