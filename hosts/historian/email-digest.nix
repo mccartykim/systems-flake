@@ -632,6 +632,10 @@ in {
     # downtime. (The digest timer below already used OnCalendar — that's
     # why it never wedged; only the index timer chained monotonically.)
     timers.email-digest-index = {
+      # Disabled 2026-11-09 on user request. The running system already had
+      # this masked; this makes the disable declarative so a switch cannot
+      # resurrect the ~50-minute mbsync/mu index passes.
+      enable = false;
       wantedBy = ["timers.target"];
       timerConfig = {
         OnCalendar = "hourly";
@@ -648,6 +652,9 @@ in {
     # down to twice-daily (OnCalendar = "09:00,21:00") if hourly DMs are too
     # chatty — the index timer, not this one, gates Interrogator freshness.
     timers.email-digest = {
+      # Disabled 2026-11-09 on user request: this is the hourly lifecoach DM
+      # ("No new mail since ..."). The services stay defined for manual runs.
+      enable = false;
       wantedBy = ["timers.target"];
       timerConfig = {
         OnCalendar = "*-*-* *:30:00";

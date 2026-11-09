@@ -36,7 +36,10 @@ in {
   # path makes a system user with home = stateDir; we instead declare kimb's
   # membership ourselves and point the service at the existing account.
   services.hermes-agent = {
-    enable = true;
+    # Disabled 2026-11-09 on user request. It had no messaging platforms and
+    # no cron jobs left; the job-search automation now runs on `dsh headless`.
+    # State stays at /var/lib/hermes. Re-enable: set this back to true.
+    enable = false;
     user = "kimb";
     group = "users";
     createUser = false;

@@ -47,6 +47,14 @@
     discordAllowedUsers = "366455267673636866"; # Kimb only
   };
 
+  # Disabled 2026-11-09 on user request. The daemon and its Discord bot
+  # (username "crema") sent hourly proactive check-ins and a scheduled
+  # "email digest". The module stays enabled so the state dir, the org-crm
+  # user, and the Emacs daemon survive; only the two DM-sending units are
+  # masked. Re-enable: delete these two lines and redeploy.
+  systemd.services.org-crm.enable = false;
+  systemd.services.discord-org-crm.enable = false;
+
   # kimi-k2.7-code:cloud supports 256k context. org-crm does multi-turn
   # reasoning + email-digest over 3 mailboxes — raise the context window
   # well above the repo default (32768) so large digests don't truncate.
