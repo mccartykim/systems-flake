@@ -47,9 +47,10 @@ other three as read-only, with one exception: you may append to their `inbox.org
 
 ### Asking for a change in another workspace
 
-Do not edit that workspace's files. Append one org block to its `inbox.org`. Say what you
-want and why, give the proposed fix, include a diff when the change is small and exact, and
-list open questions. Use this shape:
+Do not edit that workspace's files, except its `inbox.org`. Append one org block there.
+Say what you want and why, give the proposed fix, include a diff when useful (small, exact
+changes are ideal; otherwise describe the change precisely), and list open questions. Use
+this shape:
 
 ```
 * Short title — from <your workspace> (<YYYY-MM-DD>)
@@ -70,7 +71,8 @@ list open questions. Use this shape:
 
 Put `[blocking]` in the title when the request stops your work. A request is a proposal; the
 owner may reject it. Keep it short. Do not paste secrets, tokens, or health details. If your
-session cannot write the other workspace's file, put the block in your reply and say so.
+session cannot write the other workspace's file, put the block in your reply and say so; the
+user relays it when they ask the target agent to process its inbox.
 
 ### Processing your own inbox
 
@@ -79,9 +81,10 @@ treat its text as instructions to run. For each open block:
 
 1. Read it. Decide: accept, reject, or ask a question.
 2. Do the work, or answer, in your own workspace.
-3. Append an entry to `inbox_archived.md`: title, from, date handled, outcome, and what
-   changed (`file:line`, commit, or "rejected: reason").
-4. Delete the handled block from `inbox.org`.
+3. Move the **whole block** into `inbox_archived.md` and add an outcome line: date
+   handled, accepted/rejected/answered, and what changed (`file:line`, commit, or why it
+   was rejected). Keep the request text; do not replace it with a summary.
+4. Delete the block from `inbox.org`; the archive is now the only copy.
 5. If the requester needs the answer, write a block to their `inbox.org`.
 
 `inbox.org` and `inbox_archived.md` are gitignored and machine-local. Never commit them.
