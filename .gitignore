@@ -28,3 +28,8 @@ __marimo__/
 .dolt/
 *.db
 .beads-credential-key
+
+# Cross-project agent inboxes: machine-local, sensitive, never repo content.
+# Protocol: AGENTS.md -> "Cross-project inboxes".
+/inbox.org
+/inbox_archived.md

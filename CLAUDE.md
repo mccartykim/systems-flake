@@ -637,6 +637,12 @@ scp host:/tmp/image.jpg /tmp/image.jpg
 - Check group membership if another service needs access
 - Remember systemd's ProtectSystem=strict limits writes to ReadWritePaths only
 
+## Cross-project inboxes
+
+This workspace shares the machine with three other agent workspaces. Do not edit their files;
+propose changes through their `inbox.org`. The full protocol — request template, inbox
+processing, archive — is in `AGENTS.md` → "Cross-project inboxes".
+
 # important-instruction-reminders
 Do what has been asked; nothing more, nothing less.
 NEVER create files unless they're absolutely necessary for achieving your goal.
