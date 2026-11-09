@@ -208,6 +208,40 @@
         publicAccess = true;
         websockets = false;
       };
+      # Plaid Link callback — the public HTTPS name for the money_checker
+      # workspace's link server. Plaid production OAuth (Chase and others)
+      # requires a registered HTTPS redirect URI, so the link flow needs a
+      # stable public name. The registered URI is
+      # https://plaid.kimb.dev/callback.
+      #
+      # The link server is NOT a NixOS service. The money_checker workspace
+      # starts it for one link session and stops it after; this entry only
+      # publishes the name. The server must listen on 0.0.0.0:8766 (not
+      # 127.0.0.1) while a session is open: maitred terminates TLS and reaches
+      # this port over Nebula, so a loopback bind accepts the TCP connection
+      # and then refuses it. With no server running, the vhost answers 502.
+      #
+      # Port 8766: 8765 belongs to the keyed-james-bible app (kjv.nix).
+      #
+      # auth = "none" is deliberate. The OAuth redirect returns the browser to
+      # /callback, and an Authelia login bounce on that path breaks the flow.
+      # The link server's one-time session cookie is the gate. Caddy in nixpkgs
+      # has no rate-limit plugin, so the server must rate-limit itself.
+      #
+      # There is a duplicate of this entry under the maitred bucket: maitred is
+      # still the public edge for kimb.dev, so it needs one to generate the
+      # plaid.kimb.dev vhost and its socat forwarder to this host. After the
+      # a3j.8.2 edge flip, historian's own Caddy serves this vhost at
+      # 127.0.0.1:8766 and the maitred duplicate goes away.
+      plaid-link = {
+        enable = true;
+        port = 8766;
+        subdomain = "plaid";
+        host = "historian";
+        auth = "none";
+        publicAccess = true;
+        websockets = false;
+      };
     };
 
     # Maitred services (router + reverse proxy)
@@ -331,6 +365,22 @@
         auth = "authelia";
         publicAccess = true;
         websockets = true;
+      };
+      # Plaid Link callback — the money_checker link server on historian. This
+      # duplicate drives, in one entry: the plaid.kimb.dev vhost on maitred's
+      # Caddy, the `plaid-link-proxy` socat forwarder (containerBridge:8766 →
+      # historian Nebula 10.100.0.10:8766), and the unbound split-horizon
+      # record. auth = "none" means no Authelia rule: the OAuth redirect must
+      # land on the link server without an SSO bounce. See the historian-bucket
+      # entry for the full reasoning.
+      plaid-link = {
+        enable = true;
+        port = 8766;
+        subdomain = "plaid";
+        host = "historian";
+        auth = "none";
+        publicAccess = true;
+        websockets = false;
       };
       reverse-proxy = {
         enable = true;

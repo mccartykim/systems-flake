@@ -127,6 +127,11 @@
     # served at kjv.kimb.dev. Gated on the `kjv` entry in services/default.nix.
     ./kjv.nix
 
+    # Plaid Link callback — the plaid.kimb.dev name for the money_checker
+    # workspace's link server. Gated on the `plaid-link` entry in
+    # services/default.nix; opens only the Nebula ACL, not a local service.
+    ./plaid-link.nix
+
     # Buildbot worker — DISABLED 2026-06-22 (gave up on buildbot-nix
     # fighting private-repo flake inputs; may revisit a different CI
     # scheme later). Re-enable by uncommenting this import; the module
