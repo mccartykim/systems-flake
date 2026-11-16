@@ -109,6 +109,26 @@ in {
                   maxTokens: 1048576
                   input: [text]
 
+            # Google's Gemini API. pi-ai ships this route and its model
+            # catalog (23 models), so only the credential reference is
+            # declared here: api, baseURL, and the model list come from the
+            # installed catalog. GEMINI_API_KEY is the provider's own ambient
+            # default; apiKeyEnv names the reference the stored credential
+            # file actually holds, so the two must stay in step with
+            # ~/.dsh/.credentials.yaml.
+            google:
+              displayName: Google
+              apiKeyEnv: GOOGLE_API_KEY
+
+            # OpenRouter's aggregated catalog (396 chat models in the
+            # installed pi-ai data). Same rule: only the credential reference
+            # is declared. OpenRouter personalizes the list per key by calling
+            # /models/user on first use, so the selector shows the models this
+            # key can actually reach.
+            openrouter:
+              displayName: OpenRouter
+              apiKeyEnv: OPENROUTER_API_KEY
+
       - id: agent-default-model
         config:
           provider: ollama
