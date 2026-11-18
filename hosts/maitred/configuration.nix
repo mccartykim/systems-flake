@@ -89,10 +89,12 @@ in {
       efi.canTouchEfiVariables = true;
     };
 
-    # Enable IP forwarding for routing
+    # Enable IPv4 forwarding for routing. IPv6 is deliberately off on this
+    # router (see networking.enableIPv6 below): the LAN is IPv4-only, the
+    # WAN v6 path is unreliable, and IPv6 forwarding had no matching
+    # ip6tables FORWARD rules, so it was an unmanaged, unfiltered surface.
     kernel.sysctl = {
       "net.ipv4.ip_forward" = 1;
-      "net.ipv6.conf.all.forwarding" = 1;
       # Enable hairpin NAT for all interfaces
       "net.bridge.bridge-nf-call-iptables" = 1;
       "net.bridge.bridge-nf-call-ip6tables" = 1;
@@ -206,6 +208,12 @@ in {
   networking = {
     # Host identification
     hostName = "maitred";
+
+    # IPv6 stays off on the router. The LAN is IPv4-only, the WAN v6 path is
+    # flaky, and the router's ip6tables FORWARD chain was empty while the
+    # policy was ACCEPT, so v6 forwarding was unfiltered. Turning v6 off
+    # avoids maintaining a second firewall for no benefit.
+    enableIPv6 = false;
 
     useDHCP = false; # Managed by systemd-networkd
     useNetworkd = true;
@@ -494,6 +502,9 @@ in {
             "0.0.0.0" # Listen on all interfaces for now
             "127.0.0.1" # localhost
           ];
+          # The router has no IPv6 (networking.enableIPv6 = false), so do not
+          # spend recursion time on upstream v6 queries that can time out.
+          do-ip6 = false;
           access-control = [
             "192.168.69.0/24 allow"
             "192.168.100.0/24 allow" # Container network
