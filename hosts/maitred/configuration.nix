@@ -459,10 +459,13 @@ in {
         PasswordAuthentication = false;
         PermitRootLogin = "no";
       };
-      # Bind on all addresses; the firewall restricts WAN access (enp3s0 is
-      # not in trustedInterfaces and 22 isn't in allowedTCPPorts). Binding
-      # explicitly to 10.100.0.50 raced with nebula1 coming up at boot, so
-      # sshd silently fell back to LAN-only and broke mesh deploys.
+      # sshd binds all interfaces, including WAN, so the firewall is the only
+      # thing keeping port 22 off the internet. openFirewall must stay false:
+      # it defaults to true and adds 22 globally, which is why internet
+      # scanners were reaching sshd even though 22 is not in allowedTCPPorts.
+      # LAN (enp2s0) and Nebula (nebula1) are trusted interfaces, so SSH
+      # stays available there, and colmena deploys maitred over its LAN IP.
+      openFirewall = false;
     };
 
     # Disable systemd-resolved to avoid port 53 conflict
