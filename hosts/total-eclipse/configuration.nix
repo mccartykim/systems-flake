@@ -115,13 +115,9 @@
     mouse.enable = true;
   };
 
-  # Disable sleep/suspend (keeps waking immediately anyway)
-  systemd.sleep.settings.Sleep = {
-    AllowSuspend = "no";
-    AllowHibernation = "no";
-    AllowHybridSleep = "no";
-    AllowSuspendThenHibernate = "no";
-  };
+  # Sleep is enabled by default. It was previously disabled here because the
+  # machine kept waking immediately; the cause was Wake-on-LAN "unicast" below,
+  # not a suspend fault. See the eno2 wakeOnLan comment.
 
   # Host identification and networking configuration
   networking = {
@@ -132,7 +128,12 @@
     # Network interface configuration
     interfaces.eno2.wakeOnLan = {
       enable = true;
-      policy = ["magic" "unicast"];
+      # "unicast" wakes on ANY packet addressed to this NIC's MAC (ARP probes,
+      # neighbour discovery, scans), which woke the machine moments after every
+      # suspend or shutdown. "magic" alone still allows deliberate remote wake
+      # via `wakeonlan <mac>`. If the BIOS has WoL armed for S4 power-on, that
+      # must be turned off as well — the OS flag only arms the NIC.
+      policy = ["magic"];
     };
 
     # Extended firewall configuration for streaming
