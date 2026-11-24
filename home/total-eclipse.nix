@@ -23,6 +23,7 @@
     ./modules/gaming.nix
     ./modules/ai-tools.nix
     ./modules/fish-functions.nix
+    ./modules/plasma-power.nix
   ];
 
   # nixpkgs config inherited from NixOS via useGlobalPkgs = true

@@ -312,6 +312,30 @@
     }
   ];
 
+  # Hibernate (suspend-to-disk). Without a resume= parameter logind reports
+  # CanHibernate = "na" and the kernel has nowhere to read the image back from.
+  # /var/swapfile lives on the ext4 root, so this needs both the backing device
+  # AND resume_offset, the location of the swap file's HEADER. The kernel cannot
+  # follow a path at resume time — the filesystem is not mounted yet — so it is
+  # given a raw offset instead.
+  #
+  # resume_offset is the first physical block reported by
+  # `filefrag -v /var/swapfile`, in PAGE_SIZE units. Page size and ext4 block
+  # size are both 4096 here, so the number transfers unchanged.
+  #
+  # The swap file does NOT need to be contiguous. Per the kernel's
+  # Documentation/power/swsusp-and-swap-files.html, swap files "need not be
+  # contiguous" and fragmentation "is already taken care of by the
+  # swap-handling code". (e4defrag was still run to shrink the file from 765
+  # extents to 110, which speeds resume, but it is not a correctness
+  # requirement.)
+  #
+  # IF THE SWAP FILE IS EVER DELETED AND RECREATED, THIS OFFSET GOES STALE and
+  # hibernation will fail to resume. Re-read it with:
+  #   sudo filefrag -v /var/swapfile | awk '/^ *0:/ {print $4}'
+  boot.resumeDevice = "/dev/nvme0n1p1";
+  boot.kernelParams = ["resume_offset=482936832"];
+
   # 4TB Seagate SATA — was NTFS "gamejail" (old Windows/AI/game backups + the
   # roommate's CactrotRapido .vdi/clonezilla images). Personal data (user's +
   # roommate's) was carved out to the rich-evans seagate first, then the drive
